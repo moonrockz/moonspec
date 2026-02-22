@@ -198,71 +198,39 @@ fn generate_per_feature(
 }
 
 ///|
-/// PerScenario mode: one test per scenario, each with an embedded mini-feature.
+/// PerScenario mode: one test per scenario, using File source with scenario_name filter.
 fn generate_per_scenario(
   buf : StringBuilder,
   feature : @gherkin.Feature,
   source_path : String,
   config : CodegenConfig,
 ) -> Unit {
-  // Collect background steps
-  let background_steps : Array[@gherkin.Step] = []
-  for child in feature.children {
-    match child {
-      @gherkin.FeatureChild::Background(bg) =>
-        for s in bg.steps {
-          background_steps.push(s)
-        }
-      _ => ()
-    }
-  }
   for child in feature.children {
     match child {
       @gherkin.FeatureChild::Scenario(scenario) =>
         if scenario.examples.is_empty() {
           generate_scenario_runner_test(
             buf, feature.name, scenario.name, source_path, config,
-            background_steps, scenario.steps, scenario.tags,
           )
           buf.write_string("\n")
         } else {
-          let template_steps = scenario.steps
           for examples in scenario.examples {
             let headers = match examples.table_header {
               Some(header_row) => header_row.cells.map(fn(c) { c.value })
               None => continue
             }
-            let rows = examples.table_body.map(fn(r) {
-              r.cells.map(fn(c) { c.value })
-            })
-            for row in rows {
+            for row in examples.table_body {
+              let values = row.cells.map(fn(c) { c.value })
               let params : Array[String] = []
               for i = 0; i < headers.length(); i = i + 1 {
-                params.push(headers[i] + "=" + row[i])
+                params.push(headers[i] + "=" + values[i])
               }
               let scenario_name = scenario.name +
                 " (" +
                 params.join(", ") +
                 ")"
-              // Expand placeholders in step text
-              let expanded_steps : Array[@gherkin.Step] = template_steps.map(
-                fn(s) {
-                  let mut text = s.text
-                  for i = 0; i < headers.length(); i = i + 1 {
-                    text = string_replace(
-                      text, "<" + headers[i] + ">", row[i],
-                    )
-                  }
-                  // Create a new Step with expanded text
-                  {
-                    ..s,
-                    text,
-                  }
-                },
-              )
               generate_scenario_runner_test(
                 buf, feature.name, scenario_name, source_path, config,
-                background_steps, expanded_steps, scenario.tags,
               )
               buf.write_string("\n")
             }
@@ -274,62 +242,29 @@ fn generate_per_scenario(
 }
 
 ///|
-/// Generate a single async test that embeds a mini-feature and runs it.
+/// Generate a single async test that uses File source with scenario_name filter.
 fn generate_scenario_runner_test(
   buf : StringBuilder,
   feature_name : String,
   scenario_name : String,
   source_path : String,
   config : CodegenConfig,
-  background_steps : Array[@gherkin.Step],
-  scenario_steps : Array[@gherkin.Step],
-  tags : Array[@gherkin.Tag],
 ) -> Unit {
   let test_name = "Feature: " + feature_name + " / Scenario: " + scenario_name
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
-    // Embed a mini-feature as a multiline string
-    buf.write_string("  let feature =\n")
-    buf.write_string("    #|Feature: " + feature_name + "\n")
-    buf.write_string("    #|\n")
-    // Background
-    if not(background_steps.is_empty()) {
-      buf.write_string("    #|  Background:\n")
-      for s in background_steps {
-        let keyword = trim_trailing_spaces(s.keyword)
-        buf.write_string("    #|    " + keyword + " " + s.text + "\n")
-      }
-      buf.write_string("    #|\n")
-    }
-    // Tags
-    if not(tags.is_empty()) {
-      let tag_line = tags.map(fn(t) { t.name }).join(" ")
-      buf.write_string("    #|  " + tag_line + "\n")
-    }
-    // Scenario
-    buf.write_string("    #|  Scenario: " + scenario_name + "\n")
-    for s in scenario_steps {
-      let keyword = trim_trailing_spaces(s.keyword)
-      buf.write_string("    #|    " + keyword + " " + s.text + "\n")
-    }
-    // Run call
     buf.write_string(
       "  let result = @moonspec.run(\n    " +
       config.world +
-      "::default, [@moonspec.FeatureSource::Text(feature)],\n  )\n",
+      "::default, [@moonspec.FeatureSource::File(\"" +
+      escape_string(source_path) +
+      "\")],\n    scenario_name=\"" +
+      escape_string(scenario_name) +
+      "\",\n  )\n",
     )
     buf.write_string("  assert_eq!(result.summary.failed, 0)\n")
   } else {
-    // Stub mode (no world configured)
     buf.write_string("  // Source: " + source_path + "\n")
-    for s in background_steps {
-      let keyword = trim_trailing_spaces(s.keyword)
-      buf.write_string("  // " + keyword + " " + s.text + "\n")
-    }
-    for s in scenario_steps {
-      let keyword = trim_trailing_spaces(s.keyword)
-      buf.write_string("  // " + keyword + " " + s.text + "\n")
-    }
     buf.write_string("  ignore(\"\")\n")
   }
   buf.write_string("}\n")
