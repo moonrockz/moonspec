@@ -2,12 +2,5 @@
   "import": [
     "moonrockz/moonspec",
     "moonbitlang/async"
-  ],
-  "pre-build": [
-    {
-      "input": "../features/calculator.feature",
-      "output": "calculator_feature_test.mbt",
-      "command": "moonspec gen features/calculator.feature -o src/ -w CalcWorld"
-    }
   ]
 }
