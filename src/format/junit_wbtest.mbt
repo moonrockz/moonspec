@@ -1,3 +1,4 @@
+///|
 test "JUnitFormatter produces valid XML structure" {
   let fmt = JUnitFormatter::new()
   let run_result : @runner.RunResult = {
@@ -29,14 +30,15 @@ test "JUnitFormatter produces valid XML structure" {
   }
   fmt.on_run_finish(run_result)
   let output = fmt.output()
-  assert_true!(string_contains(output, "<?xml"))
-  assert_true!(string_contains(output, "<testsuites"))
-  assert_true!(string_contains(output, "<testsuite"))
-  assert_true!(string_contains(output, "name=\"Math\""))
-  assert_true!(string_contains(output, "<testcase"))
-  assert_true!(string_contains(output, "name=\"Addition\""))
+  assert_true(string_contains(output, "<?xml"))
+  assert_true(string_contains(output, "<testsuites"))
+  assert_true(string_contains(output, "<testsuite"))
+  assert_true(string_contains(output, "name=\"Math\""))
+  assert_true(string_contains(output, "<testcase"))
+  assert_true(string_contains(output, "name=\"Addition\""))
 }
 
+///|
 test "JUnitFormatter formats failed scenario with failure element" {
   let fmt = JUnitFormatter::new()
   let run_result : @runner.RunResult = {
@@ -75,11 +77,12 @@ test "JUnitFormatter formats failed scenario with failure element" {
   }
   fmt.on_run_finish(run_result)
   let output = fmt.output()
-  assert_true!(string_contains(output, "<failure"))
-  assert_true!(string_contains(output, "division by zero"))
-  assert_true!(string_contains(output, "failures=\"1\""))
+  assert_true(string_contains(output, "<failure"))
+  assert_true(string_contains(output, "division by zero"))
+  assert_true(string_contains(output, "failures=\"1\""))
 }
 
+///|
 test "JUnitFormatter formats skipped scenario" {
   let fmt = JUnitFormatter::new()
   let run_result : @runner.RunResult = {
@@ -111,9 +114,10 @@ test "JUnitFormatter formats skipped scenario" {
   }
   fmt.on_run_finish(run_result)
   let output = fmt.output()
-  assert_true!(string_contains(output, "<skipped/>"))
+  assert_true(string_contains(output, "<skipped/>"))
 }
 
+///|
 test "JUnitFormatter escapes XML special characters" {
   let fmt = JUnitFormatter::new()
   let run_result : @runner.RunResult = {
@@ -145,8 +149,8 @@ test "JUnitFormatter escapes XML special characters" {
   }
   fmt.on_run_finish(run_result)
   let output = fmt.output()
-  assert_true!(string_contains(output, "&amp;"))
-  assert_true!(string_contains(output, "&lt;"))
-  assert_true!(string_contains(output, "&gt;"))
-  assert_true!(string_contains(output, "&quot;"))
+  assert_true(string_contains(output, "&amp;"))
+  assert_true(string_contains(output, "&lt;"))
+  assert_true(string_contains(output, "&gt;"))
+  assert_true(string_contains(output, "&quot;"))
 }

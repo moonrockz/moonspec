@@ -19,22 +19,36 @@ pub(open) trait Formatter {
 }
 
 ///|
-impl Formatter with on_run_start(_self, _info) { () }
+impl Formatter with on_run_start(_self, _info) {
+  ()
+}
 
 ///|
-impl Formatter with on_feature_start(_self, _name) { () }
+impl Formatter with on_feature_start(_self, _name) {
+  ()
+}
 
 ///|
-impl Formatter with on_scenario_start(_self, _result) { () }
+impl Formatter with on_scenario_start(_self, _result) {
+  ()
+}
 
 ///|
-impl Formatter with on_step_finish(_self, _result) { () }
+impl Formatter with on_step_finish(_self, _result) {
+  ()
+}
 
 ///|
-impl Formatter with on_scenario_finish(_self, _result) { () }
+impl Formatter with on_scenario_finish(_self, _result) {
+  ()
+}
 
 ///|
-impl Formatter with on_feature_finish(_self, _result) { () }
+impl Formatter with on_feature_finish(_self, _result) {
+  ()
+}
 
 ///|
-impl Formatter with on_run_finish(_self, _result) { () }
+impl Formatter with on_run_finish(_self, _result) {
+  ()
+}

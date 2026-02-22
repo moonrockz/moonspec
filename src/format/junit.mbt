@@ -16,7 +16,9 @@ pub fn JUnitFormatter::output(self : JUnitFormatter) -> String {
 ///|
 impl Formatter for JUnitFormatter with on_run_finish(self, result) {
   let mut xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-  xml = xml + "<testsuites tests=\"" + result.summary.total_scenarios.to_string() +
+  xml = xml +
+    "<testsuites tests=\"" +
+    result.summary.total_scenarios.to_string() +
     "\""
   xml = xml + " failures=\"" + result.summary.failed.to_string() + "\""
   xml = xml + " time=\"" + ms_to_seconds(result.summary.duration_ms) + "\">\n"
@@ -25,7 +27,9 @@ impl Formatter for JUnitFormatter with on_run_finish(self, result) {
     xml = xml + " tests=\"" + feature.scenarios.length().to_string() + "\""
     xml = xml + " time=\"" + ms_to_seconds(feature.duration_ms) + "\">\n"
     for scenario in feature.scenarios {
-      xml = xml + "    <testcase name=\"" + escape_xml(scenario.scenario_name) +
+      xml = xml +
+        "    <testcase name=\"" +
+        escape_xml(scenario.scenario_name) +
         "\""
       xml = xml + " classname=\"" + escape_xml(scenario.feature_name) + "\""
       xml = xml + " time=\"" + ms_to_seconds(scenario.duration_ms) + "\">\n"

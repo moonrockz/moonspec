@@ -20,7 +20,10 @@ pub fn MessagesFormatter::output(self : MessagesFormatter) -> String {
 
 ///|
 /// Append an NDJSON line to the buffer.
-fn MessagesFormatter::emit_line(self : MessagesFormatter, line : String) -> Unit {
+fn MessagesFormatter::emit_line(
+  self : MessagesFormatter,
+  line : String,
+) -> Unit {
   if self.buffer.length() > 0 {
     self.buffer = self.buffer + "\n"
   }
@@ -35,9 +38,7 @@ fn zero_timestamp() -> Json {
 
 ///|
 impl Formatter for MessagesFormatter with on_run_start(self, _info) {
-  let envelope : Json = {
-    "testRunStarted": { "timestamp": zero_timestamp() },
-  }
+  let envelope : Json = { "testRunStarted": { "timestamp": zero_timestamp() } }
   self.emit_line(envelope.stringify())
 }
 

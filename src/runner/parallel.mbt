@@ -21,9 +21,9 @@ fn run_parallel(
   features : Array[String],
   tag_expr~ : String,
   max_concurrent~ : Int,
-) -> Array[FeatureResult]!Error {
+) -> Array[FeatureResult] raise Error {
   // Accept max_concurrent to establish the API contract.
   // True async execution will be enabled in a future release.
   ignore(max_concurrent)
-  run_sequential!(registry, features, tag_expr~)
+  run_sequential(registry, features, tag_expr~)
 }

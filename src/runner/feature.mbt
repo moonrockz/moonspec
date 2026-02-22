@@ -3,8 +3,8 @@
 pub fn execute_feature(
   registry : @core.StepRegistry,
   content : String,
-) -> FeatureResult!Error {
-  execute_feature_filtered!(registry, content, tag_expr="")
+) -> FeatureResult raise Error {
+  execute_feature_filtered(registry, content, tag_expr="")
 }
 
 ///|
@@ -13,8 +13,8 @@ pub fn execute_feature_filtered(
   registry : @core.StepRegistry,
   content : String,
   tag_expr~ : String,
-) -> FeatureResult!Error {
-  let tag_filter = TagExpression::parse!(tag_expr)
+) -> FeatureResult raise Error {
+  let tag_filter = TagExpression::parse(tag_expr)
   let source = @gherkin.Source::from_string(content)
   let doc = @gherkin.parse(source)
   let feature = match doc.feature {

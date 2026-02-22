@@ -1,3 +1,4 @@
+///|
 test "MessagesFormatter emits TestRunStarted envelope" {
   let fmt = MessagesFormatter::new()
   fmt.on_run_start({ feature_count: 1, scenario_count: 2 })
@@ -5,6 +6,7 @@ test "MessagesFormatter emits TestRunStarted envelope" {
   assert_true(string_contains(output, "testRunStarted"))
 }
 
+///|
 test "MessagesFormatter emits TestRunFinished envelope" {
   let fmt = MessagesFormatter::new()
   let run_result : @runner.RunResult = {
@@ -24,6 +26,7 @@ test "MessagesFormatter emits TestRunFinished envelope" {
   assert_true(string_contains(output, "testRunFinished"))
 }
 
+///|
 test "MessagesFormatter TestRunFinished success is true when no failures" {
   let fmt = MessagesFormatter::new()
   let run_result : @runner.RunResult = {
@@ -43,6 +46,7 @@ test "MessagesFormatter TestRunFinished success is true when no failures" {
   assert_true(string_contains(output, "\"success\":true"))
 }
 
+///|
 test "MessagesFormatter TestRunFinished success is false when failures exist" {
   let fmt = MessagesFormatter::new()
   let run_result : @runner.RunResult = {
@@ -62,6 +66,7 @@ test "MessagesFormatter TestRunFinished success is false when failures exist" {
   assert_true(string_contains(output, "\"success\":false"))
 }
 
+///|
 test "MessagesFormatter emits NDJSON with both start and finish" {
   let fmt = MessagesFormatter::new()
   fmt.on_run_start({ feature_count: 1, scenario_count: 1 })

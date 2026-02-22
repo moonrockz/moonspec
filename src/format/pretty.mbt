@@ -7,7 +7,7 @@ pub(all) struct PrettyFormatter {
 
 ///|
 /// Create a new PrettyFormatter.
-pub fn PrettyFormatter::new(no_color~ : Bool = false) -> PrettyFormatter {
+pub fn PrettyFormatter::new(no_color? : Bool = false) -> PrettyFormatter {
   { no_color, buffer: "" }
 }
 
@@ -71,10 +71,7 @@ fn ansi_gray(text : String, no_color : Bool) -> String {
 // ---------------------------------------------------------------------------
 
 ///|
-fn step_status_marker(
-  status : @runner.StepStatus,
-  no_color : Bool,
-) -> String {
+fn step_status_marker(status : @runner.StepStatus, no_color : Bool) -> String {
   match status {
     @runner.StepStatus::Passed => ansi_green("\u{2713}", no_color)
     @runner.StepStatus::Failed(_) => ansi_red("\u{2717}", no_color)
@@ -90,16 +87,11 @@ fn scenario_status_marker(
   no_color : Bool,
 ) -> String {
   match status {
-    @runner.ScenarioStatus::Passed =>
-      ansi_green("\u{2713} PASS", no_color)
-    @runner.ScenarioStatus::Failed =>
-      ansi_red("\u{2717} FAIL", no_color)
-    @runner.ScenarioStatus::Undefined =>
-      ansi_yellow("? UNDEF", no_color)
-    @runner.ScenarioStatus::Pending =>
-      ansi_cyan("\u{23F8} PENDING", no_color)
-    @runner.ScenarioStatus::Skipped =>
-      ansi_gray("- SKIP", no_color)
+    @runner.ScenarioStatus::Passed => ansi_green("\u{2713} PASS", no_color)
+    @runner.ScenarioStatus::Failed => ansi_red("\u{2717} FAIL", no_color)
+    @runner.ScenarioStatus::Undefined => ansi_yellow("? UNDEF", no_color)
+    @runner.ScenarioStatus::Pending => ansi_cyan("\u{23F8} PENDING", no_color)
+    @runner.ScenarioStatus::Skipped => ansi_gray("- SKIP", no_color)
   }
 }
 
@@ -115,10 +107,21 @@ impl Formatter for PrettyFormatter with on_feature_start(self, name) {
 ///|
 impl Formatter for PrettyFormatter with on_scenario_finish(self, result) {
   let marker = scenario_status_marker(result.status, self.no_color)
-  self.buffer = self.buffer + "  " + marker + " Scenario: " + result.scenario_name + "\n"
+  self.buffer = self.buffer +
+    "  " +
+    marker +
+    " Scenario: " +
+    result.scenario_name +
+    "\n"
   for step in result.steps {
     let step_marker = step_status_marker(step.status, self.no_color)
-    self.buffer = self.buffer + "    " + step_marker + " " + step.keyword + step.text + "\n"
+    self.buffer = self.buffer +
+      "    " +
+      step_marker +
+      " " +
+      step.keyword +
+      step.text +
+      "\n"
   }
   self.buffer = self.buffer + "\n"
 }
@@ -126,7 +129,11 @@ impl Formatter for PrettyFormatter with on_scenario_finish(self, result) {
 ///|
 impl Formatter for PrettyFormatter with on_run_finish(self, result) {
   let s = result.summary
-  let scenario_word = if s.total_scenarios == 1 { "scenario" } else { "scenarios" }
+  let scenario_word = if s.total_scenarios == 1 {
+    "scenario"
+  } else {
+    "scenarios"
+  }
   let parts : Array[String] = []
   if s.passed > 0 {
     parts.push(s.passed.to_string() + " passed")

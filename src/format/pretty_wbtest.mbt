@@ -1,3 +1,4 @@
+///|
 test "PrettyFormatter formats passed scenario" {
   let fmt = PrettyFormatter::new(no_color=true)
   let result : @runner.ScenarioResult = {
@@ -23,6 +24,7 @@ test "PrettyFormatter formats passed scenario" {
   )
 }
 
+///|
 test "PrettyFormatter formats failed scenario" {
   let fmt = PrettyFormatter::new(no_color=true)
   let result : @runner.ScenarioResult = {
@@ -48,6 +50,7 @@ test "PrettyFormatter formats failed scenario" {
   )
 }
 
+///|
 test "PrettyFormatter formats summary" {
   let fmt = PrettyFormatter::new(no_color=true)
   let run_result : @runner.RunResult = {
@@ -69,6 +72,7 @@ test "PrettyFormatter formats summary" {
   assert_true(string_contains(output, "1 failed"))
 }
 
+///|
 test "PrettyFormatter on_feature_start writes feature header" {
   let fmt = PrettyFormatter::new(no_color=true)
   fmt.on_feature_start("Calculator")
@@ -76,6 +80,7 @@ test "PrettyFormatter on_feature_start writes feature header" {
   assert_true(string_contains(output, "Feature: Calculator"))
 }
 
+///|
 test "PrettyFormatter step markers in no_color mode" {
   let fmt = PrettyFormatter::new(no_color=true)
   let result : @runner.ScenarioResult = {
@@ -112,6 +117,7 @@ test "PrettyFormatter step markers in no_color mode" {
   assert_true(string_contains(output, "Then step three"))
 }
 
+///|
 test "string_contains basic cases" {
   assert_true(string_contains("hello world", "world"))
   assert_true(string_contains("hello world", "hello"))

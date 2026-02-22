@@ -8,13 +8,13 @@
 pub fn run(
   registry : @core.StepRegistry,
   features : Array[String],
-  tag_expr~ : String = "",
-  parallel~ : Int = 0,
-) -> RunResult!Error {
+  tag_expr? : String = "",
+  parallel? : Int = 0,
+) -> RunResult raise Error {
   let feature_results = if parallel > 0 {
-    run_parallel!(registry, features, tag_expr~, max_concurrent=parallel)
+    run_parallel(registry, features, tag_expr~, max_concurrent=parallel)
   } else {
-    run_sequential!(registry, features, tag_expr~)
+    run_sequential(registry, features, tag_expr~)
   }
   let summary = compute_summary(feature_results)
   { features: feature_results, summary }
@@ -26,10 +26,10 @@ fn run_sequential(
   registry : @core.StepRegistry,
   features : Array[String],
   tag_expr~ : String,
-) -> Array[FeatureResult]!Error {
+) -> Array[FeatureResult] raise Error {
   let results : Array[FeatureResult] = []
   for content in features {
-    let result = execute_feature_filtered!(registry, content, tag_expr~)
+    let result = execute_feature_filtered(registry, content, tag_expr~)
     results.push(result)
   }
   results

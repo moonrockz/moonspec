@@ -153,14 +153,13 @@ pub fn generate_test_file(
 ) -> String {
   let hash = simple_hash(feature_content)
   let source = @gherkin.Source::from_string(feature_content)
-  let doc = try {
-    @gherkin.parse!(source)
-  } catch {
+  let doc = @gherkin.parse(source) catch {
     _ =>
-      return (
-        "// moonspec:hash:" + hash + "\n// ERROR: Failed to parse " + source_path +
+      return "// moonspec:hash:" +
+        hash +
+        "\n// ERROR: Failed to parse " +
+        source_path +
         "\n"
-      )
   }
   let buf = StringBuilder::new()
   // Header
@@ -176,11 +175,15 @@ pub fn generate_test_file(
   // Iterate children
   for child in feature.children {
     match child {
-      @gherkin.FeatureChild::Scenario(scenario) => {
+      @gherkin.FeatureChild::Scenario(scenario) =>
         if scenario.examples.is_empty() {
           // Regular scenario — one async test block
           generate_scenario_test(
-            buf, feature_name, scenario.name, source_path, scenario.steps,
+            buf,
+            feature_name,
+            scenario.name,
+            source_path,
+            scenario.steps,
           )
           buf.write_string("\n")
         } else {
@@ -200,17 +203,15 @@ pub fn generate_test_file(
               for i = 0; i < headers.length(); i = i + 1 {
                 params.push(headers[i] + "=" + row[i])
               }
-              let scenario_name =
-                scenario.name + " (" + params.join(", ") + ")"
+              let scenario_name = scenario.name + " (" + params.join(", ") + ")"
               generate_scenario_test_with_expanded(
-                buf, feature_name, scenario_name, source_path, template_steps,
-                headers, row,
+                buf, feature_name, scenario_name, source_path, template_steps, headers,
+                row,
               )
               buf.write_string("\n")
             }
           }
         }
-      }
       _ => () // Background, Rule — skip for test generation
     }
   }
@@ -226,8 +227,7 @@ fn generate_scenario_test(
   source_path : String,
   steps : Array[@gherkin.Step],
 ) -> Unit {
-  let test_name =
-    "Feature: " + feature_name + " / Scenario: " + scenario_name
+  let test_name = "Feature: " + feature_name + " / Scenario: " + scenario_name
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   buf.write_string("  // Source: " + source_path + "\n")
   for step in steps {
@@ -249,8 +249,7 @@ fn generate_scenario_test_with_expanded(
   headers : Array[String],
   row : Array[String],
 ) -> Unit {
-  let test_name =
-    "Feature: " + feature_name + " / Scenario: " + scenario_name
+  let test_name = "Feature: " + feature_name + " / Scenario: " + scenario_name
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   buf.write_string("  // Source: " + source_path + "\n")
   for step in steps {
