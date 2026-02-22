@@ -85,9 +85,7 @@ fn cmd_gen(value : @clap.SimpleValue) -> Unit {
   let config_file : String? = match config_path {
     Some(p) => Some(p)
     None => {
-      let default_content = try {
-        @fs.read_file_to_string("moonspec.json5")
-      } catch {
+      let default_content = @fs.read_file_to_string("moonspec.json5") catch {
         _ => ""
       }
       if default_content.length() > 0 {
@@ -134,7 +132,9 @@ fn cmd_gen(value : @clap.SimpleValue) -> Unit {
     None => ()
   }
   if config.world.length() == 0 {
-    die("Error: --world (-w) is required. Specify the World type name (e.g. -w CalcWorld)")
+    die(
+      "Error: --world (-w) is required. Specify the World type name (e.g. -w CalcWorld)",
+    )
     return
   }
   for file in files {

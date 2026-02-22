@@ -13,7 +13,10 @@ pub fn FeatureCache::new() -> FeatureCache {
 
 ///|
 /// Load a feature from a file path. Idempotent — skips if already cached.
-pub fn FeatureCache::load_file(self : FeatureCache, path : String) -> Unit raise Error {
+pub fn FeatureCache::load_file(
+  self : FeatureCache,
+  path : String,
+) -> Unit raise Error {
   if self.cache.contains(path) {
     return
   }
@@ -66,13 +69,18 @@ pub fn FeatureCache::load_from_source(
 
 ///|
 /// Look up a cached feature by path.
-pub fn FeatureCache::get(self : FeatureCache, path : String) -> @gherkin.Feature? {
+pub fn FeatureCache::get(
+  self : FeatureCache,
+  path : String,
+) -> @gherkin.Feature? {
   self.cache.get(path)
 }
 
 ///|
 /// Return all cached features as (path, feature) pairs.
-pub fn FeatureCache::features(self : FeatureCache) -> Array[(String, @gherkin.Feature)] {
+pub fn FeatureCache::features(
+  self : FeatureCache,
+) -> Array[(String, @gherkin.Feature)] {
   let result : Array[(String, @gherkin.Feature)] = []
   self.cache.each(fn(k, v) { result.push((k, v)) })
   result

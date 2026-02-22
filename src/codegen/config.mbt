@@ -39,10 +39,7 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
         _ => ()
       }
       match obj.get("mode") {
-        Some(String(s)) =>
-          if s == "per-feature" {
-            mode = PerFeature
-          }
+        Some(String(s)) => if s == "per-feature" { mode = PerFeature }
         _ => ()
       }
     }

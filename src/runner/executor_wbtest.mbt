@@ -6,9 +6,27 @@ test "execute_scenario with all steps passing" {
   registry.when("another passing step", fn(_args) { count = count + 1 })
   registry.then("all is well", fn(_args) { count = count + 1 })
   let steps : Array[@cucumber_messages.PickleStep] = [
-    { id: "s1", text: "a passing step", astNodeIds: [], type_: Some(@cucumber_messages.PickleStepType::Context), argument: None },
-    { id: "s2", text: "another passing step", astNodeIds: [], type_: Some(@cucumber_messages.PickleStepType::Action), argument: None },
-    { id: "s3", text: "all is well", astNodeIds: [], type_: Some(@cucumber_messages.PickleStepType::Outcome), argument: None },
+    {
+      id: "s1",
+      text: "a passing step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+    {
+      id: "s2",
+      text: "another passing step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Action),
+      argument: None,
+    },
+    {
+      id: "s3",
+      text: "all is well",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Outcome),
+      argument: None,
+    },
   ]
   let result = execute_scenario(
     registry,
@@ -32,9 +50,27 @@ test "execute_scenario skips remaining steps after failure" {
   })
   registry.then("this should be skipped", fn(_args) {  })
   let steps : Array[@cucumber_messages.PickleStep] = [
-    { id: "s1", text: "a passing step", astNodeIds: [], type_: Some(@cucumber_messages.PickleStepType::Context), argument: None },
-    { id: "s2", text: "a failing step", astNodeIds: [], type_: Some(@cucumber_messages.PickleStepType::Action), argument: None },
-    { id: "s3", text: "this should be skipped", astNodeIds: [], type_: Some(@cucumber_messages.PickleStepType::Outcome), argument: None },
+    {
+      id: "s1",
+      text: "a passing step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+    {
+      id: "s2",
+      text: "a failing step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Action),
+      argument: None,
+    },
+    {
+      id: "s3",
+      text: "this should be skipped",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Outcome),
+      argument: None,
+    },
   ]
   let result = execute_scenario(
     registry,
@@ -53,7 +89,13 @@ test "execute_scenario skips remaining steps after failure" {
 test "execute_scenario marks undefined steps" {
   let registry = @core.StepRegistry::new()
   let steps : Array[@cucumber_messages.PickleStep] = [
-    { id: "s1", text: "an undefined step", astNodeIds: [], type_: Some(@cucumber_messages.PickleStepType::Context), argument: None },
+    {
+      id: "s1",
+      text: "an undefined step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
   ]
   let result = execute_scenario(
     registry,

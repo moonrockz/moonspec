@@ -1,8 +1,8 @@
 ///|
 fn make_test_pickle(
   name : String,
-  tags~ : Array[String] = [],
-  uri~ : String = "test://feature",
+  tags? : Array[String] = [],
+  uri? : String = "test://feature",
 ) -> @cucumber_messages.Pickle {
   let pickle_tags = tags.map(fn(t) {
     let tag : @cucumber_messages.PickleTag = { name: t, astNodeId: "t1" }

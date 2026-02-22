@@ -85,9 +85,7 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
       }
       { text: step.text, keyword, status: StepStatus::Skipped, duration_ms: 0L }
     })
-    let _ = try {
-      @core.Hooks::after_scenario(world, info, Some(msg))
-    } catch {
+    let _ = @core.Hooks::after_scenario(world, info, Some(msg)) catch {
       _ => ()
     }
     return {
@@ -147,9 +145,7 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
       StepStatus::Failed(msg) => Some(msg)
       _ => None
     }
-    let _ = try {
-      @core.Hooks::after_step(world, step_info, step_result_msg)
-    } catch {
+    let _ = @core.Hooks::after_step(world, step_info, step_result_msg) catch {
       _ => ()
     }
     match status {
@@ -166,9 +162,7 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
     step_results.push({ text: step.text, keyword, status, duration_ms: 0L })
   }
   // after_scenario hook
-  let _ = try {
-    @core.Hooks::after_scenario(world, info, scenario_error)
-  } catch {
+  let _ = @core.Hooks::after_scenario(world, info, scenario_error) catch {
     _ => ()
   }
   let statuses = step_results.map(fn(r) { r.status })

@@ -27,7 +27,11 @@ fn IdCounter::next_step_id(self : IdCounter) -> String {
 ///|
 /// Replace all occurrences of `old` with `new_val` in `s`.
 /// Named differently from the one in outline.mbt to avoid collision.
-fn string_replace_compiler(s : String, old : String, new_val : String) -> String {
+fn string_replace_compiler(
+  s : String,
+  old : String,
+  new_val : String,
+) -> String {
   let buf = StringBuilder::new()
   let s_len = s.length()
   let old_len = old.length()
@@ -72,7 +76,9 @@ fn map_keyword_type(
 
 ///|
 /// Convert gherkin tags to pickle tags.
-fn compile_tags(tags : Array[@gherkin.Tag]) -> Array[@cucumber_messages.PickleTag] {
+fn compile_tags(
+  tags : Array[@gherkin.Tag],
+) -> Array[@cucumber_messages.PickleTag] {
   let result : Array[@cucumber_messages.PickleTag] = []
   for tag in tags {
     result.push({ name: tag.name, astNodeId: tag.id })
@@ -149,10 +155,18 @@ fn compile_scenario(
   let empty_headers : Array[String] = []
   let empty_values : Array[String] = []
   let (bg_steps, last_type) = compile_steps(
-    background_steps, ids, None, empty_headers, empty_values,
+    background_steps,
+    ids,
+    None,
+    empty_headers,
+    empty_values,
   )
   let (sc_steps, _) = compile_steps(
-    scenario.steps, ids, last_type, empty_headers, empty_values,
+    scenario.steps,
+    ids,
+    last_type,
+    empty_headers,
+    empty_values,
   )
   let all_steps : Array[@cucumber_messages.PickleStep] = []
   all_steps.append(bg_steps)
@@ -199,10 +213,18 @@ fn compile_outline(
       }
       let name = scenario.name + " (" + params.join(", ") + ")"
       let (bg_steps, last_type) = compile_steps(
-        background_steps, ids, None, headers, values,
+        background_steps,
+        ids,
+        None,
+        headers,
+        values,
       )
       let (sc_steps, _) = compile_steps(
-        scenario.steps, ids, last_type, headers, values,
+        scenario.steps,
+        ids,
+        last_type,
+        headers,
+        values,
       )
       let all_steps : Array[@cucumber_messages.PickleStep] = []
       all_steps.append(bg_steps)
@@ -235,9 +257,10 @@ fn process_scenario(
   pickles : Array[@cucumber_messages.Pickle],
 ) -> Unit {
   if scenario.examples.is_empty() {
-    match compile_scenario(
-      scenario, uri, language, feature_tags, background_steps, ids,
-    ) {
+    match
+      compile_scenario(
+        scenario, uri, language, feature_tags, background_steps, ids,
+      ) {
       Some(p) => pickles.push(p)
       None => ()
     }
@@ -293,7 +316,12 @@ fn compile_feature(
             }
             Scenario(scenario) =>
               process_scenario(
-                scenario, uri, feature.language, rule_tags, rule_bg_steps, ids,
+                scenario,
+                uri,
+                feature.language,
+                rule_tags,
+                rule_bg_steps,
+                ids,
                 pickles,
               )
           }

@@ -17,11 +17,7 @@ pub async fn[W : @core.World] run(
   }
   let pickles = compile_pickles(cache)
   let filter = PickleFilter::new()
-  let filter = if tag_expr != "" {
-    filter.with_tags(tag_expr)
-  } else {
-    filter
-  }
+  let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
   let filter = if scenario_name != "" {
     filter.with_names([scenario_name])
   } else {
@@ -56,11 +52,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   }
   let pickles = compile_pickles(cache)
   let filter = PickleFilter::new()
-  let filter = if tag_expr != "" {
-    filter.with_tags(tag_expr)
-  } else {
-    filter
-  }
+  let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
   let filter = if scenario_name != "" {
     filter.with_names([scenario_name])
   } else {

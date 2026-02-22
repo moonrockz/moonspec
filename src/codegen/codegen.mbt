@@ -144,7 +144,7 @@ pub fn feature_to_test_filename(path : String) -> String {
 pub fn generate_test_file(
   feature_content : String,
   source_path : String,
-  config~ : CodegenConfig = CodegenConfig::default(),
+  config? : CodegenConfig = CodegenConfig::default(),
 ) -> String {
   let hash = simple_hash(feature_content)
   let source = @gherkin.Source::from_string(feature_content)
@@ -210,7 +210,11 @@ fn generate_per_scenario(
       @gherkin.FeatureChild::Scenario(scenario) =>
         if scenario.examples.is_empty() {
           generate_scenario_runner_test(
-            buf, feature.name, scenario.name, source_path, config,
+            buf,
+            feature.name,
+            scenario.name,
+            source_path,
+            config,
           )
           buf.write_string("\n")
         } else {
@@ -225,12 +229,13 @@ fn generate_per_scenario(
               for i = 0; i < headers.length(); i = i + 1 {
                 params.push(headers[i] + "=" + values[i])
               }
-              let scenario_name = scenario.name +
-                " (" +
-                params.join(", ") +
-                ")"
+              let scenario_name = scenario.name + " (" + params.join(", ") + ")"
               generate_scenario_runner_test(
-                buf, feature.name, scenario_name, source_path, config,
+                buf,
+                feature.name,
+                scenario_name,
+                source_path,
+                config,
               )
               buf.write_string("\n")
             }
