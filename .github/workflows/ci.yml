@@ -24,6 +24,7 @@ jobs:
       - name: Check formatting
         run: |
           moon fmt
+          git checkout -- '*.pkg'
           git diff --exit-code || (echo "::error::moon fmt produced changes — run 'moon fmt' locally and commit" && exit 1)
 
       - name: Check code
