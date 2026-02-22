@@ -7,15 +7,17 @@ import {
 }
 
 // Values
-pub async fn[W : @core.World] run(() -> W, Array[String], tag_expr? : String, parallel? : Int) -> @runner.RunResult
+pub async fn[W : @core.World] run(() -> W, Array[@runner.FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int) -> @runner.RunResult
 
-pub async fn[W : @core.World + @core.Hooks] run_with_hooks(() -> W, Array[String], tag_expr? : String, parallel? : Int) -> @runner.RunResult
+pub async fn[W : @core.World + @core.Hooks] run_with_hooks(() -> W, Array[@runner.FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int) -> @runner.RunResult
 
 // Errors
 
 // Types and methods
 
 // Type aliases
+pub using @runner {type FeatureSource}
+
 pub using @core {type ScenarioInfo}
 
 pub using @core {type StepArg}

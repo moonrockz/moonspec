@@ -2,31 +2,40 @@
 package "moonrockz/moonspec/runner"
 
 import {
+  "moonrockz/cucumber-messages",
+  "moonrockz/gherkin",
   "moonrockz/moonspec/core",
 }
 
 // Values
-pub fn[W : @core.World] execute_feature(() -> W, String) -> FeatureResult raise
+pub fn compile_pickles(FeatureCache) -> Array[@cucumber-messages.Pickle]
 
-pub fn[W : @core.World] execute_feature_filtered(() -> W, String, tag_expr~ : String) -> FeatureResult raise
+pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep]) -> ScenarioResult
 
-pub fn[W : @core.World + @core.Hooks] execute_feature_filtered_with_hooks(() -> W, String, tag_expr~ : String) -> FeatureResult raise
+pub fn[W : @core.Hooks] execute_scenario_with_hooks(W, @core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep]) -> ScenarioResult
 
-pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
+pub async fn[W : @core.World] run(() -> W, Array[FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int) -> RunResult
 
-pub fn[W : @core.Hooks] execute_scenario_with_hooks(W, @core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
-
-pub fn expand_outline(String, Array[(String, String)], Array[String], Array[Array[String]]) -> Array[(String, Array[(String, String)])]
-
-pub async fn[W : @core.World] run(() -> W, Array[String], tag_expr? : String, parallel? : Int) -> RunResult
-
-pub async fn[W : @core.World + @core.Hooks] run_with_hooks(() -> W, Array[String], tag_expr? : String, parallel? : Int) -> RunResult
+pub async fn[W : @core.World + @core.Hooks] run_with_hooks(() -> W, Array[FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int) -> RunResult
 
 pub fn runner_version() -> String
 
 // Errors
 
 // Types and methods
+pub struct FeatureCache {
+  // private fields
+}
+pub fn FeatureCache::contains(Self, String) -> Bool
+pub fn FeatureCache::features(Self) -> Array[(String, @gherkin.Feature)]
+pub fn FeatureCache::get(Self, String) -> @gherkin.Feature?
+pub fn FeatureCache::length(Self) -> Int
+pub fn FeatureCache::load_file(Self, String) -> Unit raise
+pub fn FeatureCache::load_from_source(Self, FeatureSource) -> Unit raise
+pub fn FeatureCache::load_parsed(Self, String, @gherkin.Feature) -> Unit
+pub fn FeatureCache::load_text(Self, String, String) -> Unit raise
+pub fn FeatureCache::new() -> Self
+
 pub(all) struct FeatureResult {
   name : String
   scenarios : Array[ScenarioResult]
@@ -34,6 +43,23 @@ pub(all) struct FeatureResult {
 }
 pub impl Eq for FeatureResult
 pub impl Show for FeatureResult
+
+pub(all) enum FeatureSource {
+  Text(String, String)
+  File(String)
+  Parsed(String, @gherkin.Feature)
+}
+pub impl Eq for FeatureSource
+pub impl Show for FeatureSource
+
+pub struct PickleFilter {
+  tag_expression : TagExpression
+  scenario_names : Array[String]
+}
+pub fn PickleFilter::apply(Self, Array[@cucumber-messages.Pickle]) -> Array[@cucumber-messages.Pickle]
+pub fn PickleFilter::new() -> Self
+pub fn PickleFilter::with_names(Self, Array[String]) -> Self
+pub fn PickleFilter::with_tags(Self, String) -> Self raise
 
 pub(all) struct RunResult {
   features : Array[FeatureResult]
@@ -57,6 +83,7 @@ pub impl Show for RunSummary
 pub(all) struct ScenarioResult {
   feature_name : String
   scenario_name : String
+  pickle_id : String
   tags : Array[String]
   steps : Array[StepResult]
   status : ScenarioStatus

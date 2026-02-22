@@ -271,23 +271,6 @@ fn generate_scenario_runner_test(
 }
 
 ///|
-fn trim_trailing_spaces(s : String) -> String {
-  let chars = s.to_array()
-  let mut end = chars.length()
-  while end > 0 && chars[end - 1] == ' ' {
-    end = end - 1
-  }
-  if end == chars.length() {
-    return s
-  }
-  let buf = StringBuilder::new()
-  for i = 0; i < end; i = i + 1 {
-    buf.write_char(chars[i])
-  }
-  buf.to_string()
-}
-
-///|
 fn escape_string(s : String) -> String {
   string_replace(s, "\"", "\\\"")
 }

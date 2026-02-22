@@ -2,11 +2,7 @@
   "import": [
     "moonrockz/moonspec/core",
     "moonrockz/gherkin",
-    {
-      "path": "moonrockz/cucumber-expressions",
-      "alias": "cucumber_expressions"
-    },
-    {
+{
       "path": "moonrockz/cucumber-messages",
       "alias": "cucumber_messages"
     },

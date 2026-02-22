@@ -6,11 +6,26 @@ pub fn codegen_version() -> String
 
 pub fn feature_to_test_filename(String) -> String
 
-pub fn generate_test_file(String, String) -> String
+pub fn generate_test_file(String, String, config? : CodegenConfig) -> String
 
 // Errors
 
 // Types and methods
+pub(all) struct CodegenConfig {
+  mode : CodegenMode
+  world : String
+}
+pub fn CodegenConfig::default() -> Self
+pub fn CodegenConfig::from_json5(String) -> Self raise
+pub impl Eq for CodegenConfig
+pub impl Show for CodegenConfig
+
+pub(all) enum CodegenMode {
+  PerScenario
+  PerFeature
+}
+pub impl Eq for CodegenMode
+pub impl Show for CodegenMode
 
 // Type aliases
 

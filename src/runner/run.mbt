@@ -13,12 +13,12 @@ pub async fn[W : @core.World] run(
 ) -> RunResult {
   let cache = FeatureCache::new()
   for source in features {
-    cache.load_from_source!(source)
+    cache.load_from_source(source)
   }
   let pickles = compile_pickles(cache)
   let filter = PickleFilter::new()
   let filter = if tag_expr != "" {
-    filter.with_tags!(tag_expr)
+    filter.with_tags(tag_expr)
   } else {
     filter
   }
@@ -52,12 +52,12 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
 ) -> RunResult {
   let cache = FeatureCache::new()
   for source in features {
-    cache.load_from_source!(source)
+    cache.load_from_source(source)
   }
   let pickles = compile_pickles(cache)
   let filter = PickleFilter::new()
   let filter = if tag_expr != "" {
-    filter.with_tags!(tag_expr)
+    filter.with_tags(tag_expr)
   } else {
     filter
   }

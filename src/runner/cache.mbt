@@ -58,8 +58,8 @@ pub fn FeatureCache::load_from_source(
   source : FeatureSource,
 ) -> Unit raise Error {
   match source {
-    Text(path, content) => self.load_text!(path, content)
-    File(path) => self.load_file!(path)
+    Text(path, content) => self.load_text(path, content)
+    File(path) => self.load_file(path)
     Parsed(path, feature) => self.load_parsed(path, feature)
   }
 }
@@ -86,6 +86,6 @@ pub fn FeatureCache::contains(self : FeatureCache, path : String) -> Bool {
 
 ///|
 /// Number of cached features.
-pub fn FeatureCache::size(self : FeatureCache) -> Int {
-  self.cache.size()
+pub fn FeatureCache::length(self : FeatureCache) -> Int {
+  self.cache.length()
 }
