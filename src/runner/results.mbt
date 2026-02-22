@@ -1,9 +1,9 @@
 ///|
-/// Input source for a feature to be executed.
+/// Input source for a feature to be loaded into the cache.
 pub(all) enum FeatureSource {
-  Text(String)
-  File(String)
-  Parsed(@gherkin.Feature)
+  Text(String, String)              // (path, content)
+  File(String)                      // (path) — unchanged
+  Parsed(String, @gherkin.Feature)  // (path, feature)
 } derive(Show, Eq)
 
 ///|
