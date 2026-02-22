@@ -34,8 +34,17 @@ impl @moonspec.World for CalcWorld with register_steps(self, s) {
 }
 
 async test "calculator" {
-  let feature = "Feature: Calculator\n  Scenario: Addition\n    Given a calculator\n    When I add 2 and 3\n    Then the result should be 5"
-  let result = @moonspec.run(CalcWorld::default, [feature])
+  let feature =
+    #|Feature: Calculator
+    #|
+    #|  Scenario: Addition
+    #|    Given a calculator
+    #|    When I add 2 and 3
+    #|    Then the result should be 5
+  let result = @moonspec.run(
+    CalcWorld::default,
+    [@moonspec.FeatureSource::Text("test://calculator", feature)],
+  )
   assert_eq(result.summary.passed, 1)
 }
 ```
@@ -52,7 +61,7 @@ Each scenario gets a fresh World instance via `derive(Default)` for state isolat
 - **Scenario Outline expansion** -- parameterized scenarios from Examples tables
 - **Background steps** -- shared Given setup across scenarios
 - **Async/parallel execution** -- concurrent feature processing with bounded concurrency
-- **Codegen** -- generate `_test.mbt` skeleton files from `.feature` files
+- **Codegen** -- generate `_test.mbt` runner tests from `.feature` files
 - **Formatters** -- Pretty (console), Cucumber Messages (NDJSON), JUnit XML (CI)
 
 ## Packages

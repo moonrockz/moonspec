@@ -57,8 +57,17 @@ impl @moonspec.World for CalcWorld with register_steps(self, s) {
 
 ```moonbit
 async test "calculator" {
-  let feature = "Feature: Calculator\n  Scenario: Addition\n    Given a calculator\n    When I add 2 and 3\n    Then the result should be 5"
-  let result = @moonspec.run(CalcWorld::default, [feature])
+  let feature =
+    #|Feature: Calculator
+    #|
+    #|  Scenario: Addition
+    #|    Given a calculator
+    #|    When I add 2 and 3
+    #|    Then the result should be 5
+  let result = @moonspec.run(
+    CalcWorld::default,
+    [@moonspec.FeatureSource::Text("test://calculator", feature)],
+  )
   assert_eq(result.summary.passed, 1)
 }
 ```
@@ -224,7 +233,10 @@ Use `run_with_hooks` instead of `run` to enable lifecycle hooks:
 
 ```moonbit
 async test "with hooks" {
-  let result = @moonspec.run_with_hooks(MyWorld::default, [feature_content])
+  let result = @moonspec.run_with_hooks(
+    MyWorld::default,
+    [@moonspec.FeatureSource::File("features/my.feature")],
+  )
   assert_eq(result.summary.failed, 0)
 }
 ```
@@ -242,7 +254,9 @@ Use the Runner API directly in your test files for full programmatic control:
 
 ```moonbit
 async test "calculator features" {
-  let result = @moonspec.run(CalcWorld::default, [feature_content],
+  let result = @moonspec.run(
+    CalcWorld::default,
+    [@moonspec.FeatureSource::File("features/calculator.feature")],
     tag_expr="@smoke and not @slow",
     parallel=4,
   )
@@ -252,14 +266,18 @@ async test "calculator features" {
 
 Parameters:
 - `factory` -- function returning a fresh World instance (e.g., `MyWorld::default`)
-- `features` -- array of feature file contents as strings
+- `features` -- array of `FeatureSource` values:
+  - `FeatureSource::File(path)` -- load a `.feature` file from disk
+  - `FeatureSource::Text(path, content)` -- parse inline Gherkin text
+  - `FeatureSource::Parsed(path, feature)` -- use a pre-parsed feature
 - `tag_expr` -- boolean tag expression for filtering (default: `""`)
+- `scenario_name` -- run only the scenario matching this name (default: `""`)
 - `parallel` -- max concurrent features (default: `0` = sequential)
 
 ### Mode 2: Pre-build Codegen
 
 Use `moonspec gen` as a [pre-build](https://docs.moonbitlang.com/en/latest/toolchain/moon/package.html#pre-build)
-step so that test skeletons are regenerated automatically from `.feature` files on
+step so that test files are regenerated automatically from `.feature` files on
 every `moon check`, `moon build`, or `moon test`:
 
 ```json
@@ -268,11 +286,15 @@ every `moon check`, `moon build`, or `moon test`:
     {
       "input": "../features/calculator.feature",
       "output": "calculator_feature_test.mbt",
-      "command": "moonspec gen features/calculator.feature -o src/"
+      "command": "moonspec gen features/calculator.feature -w CalcWorld -o src/"
     }
   ]
 }
 ```
+
+The `--world` (`-w`) flag tells codegen which World type to use. Generated tests
+call `@moonspec.run` with `FeatureSource::File` to load the `.feature` file at
+runtime and execute each scenario through the full runner pipeline.
 
 The generated `*_feature_test.mbt` files should be gitignored -- your `.feature`
 files are the single source of truth.
@@ -307,30 +329,49 @@ moon run src/cmd/main -- <command> [args...]
 ### `gen` -- Generate Test Files
 
 ```bash
-moon run src/cmd/main -- gen <feature-files...> [--output-dir <dir>]
+moon run src/cmd/main -- gen <feature-files...> -w <WorldType> [--output-dir <dir>]
 ```
 
-Reads `.feature` files and generates `_test.mbt` skeleton files. Each scenario
-becomes an `async test` block with step comments and a placeholder body.
+Reads `.feature` files and generates `_test.mbt` test files. Each scenario becomes
+an `async test` block that calls `@moonspec.run` with `FeatureSource::File` to load
+the feature at runtime and execute it through the full runner pipeline.
 
 **Arguments:**
 - One or more `.feature` file paths (required)
+- `--world` / `-w`: World type name, e.g. `CalcWorld` (required)
 - `--output-dir` / `-o`: write generated files to this directory (default: current directory)
+- `--mode` / `-m`: `per-scenario` (default) or `per-feature`
+- `--config` / `-c`: path to a `moonspec.json5` config file
+
+**Config file** (`moonspec.json5`):
+
+```json5
+{
+  "world": "CalcWorld",
+  "mode": "per-scenario"  // or "per-feature"
+}
+```
+
+If a `moonspec.json5` file exists in the current directory, it is loaded
+automatically. CLI flags override config file values.
 
 **Examples:**
 
 ```bash
 # Generate a single test file
-moon run src/cmd/main -- gen features/calculator.feature
+moon run src/cmd/main -- gen features/calculator.feature -w CalcWorld
 
 # Generate into a specific directory
-moon run src/cmd/main -- gen features/*.feature -o src/tests/
+moon run src/cmd/main -- gen features/*.feature -w CalcWorld -o src/
 
-# Then run the generated tests
-moon test
+# Per-feature mode (single test per feature file)
+moon run src/cmd/main -- gen features/*.feature -w CalcWorld -m per-feature -o src/
+
+# Then run the generated tests (async tests require JS target)
+moon test --target js
 ```
 
-**Generated output** for `features/calculator.feature`:
+**Generated output** for `features/calculator.feature` (per-scenario mode):
 
 ```moonbit
 // Generated by moonspec codegen — DO NOT EDIT
@@ -338,11 +379,12 @@ moon test
 // moonspec:hash:a1b2c3d4
 
 async test "Feature: Calculator / Scenario: Addition" {
-  // Source: features/calculator.feature
-  // Given a calculator
-  // When I add 2 and 3
-  // Then the result should be 5
-  ignore("")
+  let result = @moonspec.run(
+    CalcWorld::default,
+    [@moonspec.FeatureSource::File("features/calculator.feature")],
+    scenario_name="Addition",
+  )
+  assert_eq!(result.summary.failed, 0)
 }
 ```
 
@@ -357,10 +399,24 @@ only when the feature file changes.
 
 ```moonbit
 async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
-  // Source: features/calculator.feature
-  // When I multiply 2 and 3
-  // Then the result should be 6
-  ignore("")
+  let result = @moonspec.run(
+    CalcWorld::default,
+    [@moonspec.FeatureSource::File("features/calculator.feature")],
+    scenario_name="Multiplication (a=2, b=3, result=6)",
+  )
+  assert_eq!(result.summary.failed, 0)
+}
+```
+
+**Per-feature mode** generates a single test that runs the entire feature file:
+
+```moonbit
+async test "Feature: Calculator" {
+  let result = @moonspec.run(
+    CalcWorld::default,
+    [@moonspec.FeatureSource::File("features/calculator.feature")],
+  )
+  assert_eq!(result.summary.failed, 0)
 }
 ```
 
@@ -394,6 +450,8 @@ Prints `moonspec <version>`.
 Filter scenarios by tags using boolean expressions:
 
 ```moonbit
+let features = [@moonspec.FeatureSource::File("features/my.feature")]
+
 // Run only @smoke scenarios
 let result = @moonspec.run(MyWorld::default, features, tag_expr="@smoke")
 
@@ -460,6 +518,11 @@ The Runner API supports async execution and parallel feature processing:
 
 ```moonbit
 async test "parallel features" {
+  let features = [
+    @moonspec.FeatureSource::File("features/auth.feature"),
+    @moonspec.FeatureSource::File("features/cart.feature"),
+    @moonspec.FeatureSource::File("features/checkout.feature"),
+  ]
   // Run up to 4 features concurrently
   let result = @moonspec.run(MyWorld::default, features, parallel=4)
   assert_eq(result.summary.failed, 0)
@@ -529,7 +592,7 @@ pub(open) trait Formatter {
 See [`examples/calculator/`](examples/calculator/) for a complete, runnable example
 demonstrating the full moonspec workflow:
 
-- Pre-build codegen via `moonspec gen` in `moon.pkg.json`
+- Codegen via `moonspec gen` generating runner tests from `.feature` files
 - World struct with `derive(Default)` and step definitions
 - Background steps, Scenario Outlines, and tag filtering
 - Runner API with inline feature content and tag filtering
@@ -537,7 +600,7 @@ demonstrating the full moonspec workflow:
 ```bash
 cd examples/calculator
 moon test --target js
-# Total tests: 10, passed: 10, failed: 0.
+# Total tests: 6, passed: 6, failed: 0.
 ```
 
 ## Architecture
@@ -545,38 +608,41 @@ moon test --target js
 ```
                     .feature files
                          |
-                         v
-                  +------+------+
-                  |   gherkin   |  (parser)
-                  +------+------+
-                         |
-              GherkinDocument
-                         |
           +--------------+--------------+
           |                             |
           v                             v
    +------+------+              +------+------+
-   |   codegen   |              |   runner    |
+   |   codegen   |              |   gherkin   |  (parser)
    +------+------+              +------+------+
-          |                       |         |
-    _test.mbt files          World +     tag filter
-                            StepRegistry     |
-                              |         outline
-                         cucumber-    expansion
-                         expressions     |
-                              |         |
-                              v         v
-                         +----+---------+----+
-                         |     executor      |
-                         +----+---------+----+
-                              |
-                         RunResult
-                              |
-                    +---------+---------+
-                    |         |         |
-                    v         v         v
-                 Pretty   Messages   JUnit
-                (console)  (NDJSON)   (XML)
+          |                             |
+    _test.mbt files            GherkinDocument
+    (calls runner)                      |
+                                +-------+-------+
+                                |               |
+                                v               v
+                          FeatureCache    compile_pickles
+                          (parse once)    (flatten/expand)
+                                |               |
+                                v               v
+                          +-----+-------+  PickleFilter
+                          |   runner    |  (tags/names)
+                          +-----+-------+
+                                |
+                           World + StepRegistry
+                           cucumber-expressions
+                                |
+                                v
+                         +------+------+
+                         |   executor  |
+                         +------+------+
+                                |
+                           RunResult
+                                |
+                    +-----------+-----------+
+                    |           |           |
+                    v           v           v
+                 Pretty     Messages     JUnit
+                (console)   (NDJSON)     (XML)
 ```
 
 ## Packages
@@ -587,7 +653,7 @@ moon test --target js
 | `moonrockz/moonspec/core` | World and Hooks traits, StepRegistry, StepArg types |
 | `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
-| `moonrockz/moonspec/codegen` | Generate `_test.mbt` skeleton files from Gherkin features |
+| `moonrockz/moonspec/codegen` | Generate `_test.mbt` runner tests from Gherkin features |
 
 Users should import `moonrockz/moonspec` and reference types via `@moonspec.World`,
 `@moonspec.run`, etc. The sub-packages are implementation details.
