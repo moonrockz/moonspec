@@ -6,15 +6,21 @@ import {
 }
 
 // Values
-pub fn execute_feature(@core.StepRegistry, String) -> FeatureResult raise
+pub fn[W : @core.World] execute_feature(() -> W, String) -> FeatureResult raise
 
-pub fn execute_feature_filtered(@core.StepRegistry, String, tag_expr~ : String) -> FeatureResult raise
+pub fn[W : @core.World] execute_feature_filtered(() -> W, String, tag_expr~ : String) -> FeatureResult raise
+
+pub fn[W : @core.World + @core.Hooks] execute_feature_filtered_with_hooks(() -> W, String, tag_expr~ : String) -> FeatureResult raise
 
 pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
 
+pub fn[W : @core.Hooks] execute_scenario_with_hooks(W, @core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
+
 pub fn expand_outline(String, Array[(String, String)], Array[String], Array[Array[String]]) -> Array[(String, Array[(String, String)])]
 
-pub async fn run(@core.StepRegistry, Array[String], tag_expr? : String, parallel? : Int) -> RunResult
+pub async fn[W : @core.World] run(() -> W, Array[String], tag_expr? : String, parallel? : Int) -> RunResult
+
+pub async fn[W : @core.World + @core.Hooks] run_with_hooks(() -> W, Array[String], tag_expr? : String, parallel? : Int) -> RunResult
 
 pub fn runner_version() -> String
 

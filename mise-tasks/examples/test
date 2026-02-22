@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Run tests for all example projects"
+set -euo pipefail
+
+for mod in examples/*/moon.mod.json; do
+  dir=$(dirname "$mod")
+  echo "==> Testing $dir"
+  (cd "$dir" && moon test --target js)
+done

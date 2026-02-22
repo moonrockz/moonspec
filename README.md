@@ -29,30 +29,42 @@ Feature: Calculator
     Then the result should be 5
 ```
 
-2. Define steps and run:
+2. Define a World struct with step definitions:
 
 ```moonbit
-let registry = @core.StepRegistry::new()
-let mut result_val = 0
+struct CalcWorld {
+  mut result : Int
+} derive(Default)
 
-registry.given("a calculator", fn(_args) { result_val = 0 })
-registry.when("I add {int} and {int}", fn(args) {
-  match (args[0], args[1]) {
-    (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) => result_val = a + b
-    _ => ()
-  }
-})
-registry.then("the result should be {int}", fn(args) raise {
-  match args[0] {
-    @core.StepArg::IntArg(expected) => assert_eq(result_val, expected)
-    _ => ()
-  }
-})
-
-let feature = "Feature: Calculator\n  Scenario: Addition\n    Given a calculator\n    When I add 2 and 3\n    Then the result should be 5"
-let result = @runner.run!(registry, [feature])
-// result.summary.passed == 1
+impl @moonspec.World for CalcWorld with register_steps(self, s) {
+  s.given("a calculator", fn(_args) { self.result = 0 })
+  s.when("I add {int} and {int}", fn(args) {
+    match (args[0], args[1]) {
+      (@moonspec.StepArg::IntArg(a), @moonspec.StepArg::IntArg(b)) => self.result = a + b
+      _ => ()
+    }
+  })
+  s.then("the result should be {int}", fn(args) raise {
+    match args[0] {
+      @moonspec.StepArg::IntArg(expected) => assert_eq(self.result, expected)
+      _ => ()
+    }
+  })
+}
 ```
+
+3. Run the feature:
+
+```moonbit
+async test "calculator" {
+  let feature = "Feature: Calculator\n  Scenario: Addition\n    Given a calculator\n    When I add 2 and 3\n    Then the result should be 5"
+  let result = @moonspec.run(CalcWorld::default, [feature])
+  assert_eq(result.summary.passed, 1)
+}
+```
+
+Each scenario gets a fresh `CalcWorld` instance (via `derive(Default)`), so state
+never leaks between scenarios.
 
 ## Writing Features
 
@@ -94,30 +106,52 @@ Supported constructs:
 - **Tags** -- `@tag` annotations for filtering and metadata
 - **Comments** -- lines starting with `#`
 
-## Step Definitions
+## World and Step Definitions
 
-Steps are registered on a `StepRegistry` using Cucumber Expression patterns:
+Following the [cucumber-rs pattern](https://cucumber-rs.github.io/cucumber/main/quickstart.html),
+moonspec uses a **World struct** to hold per-scenario state. Each scenario gets a
+fresh instance constructed via MoonBit's `Default` trait.
+
+### Defining a World
 
 ```moonbit
-let registry = @core.StepRegistry::new()
+struct MyWorld {
+  mut cucumbers : Int
+  mut belly_full : Bool
+} derive(Default)
+```
 
-registry.given("a calculator", fn(_args) {
-  // setup code
-})
+`derive(Default)` zero-initializes all fields. For custom initialization, implement
+`Default` manually.
 
-registry.when("I add {int} and {int}", fn(args) {
-  match (args[0], args[1]) {
-    (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) => result = a + b
-    _ => ()
-  }
-})
+### Registering Steps
 
-registry.then("the result should be {int}", fn(args) raise {
-  match args[0] {
-    @core.StepArg::IntArg(expected) => assert_eq(result, expected)
-    _ => ()
-  }
-})
+Implement the `World` trait to register step definitions. The `self` parameter is
+your world instance -- closures capture it to share state between steps:
+
+```moonbit
+impl @moonspec.World for MyWorld with register_steps(self, s) {
+  s.given("I have {int} cucumbers", fn(args) {
+    match args[0] {
+      @moonspec.StepArg::IntArg(n) => self.cucumbers = n
+      _ => ()
+    }
+  })
+
+  s.when("I eat {int} cucumbers", fn(args) {
+    match args[0] {
+      @moonspec.StepArg::IntArg(n) => self.cucumbers = self.cucumbers - n
+      _ => ()
+    }
+  })
+
+  s.then("I should have {int} cucumbers", fn(args) raise {
+    match args[0] {
+      @moonspec.StepArg::IntArg(expected) => assert_eq(self.cucumbers, expected)
+      _ => ()
+    }
+  })
+}
 ```
 
 ### Cucumber Expression Parameters
@@ -135,11 +169,10 @@ registry.then("the result should be {int}", fn(args) raise {
 Arguments are passed as `Array[StepArg]`. Use pattern matching to extract values:
 
 ```moonbit
-registry.when("I transfer {float} from {string} to {string}", fn(args) {
+s.when("I transfer {float} from {string} to {string}", fn(args) {
   match (args[0], args[1], args[2]) {
-    (FloatArg(amount), StringArg(from), StringArg(to)) => {
+    (@moonspec.StepArg::FloatArg(amount), @moonspec.StepArg::StringArg(from), @moonspec.StepArg::StringArg(to)) =>
       transfer(amount, from, to)
-    }
     _ => ()
   }
 })
@@ -147,65 +180,129 @@ registry.when("I transfer {float} from {string} to {string}", fn(args) {
 
 ### Generic Steps
 
-Use `registry.step()` to register a step that matches any keyword (Given/When/Then):
+Use `s.step()` to register a step that matches any keyword (Given/When/Then):
 
 ```moonbit
-registry.step("I wait {int} seconds", fn(args) {
+s.step("I wait {int} seconds", fn(args) {
   // matches "Given I wait 5 seconds", "When I wait 5 seconds", etc.
   ignore(args)
 })
 ```
 
-## Running Tests
+## Lifecycle Hooks
 
-### Mode 1: Codegen (Recommended)
-
-Generate `_test.mbt` files from `.feature` files for native `moon test` integration:
-
-```bash
-# Generate test files using the CLI
-moon run src/cmd/main -- gen features/*.feature --output-dir src/tests/
-
-# Run generated tests
-moon test
-```
-
-The codegen produces `async test` blocks with step comments:
+Implement the `Hooks` trait for setup/teardown logic around scenarios and steps:
 
 ```moonbit
-// Generated by moonspec codegen — DO NOT EDIT
-// Source: features/calculator.feature
-// moonspec:hash:a1b2c3d4
+impl @moonspec.Hooks for MyWorld with before_scenario(self, info) {
+  // Called before each scenario
+  println("Starting: " + info.scenario_name)
+}
 
-async test "Feature: Calculator / Scenario: Addition" {
-  // Given a calculator
-  // When I add 2 and 3
-  // Then the result should be 5
-  ignore("")
+impl @moonspec.Hooks for MyWorld with after_scenario(self, info, result) {
+  // Called after each scenario (result is None on success, Some(msg) on failure)
+  ignore(self)
+  ignore(info)
+  ignore(result)
+}
+
+impl @moonspec.Hooks for MyWorld with before_step(self, info) {
+  ignore(self)
+  ignore(info)
+}
+
+impl @moonspec.Hooks for MyWorld with after_step(self, info, result) {
+  ignore(self)
+  ignore(info)
+  ignore(result)
 }
 ```
 
-### Mode 2: Runner API
+All hook methods default to no-ops -- implement only the ones you need.
 
-For programmatic control, use the Runner API directly in your test files:
+Use `run_with_hooks` instead of `run` to enable lifecycle hooks:
 
 ```moonbit
-async test "calculator features" {
-  let registry = @core.StepRegistry::new()
-  // ... register steps ...
-
-  let result = @runner.run!(registry, [feature_content],
-    tag_expr="@smoke and not @slow",
-    parallel=4,
-  )
-
+async test "with hooks" {
+  let result = @moonspec.run_with_hooks(MyWorld::default, [feature_content])
   assert_eq(result.summary.failed, 0)
 }
 ```
 
+Hook behavior:
+- If `before_scenario` raises, all steps are **Skipped** and the scenario is **Failed**
+- `after_scenario` is always called, even when `before_scenario` fails
+- `after_step` is always called after each step, regardless of pass/fail
+
+## Running Tests
+
+### Mode 1: Runner API
+
+Use the Runner API directly in your test files for full programmatic control:
+
+```moonbit
+async test "calculator features" {
+  let result = @moonspec.run(CalcWorld::default, [feature_content],
+    tag_expr="@smoke and not @slow",
+    parallel=4,
+  )
+  assert_eq(result.summary.failed, 0)
+}
+```
+
+Parameters:
+- `factory` -- function returning a fresh World instance (e.g., `MyWorld::default`)
+- `features` -- array of feature file contents as strings
+- `tag_expr` -- boolean tag expression for filtering (default: `""`)
+- `parallel` -- max concurrent features (default: `0` = sequential)
+
+### Mode 2: Pre-build Codegen
+
+Use `moonspec gen` as a [pre-build](https://docs.moonbitlang.com/en/latest/toolchain/moon/package.html#pre-build)
+step so that test skeletons are regenerated automatically from `.feature` files on
+every `moon check`, `moon build`, or `moon test`:
+
+```json
+{
+  "pre-build": [
+    {
+      "input": "../features/calculator.feature",
+      "output": "calculator_feature_test.mbt",
+      "command": "moonspec gen features/calculator.feature -o src/"
+    }
+  ]
+}
+```
+
+The generated `*_feature_test.mbt` files should be gitignored -- your `.feature`
+files are the single source of truth.
+
+See [CLI: `gen` command](#gen----generate-test-files) and the
+[calculator example](examples/calculator/) for a full walkthrough.
+
 ## CLI
 
-The moonspec CLI provides two commands for working with `.feature` files:
+### Installing the CLI
+
+Install the moonspec CLI globally with `moon install`:
+
+```bash
+moon install moonrockz/moonspec/src/cmd/main
+```
+
+This makes `moonspec` available as a global command. You can then run:
+
+```bash
+moonspec gen features/*.feature -o src/
+moonspec check features/*.feature
+moonspec version
+```
+
+Alternatively, run the CLI directly from the project without installing:
+
+```bash
+moon run src/cmd/main -- <command> [args...]
+```
 
 ### `gen` -- Generate Test Files
 
@@ -213,18 +310,58 @@ The moonspec CLI provides two commands for working with `.feature` files:
 moon run src/cmd/main -- gen <feature-files...> [--output-dir <dir>]
 ```
 
-Reads `.feature` files and generates `_test.mbt` files via codegen.
+Reads `.feature` files and generates `_test.mbt` skeleton files. Each scenario
+becomes an `async test` block with step comments and a placeholder body.
 
-- Accepts one or more file paths
-- `--output-dir` / `-o`: write output to the specified directory (default: alongside source)
-- Prints generated filenames to stdout
+**Arguments:**
+- One or more `.feature` file paths (required)
+- `--output-dir` / `-o`: write generated files to this directory (default: current directory)
+
+**Examples:**
 
 ```bash
-# Generate test file alongside the feature
-moon run src/cmd/main -- gen features/login.feature
+# Generate a single test file
+moon run src/cmd/main -- gen features/calculator.feature
 
 # Generate into a specific directory
 moon run src/cmd/main -- gen features/*.feature -o src/tests/
+
+# Then run the generated tests
+moon test
+```
+
+**Generated output** for `features/calculator.feature`:
+
+```moonbit
+// Generated by moonspec codegen — DO NOT EDIT
+// Source: features/calculator.feature
+// moonspec:hash:a1b2c3d4
+
+async test "Feature: Calculator / Scenario: Addition" {
+  // Source: features/calculator.feature
+  // Given a calculator
+  // When I add 2 and 3
+  // Then the result should be 5
+  ignore("")
+}
+```
+
+**Filename mapping:**
+- `features/calculator.feature` → `calculator_feature_test.mbt`
+- `features/auth/login.feature` → `auth_login_feature_test.mbt`
+
+The `// moonspec:hash:...` comment enables future staleness detection -- regenerate
+only when the feature file changes.
+
+**Scenario Outlines** expand to one test per Examples row:
+
+```moonbit
+async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
+  // Source: features/calculator.feature
+  // When I multiply 2 and 3
+  // Then the result should be 6
+  ignore("")
+}
 ```
 
 ### `check` -- Validate Feature Files
@@ -233,11 +370,7 @@ moon run src/cmd/main -- gen features/*.feature -o src/tests/
 moon run src/cmd/main -- check <feature-files...>
 ```
 
-Parses `.feature` files and reports their structure:
-
-- Feature name, scenario count, step count
-- Tag listing
-- Parse errors (exits with code 1 on failure)
+Parses `.feature` files and reports their structure. Exits with code 1 on parse errors.
 
 ```bash
 $ moon run src/cmd/main -- check features/calculator.feature
@@ -262,13 +395,13 @@ Filter scenarios by tags using boolean expressions:
 
 ```moonbit
 // Run only @smoke scenarios
-let result = @runner.run!(registry, features, tag_expr="@smoke")
+let result = @moonspec.run(MyWorld::default, features, tag_expr="@smoke")
 
 // Run @smoke but not @slow
-let result = @runner.run!(registry, features, tag_expr="@smoke and not @slow")
+let result = @moonspec.run(MyWorld::default, features, tag_expr="@smoke and not @slow")
 
 // Run @smoke or @regression
-let result = @runner.run!(registry, features, tag_expr="@smoke or @regression")
+let result = @moonspec.run(MyWorld::default, features, tag_expr="@smoke or @regression")
 ```
 
 Tag expression syntax:
@@ -323,19 +456,18 @@ Feature: Account Management
 
 ## Async and Parallel Execution
 
-The Runner API supports async execution and parallel scenario processing:
+The Runner API supports async execution and parallel feature processing:
 
 ```moonbit
 async test "parallel features" {
-  let registry = @core.StepRegistry::new()
-  // ... register steps ...
-
-  // Run 4 scenarios concurrently
-  let result = @runner.run!(registry, features, parallel=4)
+  // Run up to 4 features concurrently
+  let result = @moonspec.run(MyWorld::default, features, parallel=4)
+  assert_eq(result.summary.failed, 0)
 }
 ```
 
-- `parallel` parameter controls concurrency level
+- `parallel` controls max concurrent features (0 = sequential)
+- Each scenario gets a fresh World instance, making parallel execution safe
 - Tests must use `async test` blocks
 - Requires JS target: `moon test --target js`
 
@@ -392,6 +524,22 @@ pub(open) trait Formatter {
 }
 ```
 
+## Example Project
+
+See [`examples/calculator/`](examples/calculator/) for a complete, runnable example
+demonstrating the full moonspec workflow:
+
+- Pre-build codegen via `moonspec gen` in `moon.pkg.json`
+- World struct with `derive(Default)` and step definitions
+- Background steps, Scenario Outlines, and tag filtering
+- Runner API with inline feature content and tag filtering
+
+```bash
+cd examples/calculator
+moon test --target js
+# Total tests: 10, passed: 10, failed: 0.
+```
+
 ## Architecture
 
 ```
@@ -411,10 +559,11 @@ pub(open) trait Formatter {
    |   codegen   |              |   runner    |
    +------+------+              +------+------+
           |                       |         |
-    _test.mbt files        StepRegistry  tag filter
-                              |         |
-                         cucumber-    outline
-                         expressions  expansion
+    _test.mbt files          World +     tag filter
+                            StepRegistry     |
+                              |         outline
+                         cucumber-    expansion
+                         expressions     |
                               |         |
                               v         v
                          +----+---------+----+
@@ -429,6 +578,19 @@ pub(open) trait Formatter {
                  Pretty   Messages   JUnit
                 (console)  (NDJSON)   (XML)
 ```
+
+## Packages
+
+| Package | Description |
+|---------|-------------|
+| `moonrockz/moonspec` | Top-level facade -- re-exports `World`, `Hooks`, `StepArg`, `run`, `run_with_hooks` |
+| `moonrockz/moonspec/core` | World and Hooks traits, StepRegistry, StepArg types |
+| `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
+| `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
+| `moonrockz/moonspec/codegen` | Generate `_test.mbt` skeleton files from Gherkin features |
+
+Users should import `moonrockz/moonspec` and reference types via `@moonspec.World`,
+`@moonspec.run`, etc. The sub-packages are implementation details.
 
 ## Dependencies
 
