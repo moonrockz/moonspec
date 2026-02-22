@@ -2,3 +2,7 @@ target/
 _build/
 .mooncakes/
 *.wasm
+
+.claude/
+.specify/
+target
