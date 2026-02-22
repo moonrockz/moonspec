@@ -35,7 +35,7 @@ pub(all) enum StepMatchResult {
     step_text~ : String,
     keyword~ : String,
     snippet~ : String,
-    suggestions~ : Array[String],
+    suggestions~ : Array[String]
   )
 }
 

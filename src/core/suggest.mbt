@@ -1,7 +1,11 @@
 ///|
 /// Return the smaller of two integers.
 fn min(a : Int, b : Int) -> Int {
-  if a < b { a } else { b }
+  if a < b {
+    a
+  } else {
+    b
+  }
 }
 
 ///|

@@ -8,27 +8,16 @@ pub suberror MoonspecError {
     step~ : String,
     keyword~ : String,
     snippet~ : String,
-    suggestions~ : Array[String],
+    suggestions~ : Array[String]
   )
-  PendingStep(
-    step~ : String,
-    keyword~ : String,
-    message~ : String,
-  )
-  StepFailed(
-    step~ : String,
-    keyword~ : String,
-    message~ : String,
-  )
+  PendingStep(step~ : String, keyword~ : String, message~ : String)
+  StepFailed(step~ : String, keyword~ : String, message~ : String)
   ScenarioFailed(
     scenario~ : String,
     feature~ : String,
-    errors~ : Array[MoonspecError],
+    errors~ : Array[MoonspecError]
   )
-  RunFailed(
-    summary~ : String,
-    errors~ : Array[MoonspecError],
-  )
+  RunFailed(summary~ : String, errors~ : Array[MoonspecError])
 }
 
 ///|

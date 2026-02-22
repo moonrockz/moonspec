@@ -13,7 +13,7 @@ test "UndefinedStep carries step text and snippet" {
       assert_true(snippet.length() > 0)
       assert_eq(suggestions.length(), 1)
     }
-    _ => fail!("expected UndefinedStep")
+    _ => fail("expected UndefinedStep")
   }
 }
 
@@ -26,19 +26,14 @@ test "PendingStep carries message" {
   )
   match err {
     PendingStep(step~, ..) => assert_eq(step, "a pending step")
-    _ => fail!("expected PendingStep")
+    _ => fail("expected PendingStep")
   }
 }
 
 ///|
 test "ScenarioFailed aggregates step errors" {
   let step_errors : Array[MoonspecError] = [
-    UndefinedStep(
-      step="undefined one",
-      keyword="Given",
-      snippet="",
-      suggestions=[],
-    ),
+    UndefinedStep(step="undefined one", keyword="Given", snippet="", suggestions=[]),
     StepFailed(step="failed one", keyword="Then", message="assertion failed"),
   ]
   let err : Error = ScenarioFailed(
@@ -48,7 +43,7 @@ test "ScenarioFailed aggregates step errors" {
   )
   match err {
     ScenarioFailed(errors~, ..) => assert_eq(errors.length(), 2)
-    _ => fail!("expected ScenarioFailed")
+    _ => fail("expected ScenarioFailed")
   }
 }
 
@@ -66,6 +61,6 @@ test "RunFailed aggregates scenario errors" {
       assert_eq(summary, "1 scenario failed")
       assert_eq(errors.length(), 1)
     }
-    _ => fail!("expected RunFailed")
+    _ => fail("expected RunFailed")
   }
 }

@@ -33,7 +33,10 @@ pub fn StepRegistry::len(self : StepRegistry) -> Int {
 
 ///|
 /// Register a StepDef directly.
-pub fn StepRegistry::register_def(self : StepRegistry, step_def : StepDef) -> Unit {
+pub fn StepRegistry::register_def(
+  self : StepRegistry,
+  step_def : StepDef,
+) -> Unit {
   let expr = @cucumber_expressions.Expression::parse_with_registry(
     step_def.pattern,
     self.param_registry,
@@ -45,7 +48,7 @@ pub fn StepRegistry::register_def(self : StepRegistry, step_def : StepDef) -> Un
 
 ///|
 /// Compose a StepLibrary into this registry.
-pub fn StepRegistry::use_library[L : StepLibrary](
+pub fn[L : StepLibrary] StepRegistry::use_library(
   self : StepRegistry,
   library : L,
 ) -> Unit {

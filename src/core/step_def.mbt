@@ -15,10 +15,18 @@ pub(all) struct StepSource {
 } derive(Show, Eq)
 
 ///|
-pub fn StepSource::new(uri~ : String = "", line~ : Int = 0) -> StepSource {
+pub fn StepSource::new(uri? : String = "", line? : Int = 0) -> StepSource {
   {
-    uri: if uri == "" { None } else { Some(uri) },
-    line: if line == 0 { None } else { Some(line) },
+    uri: if uri == "" {
+      None
+    } else {
+      Some(uri)
+    },
+    line: if line == 0 {
+      None
+    } else {
+      Some(line)
+    },
   }
 }
 

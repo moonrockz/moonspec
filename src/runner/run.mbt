@@ -80,7 +80,7 @@ pub async fn[W : @core.World] run_or_fail(
   tag_expr? : String = "",
   scenario_name? : String = "",
   parallel? : Int = 0,
-) -> RunResult raise {
+) -> RunResult {
   let result = run(factory, features, tag_expr~, scenario_name~, parallel~)
   if result.summary.failed > 0 ||
     result.summary.undefined > 0 ||

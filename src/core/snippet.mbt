@@ -97,8 +97,10 @@ fn infer_pattern(text : String) -> String {
       let mut j = i
       let mut has_dot = false
       while j < len &&
-            ((text[j] >= '0' && text[j] <= '9') ||
-             (text[j] == '.' && not(has_dot))) {
+            (
+              (text[j] >= '0' && text[j] <= '9') ||
+              (text[j] == '.' && not(has_dot))
+            ) {
         if text[j] == '.' {
           has_dot = true
         }

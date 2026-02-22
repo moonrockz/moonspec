@@ -64,11 +64,11 @@ async test "calculator" {
     #|    Given a calculator
     #|    When I add 2 and 3
     #|    Then the result should be 5
-  let result = @moonspec.run(
+  @moonspec.run_or_fail(
     CalcWorld::default,
     [@moonspec.FeatureSource::Text("test://calculator", feature)],
   )
-  assert_eq(result.summary.passed, 1)
+  |> ignore
 }
 ```
 
@@ -198,6 +198,61 @@ s.step("I wait {int} seconds", fn(args) {
 })
 ```
 
+### Composable Step Libraries
+
+For larger projects, organize step definitions into reusable libraries using the
+`StepLibrary` trait. Each library returns an `ArrayView[StepDef]`:
+
+```moonbit
+struct AccountSteps { world : BankWorld }
+
+impl @moonspec.StepLibrary for AccountSteps with steps(self) {
+  [
+    @moonspec.StepDef::given("a bank account with balance {int}", fn(args) {
+      match args[0] {
+        @moonspec.StepArg::IntArg(n) => self.world.balance = n
+        _ => ()
+      }
+    }),
+    @moonspec.StepDef::then("the balance should be {int}", fn(args) raise {
+      match args[0] {
+        @moonspec.StepArg::IntArg(n) => assert_eq(self.world.balance, n)
+        _ => ()
+      }
+    }),
+  ][:]
+}
+```
+
+Compose multiple libraries into a single World:
+
+```moonbit
+impl @moonspec.World for BankWorld with register_steps(self, s) {
+  s.use_library(AccountSteps::new(self))
+  s.use_library(TransactionSteps::new(self))
+}
+```
+
+See [`examples/bank-account/`](examples/bank-account/) for a complete example.
+
+### Error Handling
+
+moonspec uses a structured error hierarchy (`MoonspecError`) for test failures:
+
+- `UndefinedStep` -- step has no matching definition (includes a copy-paste snippet and "did you mean?" suggestions)
+- `PendingStep` -- step is marked as pending (placeholder implementation)
+- `StepFailed` -- step assertion failed
+- `ScenarioFailed` -- aggregates step errors for a scenario
+- `RunFailed` -- aggregates scenario errors for a run
+
+Use `run_or_fail` to raise on any failure instead of inspecting results manually:
+
+```moonbit
+async test "my feature" {
+  @moonspec.run_or_fail(MyWorld::default, features) |> ignore
+}
+```
+
 ## Lifecycle Hooks
 
 Implement the `Hooks` trait for setup/teardown logic around scenarios and steps:
@@ -254,12 +309,22 @@ Use the Runner API directly in your test files for full programmatic control:
 
 ```moonbit
 async test "calculator features" {
-  let result = @moonspec.run(
+  // run_or_fail raises MoonspecError on any failure
+  @moonspec.run_or_fail(
     CalcWorld::default,
     [@moonspec.FeatureSource::File("features/calculator.feature")],
     tag_expr="@smoke and not @slow",
     parallel=4,
   )
+  |> ignore
+}
+```
+
+For cases where you need to inspect results programmatically, use `run` directly:
+
+```moonbit
+async test "inspect results" {
+  let result = @moonspec.run(CalcWorld::default, features)
   assert_eq(result.summary.failed, 0)
 }
 ```
@@ -293,8 +358,8 @@ every `moon check`, `moon build`, or `moon test`:
 ```
 
 The `--world` (`-w`) flag tells codegen which World type to use. Generated tests
-call `@moonspec.run` with `FeatureSource::File` to load the `.feature` file at
-runtime and execute each scenario through the full runner pipeline.
+call `@moonspec.run_or_fail` with `FeatureSource::File` to load the `.feature`
+file at runtime and execute each scenario through the full runner pipeline.
 
 The generated `*_feature_test.mbt` files should be gitignored -- your `.feature`
 files are the single source of truth.
@@ -333,8 +398,8 @@ moon run src/cmd/main -- gen <feature-files...> -w <WorldType> [--output-dir <di
 ```
 
 Reads `.feature` files and generates `_test.mbt` test files. Each scenario becomes
-an `async test` block that calls `@moonspec.run` with `FeatureSource::File` to load
-the feature at runtime and execute it through the full runner pipeline.
+an `async test` block that calls `@moonspec.run_or_fail` with `FeatureSource::File`
+to load the feature at runtime and execute it through the full runner pipeline.
 
 **Arguments:**
 - One or more `.feature` file paths (required)
@@ -379,12 +444,11 @@ moon test --target js
 // moonspec:hash:a1b2c3d4
 
 async test "Feature: Calculator / Scenario: Addition" {
-  let result = @moonspec.run(
-    CalcWorld::default,
-    [@moonspec.FeatureSource::File("features/calculator.feature")],
+  @moonspec.run_or_fail(
+    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
     scenario_name="Addition",
   )
-  assert_eq!(result.summary.failed, 0)
+  |> ignore
 }
 ```
 
@@ -399,12 +463,11 @@ only when the feature file changes.
 
 ```moonbit
 async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
-  let result = @moonspec.run(
-    CalcWorld::default,
-    [@moonspec.FeatureSource::File("features/calculator.feature")],
+  @moonspec.run_or_fail(
+    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
     scenario_name="Multiplication (a=2, b=3, result=6)",
   )
-  assert_eq!(result.summary.failed, 0)
+  |> ignore
 }
 ```
 
@@ -412,11 +475,10 @@ async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)"
 
 ```moonbit
 async test "Feature: Calculator" {
-  let result = @moonspec.run(
-    CalcWorld::default,
-    [@moonspec.FeatureSource::File("features/calculator.feature")],
+  @moonspec.run_or_fail(
+    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
   )
-  assert_eq!(result.summary.failed, 0)
+  |> ignore
 }
 ```
 
@@ -524,8 +586,7 @@ async test "parallel features" {
     @moonspec.FeatureSource::File("features/checkout.feature"),
   ]
   // Run up to 4 features concurrently
-  let result = @moonspec.run(MyWorld::default, features, parallel=4)
-  assert_eq(result.summary.failed, 0)
+  @moonspec.run_or_fail(MyWorld::default, features, parallel=4) |> ignore
 }
 ```
 
@@ -587,21 +648,23 @@ pub(open) trait Formatter {
 }
 ```
 
-## Example Project
+## Example Projects
 
-See [`examples/calculator/`](examples/calculator/) for a complete, runnable example
-demonstrating the full moonspec workflow:
+### Calculator (PerScenario mode)
 
-- Codegen via `moonspec gen` generating runner tests from `.feature` files
-- World struct with `derive(Default)` and step definitions
+See [`examples/calculator/`](examples/calculator/) -- one test per scenario:
+
+- Codegen via `moonspec gen` with per-scenario mode (default)
+- World struct with `derive(Default)` and inline step definitions
 - Background steps, Scenario Outlines, and tag filtering
-- Runner API with inline feature content and tag filtering
 
-```bash
-cd examples/calculator
-moon test --target js
-# Total tests: 6, passed: 6, failed: 0.
-```
+### Bank Account (PerFeature mode + StepLibrary)
+
+See [`examples/bank-account/`](examples/bank-account/) -- single test per feature:
+
+- Codegen via `moonspec gen -m per-feature`
+- Composable step libraries (`AccountSteps`, `TransactionSteps`) via `StepLibrary` trait
+- `use_library()` composition in the World
 
 ## Architecture
 
@@ -649,14 +712,14 @@ moon test --target js
 
 | Package | Description |
 |---------|-------------|
-| `moonrockz/moonspec` | Top-level facade -- re-exports `World`, `Hooks`, `StepArg`, `run`, `run_with_hooks` |
-| `moonrockz/moonspec/core` | World and Hooks traits, StepRegistry, StepArg types |
+| `moonrockz/moonspec` | Top-level facade -- re-exports `World`, `Hooks`, `StepLibrary`, `StepDef`, `StepArg`, `MoonspecError`, `run`, `run_or_fail` |
+| `moonrockz/moonspec/core` | World, Hooks, StepLibrary traits, StepRegistry, StepDef, StepArg, MoonspecError |
 | `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
 | `moonrockz/moonspec/codegen` | Generate `_test.mbt` runner tests from Gherkin features |
 
 Users should import `moonrockz/moonspec` and reference types via `@moonspec.World`,
-`@moonspec.run`, etc. The sub-packages are implementation details.
+`@moonspec.run_or_fail`, etc. The sub-packages are implementation details.
 
 ## Dependencies
 

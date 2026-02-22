@@ -41,11 +41,11 @@ async test "calculator" {
     #|    Given a calculator
     #|    When I add 2 and 3
     #|    Then the result should be 5
-  let result = @moonspec.run(
+  @moonspec.run_or_fail(
     CalcWorld::default,
     [@moonspec.FeatureSource::Text("test://calculator", feature)],
   )
-  assert_eq(result.summary.passed, 1)
+  |> ignore
 }
 ```
 
@@ -54,6 +54,10 @@ Each scenario gets a fresh World instance via `derive(Default)` for state isolat
 ## Features
 
 - **World trait** -- per-scenario state isolation following cucumber-rs patterns
+- **StepLibrary trait** -- composable, reusable step definition groups
+- **StepDef type** -- first-class step definitions you can inspect, test, and pass around
+- **Structured errors** -- `MoonspecError` hierarchy with `run_or_fail` throwing variant
+- **Undefined step diagnostics** -- copy-paste snippets and "did you mean?" suggestions
 - **Lifecycle hooks** -- `before_scenario`, `after_scenario`, `before_step`, `after_step`
 - **Gherkin parsing** -- Feature, Scenario, Scenario Outline, Background, Rules, Data Tables, Doc Strings
 - **Cucumber Expressions** -- type-safe step matching with `{int}`, `{float}`, `{string}`, `{word}`

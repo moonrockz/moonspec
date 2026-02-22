@@ -33,7 +33,7 @@ test "StepRegistry extracts parameters" {
   reg.given("I have {int} cucumbers", fn(_args) {  })
   match reg.find_match("I have 42 cucumbers") {
     Matched(_, args) => assert_eq(args[0], StepArg::IntArg(42))
-    _ => fail!("expected Matched")
+    _ => fail("expected Matched")
   }
 }
 
@@ -62,7 +62,7 @@ test "StepRegistry find_match returns Matched with StepDef" {
       assert_eq(step_def.keyword, StepKeyword::Given)
       assert_eq(args[0], StepArg::IntArg(42))
     }
-    _ => fail!("expected Matched")
+    _ => fail("expected Matched")
   }
 }
 
@@ -75,7 +75,7 @@ test "StepRegistry find_match returns Undefined with snippet" {
       assert_eq(step_text, "I have many bananas")
       assert_true(contains(snippet, "s.step"))
     }
-    _ => fail!("expected Undefined")
+    _ => fail("expected Undefined")
   }
 }
 

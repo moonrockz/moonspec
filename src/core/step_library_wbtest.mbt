@@ -10,7 +10,7 @@ struct MathSteps {
 
 ///|
 fn MathSteps::new(world : TestWorld) -> MathSteps {
-  { world }
+  { world, }
 }
 
 ///|

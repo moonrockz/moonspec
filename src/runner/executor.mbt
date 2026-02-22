@@ -27,24 +27,55 @@ pub fn execute_scenario(
       })
       continue
     }
-    let (status, diagnostic) : (StepStatus, Error?) = match registry.find_match(step.text, keyword=keyword) {
+    let (status, diagnostic) : (StepStatus, Error?) = match
+      registry.find_match(step.text, keyword~) {
       Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
-        (StepStatus::Undefined, Some(@core.undefined_step_error(step=step_text, keyword=kw, snippet~, suggestions~)))
+        (
+          StepStatus::Undefined,
+          Some(
+            @core.undefined_step_error(
+              step=step_text,
+              keyword=kw,
+              snippet~,
+              suggestions~,
+            ),
+          ),
+        )
       Matched(step_def, args) =>
         try {
           (step_def.handler.0)(args)
           (StepStatus::Passed, None)
         } catch {
           @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
-            (StepStatus::Pending, Some(@core.pending_step_error(step~, keyword=kw, message~)))
-          e => (StepStatus::Failed(e.to_string()), Some(@core.step_failed_error(step=step.text, keyword=keyword, message=e.to_string())))
+            (
+              StepStatus::Pending,
+              Some(@core.pending_step_error(step~, keyword=kw, message~)),
+            )
+          e =>
+            (
+              StepStatus::Failed(e.to_string()),
+              Some(
+                @core.step_failed_error(
+                  step=step.text,
+                  keyword~,
+                  message=e.to_string(),
+                ),
+              ),
+            )
         }
     }
     match status {
-      StepStatus::Failed(_) | StepStatus::Undefined | StepStatus::Pending => failed = true
+      StepStatus::Failed(_) | StepStatus::Undefined | StepStatus::Pending =>
+        failed = true
       _ => ()
     }
-    step_results.push({ text: step.text, keyword, status, duration_ms: 0L, diagnostic })
+    step_results.push({
+      text: step.text,
+      keyword,
+      status,
+      duration_ms: 0L,
+      diagnostic,
+    })
   }
   let statuses = step_results.map(fn(r) { r.status })
   {
@@ -87,7 +118,13 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
         Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
         _ => "* "
       }
-      { text: step.text, keyword, status: StepStatus::Skipped, duration_ms: 0L, diagnostic: None }
+      {
+        text: step.text,
+        keyword,
+        status: StepStatus::Skipped,
+        duration_ms: 0L,
+        diagnostic: None,
+      }
     })
     let _ = @core.Hooks::after_scenario(world, info, Some(msg)) catch {
       _ => ()
@@ -132,19 +169,45 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
       e => Some(e.to_string())
     }
     let (status, diagnostic) : (StepStatus, Error?) = if before_err is Some(msg) {
-      (StepStatus::Failed(msg), Some(@core.step_failed_error(step=step.text, keyword=keyword, message=msg)))
+      (
+        StepStatus::Failed(msg),
+        Some(@core.step_failed_error(step=step.text, keyword~, message=msg)),
+      )
     } else {
-      match registry.find_match(step.text, keyword=keyword) {
+      match registry.find_match(step.text, keyword~) {
         Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
-          (StepStatus::Undefined, Some(@core.undefined_step_error(step=step_text, keyword=kw, snippet~, suggestions~)))
+          (
+            StepStatus::Undefined,
+            Some(
+              @core.undefined_step_error(
+                step=step_text,
+                keyword=kw,
+                snippet~,
+                suggestions~,
+              ),
+            ),
+          )
         Matched(step_def, args) =>
           try {
             (step_def.handler.0)(args)
             (StepStatus::Passed, None)
           } catch {
             @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
-              (StepStatus::Pending, Some(@core.pending_step_error(step~, keyword=kw, message~)))
-            e => (StepStatus::Failed(e.to_string()), Some(@core.step_failed_error(step=step.text, keyword=keyword, message=e.to_string())))
+              (
+                StepStatus::Pending,
+                Some(@core.pending_step_error(step~, keyword=kw, message~)),
+              )
+            e =>
+              (
+                StepStatus::Failed(e.to_string()),
+                Some(
+                  @core.step_failed_error(
+                    step=step.text,
+                    keyword~,
+                    message=e.to_string(),
+                  ),
+                ),
+              )
           }
       }
     }
@@ -167,7 +230,13 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
       }
       _ => ()
     }
-    step_results.push({ text: step.text, keyword, status, duration_ms: 0L, diagnostic })
+    step_results.push({
+      text: step.text,
+      keyword,
+      status,
+      duration_ms: 0L,
+      diagnostic,
+    })
   }
   // after_scenario hook
   let _ = @core.Hooks::after_scenario(world, info, scenario_error) catch {

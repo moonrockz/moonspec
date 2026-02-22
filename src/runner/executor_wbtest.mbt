@@ -138,7 +138,11 @@ test "execute_scenario carries UndefinedStep diagnostic" {
 test "execute_scenario catches PendingStep" {
   let registry = @core.StepRegistry::new()
   registry.given("a pending step", fn(_args) raise {
-    raise @core.pending_step_error(step="a pending step", keyword="Given", message="TODO")
+    raise @core.pending_step_error(
+      step="a pending step",
+      keyword="Given",
+      message="TODO",
+    )
   })
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
