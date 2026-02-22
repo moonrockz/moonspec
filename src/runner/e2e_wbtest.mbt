@@ -1,5 +1,5 @@
 ///|
-test "end-to-end: calculator feature" {
+async test "end-to-end: calculator feature" {
   let registry = @core.StepRegistry::new()
   let mut result_val = 0
   registry.given("a calculator", fn(_args) { result_val = 0 })
@@ -35,7 +35,7 @@ test "end-to-end: calculator feature" {
 }
 
 ///|
-test "end-to-end: tag filtering" {
+async test "end-to-end: tag filtering" {
   let registry = @core.StepRegistry::new()
   registry.given("a calculator", fn(_args) {  })
   registry.when("I add {int} and {int}", fn(_args) {  })

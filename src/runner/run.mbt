@@ -1,16 +1,14 @@
 ///|
 /// Run all features and collect results.
 ///
-/// When `parallel` is greater than 0, it indicates the desired concurrency level
-/// for feature execution. Currently executes sequentially regardless; true async
-/// parallel execution will be enabled in a future release once the runner's
-/// error-raising functions are adapted for async contexts.
-pub fn run(
+/// When `parallel` is greater than 0, features are executed concurrently using
+/// `@async.all()` with bounded concurrency. Otherwise, features run sequentially.
+pub async fn run(
   registry : @core.StepRegistry,
   features : Array[String],
   tag_expr? : String = "",
   parallel? : Int = 0,
-) -> RunResult raise Error {
+) -> RunResult {
   let feature_results = if parallel > 0 {
     run_parallel(registry, features, tag_expr~, max_concurrent=parallel)
   } else {

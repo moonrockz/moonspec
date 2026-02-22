@@ -1,5 +1,5 @@
 ///|
-test "run single feature and collect summary" {
+async test "run single feature and collect summary" {
   let registry = @core.StepRegistry::new()
   registry.given("a step", fn(_args) {  })
   let features = ["Feature: One\n\n  Scenario: Pass\n    Given a step\n"]
@@ -10,7 +10,7 @@ test "run single feature and collect summary" {
 }
 
 ///|
-test "run multiple features" {
+async test "run multiple features" {
   let registry = @core.StepRegistry::new()
   registry.given("pass", fn(_args) {  })
   registry.given("fail", fn(_args) raise { raise Failure::Failure("fail") })

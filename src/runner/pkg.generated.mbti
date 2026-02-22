@@ -14,7 +14,7 @@ pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_nam
 
 pub fn expand_outline(String, Array[(String, String)], Array[String], Array[Array[String]]) -> Array[(String, Array[(String, String)])]
 
-pub fn run(@core.StepRegistry, Array[String], tag_expr? : String, parallel? : Int) -> RunResult raise
+pub async fn run(@core.StepRegistry, Array[String], tag_expr? : String, parallel? : Int) -> RunResult
 
 pub fn runner_version() -> String
 

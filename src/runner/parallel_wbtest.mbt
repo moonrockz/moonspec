@@ -1,5 +1,5 @@
 ///|
-test "run with parallel parameter executes all features" {
+async test "run with parallel parameter executes all features" {
   let registry = @core.StepRegistry::new()
   registry.given("a step", fn(_args) {  })
   let features = [
@@ -11,7 +11,7 @@ test "run with parallel parameter executes all features" {
 }
 
 ///|
-test "run with parallel=0 falls back to sequential" {
+async test "run with parallel=0 falls back to sequential" {
   let registry = @core.StepRegistry::new()
   registry.given("a step", fn(_args) {  })
   let features = ["Feature: A\n\n  Scenario: S1\n    Given a step\n"]
@@ -21,7 +21,7 @@ test "run with parallel=0 falls back to sequential" {
 }
 
 ///|
-test "run with parallel preserves feature order" {
+async test "run with parallel preserves feature order" {
   let registry = @core.StepRegistry::new()
   registry.given("step a", fn(_args) {  })
   registry.given("step b", fn(_args) {  })
@@ -34,7 +34,7 @@ test "run with parallel preserves feature order" {
 }
 
 ///|
-test "run with parallel and tag filtering" {
+async test "run with parallel and tag filtering" {
   let registry = @core.StepRegistry::new()
   registry.given("a step", fn(_args) {  })
   let features = [

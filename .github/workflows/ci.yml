@@ -45,5 +45,8 @@ jobs:
       - name: Install dependencies
         run: moon update
 
-      - name: Run unit tests
-        run: mise run test:unit
+      - name: Run unit tests (wasm-gc)
+        run: moon test
+
+      - name: Run unit tests including async (js)
+        run: moon test --target js
