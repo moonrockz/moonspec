@@ -2,36 +2,40 @@
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
-/// When `parallel` is greater than 0, features are executed concurrently using
-/// `@async.all()` with bounded concurrency. Otherwise, features run sequentially.
+/// When `parallel` is greater than 0, pickles are executed concurrently using
+/// `@async.all()` with bounded concurrency. Otherwise, pickles run sequentially.
 pub async fn[W : @core.World] run(
   factory : () -> W,
   features : Array[FeatureSource],
   tag_expr? : String = "",
+  scenario_name? : String = "",
   parallel? : Int = 0,
 ) -> RunResult {
-  let feature_results = if parallel > 0 {
-    run_parallel(factory, features, tag_expr~, max_concurrent=parallel)
-  } else {
-    run_sequential(factory, features, tag_expr~)
+  let cache = FeatureCache::new()
+  for source in features {
+    cache.load_from_source!(source)
   }
+  let pickles = compile_pickles(cache)
+  let filter = PickleFilter::new()
+  let filter = if tag_expr != "" {
+    filter.with_tags!(tag_expr)
+  } else {
+    filter
+  }
+  let filter = if scenario_name != "" {
+    filter.with_names([scenario_name])
+  } else {
+    filter
+  }
+  let filtered = filter.apply(pickles)
+  let results = if parallel > 0 {
+    run_pickles_parallel(factory, filtered, max_concurrent=parallel)
+  } else {
+    run_pickles_sequential(factory, filtered)
+  }
+  let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
   { features: feature_results, summary }
-}
-
-///|
-/// Run features sequentially (the default path).
-fn[W : @core.World] run_sequential(
-  factory : () -> W,
-  features : Array[FeatureSource],
-  tag_expr~ : String,
-) -> Array[FeatureResult] raise Error {
-  let results : Array[FeatureResult] = []
-  for input in features {
-    let result = execute_feature_filtered(factory, input, tag_expr~)
-    results.push(result)
-  }
-  results
 }
 
 ///|
@@ -43,29 +47,134 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   factory : () -> W,
   features : Array[FeatureSource],
   tag_expr? : String = "",
+  scenario_name? : String = "",
   parallel? : Int = 0,
 ) -> RunResult {
-  let feature_results = if parallel > 0 {
-    run_parallel_with_hooks(factory, features, tag_expr~, max_concurrent=parallel)
-  } else {
-    run_sequential_with_hooks(factory, features, tag_expr~)
+  let cache = FeatureCache::new()
+  for source in features {
+    cache.load_from_source!(source)
   }
+  let pickles = compile_pickles(cache)
+  let filter = PickleFilter::new()
+  let filter = if tag_expr != "" {
+    filter.with_tags!(tag_expr)
+  } else {
+    filter
+  }
+  let filter = if scenario_name != "" {
+    filter.with_names([scenario_name])
+  } else {
+    filter
+  }
+  let filtered = filter.apply(pickles)
+  let results = if parallel > 0 {
+    run_pickles_parallel_with_hooks(factory, filtered, max_concurrent=parallel)
+  } else {
+    run_pickles_sequential_with_hooks(factory, filtered)
+  }
+  let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
   { features: feature_results, summary }
 }
 
 ///|
-fn[W : @core.World + @core.Hooks] run_sequential_with_hooks(
+/// Run pickles sequentially (the default path).
+fn[W : @core.World] run_pickles_sequential(
   factory : () -> W,
-  features : Array[FeatureSource],
-  tag_expr~ : String,
-) -> Array[FeatureResult] raise Error {
-  let results : Array[FeatureResult] = []
-  for input in features {
-    let result = execute_feature_filtered_with_hooks(factory, input, tag_expr~)
+  pickles : Array[@cucumber_messages.Pickle],
+) -> Array[ScenarioResult] {
+  let results : Array[ScenarioResult] = []
+  for pickle in pickles {
+    let result = execute_pickle(factory, pickle)
     results.push(result)
   }
   results
+}
+
+///|
+/// Run pickles sequentially with hooks.
+fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
+  factory : () -> W,
+  pickles : Array[@cucumber_messages.Pickle],
+) -> Array[ScenarioResult] {
+  let results : Array[ScenarioResult] = []
+  for pickle in pickles {
+    let result = execute_pickle_with_hooks(factory, pickle)
+    results.push(result)
+  }
+  results
+}
+
+///|
+/// Execute a single pickle with a fresh world.
+fn[W : @core.World] execute_pickle(
+  factory : () -> W,
+  pickle : @cucumber_messages.Pickle,
+) -> ScenarioResult {
+  let world = factory()
+  let registry = @core.StepRegistry::new()
+  @core.World::register_steps(world, registry)
+  execute_scenario(
+    registry,
+    feature_name=pickle.uri,
+    scenario_name=pickle.name,
+    pickle_id=pickle.id,
+    tags=pickle.tags.map(fn(t) { t.name }),
+    steps=pickle.steps,
+  )
+}
+
+///|
+/// Execute a single pickle with hooks and a fresh world.
+fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
+  factory : () -> W,
+  pickle : @cucumber_messages.Pickle,
+) -> ScenarioResult {
+  let world = factory()
+  let registry = @core.StepRegistry::new()
+  @core.World::register_steps(world, registry)
+  execute_scenario_with_hooks(
+    world,
+    registry,
+    feature_name=pickle.uri,
+    scenario_name=pickle.name,
+    pickle_id=pickle.id,
+    tags=pickle.tags.map(fn(t) { t.name }),
+    steps=pickle.steps,
+  )
+}
+
+///|
+/// Group scenario results by feature URI and look up feature names from cache.
+fn group_by_feature(
+  results : Array[ScenarioResult],
+  cache : FeatureCache,
+) -> Array[FeatureResult] {
+  let groups : Map[String, Array[ScenarioResult]] = {}
+  let order : Array[String] = []
+  for r in results {
+    let key = r.feature_name
+    match groups.get(key) {
+      Some(arr) => arr.push(r)
+      None => {
+        groups.set(key, [r])
+        order.push(key)
+      }
+    }
+  }
+  let feature_results : Array[FeatureResult] = []
+  for uri in order {
+    let scenarios = match groups.get(uri) {
+      Some(arr) => arr
+      None => []
+    }
+    let name = match cache.get(uri) {
+      Some(f) => f.name
+      None => uri
+    }
+    feature_results.push({ name, scenarios, duration_ms: 0L })
+  }
+  feature_results
 }
 
 ///|

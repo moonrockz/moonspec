@@ -78,6 +78,7 @@ pub(all) struct StepResult {
 pub(all) struct ScenarioResult {
   feature_name : String
   scenario_name : String
+  pickle_id : String
   tags : Array[String]
   steps : Array[StepResult]
   status : ScenarioStatus

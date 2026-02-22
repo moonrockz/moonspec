@@ -1,32 +1,23 @@
 ///|
-/// Run features with bounded concurrency using `@async.all()`.
-/// Each scenario gets a fresh world via `factory()` for isolation.
-async fn[W : @core.World] run_parallel(
+async fn[W : @core.World] run_pickles_parallel(
   factory : () -> W,
-  features : Array[FeatureSource],
-  tag_expr~ : String,
+  pickles : Array[@cucumber_messages.Pickle],
   max_concurrent~ : Int,
-) -> Array[FeatureResult] {
-  let tasks : Array[async () -> FeatureResult] = features.map(fn(input) {
-    async fn() -> FeatureResult {
-      execute_feature_filtered(factory, input, tag_expr~)
-    }
+) -> Array[ScenarioResult] {
+  let tasks : Array[async () -> ScenarioResult] = pickles.map(fn(pickle) {
+    async fn() -> ScenarioResult { execute_pickle(factory, pickle) }
   })
   @async.all(tasks[:], max_concurrent~)
 }
 
 ///|
-/// Run features with hooks and bounded concurrency using `@async.all()`.
-async fn[W : @core.World + @core.Hooks] run_parallel_with_hooks(
+async fn[W : @core.World + @core.Hooks] run_pickles_parallel_with_hooks(
   factory : () -> W,
-  features : Array[FeatureSource],
-  tag_expr~ : String,
+  pickles : Array[@cucumber_messages.Pickle],
   max_concurrent~ : Int,
-) -> Array[FeatureResult] {
-  let tasks : Array[async () -> FeatureResult] = features.map(fn(input) {
-    async fn() -> FeatureResult {
-      execute_feature_filtered_with_hooks(factory, input, tag_expr~)
-    }
+) -> Array[ScenarioResult] {
+  let tasks : Array[async () -> ScenarioResult] = pickles.map(fn(pickle) {
+    async fn() -> ScenarioResult { execute_pickle_with_hooks(factory, pickle) }
   })
   @async.all(tasks[:], max_concurrent~)
 }

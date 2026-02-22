@@ -4,6 +4,7 @@ test "PrettyFormatter formats passed scenario" {
   let result : @runner.ScenarioResult = {
     feature_name: "Math",
     scenario_name: "Addition",
+    pickle_id: "p1",
     tags: [],
     steps: [
       {
@@ -30,6 +31,7 @@ test "PrettyFormatter formats failed scenario" {
   let result : @runner.ScenarioResult = {
     feature_name: "Math",
     scenario_name: "Division by zero",
+    pickle_id: "p2",
     tags: [],
     steps: [
       {
@@ -86,6 +88,7 @@ test "PrettyFormatter step markers in no_color mode" {
   let result : @runner.ScenarioResult = {
     feature_name: "Test",
     scenario_name: "Steps",
+    pickle_id: "p3",
     tags: [],
     steps: [
       {
