@@ -25,21 +25,57 @@ pub fn execute_feature(
   let scenario_results : Array[ScenarioResult] = []
   for child in feature.children {
     match child {
-      @gherkin.FeatureChild::Scenario(scenario) => {
-        let all_steps = background_steps.copy()
-        for s in scenario.steps {
-          all_steps.push((s.keyword, s.text))
+      @gherkin.FeatureChild::Scenario(scenario) =>
+        if scenario.examples.is_empty() {
+          // Regular scenario
+          let all_steps = background_steps.copy()
+          for s in scenario.steps {
+            all_steps.push((s.keyword, s.text))
+          }
+          let tags = scenario.tags.map(fn(t) { t.name })
+          let result = execute_scenario(
+            registry,
+            feature_name=feature.name,
+            scenario_name=scenario.name,
+            tags~,
+            steps=all_steps,
+          )
+          scenario_results.push(result)
+        } else {
+          // Scenario Outline: expand each Examples table
+          let template_steps = scenario.steps.map(fn(s) { (s.keyword, s.text) })
+          let tags = scenario.tags.map(fn(t) { t.name })
+          for examples in scenario.examples {
+            let headers = match examples.table_header {
+              Some(header_row) => header_row.cells.map(fn(c) { c.value })
+              None => continue
+            }
+            let rows = examples.table_body.map(
+              fn(r) { r.cells.map(fn(c) { c.value }) },
+            )
+            let expanded = expand_outline(
+              scenario.name,
+              template_steps,
+              headers,
+              rows,
+            )
+            for pair in expanded {
+              let (expanded_name, expanded_steps) = pair
+              let all_steps = background_steps.copy()
+              for step in expanded_steps {
+                all_steps.push(step)
+              }
+              let result = execute_scenario(
+                registry,
+                feature_name=feature.name,
+                scenario_name=expanded_name,
+                tags~,
+                steps=all_steps,
+              )
+              scenario_results.push(result)
+            }
+          }
         }
-        let tags = scenario.tags.map(fn(t) { t.name })
-        let result = execute_scenario(
-          registry,
-          feature_name=feature.name,
-          scenario_name=scenario.name,
-          tags~,
-          steps=all_steps,
-        )
-        scenario_results.push(result)
-      }
       _ => () // Rule handled later
     }
   }
