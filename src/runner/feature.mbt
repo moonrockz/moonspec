@@ -3,7 +3,18 @@
 pub fn execute_feature(
   registry : @core.StepRegistry,
   content : String,
-) -> FeatureResult raise Error {
+) -> FeatureResult!Error {
+  execute_feature_filtered!(registry, content, tag_expr="")
+}
+
+///|
+/// Execute a feature with optional tag filtering.
+pub fn execute_feature_filtered(
+  registry : @core.StepRegistry,
+  content : String,
+  tag_expr~ : String,
+) -> FeatureResult!Error {
+  let tag_filter = TagExpression::parse!(tag_expr)
   let source = @gherkin.Source::from_string(content)
   let doc = @gherkin.parse(source)
   let feature = match doc.feature {
@@ -25,14 +36,17 @@ pub fn execute_feature(
   let scenario_results : Array[ScenarioResult] = []
   for child in feature.children {
     match child {
-      @gherkin.FeatureChild::Scenario(scenario) =>
+      @gherkin.FeatureChild::Scenario(scenario) => {
+        let tags = scenario.tags.map(fn(t) { t.name })
+        if not(tag_filter.matches(tags)) {
+          continue
+        }
         if scenario.examples.is_empty() {
           // Regular scenario
           let all_steps = background_steps.copy()
           for s in scenario.steps {
             all_steps.push((s.keyword, s.text))
           }
-          let tags = scenario.tags.map(fn(t) { t.name })
           let result = execute_scenario(
             registry,
             feature_name=feature.name,
@@ -44,15 +58,14 @@ pub fn execute_feature(
         } else {
           // Scenario Outline: expand each Examples table
           let template_steps = scenario.steps.map(fn(s) { (s.keyword, s.text) })
-          let tags = scenario.tags.map(fn(t) { t.name })
           for examples in scenario.examples {
             let headers = match examples.table_header {
               Some(header_row) => header_row.cells.map(fn(c) { c.value })
               None => continue
             }
-            let rows = examples.table_body.map(
-              fn(r) { r.cells.map(fn(c) { c.value }) },
-            )
+            let rows = examples.table_body.map(fn(r) {
+              r.cells.map(fn(c) { c.value })
+            })
             let expanded = expand_outline(
               scenario.name,
               template_steps,
@@ -76,6 +89,7 @@ pub fn execute_feature(
             }
           }
         }
+      }
       _ => () // Rule handled later
     }
   }
