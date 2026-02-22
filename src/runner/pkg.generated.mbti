@@ -6,6 +6,8 @@ import {
 }
 
 // Values
+pub fn execute_feature(@core.StepRegistry, String) -> FeatureResult raise
+
 pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
 
 pub fn runner_version() -> String
