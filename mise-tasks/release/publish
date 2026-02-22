@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+#MISE description="Publish package to mooncakes.io"
+set -euo pipefail
+
+echo "==> Pre-publish checks"
+moon check
+moon test
+
+echo "==> Publishing to mooncakes.io"
+moon publish
