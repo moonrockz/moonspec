@@ -1,15 +1,23 @@
 ///|
-/// Run features with bounded concurrency using `@async.all()`.
-async fn run_parallel(
-  registry : @core.StepRegistry,
-  features : Array[String],
-  tag_expr~ : String,
+async fn[W : @core.World] run_pickles_parallel(
+  factory : () -> W,
+  pickles : Array[@cucumber_messages.Pickle],
   max_concurrent~ : Int,
-) -> Array[FeatureResult] {
-  let tasks : Array[async () -> FeatureResult] = features.map(fn(content) {
-    async fn() -> FeatureResult {
-      execute_feature_filtered(registry, content, tag_expr~)
-    }
+) -> Array[ScenarioResult] {
+  let tasks : Array[async () -> ScenarioResult] = pickles.map(fn(pickle) {
+    fn() -> ScenarioResult { execute_pickle(factory, pickle) }
+  })
+  @async.all(tasks[:], max_concurrent~)
+}
+
+///|
+async fn[W : @core.World + @core.Hooks] run_pickles_parallel_with_hooks(
+  factory : () -> W,
+  pickles : Array[@cucumber_messages.Pickle],
+  max_concurrent~ : Int,
+) -> Array[ScenarioResult] {
+  let tasks : Array[async () -> ScenarioResult] = pickles.map(fn(pickle) {
+    fn() -> ScenarioResult { execute_pickle_with_hooks(factory, pickle) }
   })
   @async.all(tasks[:], max_concurrent~)
 }

@@ -57,4 +57,14 @@ pub fn StepRegistry::when(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
 // Type aliases
 
 // Traits
+pub(open) trait Hooks {
+  before_scenario(Self, ScenarioInfo) -> Unit raise = _
+  after_scenario(Self, ScenarioInfo, String?) -> Unit raise = _
+  before_step(Self, StepInfo) -> Unit raise = _
+  after_step(Self, StepInfo, String?) -> Unit raise = _
+}
+
+pub(open) trait World {
+  register_steps(Self, StepRegistry) -> Unit
+}
 

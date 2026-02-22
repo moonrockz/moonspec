@@ -2,7 +2,11 @@
   "import": [
     "moonrockz/moonspec/core",
     "moonrockz/gherkin",
-    "moonrockz/cucumber-expressions",
-    "moonbitlang/async"
+{
+      "path": "moonrockz/cucumber-messages",
+      "alias": "cucumber_messages"
+    },
+    "moonbitlang/async",
+    "moonbitlang/x/fs"
   ]
 }

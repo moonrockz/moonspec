@@ -9,6 +9,7 @@ test "JUnitFormatter produces valid XML structure" {
           {
             feature_name: "Math",
             scenario_name: "Addition",
+            pickle_id: "p1",
             tags: [],
             steps: [],
             status: @runner.ScenarioStatus::Passed,
@@ -49,6 +50,7 @@ test "JUnitFormatter formats failed scenario with failure element" {
           {
             feature_name: "Math",
             scenario_name: "Division",
+            pickle_id: "p2",
             tags: [],
             steps: [
               {
@@ -93,6 +95,7 @@ test "JUnitFormatter formats skipped scenario" {
           {
             feature_name: "Skipped Feature",
             scenario_name: "Skipped Scenario",
+            pickle_id: "p3",
             tags: [],
             steps: [],
             status: @runner.ScenarioStatus::Skipped,
@@ -128,6 +131,7 @@ test "JUnitFormatter escapes XML special characters" {
           {
             feature_name: "Math <&> \"ops\"",
             scenario_name: "A & B",
+            pickle_id: "p4",
             tags: [],
             steps: [],
             status: @runner.ScenarioStatus::Passed,

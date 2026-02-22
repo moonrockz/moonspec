@@ -1,4 +1,12 @@
 ///|
+/// Input source for a feature to be loaded into the cache.
+pub(all) enum FeatureSource {
+  Text(String, String) // (path, content)
+  File(String) // (path) — unchanged
+  Parsed(String, @gherkin.Feature) // (path, feature)
+} derive(Show, Eq)
+
+///|
 /// Status of a single step execution.
 pub(all) enum StepStatus {
   Passed
@@ -70,6 +78,7 @@ pub(all) struct StepResult {
 pub(all) struct ScenarioResult {
   feature_name : String
   scenario_name : String
+  pickle_id : String
   tags : Array[String]
   steps : Array[StepResult]
   status : ScenarioStatus

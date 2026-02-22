@@ -1,0 +1,6 @@
+{
+  "import": [
+    "moonrockz/moonspec",
+    "moonbitlang/async"
+  ]
+}

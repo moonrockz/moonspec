@@ -4,5 +4,9 @@ _build/
 *.wasm
 
 .claude/
+.worktrees/
 .specify/
 target
+examples/*/target/
+examples/*/.mooncakes/
+examples/*/src/*_feature_test.mbt
