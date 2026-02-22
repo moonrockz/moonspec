@@ -1,0 +1,8 @@
+{
+  "import": [
+    "moonrockz/moonspec/core",
+    "moonrockz/gherkin",
+    "moonrockz/cucumber-expressions",
+    "moonbitlang/async"
+  ]
+}

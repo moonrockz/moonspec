@@ -8,22 +8,6 @@ moonspec brings Behavior-Driven Development to [MoonBit](https://www.moonbitlang
 Write specifications in Gherkin, match steps with Cucumber Expressions, and run
 them natively with `moon test` or via the programmatic Runner API.
 
-## Features
-
-- **Gherkin parsing** -- Feature, Scenario, Scenario Outline, Background, Rules,
-  Examples, Data Tables, Doc Strings
-- **Cucumber Expressions** -- type-safe step matching with `{int}`, `{float}`,
-  `{string}`, `{word}`, and custom parameter types
-- **Tag filtering** -- boolean tag expressions (`@smoke and not @slow`)
-- **Scenario Outline expansion** -- parameterized scenarios from Examples tables
-- **Background steps** -- shared setup across scenarios
-- **Pluggable formatters** -- Pretty (console), Cucumber Messages (NDJSON),
-  JUnit XML (CI integration)
-- **Codegen** -- generate `_test.mbt` files from `.feature` files for native
-  `moon test` integration
-- **Event-driven architecture** -- formatters receive lifecycle events during
-  execution
-
 ## Quick Start
 
 ### Installation
@@ -32,41 +16,380 @@ them natively with `moon test` or via the programmatic Runner API.
 moon add moonrockz/moonspec
 ```
 
-### Mode 1: Codegen (Recommended)
+### Minimal Working Example
 
-Generate MoonBit test files from Gherkin features for native `moon test`:
+1. Write a feature file (`features/calculator.feature`):
 
-```moonbit
-// Use the codegen package to generate _test.mbt from .feature files
-let content = @codegen.generate_test_file(feature_content, "features/calculator.feature")
-// Write `content` to a _test.mbt file, then run `moon test`
+```gherkin
+Feature: Calculator
+
+  Scenario: Addition
+    Given a calculator
+    When I add 2 and 3
+    Then the result should be 5
 ```
 
-### Mode 2: Runner API
+2. Define steps and run:
 
-Register steps and execute features programmatically:
+```moonbit
+let registry = @core.StepRegistry::new()
+let mut result_val = 0
+
+registry.given("a calculator", fn(_args) { result_val = 0 })
+registry.when("I add {int} and {int}", fn(args) {
+  match (args[0], args[1]) {
+    (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) => result_val = a + b
+    _ => ()
+  }
+})
+registry.then("the result should be {int}", fn(args) raise {
+  match args[0] {
+    @core.StepArg::IntArg(expected) => assert_eq(result_val, expected)
+    _ => ()
+  }
+})
+
+let feature = "Feature: Calculator\n  Scenario: Addition\n    Given a calculator\n    When I add 2 and 3\n    Then the result should be 5"
+let result = @runner.run!(registry, [feature])
+// result.summary.passed == 1
+```
+
+## Writing Features
+
+moonspec uses standard [Gherkin](https://cucumber.io/docs/gherkin/) syntax:
+
+```gherkin
+@smoke
+Feature: Shopping Cart
+
+  Background:
+    Given a logged-in user
+    And an empty cart
+
+  Scenario: Add item to cart
+    When I add "Widget" to the cart
+    Then the cart should contain 1 item
+
+  @slow
+  Scenario Outline: Bulk discount
+    When I add <quantity> of "<product>" to the cart
+    Then the discount should be <discount>%
+
+    Examples:
+      | quantity | product | discount |
+      | 10       | Widget  | 5        |
+      | 50       | Widget  | 15       |
+      | 100      | Gadget  | 20       |
+```
+
+Supported constructs:
+
+- **Feature** -- top-level container with optional description
+- **Scenario** -- a concrete test case
+- **Scenario Outline** -- parameterized scenario with Examples table
+- **Background** -- shared Given steps run before each scenario
+- **Rule** -- grouping scenarios under a business rule
+- **Data Tables** -- tabular data attached to a step
+- **Doc Strings** -- multiline text attached to a step
+- **Tags** -- `@tag` annotations for filtering and metadata
+- **Comments** -- lines starting with `#`
+
+## Step Definitions
+
+Steps are registered on a `StepRegistry` using Cucumber Expression patterns:
 
 ```moonbit
 let registry = @core.StepRegistry::new()
 
-registry.given("a calculator", fn(_args) { /* setup */ })
-registry.when("I add {int} and {int}", fn(args) {
-  // args[0] is IntArg(a), args[1] is IntArg(b)
-  ignore(args)
-})
-registry.then("the result is {int}", fn(args) {
-  // assert the result
-  ignore(args)
+registry.given("a calculator", fn(_args) {
+  // setup code
 })
 
-let feature_content = "Feature: Calculator\n  Scenario: Add\n    Given a calculator\n    When I add 2 and 3\n    Then the result is 5"
-let result = @runner.run!(registry, [feature_content])
+registry.when("I add {int} and {int}", fn(args) {
+  match (args[0], args[1]) {
+    (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) => result = a + b
+    _ => ()
+  }
+})
+
+registry.then("the result should be {int}", fn(args) raise {
+  match args[0] {
+    @core.StepArg::IntArg(expected) => assert_eq(result, expected)
+    _ => ()
+  }
+})
 ```
 
-### Mode 3: CLI
+### Cucumber Expression Parameters
+
+| Parameter | StepArg Variant | Example Pattern |
+|-----------|-----------------|-----------------|
+| `{int}` | `IntArg(Int)` | `"I have {int} items"` |
+| `{float}` | `FloatArg(Double)` | `"priced at {float}"` |
+| `{string}` | `StringArg(String)` | `"named {string}"` |
+| `{word}` | `WordArg(String)` | `"as {word}"` |
+| custom | `CustomArg(String)` | user-defined types |
+
+### StepArg Destructuring
+
+Arguments are passed as `Array[StepArg]`. Use pattern matching to extract values:
+
+```moonbit
+registry.when("I transfer {float} from {string} to {string}", fn(args) {
+  match (args[0], args[1], args[2]) {
+    (FloatArg(amount), StringArg(from), StringArg(to)) => {
+      transfer(amount, from, to)
+    }
+    _ => ()
+  }
+})
+```
+
+### Generic Steps
+
+Use `registry.step()` to register a step that matches any keyword (Given/When/Then):
+
+```moonbit
+registry.step("I wait {int} seconds", fn(args) {
+  // matches "Given I wait 5 seconds", "When I wait 5 seconds", etc.
+  ignore(args)
+})
+```
+
+## Running Tests
+
+### Mode 1: Codegen (Recommended)
+
+Generate `_test.mbt` files from `.feature` files for native `moon test` integration:
 
 ```bash
-moon run src/cmd/main
+# Generate test files using the CLI
+moon run src/cmd/main -- gen features/*.feature --output-dir src/tests/
+
+# Run generated tests
+moon test
+```
+
+The codegen produces `async test` blocks with step comments:
+
+```moonbit
+// Generated by moonspec codegen — DO NOT EDIT
+// Source: features/calculator.feature
+// moonspec:hash:a1b2c3d4
+
+async test "Feature: Calculator / Scenario: Addition" {
+  // Given a calculator
+  // When I add 2 and 3
+  // Then the result should be 5
+  ignore("")
+}
+```
+
+### Mode 2: Runner API
+
+For programmatic control, use the Runner API directly in your test files:
+
+```moonbit
+async test "calculator features" {
+  let registry = @core.StepRegistry::new()
+  // ... register steps ...
+
+  let result = @runner.run!(registry, [feature_content],
+    tag_expr="@smoke and not @slow",
+    parallel=4,
+  )
+
+  assert_eq(result.summary.failed, 0)
+}
+```
+
+## CLI
+
+The moonspec CLI provides two commands for working with `.feature` files:
+
+### `gen` -- Generate Test Files
+
+```bash
+moon run src/cmd/main -- gen <feature-files...> [--output-dir <dir>]
+```
+
+Reads `.feature` files and generates `_test.mbt` files via codegen.
+
+- Accepts one or more file paths
+- `--output-dir` / `-o`: write output to the specified directory (default: alongside source)
+- Prints generated filenames to stdout
+
+```bash
+# Generate test file alongside the feature
+moon run src/cmd/main -- gen features/login.feature
+
+# Generate into a specific directory
+moon run src/cmd/main -- gen features/*.feature -o src/tests/
+```
+
+### `check` -- Validate Feature Files
+
+```bash
+moon run src/cmd/main -- check <feature-files...>
+```
+
+Parses `.feature` files and reports their structure:
+
+- Feature name, scenario count, step count
+- Tag listing
+- Parse errors (exits with code 1 on failure)
+
+```bash
+$ moon run src/cmd/main -- check features/calculator.feature
+features/calculator.feature:
+  Feature: Calculator
+  Scenarios: 3
+  Steps: 7
+  Tags: @slow
+```
+
+### `version`
+
+```bash
+moon run src/cmd/main -- version
+```
+
+Prints `moonspec <version>`.
+
+## Tag Filtering
+
+Filter scenarios by tags using boolean expressions:
+
+```moonbit
+// Run only @smoke scenarios
+let result = @runner.run!(registry, features, tag_expr="@smoke")
+
+// Run @smoke but not @slow
+let result = @runner.run!(registry, features, tag_expr="@smoke and not @slow")
+
+// Run @smoke or @regression
+let result = @runner.run!(registry, features, tag_expr="@smoke or @regression")
+```
+
+Tag expression syntax:
+
+| Expression | Meaning |
+|------------|---------|
+| `@smoke` | Scenarios tagged `@smoke` |
+| `not @slow` | Scenarios NOT tagged `@slow` |
+| `@smoke and @fast` | Scenarios tagged with BOTH |
+| `@smoke or @regression` | Scenarios tagged with EITHER |
+| `@smoke and not @slow` | Combined expressions |
+
+Tags are inherited: a tag on a Feature applies to all its scenarios.
+
+## Scenario Outlines
+
+Parameterized scenarios generate one test per row in the Examples table:
+
+```gherkin
+Scenario Outline: Arithmetic
+  When I compute <a> <op> <b>
+  Then the result should be <result>
+
+  Examples:
+    | a  | op  | b  | result |
+    | 2  | +   | 3  | 5      |
+    | 10 | -   | 4  | 6      |
+    | 3  | *   | 7  | 21     |
+```
+
+Each row produces a separate scenario with `<placeholder>` values substituted.
+
+## Background Steps
+
+Background steps run before every scenario in a feature:
+
+```gherkin
+Feature: Account Management
+
+  Background:
+    Given a logged-in user
+    And the account page is open
+
+  Scenario: Change email
+    When I update my email to "new@example.com"
+    Then the email should be "new@example.com"
+
+  Scenario: Change password
+    When I change my password
+    Then I should see a confirmation
+```
+
+## Async and Parallel Execution
+
+The Runner API supports async execution and parallel scenario processing:
+
+```moonbit
+async test "parallel features" {
+  let registry = @core.StepRegistry::new()
+  // ... register steps ...
+
+  // Run 4 scenarios concurrently
+  let result = @runner.run!(registry, features, parallel=4)
+}
+```
+
+- `parallel` parameter controls concurrency level
+- Tests must use `async test` blocks
+- Requires JS target: `moon test --target js`
+
+## Formatters
+
+moonspec includes three formatters for different output needs:
+
+### Pretty Formatter (Console)
+
+Human-readable colored output:
+
+```moonbit
+let fmt = @format.PrettyFormatter::new()
+// or disable colors:
+let fmt = @format.PrettyFormatter::new(no_color=true)
+
+// After running, get the formatted output:
+let output = fmt.output()
+```
+
+### Cucumber Messages (NDJSON)
+
+Standard Cucumber Messages protocol for tool integration:
+
+```moonbit
+let fmt = @format.MessagesFormatter::new()
+// ... run features with formatter ...
+let ndjson = fmt.output()
+```
+
+### JUnit XML
+
+For CI/CD integration:
+
+```moonbit
+let fmt = @format.JUnitFormatter::new()
+// ... run features with formatter ...
+let xml = fmt.output()
+```
+
+### Using Formatters
+
+Formatters implement the `Formatter` trait with event-driven callbacks:
+
+```moonbit
+pub(open) trait Formatter {
+  on_run_start(Self, RunInfo) -> Unit
+  on_feature_start(Self, String) -> Unit
+  on_scenario_start(Self, ScenarioResult) -> Unit
+  on_step_finish(Self, StepResult) -> Unit
+  on_scenario_finish(Self, ScenarioResult) -> Unit
+  on_feature_finish(Self, FeatureResult) -> Unit
+  on_run_finish(Self, RunResult) -> Unit
+}
 ```
 
 ## Architecture
@@ -114,6 +437,7 @@ moon run src/cmd/main
 | [moonrockz/gherkin](https://mooncakes.io/docs/#/moonrockz/gherkin/) | Gherkin parser |
 | [moonrockz/cucumber-expressions](https://mooncakes.io/docs/#/moonrockz/cucumber-expressions/) | Step pattern matching |
 | [moonrockz/cucumber-messages](https://mooncakes.io/docs/#/moonrockz/cucumber-messages/) | Cucumber Messages protocol |
+| [TheWaWaR/clap](https://mooncakes.io/docs/#/TheWaWaR/clap/) | CLI argument parsing |
 | [moonbitlang/x](https://mooncakes.io/docs/#/moonbitlang/x/) | Standard library extensions |
 | [moonbitlang/async](https://mooncakes.io/docs/#/moonbitlang/async/) | Async execution primitives |
 | [moonbitlang/regexp](https://mooncakes.io/docs/#/moonbitlang/regexp/) | Regular expressions |
@@ -123,6 +447,7 @@ moon run src/cmd/main
 ```bash
 moon check          # Type-check the project
 moon test           # Run all tests
+moon test --target js  # Run tests (required for async/parallel)
 moon fmt            # Format code
 moon info           # Update .mbti interface files
 mise run test:unit  # Run tests via mise

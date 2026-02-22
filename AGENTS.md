@@ -18,7 +18,8 @@ The framework supports three integration modes:
    `moon test` execution
 2. **Runner API** -- programmatic step registration and execution from MoonBit
    code
-3. **CLI** -- command-line entry point for running features
+3. **CLI** -- command-line tool with `gen` (codegen), `check` (validation),
+   and `version` subcommands
 
 ### Architecture Summary
 
