@@ -1,0 +1,11 @@
+{
+  "import": [
+    "moonrockz/moonspec/core",
+    "moonrockz/moonspec/runner",
+    "moonrockz/gherkin",
+    {
+      "path": "moonrockz/cucumber-messages",
+      "alias": "cucumber_messages"
+    }
+  ]
+}
