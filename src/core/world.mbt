@@ -1,0 +1,22 @@
+///|
+/// Step registration trait. Users implement this on their world struct.
+///
+/// Called once per scenario with a fresh `Default`-constructed instance.
+/// Closures registered via `StepRegistry` capture `self`, sharing world
+/// state between steps within the same scenario. Since MoonBit structs
+/// are reference types, mutations through closures are visible to all
+/// step handlers.
+///
+/// Example:
+/// ```
+/// struct MyWorld { mut count : Int } derive(Default)
+///
+/// impl @moonspec.World for MyWorld with register_steps(self, s) {
+///   s.given("a count of {int}", fn(args) {
+///     match args[0] { @moonspec.IntArg(n) => self.count = n | _ => () }
+///   })
+/// }
+/// ```
+pub(open) trait World {
+  register_steps(Self, StepRegistry) -> Unit
+}
