@@ -30,12 +30,29 @@ pub fn StepArg::from_param(@cucumber-expressions.Param) -> Self
 pub impl Eq for StepArg
 pub impl Show for StepArg
 
+type StepEntry
+
+pub struct StepHandler((Array[StepArg]) -> Unit raise)
+#deprecated
+pub fn StepHandler::inner(Self) -> (Array[StepArg]) -> Unit raise
+
 pub(all) struct StepInfo {
   keyword : String
   text : String
 }
 pub impl Eq for StepInfo
 pub impl Show for StepInfo
+
+pub(all) struct StepRegistry {
+  // private fields
+}
+pub fn StepRegistry::find_match(Self, String) -> (StepHandler, Array[StepArg], String)?
+pub fn StepRegistry::given(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn StepRegistry::len(Self) -> Int
+pub fn StepRegistry::new() -> Self
+pub fn StepRegistry::step(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn StepRegistry::then(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn StepRegistry::when(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
 
 // Type aliases
 
