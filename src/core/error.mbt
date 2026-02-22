@@ -61,3 +61,22 @@ pub fn step_failed_error(
 ) -> Error {
   StepFailed(step~, keyword~, message~)
 }
+
+///|
+/// Create a ScenarioFailed error.
+pub fn scenario_failed_error(
+  scenario~ : String,
+  feature~ : String,
+  errors~ : Array[MoonspecError],
+) -> MoonspecError {
+  ScenarioFailed(scenario~, feature~, errors~)
+}
+
+///|
+/// Create a RunFailed error.
+pub fn run_failed_error(
+  summary~ : String,
+  errors~ : Array[MoonspecError],
+) -> Error {
+  RunFailed(summary~, errors~)
+}

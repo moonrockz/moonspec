@@ -44,3 +44,39 @@ async test "run multiple features" {
   assert_eq(result.summary.failed, 1)
   assert_eq(result.features.length(), 2)
 }
+
+///|
+struct PassWorld {} derive(Default)
+
+impl @core.World for PassWorld with register_steps(_self, s) {
+  s.given("a calculator", fn(_args) {  })
+}
+
+///|
+async test "run_or_fail succeeds when all pass" {
+  let content = "Feature: Simple\n\n  Scenario: Pass\n    Given a calculator\n"
+  let result = run_or_fail(
+    PassWorld::default,
+    [FeatureSource::Text("test://pass", content)],
+  )
+  assert_eq(result.summary.passed, 1)
+}
+
+///|
+struct NoStepsWorld {} derive(Default)
+
+impl @core.World for NoStepsWorld with register_steps(_self, _s) {  }
+
+///|
+async test "run_or_fail raises RunFailed on undefined steps" {
+  let content = "Feature: Fail\n\n  Scenario: Undefined\n    Given an undefined step\n"
+  let mut caught = false
+  try {
+    run_or_fail(NoStepsWorld::default, [FeatureSource::Text("test://fail", content)])
+    |> ignore
+  } catch {
+    @core.RunFailed(..) => caught = true
+    _ => ()
+  }
+  assert_true(caught)
+}
