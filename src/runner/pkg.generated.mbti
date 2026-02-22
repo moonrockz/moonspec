@@ -10,6 +10,8 @@ pub fn execute_feature(@core.StepRegistry, String) -> FeatureResult raise
 
 pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
 
+pub fn expand_outline(String, Array[(String, String)], Array[String], Array[Array[String]]) -> Array[(String, Array[(String, String)])]
+
 pub fn runner_version() -> String
 
 // Errors
@@ -83,6 +85,18 @@ pub(all) enum StepStatus {
 pub fn StepStatus::is_passed(Self) -> Bool
 pub impl Eq for StepStatus
 pub impl Show for StepStatus
+
+pub(all) enum TagExpression {
+  TagLiteral(String)
+  Not(TagExpression)
+  And(TagExpression, TagExpression)
+  Or(TagExpression, TagExpression)
+  Always
+}
+pub fn TagExpression::matches(Self, Array[String]) -> Bool
+pub fn TagExpression::parse(String) -> Self raise
+pub impl Eq for TagExpression
+pub impl Show for TagExpression
 
 // Type aliases
 
