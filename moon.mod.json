@@ -1,0 +1,18 @@
+{
+  "name": "moonrockz/moonspec",
+  "version": "0.1.0",
+  "deps": {
+    "moonbitlang/x": "0.4.40",
+    "moonbitlang/async": "0.16.6",
+    "moonbitlang/regexp": "0.3.5",
+    "moonrockz/gherkin": "0.3.0",
+    "moonrockz/cucumber-expressions": "0.1.0",
+    "moonrockz/cucumber-messages": "0.1.0"
+  },
+  "readme": "README.mbt.md",
+  "repository": "https://github.com/moonrockz/moonspec",
+  "license": "Apache-2.0",
+  "keywords": ["bdd", "cucumber", "gherkin", "testing", "moonbit"],
+  "description": "BDD test framework for MoonBit with Gherkin and Cucumber Expressions",
+  "source": "src"
+}

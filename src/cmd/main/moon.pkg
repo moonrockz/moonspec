@@ -1,0 +1,12 @@
+import {
+  "moonrockz/moonspec/core",
+  "moonrockz/moonspec/runner",
+  "moonrockz/moonspec/format",
+  "moonrockz/moonspec/codegen",
+  "moonrockz/gherkin",
+  "moonbitlang/async",
+}
+
+options(
+  "is-main": true,
+)
