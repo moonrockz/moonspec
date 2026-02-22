@@ -1,17 +1,38 @@
 ///|
 /// Run all features and collect results.
+///
+/// When `parallel` is greater than 0, it indicates the desired concurrency level
+/// for feature execution. Currently executes sequentially regardless; true async
+/// parallel execution will be enabled in a future release once the runner's
+/// error-raising functions are adapted for async contexts.
 pub fn run(
   registry : @core.StepRegistry,
   features : Array[String],
   tag_expr~ : String = "",
+  parallel~ : Int = 0,
 ) -> RunResult!Error {
-  let feature_results : Array[FeatureResult] = []
-  for content in features {
-    let result = execute_feature_filtered!(registry, content, tag_expr~)
-    feature_results.push(result)
+  let feature_results = if parallel > 0 {
+    run_parallel!(registry, features, tag_expr~, max_concurrent=parallel)
+  } else {
+    run_sequential!(registry, features, tag_expr~)
   }
   let summary = compute_summary(feature_results)
   { features: feature_results, summary }
+}
+
+///|
+/// Run features sequentially (the default path).
+fn run_sequential(
+  registry : @core.StepRegistry,
+  features : Array[String],
+  tag_expr~ : String,
+) -> Array[FeatureResult]!Error {
+  let results : Array[FeatureResult] = []
+  for content in features {
+    let result = execute_feature_filtered!(registry, content, tag_expr~)
+    results.push(result)
+  }
+  results
 }
 
 ///|

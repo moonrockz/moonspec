@@ -8,9 +8,13 @@ import {
 // Values
 pub fn execute_feature(@core.StepRegistry, String) -> FeatureResult raise
 
+pub fn execute_feature_filtered(@core.StepRegistry, String, tag_expr~ : String) -> FeatureResult raise
+
 pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
 
 pub fn expand_outline(String, Array[(String, String)], Array[String], Array[Array[String]]) -> Array[(String, Array[(String, String)])]
+
+pub fn run(@core.StepRegistry, Array[String], tag_expr? : String, parallel? : Int) -> RunResult raise
 
 pub fn runner_version() -> String
 
