@@ -1,0 +1,43 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec/core"
+
+import {
+  "moonrockz/cucumber-expressions",
+}
+
+// Values
+pub fn core_version() -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct ScenarioInfo {
+  feature_name : String
+  scenario_name : String
+  tags : Array[String]
+}
+pub impl Eq for ScenarioInfo
+pub impl Show for ScenarioInfo
+
+pub(all) enum StepArg {
+  IntArg(Int)
+  FloatArg(Double)
+  StringArg(String)
+  WordArg(String)
+  CustomArg(String)
+}
+pub fn StepArg::from_param(@cucumber-expressions.Param) -> Self
+pub impl Eq for StepArg
+pub impl Show for StepArg
+
+pub(all) struct StepInfo {
+  keyword : String
+  text : String
+}
+pub impl Eq for StepInfo
+pub impl Show for StepInfo
+
+// Type aliases
+
+// Traits
+

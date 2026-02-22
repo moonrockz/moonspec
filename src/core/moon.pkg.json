@@ -1,0 +1,9 @@
+{
+  "import": [
+    {
+      "path": "moonrockz/cucumber-expressions",
+      "alias": "cucumber_expressions"
+    },
+    "moonbitlang/core/strconv"
+  ]
+}
