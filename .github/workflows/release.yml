@@ -28,7 +28,7 @@ jobs:
       - name: Check formatting
         run: |
           moon fmt
-          git diff --exit-code
+          git diff --exit-code -- '*.mbt' || (echo "::error::moon fmt produced changes — run 'moon fmt' locally and commit" && exit 1)
 
       - name: Check code
         run: moon check
