@@ -188,7 +188,7 @@ fn generate_per_feature(
       config.world +
       "::default, [@moonspec.FeatureSource::File(\"" +
       escape_string(source_path) +
-      "\")],\n  )\n",
+      "\")],\n  )\n  |> ignore\n",
     )
   } else {
     buf.write_string("  ignore(\"\")\n")
@@ -264,7 +264,7 @@ fn generate_scenario_runner_test(
       escape_string(source_path) +
       "\")],\n    scenario_name=\"" +
       escape_string(scenario_name) +
-      "\",\n  )\n",
+      "\",\n  )\n  |> ignore\n",
     )
   } else {
     buf.write_string("  // Source: " + source_path + "\n")

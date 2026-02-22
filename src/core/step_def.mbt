@@ -34,35 +34,35 @@ pub(all) struct StepDef {
 ///|
 pub fn StepDef::given(
   pattern : String,
-  handler : StepHandler,
+  handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Given, pattern, handler, source }
+  { keyword: Given, pattern, handler: StepHandler(handler), source }
 }
 
 ///|
 pub fn StepDef::when(
   pattern : String,
-  handler : StepHandler,
+  handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: When, pattern, handler, source }
+  { keyword: When, pattern, handler: StepHandler(handler), source }
 }
 
 ///|
 pub fn StepDef::then(
   pattern : String,
-  handler : StepHandler,
+  handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Then, pattern, handler, source }
+  { keyword: Then, pattern, handler: StepHandler(handler), source }
 }
 
 ///|
 pub fn StepDef::step(
   pattern : String,
-  handler : StepHandler,
+  handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Step, pattern, handler, source }
+  { keyword: Step, pattern, handler: StepHandler(handler), source }
 }

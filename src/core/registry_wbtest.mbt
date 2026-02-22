@@ -91,7 +91,7 @@ test "StepRegistry use_library registers library steps" {
 ///|
 test "StepRegistry register_def registers a StepDef directly" {
   let reg = StepRegistry::new()
-  let def = StepDef::given("hello world", StepHandler(fn(_args) {  }))
+  let def = StepDef::given("hello world", fn(_args) {  })
   reg.register_def(def)
   assert_eq(reg.len(), 1)
   assert_true(reg.find_match("hello world") is Matched(_, _))
