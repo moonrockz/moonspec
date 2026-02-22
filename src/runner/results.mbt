@@ -71,7 +71,8 @@ pub(all) struct StepResult {
   keyword : String
   status : StepStatus
   duration_ms : Int64
-} derive(Show, Eq)
+  diagnostic : Error?
+} derive(Show)
 
 ///|
 /// Result of executing a scenario.
@@ -83,7 +84,7 @@ pub(all) struct ScenarioResult {
   steps : Array[StepResult]
   status : ScenarioStatus
   duration_ms : Int64
-} derive(Show, Eq)
+} derive(Show)
 
 ///|
 /// Result of executing a feature.
@@ -91,7 +92,7 @@ pub(all) struct FeatureResult {
   name : String
   scenarios : Array[ScenarioResult]
   duration_ms : Int64
-} derive(Show, Eq)
+} derive(Show)
 
 ///|
 /// Summary of an entire run.
@@ -110,4 +111,4 @@ pub(all) struct RunSummary {
 pub(all) struct RunResult {
   features : Array[FeatureResult]
   summary : RunSummary
-} derive(Show, Eq)
+} derive(Show)

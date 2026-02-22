@@ -108,3 +108,54 @@ test "execute_scenario marks undefined steps" {
   assert_eq(result.status, ScenarioStatus::Undefined)
   assert_eq(result.steps[0].status, StepStatus::Undefined)
 }
+
+///|
+test "execute_scenario carries UndefinedStep diagnostic" {
+  let registry = @core.StepRegistry::new()
+  registry.given("I have {int} cucumbers", fn(_args) {  })
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "an undefined step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test Feature",
+    scenario_name="Diagnostic test",
+    pickle_id="test-pickle-diag",
+    tags=[],
+    steps~,
+  )
+  assert_eq(result.steps[0].status, StepStatus::Undefined)
+  assert_true(result.steps[0].diagnostic is Some(_))
+}
+
+///|
+test "execute_scenario catches PendingStep" {
+  let registry = @core.StepRegistry::new()
+  registry.given("a pending step", fn(_args) raise {
+    raise @core.pending_step_error(step="a pending step", keyword="Given", message="TODO")
+  })
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a pending step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test Feature",
+    scenario_name="Pending test",
+    pickle_id="test-pickle-pending",
+    tags=[],
+    steps~,
+  )
+  assert_eq(result.steps[0].status, StepStatus::Pending)
+}

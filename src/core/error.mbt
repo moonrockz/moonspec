@@ -30,3 +30,34 @@ pub suberror MoonspecError {
     errors~ : Array[MoonspecError],
   )
 }
+
+///|
+/// Create an UndefinedStep error.
+pub fn undefined_step_error(
+  step~ : String,
+  keyword~ : String,
+  snippet~ : String,
+  suggestions~ : Array[String],
+) -> Error {
+  UndefinedStep(step~, keyword~, snippet~, suggestions~)
+}
+
+///|
+/// Create a PendingStep error.
+pub fn pending_step_error(
+  step~ : String,
+  keyword~ : String,
+  message~ : String,
+) -> Error {
+  PendingStep(step~, keyword~, message~)
+}
+
+///|
+/// Create a StepFailed error.
+pub fn step_failed_error(
+  step~ : String,
+  keyword~ : String,
+  message~ : String,
+) -> Error {
+  StepFailed(step~, keyword~, message~)
+}
