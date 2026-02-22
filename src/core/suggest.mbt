@@ -66,7 +66,7 @@ fn find_suggestions(registry : StepRegistry, text : String) -> Array[String] {
   let normalized_text = normalize_pattern(text)
   let candidates : Array[(String, Int)] = []
   for entry in registry.entries {
-    let pattern = entry.expression.source()
+    let pattern = entry.def.pattern
     let normalized = normalize_pattern(pattern)
     let dist = levenshtein_distance(normalized_text, normalized)
     let threshold = normalized_text.length() / 2
