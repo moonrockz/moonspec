@@ -28,8 +28,23 @@ fn build_parser() -> @clap.Parser {
           ),
           "output-dir": @clap.Arg::named(
             short='o',
-            nargs=Fixed(1),
+            nargs=AtMost(1),
             help="Output directory for generated test files",
+          ),
+          "world": @clap.Arg::named(
+            short='w',
+            nargs=AtMost(1),
+            help="World type name (e.g. CalcWorld)",
+          ),
+          "mode": @clap.Arg::named(
+            short='m',
+            nargs=AtMost(1),
+            help="Codegen mode: per-scenario (default) or per-feature",
+          ),
+          "config": @clap.Arg::named(
+            short='c',
+            nargs=AtMost(1),
+            help="Path to moonspec.json5 config file",
           ),
         },
         help="Generate _test.mbt files from .feature files",
@@ -60,6 +75,68 @@ fn cmd_gen(value : @clap.SimpleValue) -> Unit {
     Some(vals) => Some(vals[0])
     None => None
   }
+  // Load config: start from defaults, overlay config file, then CLI flags
+  let mut config = @codegen.CodegenConfig::default()
+  let config_path : String? = match value.args.get("config") {
+    Some(vals) => Some(vals[0])
+    None => None
+  }
+  // Try explicit --config path, or fall back to moonspec.json5 in cwd
+  let config_file : String? = match config_path {
+    Some(p) => Some(p)
+    None => {
+      let default_content = try {
+        @fs.read_file_to_string("moonspec.json5")
+      } catch {
+        _ => ""
+      }
+      if default_content.length() > 0 {
+        Some("moonspec.json5")
+      } else {
+        None
+      }
+    }
+  }
+  match config_file {
+    Some(path) => {
+      let json5_content = @fs.read_file_to_string(path) catch {
+        @fs.IOError(msg) => {
+          die("Error reading config \{path}: \{msg}")
+          return
+        }
+      }
+      config = @codegen.CodegenConfig::from_json5(json5_content) catch {
+        err => {
+          die("Error parsing config \{path}: \{err}")
+          return
+        }
+      }
+    }
+    None => ()
+  }
+  // CLI flags override config file values
+  match value.args.get("world") {
+    Some(vals) => config = { ..config, world: vals[0] }
+    None => ()
+  }
+  match value.args.get("mode") {
+    Some(vals) =>
+      match vals[0] {
+        "per-feature" =>
+          config = { ..config, mode: @codegen.CodegenMode::PerFeature }
+        "per-scenario" =>
+          config = { ..config, mode: @codegen.CodegenMode::PerScenario }
+        other => {
+          die("Unknown mode: \{other} (expected per-scenario or per-feature)")
+          return
+        }
+      }
+    None => ()
+  }
+  if config.world.length() == 0 {
+    die("Error: --world (-w) is required. Specify the World type name (e.g. -w CalcWorld)")
+    return
+  }
   for file in files {
     let content = @fs.read_file_to_string(file) catch {
       @fs.IOError(msg) => {
@@ -67,7 +144,7 @@ fn cmd_gen(value : @clap.SimpleValue) -> Unit {
         return
       }
     }
-    let test_code = @codegen.generate_test_file(content, file)
+    let test_code = @codegen.generate_test_file(content, file, config~)
     let test_filename = @codegen.feature_to_test_filename(file)
     let output_path = match output_dir {
       Some(dir) => dir + "/" + test_filename

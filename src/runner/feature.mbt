@@ -1,11 +1,48 @@
 ///|
-/// Execute all scenarios in a feature, given its content as a string.
+/// Resolve a FeatureSource to a parsed Gherkin Feature.
+fn resolve_feature(input : FeatureSource) -> @gherkin.Feature? raise Error {
+  match input {
+    Text(content) => {
+      let source = @gherkin.Source::from_string(content)
+      let doc = @gherkin.parse(source)
+      doc.feature
+    }
+    File(path) => {
+      let content = @fs.read_file_to_string(path)
+      let source = @gherkin.Source::from_string(content)
+      let doc = @gherkin.parse(source)
+      doc.feature
+    }
+    Parsed(feature) => Some(feature)
+  }
+}
+
+///|
+/// Collect background steps from a parsed feature.
+fn collect_background_steps(
+  feature : @gherkin.Feature,
+) -> Array[(String, String)] {
+  let steps : Array[(String, String)] = []
+  for child in feature.children {
+    match child {
+      @gherkin.FeatureChild::Background(bg) =>
+        for s in bg.steps {
+          steps.push((s.keyword, s.text))
+        }
+      _ => ()
+    }
+  }
+  steps
+}
+
+///|
+/// Execute all scenarios in a feature.
 /// A fresh world is created per scenario via `factory()`.
 pub fn[W : @core.World] execute_feature(
   factory : () -> W,
-  content : String,
+  input : FeatureSource,
 ) -> FeatureResult raise Error {
-  execute_feature_filtered(factory, content, tag_expr="")
+  execute_feature_filtered(factory, input, tag_expr="")
 }
 
 ///|
@@ -13,28 +50,15 @@ pub fn[W : @core.World] execute_feature(
 /// A fresh world is created per scenario via `factory()`.
 pub fn[W : @core.World] execute_feature_filtered(
   factory : () -> W,
-  content : String,
+  input : FeatureSource,
   tag_expr~ : String,
 ) -> FeatureResult raise Error {
   let tag_filter = TagExpression::parse(tag_expr)
-  let source = @gherkin.Source::from_string(content)
-  let doc = @gherkin.parse(source)
-  let feature = match doc.feature {
+  let feature = match resolve_feature(input) {
     Some(f) => f
     None => return { name: "(empty)", scenarios: [], duration_ms: 0L }
   }
-  // First pass: collect background steps
-  let background_steps : Array[(String, String)] = []
-  for child in feature.children {
-    match child {
-      @gherkin.FeatureChild::Background(bg) =>
-        for s in bg.steps {
-          background_steps.push((s.keyword, s.text))
-        }
-      _ => ()
-    }
-  }
-  // Second pass: execute scenarios with fresh world per scenario
+  let background_steps = collect_background_steps(feature)
   let scenario_results : Array[ScenarioResult] = []
   for child in feature.children {
     match child {
@@ -109,26 +133,15 @@ pub fn[W : @core.World] execute_feature_filtered(
 /// A fresh world is created per scenario via `factory()`.
 pub fn[W : @core.World + @core.Hooks] execute_feature_filtered_with_hooks(
   factory : () -> W,
-  content : String,
+  input : FeatureSource,
   tag_expr~ : String,
 ) -> FeatureResult raise Error {
   let tag_filter = TagExpression::parse(tag_expr)
-  let source = @gherkin.Source::from_string(content)
-  let doc = @gherkin.parse(source)
-  let feature = match doc.feature {
+  let feature = match resolve_feature(input) {
     Some(f) => f
     None => return { name: "(empty)", scenarios: [], duration_ms: 0L }
   }
-  let background_steps : Array[(String, String)] = []
-  for child in feature.children {
-    match child {
-      @gherkin.FeatureChild::Background(bg) =>
-        for s in bg.steps {
-          background_steps.push((s.keyword, s.text))
-        }
-      _ => ()
-    }
-  }
+  let background_steps = collect_background_steps(feature)
   let scenario_results : Array[ScenarioResult] = []
   for child in feature.children {
     match child {

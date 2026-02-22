@@ -27,7 +27,7 @@ async test "isolation: each scenario gets a fresh world" {
   // Scenario 1 sets counter to 42, scenario 2 expects default (0).
   // If isolation is broken, scenario 2 would see 42.
   let content = "Feature: Isolation\n\n  Scenario: Set counter\n    Given I set counter to 42\n    Then counter should be 42\n\n  Scenario: Fresh world\n    Then counter should be 0\n"
-  let result = run(IsolationWorld::default, [content])
+  let result = run(IsolationWorld::default, [FeatureSource::Text(content)])
   assert_eq(result.summary.total_scenarios, 2)
   assert_eq(result.summary.passed, 2)
   assert_eq(result.summary.failed, 0)
@@ -37,7 +37,7 @@ async test "isolation: each scenario gets a fresh world" {
 async test "isolation: parallel execution with fresh worlds" {
   let feature1 = "Feature: F1\n\n  Scenario: Set counter\n    Given I set counter to 99\n    Then counter should be 99\n"
   let feature2 = "Feature: F2\n\n  Scenario: Fresh world\n    Then counter should be 0\n"
-  let result = run(IsolationWorld::default, [feature1, feature2], parallel=2)
+  let result = run(IsolationWorld::default, [FeatureSource::Text(feature1), FeatureSource::Text(feature2)], parallel=2)
   assert_eq(result.summary.total_scenarios, 2)
   assert_eq(result.summary.passed, 2)
 }
@@ -151,7 +151,7 @@ test "hooks: before_scenario failure skips all steps" {
 ///|
 async test "hooks: run_with_hooks end-to-end" {
   let content = "Feature: Hooks E2E\n\n  Scenario: Pass\n    Given a step\n    Then it passes\n"
-  let result = run_with_hooks(HookWorld::default, [content])
+  let result = run_with_hooks(HookWorld::default, [FeatureSource::Text(content)])
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.summary.passed, 1)
 }

@@ -1,4 +1,12 @@
 ///|
+/// Input source for a feature to be executed.
+pub(all) enum FeatureSource {
+  Text(String)
+  File(String)
+  Parsed(@gherkin.Feature)
+} derive(Show, Eq)
+
+///|
 /// Status of a single step execution.
 pub(all) enum StepStatus {
   Passed

@@ -3,6 +3,7 @@
     "moonrockz/moonspec/core",
     "moonrockz/gherkin",
     "moonrockz/cucumber-expressions",
-    "moonbitlang/async"
+    "moonbitlang/async",
+    "moonbitlang/x/fs"
   ]
 }

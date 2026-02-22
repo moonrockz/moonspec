@@ -6,7 +6,7 @@
 /// `@async.all()` with bounded concurrency. Otherwise, features run sequentially.
 pub async fn[W : @core.World] run(
   factory : () -> W,
-  features : Array[String],
+  features : Array[FeatureSource],
   tag_expr? : String = "",
   parallel? : Int = 0,
 ) -> RunResult {
@@ -23,12 +23,12 @@ pub async fn[W : @core.World] run(
 /// Run features sequentially (the default path).
 fn[W : @core.World] run_sequential(
   factory : () -> W,
-  features : Array[String],
+  features : Array[FeatureSource],
   tag_expr~ : String,
 ) -> Array[FeatureResult] raise Error {
   let results : Array[FeatureResult] = []
-  for content in features {
-    let result = execute_feature_filtered(factory, content, tag_expr~)
+  for input in features {
+    let result = execute_feature_filtered(factory, input, tag_expr~)
     results.push(result)
   }
   results
@@ -41,7 +41,7 @@ fn[W : @core.World] run_sequential(
 /// on the world. The world must implement both `World` and `Hooks` traits.
 pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   factory : () -> W,
-  features : Array[String],
+  features : Array[FeatureSource],
   tag_expr? : String = "",
   parallel? : Int = 0,
 ) -> RunResult {
@@ -57,12 +57,12 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
 ///|
 fn[W : @core.World + @core.Hooks] run_sequential_with_hooks(
   factory : () -> W,
-  features : Array[String],
+  features : Array[FeatureSource],
   tag_expr~ : String,
 ) -> Array[FeatureResult] raise Error {
   let results : Array[FeatureResult] = []
-  for content in features {
-    let result = execute_feature_filtered_with_hooks(factory, content, tag_expr~)
+  for input in features {
+    let result = execute_feature_filtered_with_hooks(factory, input, tag_expr~)
     results.push(result)
   }
   results

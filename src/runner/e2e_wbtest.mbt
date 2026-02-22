@@ -38,7 +38,7 @@ impl @core.World for CalcWorld with register_steps(self, s) {
 ///|
 async test "end-to-end: calculator feature" {
   let content = "Feature: Calculator\n\n  Background:\n    Given a calculator\n\n  Scenario: Addition\n    When I add 5 and 3\n    Then the result should be 8\n\n  Scenario: Subtraction\n    When I subtract 3 from 10\n    Then the result should be 7\n\n  @slow\n  Scenario Outline: Multiplication\n    When I multiply <a> and <b>\n    Then the result should be <result>\n\n    Examples:\n      | a  | b  | result |\n      | 2  | 3  | 6      |\n      | 10 | 5  | 50     |\n"
-  let result = run(CalcWorld::default, [content])
+  let result = run(CalcWorld::default, [FeatureSource::Text(content)])
   assert_eq(result.summary.total_scenarios, 4) // 2 regular + 2 outline rows
   assert_eq(result.summary.passed, 4)
   assert_eq(result.summary.failed, 0)
@@ -57,6 +57,6 @@ impl @core.World for TagWorld with register_steps(_self, s) {
 ///|
 async test "end-to-end: tag filtering" {
   let content = "Feature: Tagged\n\n  @smoke\n  Scenario: Fast\n    Given a calculator\n\n  @slow\n  Scenario: Slow\n    Given a calculator\n"
-  let result = run(TagWorld::default, [content], tag_expr="@smoke")
+  let result = run(TagWorld::default, [FeatureSource::Text(content)], tag_expr="@smoke")
   assert_eq(result.summary.total_scenarios, 1)
 }

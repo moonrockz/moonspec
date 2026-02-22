@@ -12,4 +12,4 @@ pub using @core {
   type StepInfo
 }
 
-pub using @runner {run, run_with_hooks}
+pub using @runner {type FeatureSource, run, run_with_hooks}

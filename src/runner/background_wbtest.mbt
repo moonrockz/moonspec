@@ -13,7 +13,7 @@ impl @core.World for BgWorld with register_steps(self, s) {
 ///|
 test "execute_feature prepends background steps to each scenario" {
   let content = "Feature: With Background\n\n  Background:\n    Given a common setup\n\n  Scenario: First\n    When I do something\n    Then it works\n\n  Scenario: Second\n    When I do something\n    Then it works\n"
-  let result = execute_feature(BgWorld::default, content)
+  let result = execute_feature(BgWorld::default, Text(content))
   assert_eq(result.scenarios.length(), 2)
   // Each scenario should have 3 steps (1 background + 2 scenario)
   assert_eq(result.scenarios[0].steps.length(), 3)
