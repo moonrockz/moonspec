@@ -1,0 +1,9 @@
+{
+  "name": "example/ecommerce",
+  "version": "0.0.1",
+  "deps": {
+    "moonrockz/moonspec": { "path": "../.." },
+    "moonbitlang/async": "0.16.6"
+  },
+  "source": "src"
+}
