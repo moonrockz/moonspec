@@ -1,0 +1,82 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec/runner"
+
+// Values
+pub fn runner_version() -> String
+
+// Errors
+
+// Types and methods
+pub(all) struct FeatureResult {
+  name : String
+  scenarios : Array[ScenarioResult]
+  duration_ms : Int64
+}
+pub impl Eq for FeatureResult
+pub impl Show for FeatureResult
+
+pub(all) struct RunResult {
+  features : Array[FeatureResult]
+  summary : RunSummary
+}
+pub impl Eq for RunResult
+pub impl Show for RunResult
+
+pub(all) struct RunSummary {
+  total_scenarios : Int
+  passed : Int
+  failed : Int
+  undefined : Int
+  pending : Int
+  skipped : Int
+  duration_ms : Int64
+}
+pub impl Eq for RunSummary
+pub impl Show for RunSummary
+
+pub(all) struct ScenarioResult {
+  feature_name : String
+  scenario_name : String
+  tags : Array[String]
+  steps : Array[StepResult]
+  status : ScenarioStatus
+  duration_ms : Int64
+}
+pub impl Eq for ScenarioResult
+pub impl Show for ScenarioResult
+
+pub(all) enum ScenarioStatus {
+  Passed
+  Failed
+  Skipped
+  Undefined
+  Pending
+}
+pub fn ScenarioStatus::from_steps(Array[StepStatus]) -> Self
+pub impl Eq for ScenarioStatus
+pub impl Show for ScenarioStatus
+
+pub(all) struct StepResult {
+  text : String
+  keyword : String
+  status : StepStatus
+  duration_ms : Int64
+}
+pub impl Eq for StepResult
+pub impl Show for StepResult
+
+pub(all) enum StepStatus {
+  Passed
+  Failed(String)
+  Skipped
+  Undefined
+  Pending
+}
+pub fn StepStatus::is_passed(Self) -> Bool
+pub impl Eq for StepStatus
+pub impl Show for StepStatus
+
+// Type aliases
+
+// Traits
+

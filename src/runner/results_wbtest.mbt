@@ -1,0 +1,65 @@
+///|
+test "StepStatus::Passed shows correctly" {
+  inspect(StepStatus::Passed, content="Passed")
+}
+
+///|
+test "StepStatus::Failed shows with error" {
+  let status = StepStatus::Failed("assertion failed")
+  inspect(status, content="Failed(\"assertion failed\")")
+}
+
+///|
+test "StepStatus::Skipped shows correctly" {
+  inspect(StepStatus::Skipped, content="Skipped")
+}
+
+///|
+test "StepStatus::Undefined shows correctly" {
+  inspect(StepStatus::Undefined, content="Undefined")
+}
+
+///|
+test "StepStatus::Pending shows correctly" {
+  inspect(StepStatus::Pending, content="Pending")
+}
+
+///|
+test "StepStatus is_passed returns true for Passed" {
+  assert_true(StepStatus::Passed.is_passed())
+}
+
+///|
+test "StepStatus is_passed returns false for Failed" {
+  assert_false(StepStatus::Failed("err").is_passed())
+}
+
+///|
+test "ScenarioStatus from empty steps is Passed" {
+  let result = ScenarioStatus::from_steps([])
+  assert_eq(result, ScenarioStatus::Passed)
+}
+
+///|
+test "ScenarioStatus from all passed steps is Passed" {
+  let result = ScenarioStatus::from_steps([
+    StepStatus::Passed,
+    StepStatus::Passed,
+  ])
+  assert_eq(result, ScenarioStatus::Passed)
+}
+
+///|
+test "ScenarioStatus with one Failed is Failed" {
+  let result = ScenarioStatus::from_steps([
+    StepStatus::Passed,
+    StepStatus::Failed("err"),
+  ])
+  assert_eq(result, ScenarioStatus::Failed)
+}
+
+///|
+test "ScenarioStatus with Undefined is Undefined" {
+  let result = ScenarioStatus::from_steps([StepStatus::Undefined])
+  assert_eq(result, ScenarioStatus::Undefined)
+}
