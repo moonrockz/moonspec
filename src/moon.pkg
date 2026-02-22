@@ -1,0 +1,4 @@
+import {
+  "moonrockz/moonspec/core",
+  "moonrockz/moonspec/runner",
+}
