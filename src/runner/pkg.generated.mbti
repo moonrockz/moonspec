@@ -1,7 +1,13 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "moonrockz/moonspec/runner"
 
+import {
+  "moonrockz/moonspec/core",
+}
+
 // Values
+pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, tags~ : Array[String], steps~ : Array[(String, String)]) -> ScenarioResult
+
 pub fn runner_version() -> String
 
 // Errors
