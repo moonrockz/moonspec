@@ -318,8 +318,9 @@ pub async fn[W : @core.World] run(
   let world0 = factory()
   @core.World::configure(world0, setup)
   let registry = setup.step_registry()
-  let _param_registry = setup.param_registry()
+  let custom_param_types = setup.custom_param_types()
   // Emit StepDefinition envelopes
+  let id_gen = IdGenerator::new()
   if sinks.length() > 0 {
     let sd_envelopes = build_step_definition_envelopes(registry)
     for env in sd_envelopes {
@@ -327,11 +328,25 @@ pub async fn[W : @core.World] run(
     }
   }
   // Emit ParameterType envelopes for custom parameter types
-  // TODO: Requires param_types() -> ArrayView[ParamType] accessor
-  // on cucumber-expressions ParamTypeRegistry. Currently no custom
-  // parameter types are supported, so this emits nothing.
+  if sinks.length() > 0 {
+    for cpt in custom_param_types {
+      let regex_json : Array[Json] = cpt.patterns.map(fn(p) { p.to_json() })
+      let json : Json = {
+        "parameterType": {
+          "id": id_gen.next_param_type_id().to_json(),
+          "name": cpt.name.to_json(),
+          "regularExpressions": regex_json.to_json(),
+          "preferForRegularExpressionMatch": false.to_json(),
+          "useForSnippets": true.to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   // Test planning phase
-  let id_gen = IdGenerator::new()
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
     let tc_envelopes = build_test_cases(registry, filtered, id_gen)
     for env in tc_envelopes {
@@ -464,8 +479,9 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   let world0 = factory()
   @core.World::configure(world0, setup)
   let registry = setup.step_registry()
-  let _param_registry = setup.param_registry()
+  let custom_param_types = setup.custom_param_types()
   // Emit StepDefinition envelopes
+  let id_gen = IdGenerator::new()
   if sinks.length() > 0 {
     let sd_envelopes = build_step_definition_envelopes(registry)
     for env in sd_envelopes {
@@ -473,9 +489,24 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
     }
   }
   // Emit ParameterType envelopes for custom parameter types
-  // TODO: Requires param_types() -> ArrayView[ParamType] accessor
-  // on cucumber-expressions ParamTypeRegistry. Currently no custom
-  // parameter types are supported, so this emits nothing.
+  if sinks.length() > 0 {
+    for cpt in custom_param_types {
+      let regex_json : Array[Json] = cpt.patterns.map(fn(p) { p.to_json() })
+      let json : Json = {
+        "parameterType": {
+          "id": id_gen.next_param_type_id().to_json(),
+          "name": cpt.name.to_json(),
+          "regularExpressions": regex_json.to_json(),
+          "preferForRegularExpressionMatch": false.to_json(),
+          "useForSnippets": true.to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   // Test planning phase
   let id_gen = IdGenerator::new()
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {

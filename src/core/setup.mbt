@@ -43,6 +43,21 @@ pub fn Setup::add_param_type(
 }
 
 ///|
+/// Register a custom parameter type with name and string regex patterns.
+/// Convenience method that avoids requiring callers to import cucumber-expressions.
+pub fn Setup::add_param_type_strings(
+  self : Setup,
+  name : String,
+  patterns : Array[String],
+) -> Unit {
+  self.param_reg.register(
+    name,
+    @cucumber_expressions.ParamType::Custom(name),
+    patterns.map(fn(p) { @cucumber_expressions.RegexPattern(p) }),
+  )
+}
+
+///|
 /// Register a Given step.
 pub fn Setup::given(
   self : Setup,
@@ -116,6 +131,31 @@ pub fn Setup::step(
     },
     self.param_reg,
   )
+}
+
+///|
+/// Info about a custom parameter type, for envelope emission.
+pub(all) struct CustomParamTypeInfo {
+  name : String
+  patterns : Array[String]
+}
+
+///|
+/// Return custom (non-built-in) parameter types for envelope emission.
+/// Built-in types (int, float, string, word, anonymous "") are excluded.
+pub fn Setup::custom_param_types(self : Setup) -> Array[CustomParamTypeInfo] {
+  let builtin = ["int", "float", "string", "word", ""]
+  let result : Array[CustomParamTypeInfo] = []
+  for entry in self.param_reg.entries_view() {
+    if builtin.contains(entry.name) {
+      continue
+    }
+    result.push({
+      name: entry.name,
+      patterns: entry.patterns.map(fn(p) { p.to_string() }),
+    })
+  }
+  result
 }
 
 ///|
