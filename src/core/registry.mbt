@@ -10,10 +10,28 @@ struct CompiledStep {
 }
 
 ///|
+/// Internal: generates sequential StepDefIds.
+priv struct IdGenerator {
+  mut counter : Int
+}
+
+///|
+fn IdGenerator::new() -> IdGenerator {
+  { counter: 0 }
+}
+
+///|
+fn IdGenerator::next_step_def_id(self : IdGenerator) -> StepDefId {
+  self.counter += 1
+  StepDefId::from_string("sd-" + self.counter.to_string())
+}
+
+///|
 /// Registry of step definitions keyed by Cucumber Expression patterns.
 pub(all) struct StepRegistry {
   priv entries : Array[CompiledStep]
   priv param_registry : @cucumber_expressions.ParamTypeRegistry
+  priv id_gen : IdGenerator
 }
 
 ///|
@@ -22,6 +40,7 @@ pub fn StepRegistry::new() -> StepRegistry {
   {
     entries: [],
     param_registry: @cucumber_expressions.ParamTypeRegistry::default(),
+    id_gen: IdGenerator::new(),
   }
 }
 
@@ -43,7 +62,14 @@ pub fn StepRegistry::register_def(
   ) catch {
     _ => return
   }
+  step_def.id = Some(self.id_gen.next_step_def_id())
   self.entries.push({ def: step_def, expression: expr })
+}
+
+///|
+/// Return all registered step definitions.
+pub fn StepRegistry::step_defs(self : StepRegistry) -> Array[StepDef] {
+  self.entries.map(fn(e) { e.def })
 }
 
 ///|

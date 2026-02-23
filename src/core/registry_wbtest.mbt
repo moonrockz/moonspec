@@ -96,3 +96,39 @@ test "StepRegistry register_def registers a StepDef directly" {
   assert_eq(reg.len(), 1)
   assert_true(reg.find_match("hello world") is Matched(_, _))
 }
+
+///|
+test "register_def assigns a StepDefId" {
+  let reg = StepRegistry::new()
+  let def = StepDef::given("I have {int} cucumbers", fn(_args) {  })
+  assert_true(def.id is None)
+  reg.register_def(def)
+  assert_true(def.id is Some(_))
+}
+
+///|
+test "step_defs returns all registered definitions" {
+  let reg = StepRegistry::new()
+  reg.given("step one", fn(_args) {  })
+  reg.when("step two", fn(_args) {  })
+  reg.then("step three", fn(_args) {  })
+  let defs = reg.step_defs()
+  assert_eq(defs.length(), 3)
+  assert_eq(defs[0].keyword, StepKeyword::Given)
+  assert_eq(defs[1].keyword, StepKeyword::When)
+  assert_eq(defs[2].keyword, StepKeyword::Then)
+}
+
+///|
+test "StepDefIds are unique across registrations" {
+  let reg = StepRegistry::new()
+  reg.given("first step", fn(_args) {  })
+  reg.when("second step", fn(_args) {  })
+  reg.then("third step", fn(_args) {  })
+  let defs = reg.step_defs()
+  let ids = defs.map(fn(d) { d.id })
+  // All ids should be Some and distinct
+  assert_true(ids[0] != ids[1])
+  assert_true(ids[1] != ids[2])
+  assert_true(ids[0] != ids[2])
+}
