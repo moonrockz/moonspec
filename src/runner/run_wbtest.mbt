@@ -131,3 +131,40 @@ async test "run emits Source envelope for each feature" {
   }
   assert_true(found)
 }
+
+///|
+async test "run emits GherkinDocument envelope after parsing" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://gdoc", "Feature: GDoc\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let mut found = false
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::GherkinDocument(_) {
+      found = true
+      break
+    }
+  }
+  assert_true(found)
+}
+
+///|
+async test "run emits Pickle envelopes after compilation" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://pickle", "Feature: P\n\n  Scenario: One\n    Given a step\n  Scenario: Two\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let mut pickle_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::Pickle(_) {
+      pickle_count += 1
+    }
+  }
+  assert_eq(pickle_count, 2)
+}

@@ -73,7 +73,33 @@ pub async fn[W : @core.World] run(
     }
     cache.load_from_source(source)
   }
+  // Emit GherkinDocument envelopes
+  if sinks.length() > 0 {
+    for entry in cache.features() {
+      let uri = entry.0
+      let json : Json = {
+        "gherkinDocument": {
+          "uri": uri.to_json(),
+          "comments": ([] : Array[Int]).to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let pickles = compile_pickles(cache)
+  // Emit Pickle envelopes
+  if sinks.length() > 0 {
+    for pickle in pickles {
+      let json : Json = { "pickle": pickle.to_json() }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let filter = PickleFilter::new()
   let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
   let filter = if scenario_name != "" {
@@ -123,7 +149,33 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
     }
     cache.load_from_source(source)
   }
+  // Emit GherkinDocument envelopes
+  if sinks.length() > 0 {
+    for entry in cache.features() {
+      let uri = entry.0
+      let json : Json = {
+        "gherkinDocument": {
+          "uri": uri.to_json(),
+          "comments": ([] : Array[Int]).to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let pickles = compile_pickles(cache)
+  // Emit Pickle envelopes
+  if sinks.length() > 0 {
+    for pickle in pickles {
+      let json : Json = { "pickle": pickle.to_json() }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let filter = PickleFilter::new()
   let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
   let filter = if scenario_name != "" {
