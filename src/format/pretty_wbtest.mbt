@@ -18,7 +18,7 @@ test "PrettyFormatter formats passed scenario" {
     status: @runner.ScenarioStatus::Passed,
     duration_ms: 1L,
   }
-  fmt.on_scenario_finish(result)
+  fmt.format_scenario(result)
   let output = fmt.output()
   assert_true(string_contains(output, "Addition"))
   assert_true(
@@ -46,7 +46,7 @@ test "PrettyFormatter formats failed scenario" {
     status: @runner.ScenarioStatus::Failed,
     duration_ms: 2L,
   }
-  fmt.on_scenario_finish(result)
+  fmt.format_scenario(result)
   let output = fmt.output()
   assert_true(string_contains(output, "Division by zero"))
   assert_true(
@@ -69,7 +69,7 @@ test "PrettyFormatter formats summary" {
       duration_ms: 100L,
     },
   }
-  fmt.on_run_finish(run_result)
+  fmt.format_summary(run_result)
   let output = fmt.output()
   assert_true(string_contains(output, "3 scenario"))
   assert_true(string_contains(output, "2 passed"))
@@ -79,7 +79,7 @@ test "PrettyFormatter formats summary" {
 ///|
 test "PrettyFormatter on_feature_start writes feature header" {
   let fmt = PrettyFormatter::new(no_color=true)
-  fmt.on_feature_start("Calculator")
+  fmt.format_feature_start("Calculator")
   let output = fmt.output()
   assert_true(string_contains(output, "Feature: Calculator"))
 }
@@ -118,11 +118,27 @@ test "PrettyFormatter step markers in no_color mode" {
     status: @runner.ScenarioStatus::Undefined,
     duration_ms: 1L,
   }
-  fmt.on_scenario_finish(result)
+  fmt.format_scenario(result)
   let output = fmt.output()
   assert_true(string_contains(output, "Given step one"))
   assert_true(string_contains(output, "When step two"))
   assert_true(string_contains(output, "Then step three"))
+}
+
+///|
+test "PrettyFormatter implements MessageSink" {
+  let fmt = PrettyFormatter::new(no_color=true)
+  let json : Json = {
+    "testRunStarted": {
+      "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+    },
+  }
+  let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+    _ => panic()
+  }
+  @core.MessageSink::on_message(fmt, envelope)
+  // Currently a no-op, so no output expected
+  assert_eq(fmt.output(), "")
 }
 
 ///|
