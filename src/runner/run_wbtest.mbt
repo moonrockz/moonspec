@@ -97,3 +97,37 @@ async test "run accepts sinks parameter" {
   let result = run(RunWorld::default, features, sinks=[collector])
   assert_eq(result.summary.passed, 1)
 }
+
+///|
+async test "run emits Meta envelope first" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://meta", "Feature: Meta\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  assert_true(collector.envelopes.length() > 0)
+  guard collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_)
+}
+
+///|
+async test "run emits Source envelope for each feature" {
+  let collector = CollectorSink::new()
+  let content = "Feature: Src\n\n  Scenario: S\n    Given a step\n"
+  let features = [FeatureSource::Text("test://src", content)]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let mut found = false
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::Source(src) => {
+        assert_eq(src.uri, "test://src")
+        assert_eq(src.data, content)
+        found = true
+        break
+      }
+      _ => continue
+    }
+  }
+  assert_true(found)
+}

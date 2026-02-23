@@ -7,6 +7,41 @@ fn emit(sinks : Array[&@core.MessageSink], envelope : @cucumber_messages.Envelop
 }
 
 ///|
+fn zero_timestamp() -> @cucumber_messages.Timestamp {
+  let json : Json = { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+fn make_meta_envelope() -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "meta": {
+      "protocolVersion": "25.0.1".to_json(),
+      "implementation": {
+        "name": "moonspec".to_json(),
+        "version": "0.2.0".to_json(),
+      },
+      "runtime": { "name": "moonbit".to_json() },
+      "os": { "name": "unknown".to_json() },
+      "cpu": { "name": "unknown".to_json() },
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+fn make_source_envelope(uri : String, data : String) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "source": {
+      "uri": uri.to_json(),
+      "data": data.to_json(),
+      "mediaType": "text/x.cucumber.gherkin+plain".to_json(),
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
@@ -21,7 +56,21 @@ pub async fn[W : @core.World] run(
   sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
   let cache = FeatureCache::new()
+  if sinks.length() > 0 {
+    emit(sinks, make_meta_envelope())
+  }
   for source in features {
+    if sinks.length() > 0 {
+      let (uri, data) = match source {
+        FeatureSource::Text(path, content) => (path, content)
+        FeatureSource::File(path) => {
+          let content = @fs.read_file_to_string(path) catch { _ => "" }
+          (path, content)
+        }
+        FeatureSource::Parsed(path, _) => (path, "")
+      }
+      emit(sinks, make_source_envelope(uri, data))
+    }
     cache.load_from_source(source)
   }
   let pickles = compile_pickles(cache)
@@ -40,7 +89,6 @@ pub async fn[W : @core.World] run(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
-  ignore(sinks)
   { features: feature_results, summary }
 }
 
@@ -58,7 +106,21 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
   let cache = FeatureCache::new()
+  if sinks.length() > 0 {
+    emit(sinks, make_meta_envelope())
+  }
   for source in features {
+    if sinks.length() > 0 {
+      let (uri, data) = match source {
+        FeatureSource::Text(path, content) => (path, content)
+        FeatureSource::File(path) => {
+          let content = @fs.read_file_to_string(path) catch { _ => "" }
+          (path, content)
+        }
+        FeatureSource::Parsed(path, _) => (path, "")
+      }
+      emit(sinks, make_source_envelope(uri, data))
+    }
     cache.load_from_source(source)
   }
   let pickles = compile_pickles(cache)
@@ -77,7 +139,6 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
-  ignore(sinks)
   { features: feature_results, summary }
 }
 
