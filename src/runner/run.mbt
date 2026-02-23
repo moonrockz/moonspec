@@ -273,6 +273,28 @@ pub async fn[W : @core.World] run(
       emit(sinks, envelope)
     }
   }
+  // Emit ParseError envelopes
+  if sinks.length() > 0 {
+    for pe in all_parse_errors {
+      let source_ref : Map[String, Json] = {}
+      source_ref["uri"] = pe.uri.to_json()
+      match pe.line {
+        Some(line) =>
+          source_ref["location"] = { "line": line.to_json() }
+        None => ()
+      }
+      let json : Json = {
+        "parseError": {
+          "source": source_ref.to_json(),
+          "message": pe.message.to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let pickles = compile_pickles(cache)
   // Emit Pickle envelopes
   if sinks.length() > 0 {
@@ -396,6 +418,28 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
       emit(sinks, envelope)
     }
   }
+  // Emit ParseError envelopes
+  if sinks.length() > 0 {
+    for pe in all_parse_errors {
+      let source_ref : Map[String, Json] = {}
+      source_ref["uri"] = pe.uri.to_json()
+      match pe.line {
+        Some(line) =>
+          source_ref["location"] = { "line": line.to_json() }
+        None => ()
+      }
+      let json : Json = {
+        "parseError": {
+          "source": source_ref.to_json(),
+          "message": pe.message.to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let pickles = compile_pickles(cache)
   // Emit Pickle envelopes
   if sinks.length() > 0 {
@@ -497,7 +541,8 @@ pub async fn[W : @core.World] run_or_fail(
     parallel~,
     sinks~,
   )
-  if result.summary.failed > 0 ||
+  if result.parse_errors.length() > 0 ||
+    result.summary.failed > 0 ||
     result.summary.undefined > 0 ||
     result.summary.pending > 0 {
     let errors = collect_scenario_errors(result)

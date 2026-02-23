@@ -336,3 +336,43 @@ async test "run emits no ParameterType envelopes for built-in types only" {
   }
   assert_eq(pt_count, 0)
 }
+
+///|
+async test "run emits ParseError envelope for invalid feature" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text("test://bad", "This is not valid Gherkin"),
+    FeatureSource::Text(
+      "test://ok", "Feature: OK\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let result = run(RunWorld::default, features, sinks=[collector])
+  // Run should continue with valid features
+  assert_eq(result.summary.total_scenarios, 1)
+  // Parse errors should be in result
+  assert_eq(result.parse_errors.length(), 1)
+  assert_eq(result.parse_errors[0].uri, "test://bad")
+  // ParseError envelope should be emitted
+  let mut found_parse_error = false
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::ParseError(_) {
+      found_parse_error = true
+    }
+  }
+  assert_true(found_parse_error)
+}
+
+///|
+async test "run_or_fail raises on parse errors" {
+  let mut caught = false
+  try
+    run_or_fail(RunWorld::default, [
+      FeatureSource::Text("test://bad", "Not valid Gherkin"),
+    ])
+    |> ignore
+  catch {
+    @core.RunFailed(..) => caught = true
+    _ => ()
+  }
+  assert_true(caught)
+}
