@@ -21,33 +21,53 @@ fn build_parser() -> @clap.Parser {
     description="BDD test framework for MoonBit",
     subcmds={
       "gen": @clap.SubCommand::new(
-        args={
-          "files": @clap.Arg::positional(
-            nargs=AtLeast(1),
-            help=".feature files to generate tests from",
+        help="Code generation commands",
+        subcmds={
+          "tests": @clap.SubCommand::new(
+            args={
+              "files": @clap.Arg::positional(
+                nargs=AtLeast(1),
+                help=".feature files to generate tests from",
+              ),
+              "output-dir": @clap.Arg::named(
+                short='o',
+                nargs=AtMost(1),
+                help="Output directory for generated test files",
+              ),
+              "world": @clap.Arg::named(
+                short='w',
+                nargs=AtMost(1),
+                help="World type name (e.g. CalcWorld)",
+              ),
+              "mode": @clap.Arg::named(
+                short='m',
+                nargs=AtMost(1),
+                help="Codegen mode: per-scenario (default) or per-feature",
+              ),
+              "config": @clap.Arg::named(
+                short='c',
+                nargs=AtMost(1),
+                help="Path to moonspec.json5 config file",
+              ),
+            },
+            help="Generate _test.mbt files from .feature files",
           ),
-          "output-dir": @clap.Arg::named(
-            short='o',
-            nargs=AtMost(1),
-            help="Output directory for generated test files",
-          ),
-          "world": @clap.Arg::named(
-            short='w',
-            nargs=AtMost(1),
-            help="World type name (e.g. CalcWorld)",
-          ),
-          "mode": @clap.Arg::named(
-            short='m',
-            nargs=AtMost(1),
-            help="Codegen mode: per-scenario (default) or per-feature",
-          ),
-          "config": @clap.Arg::named(
-            short='c',
-            nargs=AtMost(1),
-            help="Path to moonspec.json5 config file",
+          "steps": @clap.SubCommand::new(
+            args={
+              "dir": @clap.Arg::named(
+                short='d',
+                nargs=AtMost(1),
+                help="Directory to scan for step definitions",
+              ),
+              "config": @clap.Arg::named(
+                short='c',
+                nargs=AtMost(1),
+                help="Path to moonspec.json5 config file",
+              ),
+            },
+            help="Generate register_steps from #moonspec.* attributes",
           ),
         },
-        help="Generate _test.mbt files from .feature files",
       ),
       "check": @clap.SubCommand::new(
         args={
@@ -69,7 +89,7 @@ fn cmd_version() -> Unit {
 }
 
 ///|
-fn cmd_gen(value : @clap.SimpleValue) -> Unit {
+fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
   let files = value.positional_args
   let output_dir : String? = match value.args.get("output-dir") {
     Some(vals) => Some(vals[0])
@@ -158,6 +178,12 @@ fn cmd_gen(value : @clap.SimpleValue) -> Unit {
     }
     println(output_path)
   }
+}
+
+///|
+fn cmd_gen_steps(_value : @clap.SimpleValue) -> Unit {
+  eprintln("moonspec gen steps: not yet implemented")
+  @sys.exit(1)
 }
 
 ///|
@@ -264,7 +290,19 @@ fn main {
     Some(subcmd) =>
       match subcmd.name {
         "version" => cmd_version()
-        "gen" => cmd_gen(subcmd)
+        "gen" =>
+          match subcmd.subcmd {
+            Some(gen_subcmd) =>
+              match gen_subcmd.name {
+                "tests" => cmd_gen_tests(gen_subcmd)
+                "steps" => cmd_gen_steps(gen_subcmd)
+                _ => ()
+              }
+            None => {
+              let help = parser.gen_help_message(["moonspec", "gen"], {})
+              println(help)
+            }
+          }
         "check" => cmd_check(subcmd)
         _ => ()
       }
