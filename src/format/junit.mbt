@@ -19,7 +19,10 @@ pub impl @core.MessageSink for JUnitFormatter with on_message(_self, _envelope) 
 }
 
 ///|
-pub fn JUnitFormatter::format_result(self : JUnitFormatter, result : @runner.RunResult) -> Unit {
+pub fn JUnitFormatter::format_result(
+  self : JUnitFormatter,
+  result : @runner.RunResult,
+) -> Unit {
   let mut xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
   xml = xml +
     "<testsuites tests=\"" +

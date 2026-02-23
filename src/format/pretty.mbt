@@ -111,12 +111,18 @@ pub impl @core.MessageSink for PrettyFormatter with on_message(_self, _envelope)
 // ---------------------------------------------------------------------------
 
 ///|
-pub fn PrettyFormatter::format_feature_start(self : PrettyFormatter, name : String) -> Unit {
+pub fn PrettyFormatter::format_feature_start(
+  self : PrettyFormatter,
+  name : String,
+) -> Unit {
   self.buffer = self.buffer + "Feature: " + name + "\n\n"
 }
 
 ///|
-pub fn PrettyFormatter::format_scenario(self : PrettyFormatter, result : @runner.ScenarioResult) -> Unit {
+pub fn PrettyFormatter::format_scenario(
+  self : PrettyFormatter,
+  result : @runner.ScenarioResult,
+) -> Unit {
   let marker = scenario_status_marker(result.status, self.no_color)
   self.buffer = self.buffer +
     "  " +
@@ -138,7 +144,10 @@ pub fn PrettyFormatter::format_scenario(self : PrettyFormatter, result : @runner
 }
 
 ///|
-pub fn PrettyFormatter::format_summary(self : PrettyFormatter, result : @runner.RunResult) -> Unit {
+pub fn PrettyFormatter::format_summary(
+  self : PrettyFormatter,
+  result : @runner.RunResult,
+) -> Unit {
   let s = result.summary
   let scenario_word = if s.total_scenarios == 1 {
     "scenario"

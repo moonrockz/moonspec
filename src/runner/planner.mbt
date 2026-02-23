@@ -36,18 +36,17 @@ pub fn[W : @core.World] build_test_cases(
         Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
         _ => "* "
       }
-      let step_def_ids : Array[Json] = match registry.find_match(step.text, keyword~) {
-        Matched(_, _) => []  // We don't have stable IDs for step defs yet
+      let step_def_ids : Array[Json] = match
+        registry.find_match(step.text, keyword~) {
+        Matched(_, _) => [] // We don't have stable IDs for step defs yet
         Undefined(..) => []
       }
       let step_id = id_gen.next("ts")
-      test_steps.push(
-        {
-          "id": step_id.to_json(),
-          "pickleStepId": step.id.to_json(),
-          "stepDefinitionIds": step_def_ids.to_json(),
-        },
-      )
+      test_steps.push({
+        "id": step_id.to_json(),
+        "pickleStepId": step.id.to_json(),
+        "stepDefinitionIds": step_def_ids.to_json(),
+      })
     }
     let tc_id = id_gen.next("tc")
     let json : Json = {

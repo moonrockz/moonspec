@@ -30,7 +30,10 @@ pub fn execute_scenario(
         emit(
           sinks,
           make_test_step_finished_envelope(
-            test_case_started_id, ts_id, "SKIPPED", None,
+            test_case_started_id,
+            ts_id,
+            "SKIPPED",
+            None,
           ),
         )
       }
@@ -150,11 +153,7 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
         Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
         _ => "* "
       }
-      let ts_id = if i < test_step_ids.length() {
-        test_step_ids[i]
-      } else {
-        ""
-      }
+      let ts_id = if i < test_step_ids.length() { test_step_ids[i] } else { "" }
       if has_sinks {
         emit(
           sinks,
@@ -163,7 +162,10 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
         emit(
           sinks,
           make_test_step_finished_envelope(
-            test_case_started_id, ts_id, "SKIPPED", None,
+            test_case_started_id,
+            ts_id,
+            "SKIPPED",
+            None,
           ),
         )
       }
@@ -208,7 +210,10 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
         emit(
           sinks,
           make_test_step_finished_envelope(
-            test_case_started_id, ts_id, "SKIPPED", None,
+            test_case_started_id,
+            ts_id,
+            "SKIPPED",
+            None,
           ),
         )
       }

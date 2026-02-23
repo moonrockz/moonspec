@@ -130,7 +130,10 @@ test "PrettyFormatter implements MessageSink" {
   let fmt = PrettyFormatter::new(no_color=true)
   let json : Json = {
     "testRunStarted": {
-      "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
     },
   }
   let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {

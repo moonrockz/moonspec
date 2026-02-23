@@ -263,10 +263,10 @@ async test "full envelope sequence for two-scenario feature" {
   // TestRunStarted, 2x (TestCaseStarted, TestStepStarted, TestStepFinished, TestCaseFinished),
   // TestRunFinished
   let expected : Array[String] = [
-    "Meta", "Source", "GherkinDocument", "Pickle", "Pickle", "TestCase",
-    "TestCase", "TestRunStarted", "TestCaseStarted", "TestStepStarted",
-    "TestStepFinished", "TestCaseFinished", "TestCaseStarted", "TestStepStarted",
-    "TestStepFinished", "TestCaseFinished", "TestRunFinished",
+    "Meta", "Source", "GherkinDocument", "Pickle", "Pickle", "TestCase", "TestCase",
+    "TestRunStarted", "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
+    "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
+    "TestRunFinished",
   ]
   assert_eq(types, expected)
   // Verify first is Meta, last is TestRunFinished

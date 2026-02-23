@@ -1,6 +1,9 @@
 ///|
 /// Broadcast an envelope to all sinks.
-fn emit(sinks : Array[&@core.MessageSink], envelope : @cucumber_messages.Envelope) -> Unit {
+fn emit(
+  sinks : Array[&@core.MessageSink],
+  envelope : @cucumber_messages.Envelope,
+) -> Unit {
   for sink in sinks {
     sink.on_message(envelope)
   }
@@ -20,11 +23,16 @@ fn make_meta_envelope() -> @cucumber_messages.Envelope {
       "cpu": { "name": "unknown".to_json() },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
-fn make_source_envelope(uri : String, data : String) -> @cucumber_messages.Envelope {
+fn make_source_envelope(
+  uri : String,
+  data : String,
+) -> @cucumber_messages.Envelope {
   let json : Json = {
     "source": {
       "uri": uri.to_json(),
@@ -32,7 +40,9 @@ fn make_source_envelope(uri : String, data : String) -> @cucumber_messages.Envel
       "mediaType": "text/x.cucumber.gherkin+plain".to_json(),
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -46,13 +56,15 @@ fn make_test_run_started_envelope(id : String) -> @cucumber_messages.Envelope {
       "id": id.to_json(),
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
 fn make_test_run_finished_envelope(
   success : Bool,
-  run_id : String
+  run_id : String,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testRunFinished": {
@@ -64,13 +76,15 @@ fn make_test_run_finished_envelope(
       "testRunStartedId": run_id.to_json(),
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
 fn make_test_case_started_envelope(
   id : String,
-  test_case_id : String
+  test_case_id : String,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseStarted": {
@@ -83,12 +97,14 @@ fn make_test_case_started_envelope(
       },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
 fn make_test_case_finished_envelope(
-  test_case_started_id : String
+  test_case_started_id : String,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseFinished": {
@@ -100,13 +116,15 @@ fn make_test_case_finished_envelope(
       "willBeRetried": false.to_json(),
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
 fn make_test_step_started_envelope(
   test_case_started_id : String,
-  test_step_id : String
+  test_step_id : String,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testStepStarted": {
@@ -118,7 +136,9 @@ fn make_test_step_started_envelope(
       },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -126,7 +146,7 @@ fn make_test_step_finished_envelope(
   test_case_started_id : String,
   test_step_id : String,
   status : String,
-  message : String?
+  message : String?,
 ) -> @cucumber_messages.Envelope {
   let result_json : Map[String, Json] = {}
   result_json["duration"] = {
@@ -149,7 +169,9 @@ fn make_test_step_finished_envelope(
       },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -183,7 +205,7 @@ priv struct TestCaseMapping {
 ///|
 /// Extract test case mappings from test case envelopes, keyed by pickle ID.
 fn extract_test_case_mappings(
-  tc_envelopes : Array[@cucumber_messages.Envelope]
+  tc_envelopes : Array[@cucumber_messages.Envelope],
 ) -> Map[String, TestCaseMapping] {
   let mappings : Map[String, TestCaseMapping] = {}
   for env in tc_envelopes {
@@ -285,13 +307,22 @@ pub async fn[W : @core.World] run(
     emit(sinks, make_test_run_started_envelope(run_id))
   }
   let results = if parallel > 0 {
-    run_pickles_parallel(factory, filtered, max_concurrent=parallel, sinks~, tc_mappings~, id_gen~)
+    run_pickles_parallel(
+      factory,
+      filtered,
+      max_concurrent=parallel,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
   } else {
     run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
   }
   // Emit TestRunFinished
   if sinks.length() > 0 {
-    let all_passed = results.iter().all(fn(r) { r.status == ScenarioStatus::Passed })
+    let all_passed = results
+      .iter()
+      .all(fn(r) { r.status == ScenarioStatus::Passed })
     emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
@@ -382,13 +413,28 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
     emit(sinks, make_test_run_started_envelope(run_id))
   }
   let results = if parallel > 0 {
-    run_pickles_parallel_with_hooks(factory, filtered, max_concurrent=parallel, sinks~, tc_mappings~, id_gen~)
+    run_pickles_parallel_with_hooks(
+      factory,
+      filtered,
+      max_concurrent=parallel,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
   } else {
-    run_pickles_sequential_with_hooks(factory, filtered, sinks~, tc_mappings~, id_gen~)
+    run_pickles_sequential_with_hooks(
+      factory,
+      filtered,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
   }
   // Emit TestRunFinished
   if sinks.length() > 0 {
-    let all_passed = results.iter().all(fn(r) { r.status == ScenarioStatus::Passed })
+    let all_passed = results
+      .iter()
+      .all(fn(r) { r.status == ScenarioStatus::Passed })
     emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
@@ -409,7 +455,14 @@ pub async fn[W : @core.World] run_or_fail(
   parallel? : Int = 0,
   sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
-  let result = run(factory, features, tag_expr~, scenario_name~, parallel~, sinks~)
+  let result = run(
+    factory,
+    features,
+    tag_expr~,
+    scenario_name~,
+    parallel~,
+    sinks~,
+  )
   if result.summary.failed > 0 ||
     result.summary.undefined > 0 ||
     result.summary.pending > 0 {
@@ -479,13 +532,7 @@ fn[W : @core.World] run_pickles_sequential(
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
-    let result = execute_pickle(
-      factory,
-      pickle,
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-    )
+    let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~)
     results.push(result)
   }
   results
