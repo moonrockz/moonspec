@@ -16,11 +16,11 @@ test "levenshtein_distance empty strings" {
 
 ///|
 test "find_suggestions returns close matches" {
-  let reg = StepRegistry::new()
-  reg.given("I have {int} cucumbers", fn(_args) {  })
-  reg.given("I have {int} tomatoes", fn(_args) {  })
-  reg.given("something completely different", fn(_args) {  })
-  let suggestions = find_suggestions(reg, "I have many cucumbers")
+  let setup = Setup::new()
+  setup.given("I have {int} cucumbers", fn(_args) {  })
+  setup.given("I have {int} tomatoes", fn(_args) {  })
+  setup.given("something completely different", fn(_args) {  })
+  let suggestions = find_suggestions(setup.step_registry(), "I have many cucumbers")
   assert_true(suggestions.length() > 0)
   assert_true(suggestions.length() <= 3)
 }

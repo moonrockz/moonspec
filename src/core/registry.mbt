@@ -30,18 +30,13 @@ fn IdGenerator::next_step_def_id(self : IdGenerator) -> StepDefId {
 /// Registry of step definitions keyed by Cucumber Expression patterns.
 pub(all) struct StepRegistry {
   priv entries : Array[CompiledStep]
-  priv param_registry : @cucumber_expressions.ParamTypeRegistry
   priv id_gen : IdGenerator
 }
 
 ///|
-/// Create an empty step registry with default parameter types.
+/// Create an empty step registry.
 pub fn StepRegistry::new() -> StepRegistry {
-  {
-    entries: [],
-    param_registry: @cucumber_expressions.ParamTypeRegistry::default(),
-    id_gen: IdGenerator::new(),
-  }
+  { entries: [], id_gen: IdGenerator::new() }
 }
 
 ///|
@@ -51,14 +46,15 @@ pub fn StepRegistry::len(self : StepRegistry) -> Int {
 }
 
 ///|
-/// Register a StepDef directly.
+/// Register a StepDef directly, using the given param registry for expression parsing.
 pub fn StepRegistry::register_def(
   self : StepRegistry,
   step_def : StepDef,
+  param_registry : @cucumber_expressions.ParamTypeRegistry,
 ) -> Unit {
   let expr = @cucumber_expressions.Expression::parse_with_registry(
     step_def.pattern,
-    self.param_registry,
+    param_registry,
   ) catch {
     _ => return
   }
@@ -73,64 +69,15 @@ pub fn StepRegistry::step_defs(self : StepRegistry) -> Array[StepDef] {
 }
 
 ///|
-/// Compose a StepLibrary into this registry.
+/// Compose a StepLibrary into this registry using the given param registry.
 pub fn[L : StepLibrary] StepRegistry::use_library(
   self : StepRegistry,
   library : L,
+  param_registry : @cucumber_expressions.ParamTypeRegistry,
 ) -> Unit {
   for step_def in library.steps() {
-    self.register_def(step_def)
+    self.register_def(step_def, param_registry)
   }
-}
-
-///|
-fn StepRegistry::register(
-  self : StepRegistry,
-  keyword : StepKeyword,
-  pattern : String,
-  handler : StepHandler,
-) -> Unit {
-  self.register_def({ keyword, pattern, handler, source: None, id: None })
-}
-
-///|
-/// Register a Given step.
-pub fn StepRegistry::given(
-  self : StepRegistry,
-  pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
-) -> Unit {
-  self.register(StepKeyword::Given, pattern, StepHandler(handler))
-}
-
-///|
-/// Register a When step.
-pub fn StepRegistry::when(
-  self : StepRegistry,
-  pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
-) -> Unit {
-  self.register(StepKeyword::When, pattern, StepHandler(handler))
-}
-
-///|
-/// Register a Then step.
-pub fn StepRegistry::then(
-  self : StepRegistry,
-  pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
-) -> Unit {
-  self.register(StepKeyword::Then, pattern, StepHandler(handler))
-}
-
-///|
-/// Register a step that matches any keyword.
-pub fn StepRegistry::step(
-  self : StepRegistry,
-  pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
-) -> Unit {
-  self.register(StepKeyword::Step, pattern, StepHandler(handler))
 }
 
 ///|
