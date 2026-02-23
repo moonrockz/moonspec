@@ -37,13 +37,13 @@ fn zero_timestamp() -> Json {
 }
 
 ///|
-impl Formatter for MessagesFormatter with on_run_start(self, _info) {
+pub impl Formatter for MessagesFormatter with on_run_start(self, _info) {
   let envelope : Json = { "testRunStarted": { "timestamp": zero_timestamp() } }
   self.emit_line(envelope.stringify())
 }
 
 ///|
-impl Formatter for MessagesFormatter with on_run_finish(self, result) {
+pub impl Formatter for MessagesFormatter with on_run_finish(self, result) {
   let success = result.summary.failed == 0
   let envelope : Json = {
     "testRunFinished": {

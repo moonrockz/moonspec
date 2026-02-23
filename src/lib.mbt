@@ -19,4 +19,16 @@ pub using @core {
 }
 
 ///|
-pub using @runner {type FeatureSource, run, run_with_hooks, run_or_fail}
+pub using @runner {
+  type FeatureSource,
+  type RunResult,
+  type RunSummary,
+  type FeatureResult,
+  type ScenarioResult,
+  type StepResult,
+  type ScenarioStatus,
+  type StepStatus,
+  run,
+  run_with_hooks,
+  run_or_fail,
+}
