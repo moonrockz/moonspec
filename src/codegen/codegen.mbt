@@ -1,10 +1,4 @@
 ///|
-/// moonspec codegen — Generate _test.mbt from .feature files.
-pub fn codegen_version() -> String {
-  "0.2.0"
-}
-
-///|
 /// Simple FNV-1a-like hash of a string, returned as a hex string.
 fn simple_hash(s : String) -> String {
   let mut hash : UInt = 2166136261
