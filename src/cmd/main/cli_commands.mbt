@@ -1,6 +1,6 @@
 ///|
 fn cmd_version() -> Unit {
-  println("moonspec \{version}")
+  println("moonspec \{get_version()}")
 }
 
 ///|
