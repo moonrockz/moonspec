@@ -187,3 +187,44 @@ async test "run emits TestCase envelopes with test steps" {
   }
   assert_true(found)
 }
+
+///|
+async test "run emits envelopes in canonical order" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://order", "Feature: Order\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let types : Array[String] = []
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::Meta(_) => types.push("Meta")
+      @cucumber_messages.Envelope::Source(_) => types.push("Source")
+      @cucumber_messages.Envelope::GherkinDocument(_) =>
+        types.push("GherkinDocument")
+      @cucumber_messages.Envelope::Pickle(_) => types.push("Pickle")
+      @cucumber_messages.Envelope::TestCase(_) => types.push("TestCase")
+      @cucumber_messages.Envelope::TestRunStarted(_) =>
+        types.push("TestRunStarted")
+      @cucumber_messages.Envelope::TestCaseStarted(_) =>
+        types.push("TestCaseStarted")
+      @cucumber_messages.Envelope::TestStepStarted(_) =>
+        types.push("TestStepStarted")
+      @cucumber_messages.Envelope::TestStepFinished(_) =>
+        types.push("TestStepFinished")
+      @cucumber_messages.Envelope::TestCaseFinished(_) =>
+        types.push("TestCaseFinished")
+      @cucumber_messages.Envelope::TestRunFinished(_) =>
+        types.push("TestRunFinished")
+      _ => types.push("Other")
+    }
+  }
+  let expected : Array[String] = [
+    "Meta", "Source", "GherkinDocument", "Pickle", "TestCase", "TestRunStarted",
+    "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
+    "TestRunFinished",
+  ]
+  assert_eq(types, expected)
+}

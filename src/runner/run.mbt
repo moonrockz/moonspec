@@ -42,6 +42,172 @@ fn make_source_envelope(uri : String, data : String) -> @cucumber_messages.Envel
 }
 
 ///|
+fn make_test_run_started_envelope(id : String) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testRunStarted": {
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+      "id": id.to_json(),
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+fn make_test_run_finished_envelope(
+  success : Bool,
+  run_id : String
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testRunFinished": {
+      "success": success.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+      "testRunStartedId": run_id.to_json(),
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+fn make_test_case_started_envelope(
+  id : String,
+  test_case_id : String
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testCaseStarted": {
+      "attempt": (0 : Int).to_json(),
+      "id": id.to_json(),
+      "testCaseId": test_case_id.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+fn make_test_case_finished_envelope(
+  test_case_started_id : String
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testCaseFinished": {
+      "testCaseStartedId": test_case_started_id.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+      "willBeRetried": false.to_json(),
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+fn make_test_step_started_envelope(
+  test_case_started_id : String,
+  test_step_id : String
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testStepStarted": {
+      "testCaseStartedId": test_case_started_id.to_json(),
+      "testStepId": test_step_id.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+fn make_test_step_finished_envelope(
+  test_case_started_id : String,
+  test_step_id : String,
+  status : String,
+  message : String?
+) -> @cucumber_messages.Envelope {
+  let result_json : Map[String, Json] = {}
+  result_json["duration"] = {
+    "seconds": (0 : Int).to_json(),
+    "nanos": (0 : Int).to_json(),
+  }
+  result_json["status"] = status.to_json()
+  match message {
+    Some(msg) => result_json["message"] = msg.to_json()
+    None => ()
+  }
+  let json : Json = {
+    "testStepFinished": {
+      "testCaseStartedId": test_case_started_id.to_json(),
+      "testStepId": test_step_id.to_json(),
+      "testStepResult": result_json.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+    },
+  }
+  @json.from_json(json) catch { _ => panic() }
+}
+
+///|
+/// Map a StepStatus to a cucumber-messages status string.
+fn step_status_to_string(status : StepStatus) -> String {
+  match status {
+    StepStatus::Passed => "PASSED"
+    StepStatus::Failed(_) => "FAILED"
+    StepStatus::Skipped => "SKIPPED"
+    StepStatus::Undefined => "UNDEFINED"
+    StepStatus::Pending => "PENDING"
+  }
+}
+
+///|
+/// Map a StepStatus to a failure message (if any).
+fn step_status_message(status : StepStatus) -> String? {
+  match status {
+    StepStatus::Failed(msg) => Some(msg)
+    _ => None
+  }
+}
+
+///|
+/// Mapping from pickle to its test case ID and test step IDs.
+struct TestCaseMapping {
+  test_case_id : String
+  test_step_ids : Array[String]
+}
+
+///|
+/// Extract test case mappings from test case envelopes, keyed by pickle ID.
+fn extract_test_case_mappings(
+  tc_envelopes : Array[@cucumber_messages.Envelope]
+) -> Map[String, TestCaseMapping] {
+  let mappings : Map[String, TestCaseMapping] = {}
+  for env in tc_envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestCase(tc) => {
+        let step_ids : Array[String] = []
+        for ts in tc.testSteps {
+          step_ids.push(ts.id)
+        }
+        mappings[tc.pickleId] = { test_case_id: tc.id, test_step_ids: step_ids }
+      }
+      _ => ()
+    }
+  }
+  mappings
+}
+
+///|
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
@@ -109,17 +275,30 @@ pub async fn[W : @core.World] run(
   }
   let filtered = filter.apply(pickles)
   // Test planning phase
-  if sinks.length() > 0 {
-    let id_gen = IdGenerator::new()
+  let id_gen = IdGenerator::new()
+  let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
     let tc_envelopes = build_test_cases(factory, filtered, id_gen)
     for env in tc_envelopes {
       emit(sinks, env)
     }
+    extract_test_case_mappings(tc_envelopes)
+  } else {
+    {}
+  }
+  // Emit TestRunStarted
+  let run_id = id_gen.next("tr")
+  if sinks.length() > 0 {
+    emit(sinks, make_test_run_started_envelope(run_id))
   }
   let results = if parallel > 0 {
-    run_pickles_parallel(factory, filtered, max_concurrent=parallel)
+    run_pickles_parallel(factory, filtered, max_concurrent=parallel, sinks~, tc_mappings~, id_gen~)
   } else {
-    run_pickles_sequential(factory, filtered)
+    run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
+  }
+  // Emit TestRunFinished
+  if sinks.length() > 0 {
+    let all_passed = results.iter().all(fn(r) { r.status == ScenarioStatus::Passed })
+    emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
@@ -193,17 +372,30 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   }
   let filtered = filter.apply(pickles)
   // Test planning phase
-  if sinks.length() > 0 {
-    let id_gen = IdGenerator::new()
+  let id_gen = IdGenerator::new()
+  let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
     let tc_envelopes = build_test_cases(factory, filtered, id_gen)
     for env in tc_envelopes {
       emit(sinks, env)
     }
+    extract_test_case_mappings(tc_envelopes)
+  } else {
+    {}
+  }
+  // Emit TestRunStarted
+  let run_id = id_gen.next("tr")
+  if sinks.length() > 0 {
+    emit(sinks, make_test_run_started_envelope(run_id))
   }
   let results = if parallel > 0 {
-    run_pickles_parallel_with_hooks(factory, filtered, max_concurrent=parallel)
+    run_pickles_parallel_with_hooks(factory, filtered, max_concurrent=parallel, sinks~, tc_mappings~, id_gen~)
   } else {
-    run_pickles_sequential_with_hooks(factory, filtered)
+    run_pickles_sequential_with_hooks(factory, filtered, sinks~, tc_mappings~, id_gen~)
+  }
+  // Emit TestRunFinished
+  if sinks.length() > 0 {
+    let all_passed = results.iter().all(fn(r) { r.status == ScenarioStatus::Passed })
+    emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
@@ -287,10 +479,19 @@ fn format_run_summary(summary : RunSummary) -> String {
 fn[W : @core.World] run_pickles_sequential(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
-    let result = execute_pickle(factory, pickle)
+    let result = execute_pickle(
+      factory,
+      pickle,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
     results.push(result)
   }
   results
@@ -301,10 +502,19 @@ fn[W : @core.World] run_pickles_sequential(
 fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
-    let result = execute_pickle_with_hooks(factory, pickle)
+    let result = execute_pickle_with_hooks(
+      factory,
+      pickle,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
     results.push(result)
   }
   results
@@ -315,18 +525,49 @@ fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
 fn[W : @core.World] execute_pickle(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> ScenarioResult {
   let world = factory()
   let registry = @core.StepRegistry::new()
   @core.World::register_steps(world, registry)
-  execute_scenario(
+  // Emit TestCaseStarted
+  let mapping = tc_mappings.get(pickle.id)
+  let tcs_id = match mapping {
+    Some(m) => {
+      let tcs_id = id_gen.next("tcs")
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_started_envelope(tcs_id, m.test_case_id))
+      }
+      Some(tcs_id)
+    }
+    None => None
+  }
+  let test_step_ids = match mapping {
+    Some(m) => m.test_step_ids
+    None => []
+  }
+  let result = execute_scenario(
     registry,
     feature_name=pickle.uri,
     scenario_name=pickle.name,
     pickle_id=pickle.id,
     tags=pickle.tags.map(fn(t) { t.name }),
     steps=pickle.steps,
+    sinks~,
+    test_case_started_id=tcs_id.unwrap_or(""),
+    test_step_ids~,
   )
+  // Emit TestCaseFinished
+  match tcs_id {
+    Some(id) =>
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_finished_envelope(id))
+      }
+    None => ()
+  }
+  result
 }
 
 ///|
@@ -334,11 +575,30 @@ fn[W : @core.World] execute_pickle(
 fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> ScenarioResult {
   let world = factory()
   let registry = @core.StepRegistry::new()
   @core.World::register_steps(world, registry)
-  execute_scenario_with_hooks(
+  // Emit TestCaseStarted
+  let mapping = tc_mappings.get(pickle.id)
+  let tcs_id = match mapping {
+    Some(m) => {
+      let tcs_id = id_gen.next("tcs")
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_started_envelope(tcs_id, m.test_case_id))
+      }
+      Some(tcs_id)
+    }
+    None => None
+  }
+  let test_step_ids = match mapping {
+    Some(m) => m.test_step_ids
+    None => []
+  }
+  let result = execute_scenario_with_hooks(
     world,
     registry,
     feature_name=pickle.uri,
@@ -346,7 +606,19 @@ fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
     pickle_id=pickle.id,
     tags=pickle.tags.map(fn(t) { t.name }),
     steps=pickle.steps,
+    sinks~,
+    test_case_started_id=tcs_id.unwrap_or(""),
+    test_step_ids~,
   )
+  // Emit TestCaseFinished
+  match tcs_id {
+    Some(id) =>
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_finished_envelope(id))
+      }
+    None => ()
+  }
+  result
 }
 
 ///|
