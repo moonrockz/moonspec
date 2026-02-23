@@ -1,0 +1,19 @@
+import {
+  "moonrockz/moonspec",
+  "moonbitlang/async",
+}
+
+options(
+  "pre-build": [
+    {
+      "input": "../features/todolist.feature",
+      "output": "todolist_feature_wbtest.mbt",
+      "command": "moonspec gen tests $input -w TodoWorld -o .",
+    },
+    {
+      "input": "steps.mbt",
+      "output": "todoworld_steps_gen.mbt",
+      "command": "moonspec gen steps -d .",
+    },
+  ],
+)
