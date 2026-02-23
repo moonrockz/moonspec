@@ -26,9 +26,15 @@ The framework supports three integration modes:
 ```
 moonrockz/moonspec
 ├── src/
-│   ├── core/            # Foundation types and step registry
-│   │   ├── types.mbt        # StepArg (ADT), ScenarioInfo, StepInfo
-│   │   ├── registry.mbt     # StepRegistry — given/when/then/step + find_match
+│   ├── core/            # Foundation types, step registry, and step definitions
+│   │   ├── types.mbt        # StepArg (ADT), ScenarioInfo, StepInfo, StepHandler
+│   │   ├── registry.mbt     # StepRegistry — given/when/then/step + find_match + use_library
+│   │   ├── step_def.mbt     # StepDef — first-class step definitions (given/when/then/step constructors)
+│   │   ├── step_library.mbt # StepLibrary trait — composable step definition groups
+│   │   ├── world.mbt        # World and Hooks traits
+│   │   ├── error.mbt        # MoonspecError hierarchy (ParseError, UndefinedStep, etc.)
+│   │   ├── snippet.mbt      # Snippet generator for undefined steps
+│   │   ├── suggest.mbt      # "Did you mean?" suggestions for undefined steps
 │   │   └── lib.mbt          # Package entry point
 │   ├── runner/          # Scenario execution engine
 │   │   ├── results.mbt      # StepStatus, ScenarioStatus, *Result, RunSummary
@@ -61,10 +67,13 @@ moonrockz/moonspec
 .feature file → @gherkin.parse() → GherkinDocument
              → extract scenarios + expand outlines
              → filter by tag expression
+             → World::register_steps() → StepRegistry (with StepLibrary composition)
              → for each step:
                  → StepRegistry::find_match(text) → (handler, args)
                  → execute handler → StepResult
+                 → on undefined: generate snippet + "did you mean?" suggestions
              → aggregate → ScenarioResult → FeatureResult → RunResult
+             → run_or_fail: raise MoonspecError on failure
              → Formatter::on_*() events → output
 ```
 

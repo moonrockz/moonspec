@@ -1,0 +1,10 @@
+{
+  "name": "example/ecommerce-cli",
+  "version": "0.0.1",
+  "deps": {
+    "moonrockz/moonspec": { "path": "../.." },
+    "moonbitlang/async": "0.16.6",
+    "moonbitlang/x": "0.4.40"
+  },
+  "source": "src"
+}

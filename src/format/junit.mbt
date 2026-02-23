@@ -14,7 +14,7 @@ pub fn JUnitFormatter::output(self : JUnitFormatter) -> String {
 }
 
 ///|
-impl Formatter for JUnitFormatter with on_run_finish(self, result) {
+pub impl Formatter for JUnitFormatter with on_run_finish(self, result) {
   let mut xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
   xml = xml +
     "<testsuites tests=\"" +

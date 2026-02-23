@@ -28,6 +28,18 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
 }
 
 ///|
+/// Result of matching step text against the registry.
+pub(all) enum StepMatchResult {
+  Matched(StepDef, Array[StepArg])
+  Undefined(
+    step_text~ : String,
+    keyword~ : String,
+    snippet~ : String,
+    suggestions~ : Array[String]
+  )
+}
+
+///|
 /// Information about a scenario being executed.
 pub(all) struct ScenarioInfo {
   feature_name : String

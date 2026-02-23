@@ -6,11 +6,29 @@
 pub using @core {
   trait World,
   trait Hooks,
+  trait StepLibrary,
   type StepRegistry,
+  type StepDef,
   type StepArg,
+  type StepKeyword,
+  type StepSource,
+  type StepMatchResult,
+  type MoonspecError,
   type ScenarioInfo,
   type StepInfo,
 }
 
 ///|
-pub using @runner {type FeatureSource, run, run_with_hooks}
+pub using @runner {
+  type FeatureSource,
+  type RunResult,
+  type RunSummary,
+  type FeatureResult,
+  type ScenarioResult,
+  type StepResult,
+  type ScenarioStatus,
+  type StepStatus,
+  run,
+  run_with_hooks,
+  run_or_fail,
+}

@@ -1,0 +1,11 @@
+import {
+  "moonrockz/moonspec",
+  "moonrockz/moonspec/format",
+  "moonbitlang/x/sys",
+  "moonbitlang/core/env",
+  "moonbitlang/async",
+}
+
+options(
+  "is-main": true,
+)

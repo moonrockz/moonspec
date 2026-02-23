@@ -70,6 +70,77 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
 }
 
 ///|
+/// Run all features, raising MoonspecError on any failure.
+///
+/// This is the ergonomic test API. Use in generated tests and manual tests
+/// where you want structured error output instead of manual result inspection.
+pub async fn[W : @core.World] run_or_fail(
+  factory : () -> W,
+  features : Array[FeatureSource],
+  tag_expr? : String = "",
+  scenario_name? : String = "",
+  parallel? : Int = 0,
+) -> RunResult {
+  let result = run(factory, features, tag_expr~, scenario_name~, parallel~)
+  if result.summary.failed > 0 ||
+    result.summary.undefined > 0 ||
+    result.summary.pending > 0 {
+    let errors = collect_scenario_errors(result)
+    let summary = format_run_summary(result.summary)
+    raise @core.run_failed_error(summary~, errors~)
+  }
+  result
+}
+
+///|
+/// Collect MoonspecError for each non-passing scenario.
+fn collect_scenario_errors(result : RunResult) -> Array[@core.MoonspecError] {
+  let errors : Array[@core.MoonspecError] = []
+  for feature in result.features {
+    for scenario in feature.scenarios {
+      match scenario.status {
+        ScenarioStatus::Passed => continue
+        _ => {
+          let step_errors : Array[@core.MoonspecError] = []
+          for step in scenario.steps {
+            match step.diagnostic {
+              Some(@core.UndefinedStep(..) as e) => step_errors.push(e)
+              Some(@core.PendingStep(..) as e) => step_errors.push(e)
+              Some(@core.StepFailed(..) as e) => step_errors.push(e)
+              _ => ()
+            }
+          }
+          errors.push(
+            @core.scenario_failed_error(
+              scenario=scenario.scenario_name,
+              feature=feature.name,
+              errors=step_errors,
+            ),
+          )
+        }
+      }
+    }
+  }
+  errors
+}
+
+///|
+fn format_run_summary(summary : RunSummary) -> String {
+  let parts : Array[String] = []
+  if summary.failed > 0 {
+    parts.push(summary.failed.to_string() + " failed")
+  }
+  if summary.undefined > 0 {
+    parts.push(summary.undefined.to_string() + " undefined")
+  }
+  if summary.pending > 0 {
+    parts.push(summary.pending.to_string() + " pending")
+  }
+  parts.push(summary.total_scenarios.to_string() + " total")
+  parts.join(", ")
+}
+
+///|
 /// Run pickles sequentially (the default path).
 fn[W : @core.World] run_pickles_sequential(
   factory : () -> W,

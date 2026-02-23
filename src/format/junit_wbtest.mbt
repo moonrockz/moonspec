@@ -58,6 +58,7 @@ test "JUnitFormatter formats failed scenario with failure element" {
                 keyword: "When ",
                 status: @runner.StepStatus::Failed("division by zero"),
                 duration_ms: 10L,
+                diagnostic: None,
               },
             ],
             status: @runner.ScenarioStatus::Failed,

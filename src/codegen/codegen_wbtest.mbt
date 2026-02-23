@@ -59,12 +59,13 @@ test "per-scenario mode generates runner call with world" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n    When they log in\n    Then they see the dashboard\n"
   let config = CodegenConfig::{ mode: PerScenario, world: "MyWorld" }
   let output = generate_test_file(content, "features/login.feature", config~)
-  assert_true(contains(output, "@moonspec.run"))
+  assert_true(contains(output, "@moonspec.run_or_fail"))
   assert_true(contains(output, "MyWorld::default"))
   assert_true(contains(output, "@moonspec.FeatureSource::File"))
   assert_true(contains(output, "scenario_name="))
   assert_true(contains(output, "features/login.feature"))
-  assert_true(contains(output, "assert_eq!(result.summary.failed, 0)"))
+  assert_true(contains(output, "|> ignore"))
+  assert_true(not(contains(output, "assert_eq!(result.summary.failed, 0)")))
 }
 
 ///|
@@ -72,7 +73,7 @@ test "per-feature mode generates file-based runner call" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{ mode: PerFeature, world: "MyWorld" }
   let output = generate_test_file(content, "features/login.feature", config~)
-  assert_true(contains(output, "@moonspec.run"))
+  assert_true(contains(output, "@moonspec.run_or_fail"))
   assert_true(contains(output, "MyWorld::default"))
   assert_true(contains(output, "@moonspec.FeatureSource::File"))
   assert_true(contains(output, "features/login.feature"))

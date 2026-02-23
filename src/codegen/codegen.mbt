@@ -184,13 +184,12 @@ fn generate_per_feature(
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
-      "  let result = @moonspec.run(\n    " +
+      "  @moonspec.run_or_fail(\n    " +
       config.world +
       "::default, [@moonspec.FeatureSource::File(\"" +
       escape_string(source_path) +
-      "\")],\n  )\n",
+      "\")],\n  )\n  |> ignore\n",
     )
-    buf.write_string("  assert_eq!(result.summary.failed, 0)\n")
   } else {
     buf.write_string("  ignore(\"\")\n")
   }
@@ -259,15 +258,14 @@ fn generate_scenario_runner_test(
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
-      "  let result = @moonspec.run(\n    " +
+      "  @moonspec.run_or_fail(\n    " +
       config.world +
       "::default, [@moonspec.FeatureSource::File(\"" +
       escape_string(source_path) +
       "\")],\n    scenario_name=\"" +
       escape_string(scenario_name) +
-      "\",\n  )\n",
+      "\",\n  )\n  |> ignore\n",
     )
-    buf.write_string("  assert_eq!(result.summary.failed, 0)\n")
   } else {
     buf.write_string("  // Source: " + source_path + "\n")
     buf.write_string("  ignore(\"\")\n")

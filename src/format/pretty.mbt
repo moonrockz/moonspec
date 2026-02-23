@@ -100,12 +100,12 @@ fn scenario_status_marker(
 // ---------------------------------------------------------------------------
 
 ///|
-impl Formatter for PrettyFormatter with on_feature_start(self, name) {
+pub impl Formatter for PrettyFormatter with on_feature_start(self, name) {
   self.buffer = self.buffer + "Feature: " + name + "\n\n"
 }
 
 ///|
-impl Formatter for PrettyFormatter with on_scenario_finish(self, result) {
+pub impl Formatter for PrettyFormatter with on_scenario_finish(self, result) {
   let marker = scenario_status_marker(result.status, self.no_color)
   self.buffer = self.buffer +
     "  " +
@@ -127,7 +127,7 @@ impl Formatter for PrettyFormatter with on_scenario_finish(self, result) {
 }
 
 ///|
-impl Formatter for PrettyFormatter with on_run_finish(self, result) {
+pub impl Formatter for PrettyFormatter with on_run_finish(self, result) {
   let s = result.summary
   let scenario_word = if s.total_scenarios == 1 {
     "scenario"

@@ -1,7 +1,7 @@
 ///|
 /// End-to-end test using the Runner API with inline feature content.
-/// This demonstrates programmatic test execution with assertions.
-async test "calculator: runner API" {
+/// Demonstrates PerScenario codegen mode — one test per scenario.
+async test "calculator: runner API with run_or_fail" {
   let feature =
     #|Feature: Calculator
     #|
@@ -25,10 +25,8 @@ async test "calculator: runner API" {
     #|      | a  | b  | result |
     #|      | 2  | 3  | 6      |
     #|      | 10 | 5  | 50     |
-  let result = @moonspec.run(CalcWorld::default, [@moonspec.FeatureSource::Text("test://calculator", feature)])
-  assert_eq(result.summary.total_scenarios, 4) // 2 regular + 2 outline rows
-  assert_eq(result.summary.passed, 4)
-  assert_eq(result.summary.failed, 0)
+  @moonspec.run_or_fail(CalcWorld::default, [@moonspec.FeatureSource::Text("test://calculator", feature)])
+  |> ignore
 }
 
 ///|
