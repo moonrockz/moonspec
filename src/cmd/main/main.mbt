@@ -89,75 +89,73 @@ fn cmd_version() -> Unit {
 }
 
 ///|
+fn load_config(config_path : String?) -> @config.MoonspecConfig {
+  let path = match config_path {
+    Some(p) => p
+    None => {
+      let content = @fs.read_file_to_string("moonspec.json5") catch { _ => "" }
+      if content.length() > 0 {
+        "moonspec.json5"
+      } else {
+        return @config.MoonspecConfig::empty()
+      }
+    }
+  }
+  let content = @fs.read_file_to_string(path) catch {
+    @fs.IOError(msg) => {
+      die("Error reading config \{path}: \{msg}")
+      return @config.MoonspecConfig::empty()
+    }
+  }
+  @config.MoonspecConfig::from_json5(content)
+}
+
+///|
 fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
   let files = value.positional_args
   let output_dir : String? = match value.args.get("output-dir") {
     Some(vals) => Some(vals[0])
     None => None
   }
-  // Load config: start from defaults, overlay config file, then CLI flags
-  let mut config = @codegen.CodegenConfig::default()
   let config_path : String? = match value.args.get("config") {
     Some(vals) => Some(vals[0])
     None => None
   }
-  // Try explicit --config path, or fall back to moonspec.json5 in cwd
-  let config_file : String? = match config_path {
-    Some(p) => Some(p)
-    None => {
-      let default_content = @fs.read_file_to_string("moonspec.json5") catch {
-        _ => ""
+  let moonspec_config = load_config(config_path)
+  // Resolve world: CLI --world overrides config
+  let world = match value.args.get("world") {
+    Some(vals) => vals[0]
+    None =>
+      match moonspec_config.world {
+        Some(w) => w
+        None => ""
       }
-      if default_content.length() > 0 {
-        Some("moonspec.json5")
-      } else {
-        None
-      }
-    }
   }
-  match config_file {
-    Some(path) => {
-      let json5_content = @fs.read_file_to_string(path) catch {
-        @fs.IOError(msg) => {
-          die("Error reading config \{path}: \{msg}")
-          return
-        }
-      }
-      config = @codegen.CodegenConfig::from_json5(json5_content) catch {
-        err => {
-          die("Error parsing config \{path}: \{err}")
-          return
-        }
-      }
-    }
-    None => ()
-  }
-  // CLI flags override config file values
-  match value.args.get("world") {
-    Some(vals) => config = { ..config, world: vals[0] }
-    None => ()
-  }
-  match value.args.get("mode") {
-    Some(vals) =>
-      match vals[0] {
-        "per-feature" =>
-          config = { ..config, mode: @codegen.CodegenMode::PerFeature }
-        "per-scenario" =>
-          config = { ..config, mode: @codegen.CodegenMode::PerScenario }
-        other => {
-          die("Unknown mode: \{other} (expected per-scenario or per-feature)")
-          return
-        }
-      }
-    None => ()
-  }
-  if config.world.length() == 0 {
+  if world.length() == 0 {
     die(
       "Error: --world (-w) is required. Specify the World type name (e.g. -w CalcWorld)",
     )
     return
   }
+  // CLI --mode flag (applies to all files if set)
+  let cli_mode : String? = match value.args.get("mode") {
+    Some(vals) => Some(vals[0])
+    None => None
+  }
   for file in files {
+    let mode_str = match cli_mode {
+      Some(m) => m
+      None => moonspec_config.resolve_mode(file)
+    }
+    let mode = match mode_str {
+      "per-feature" => @codegen.CodegenMode::PerFeature
+      "per-scenario" => @codegen.CodegenMode::PerScenario
+      other => {
+        die("Unknown mode: \{other} (expected per-scenario or per-feature)")
+        return
+      }
+    }
+    let config = @codegen.CodegenConfig::{ mode, world }
     let content = @fs.read_file_to_string(file) catch {
       @fs.IOError(msg) => {
         die("Error reading \{file}: \{msg}")
