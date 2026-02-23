@@ -318,3 +318,21 @@ async test "full envelope sequence for two-scenario feature" {
   guard collector.envelopes[collector.envelopes.length() - 1]
     is @cucumber_messages.Envelope::TestRunFinished(_)
 }
+
+///|
+async test "run emits no ParameterType envelopes for built-in types only" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://pt", "Feature: PT\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let mut pt_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::ParameterType(_) {
+      pt_count += 1
+    }
+  }
+  assert_eq(pt_count, 0)
+}

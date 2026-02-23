@@ -301,6 +301,10 @@ pub async fn[W : @core.World] run(
       emit(sinks, env)
     }
   }
+  // Emit ParameterType envelopes for custom parameter types
+  // TODO: Requires param_types() -> ArrayView[ParamType] accessor
+  // on cucumber-expressions ParamTypeRegistry. Currently no custom
+  // parameter types are supported, so this emits nothing.
   // Test planning phase
   let id_gen = IdGenerator::new()
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
@@ -319,15 +323,15 @@ pub async fn[W : @core.World] run(
   }
   let results = if parallel > 0 {
     run_pickles_parallel(
+      factory,
       filtered,
       max_concurrent=parallel,
       sinks~,
       tc_mappings~,
       id_gen~,
-      registry~,
     )
   } else {
-    run_pickles_sequential(filtered, sinks~, tc_mappings~, id_gen~, registry~)
+    run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
   }
   // Emit TestRunFinished
   if sinks.length() > 0 {
@@ -418,6 +422,10 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
       emit(sinks, env)
     }
   }
+  // Emit ParameterType envelopes for custom parameter types
+  // TODO: Requires param_types() -> ArrayView[ParamType] accessor
+  // on cucumber-expressions ParamTypeRegistry. Currently no custom
+  // parameter types are supported, so this emits nothing.
   // Test planning phase
   let id_gen = IdGenerator::new()
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
@@ -442,7 +450,6 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
       sinks~,
       tc_mappings~,
       id_gen~,
-      registry~,
     )
   } else {
     run_pickles_sequential_with_hooks(
@@ -451,7 +458,6 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
       sinks~,
       tc_mappings~,
       id_gen~,
-      registry~,
     )
   }
   // Emit TestRunFinished
@@ -547,16 +553,16 @@ fn format_run_summary(summary : RunSummary) -> String {
 
 ///|
 /// Run pickles sequentially (the default path).
-fn run_pickles_sequential(
+fn[W : @core.World] run_pickles_sequential(
+  factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
-  registry? : @core.StepRegistry = @core.StepRegistry::new(),
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
-    let result = execute_pickle(pickle, sinks~, tc_mappings~, id_gen~, registry~)
+    let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~)
     results.push(result)
   }
   results
@@ -564,18 +570,17 @@ fn run_pickles_sequential(
 
 ///|
 /// Run pickles sequentially with hooks.
-fn[W : @core.Hooks] run_pickles_sequential_with_hooks(
+fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
-  registry? : @core.StepRegistry = @core.StepRegistry::new(),
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
     let result = execute_pickle_with_hooks(
-      factory, pickle, sinks~, tc_mappings~, id_gen~, registry~,
+      factory, pickle, sinks~, tc_mappings~, id_gen~,
     )
     results.push(result)
   }
@@ -583,14 +588,17 @@ fn[W : @core.Hooks] run_pickles_sequential_with_hooks(
 }
 
 ///|
-/// Execute a single pickle using the shared registry.
-fn execute_pickle(
+/// Execute a single pickle with a fresh world.
+fn[W : @core.World] execute_pickle(
+  factory : () -> W,
   pickle : @cucumber_messages.Pickle,
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
-  registry? : @core.StepRegistry = @core.StepRegistry::new(),
 ) -> ScenarioResult {
+  let world = factory()
+  let registry = @core.StepRegistry::new()
+  @core.World::register_steps(world, registry)
   // Emit TestCaseStarted
   let mapping = tc_mappings.get(pickle.id)
   let tcs_id = match mapping {
@@ -631,15 +639,16 @@ fn execute_pickle(
 
 ///|
 /// Execute a single pickle with hooks and a fresh world.
-fn[W : @core.Hooks] execute_pickle_with_hooks(
+fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
-  registry? : @core.StepRegistry = @core.StepRegistry::new(),
 ) -> ScenarioResult {
   let world = factory()
+  let registry = @core.StepRegistry::new()
+  @core.World::register_steps(world, registry)
   // Emit TestCaseStarted
   let mapping = tc_mappings.get(pickle.id)
   let tcs_id = match mapping {
