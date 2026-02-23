@@ -367,6 +367,53 @@ files are the single source of truth.
 See [CLI: `gen` command](#gen----generate-test-files) and the
 [calculator example](examples/calculator/) for a full walkthrough.
 
+### Multiple Feature Files
+
+Pass multiple `FeatureSource::File` entries to run all features in a single call:
+
+```moonbit
+async test "all features" {
+  @moonspec.run_or_fail(
+    MyWorld::default,
+    [
+      @moonspec.FeatureSource::File("features/cart.feature"),
+      @moonspec.FeatureSource::File("features/checkout.feature"),
+      @moonspec.FeatureSource::File("features/inventory.feature"),
+    ],
+    tag_expr="@smoke and not @slow",
+  )
+  |> ignore
+}
+```
+
+Tag expressions filter across all features in the list. See [`examples/ecommerce/`](examples/ecommerce/) for a complete multi-feature setup.
+
+### Embedding the Runner
+
+You can embed the moonspec runner in your own binary to build custom CLI tools.
+Use `run` (not `run_or_fail`) to get the `RunResult` and wire it to a formatter:
+
+```moonbit
+async fn main {
+  let features = [
+    @moonspec.FeatureSource::File("features/cart.feature"),
+    @moonspec.FeatureSource::File("features/checkout.feature"),
+  ]
+  let result = @moonspec.run(MyWorld::default, features)
+  let fmt = @format.PrettyFormatter::new()
+  for feature in result.features {
+    @format.Formatter::on_feature_start(fmt, feature.name)
+    for scenario in feature.scenarios {
+      @format.Formatter::on_scenario_finish(fmt, scenario)
+    }
+  }
+  @format.Formatter::on_run_finish(fmt, result)
+  println(fmt.output())
+}
+```
+
+See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) for a complete CLI runner example.
+
 ## CLI
 
 ### Installing the CLI
@@ -665,6 +712,24 @@ See [`examples/bank-account/`](examples/bank-account/) -- single test per featur
 - Codegen via `moonspec gen -m per-feature`
 - Composable step libraries (`AccountSteps`, `TransactionSteps`) via `StepLibrary` trait
 - `use_library()` composition in the World
+
+### E-commerce (Multi-Feature + StepLibrary)
+
+See [`examples/ecommerce/`](examples/ecommerce/) -- multiple feature files with tag filtering:
+
+- Three feature files (cart, checkout, inventory) with feature-level and scenario-level tags
+- Composable step libraries (`CartSteps`, `CheckoutSteps`, `InventorySteps`) via `StepLibrary` trait
+- Codegen (PerScenario) and programmatic tests in a single project
+- Cross-feature tag filtering with `@smoke` and `not @inventory`
+
+### E-commerce CLI (Embedded Runner)
+
+See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) -- standalone CLI runner:
+
+- `async fn main` entry point embedding the moonspec runner
+- Manual `PrettyFormatter` wiring from `RunResult`
+- CLI argument handling for feature file paths
+- Exit code semantics (1 on failures or undefined steps)
 
 ## Architecture
 
