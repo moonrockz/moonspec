@@ -179,9 +179,177 @@ fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
 }
 
 ///|
-fn cmd_gen_steps(_value : @clap.SimpleValue) -> Unit {
-  eprintln("moonspec gen steps: not yet implemented")
-  @sys.exit(1)
+fn str_ends_with(s : String, suffix : String) -> Bool {
+  let slen = s.length()
+  let suflen = suffix.length()
+  if suflen > slen {
+    return false
+  }
+  let offset = slen - suflen
+  for i = 0; i < suflen; i = i + 1 {
+    if s[offset + i] != suffix[i] {
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn str_to_lower(s : String) -> String {
+  let buf = StringBuilder::new()
+  for i = 0; i < s.length(); i = i + 1 {
+    let c = s[i]
+    if c >= 'A' && c <= 'Z' {
+      buf.write_char((c.to_int() + 32).unsafe_to_char())
+    } else {
+      buf.write_char(c.to_int().unsafe_to_char())
+    }
+  }
+  buf.to_string()
+}
+
+///|
+fn dirname(path : String) -> String {
+  let mut last_slash = -1
+  for i = 0; i < path.length(); i = i + 1 {
+    if path[i] == '/' {
+      last_slash = i
+    }
+  }
+  if last_slash < 0 {
+    "."
+  } else if last_slash == 0 {
+    "/"
+  } else {
+    let buf = StringBuilder::new()
+    for i = 0; i < last_slash; i = i + 1 {
+      buf.write_char(path[i].to_int().unsafe_to_char())
+    }
+    buf.to_string()
+  }
+}
+
+///|
+fn ensure_parent_dir(path : String) -> Unit {
+  let dir = dirname(path)
+  if dir != "." && dir != "/" && not(@fs.path_exists(dir)) {
+    // Create parent dirs recursively
+    ensure_parent_dir(dir)
+    @fs.create_dir(dir) catch { _ => () }
+  }
+}
+
+///|
+fn compute_steps_hash(steps : Array[@scanner.StepFnInfo]) -> String {
+  let mut hash : UInt = 5381
+  for step in steps {
+    let s = step.source_file + ":" + step.line.to_string() + ":" + step.fn_name
+    for i = 0; i < s.length(); i = i + 1 {
+      let code : UInt = s[i].to_uint()
+      hash = (hash << 5) + hash + code
+    }
+  }
+  hash.to_string()
+}
+
+///|
+fn discover_mbt_files(dir : String, files : Array[String]) -> Unit {
+  let entries = @fs.read_dir(dir) catch { _ => return }
+  for entry in entries {
+    let full_path = dir + "/" + entry
+    let is_directory = @fs.is_dir(full_path) catch { _ => false }
+    if is_directory {
+      discover_mbt_files(full_path, files)
+    } else if str_ends_with(entry, ".mbt") &&
+      not(str_ends_with(entry, "_wbtest.mbt")) &&
+      not(str_ends_with(entry, "_test.mbt")) {
+      files.push(full_path)
+    }
+  }
+}
+
+///|
+fn resolve_output_path(
+  mode : String,
+  world_type : String,
+  steps : Array[@scanner.StepFnInfo]
+) -> String {
+  let lower_world = str_to_lower(world_type)
+  match mode {
+    "generated" => "_generated/" + lower_world + "_steps.mbt"
+    "alongside" => {
+      let dir = if steps.is_empty() { "." } else { dirname(steps[0].source_file) }
+      dir + "/" + lower_world + "_steps_gen.mbt"
+    }
+    "per-package" => {
+      let dir = if steps.is_empty() { "." } else { dirname(steps[0].source_file) }
+      dir + "/moonspec_gen.mbt"
+    }
+    custom_dir => custom_dir + "/" + lower_world + "_steps.mbt"
+  }
+}
+
+///|
+fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
+  let scan_dir = match value.args.get("dir") {
+    Some(vals) => vals[0]
+    None => "src"
+  }
+  let config = match value.args.get("config") {
+    Some(vals) => load_config(Some(vals[0]))
+    None => load_config(None)
+  }
+  let output_mode = match config.steps {
+    Some(steps) =>
+      match steps.output {
+        Some(o) => o
+        None => "generated"
+      }
+    None => "generated"
+  }
+  // Discover .mbt files
+  let files : Array[String] = []
+  discover_mbt_files(scan_dir, files)
+  if files.is_empty() {
+    println("No .mbt files found in \{scan_dir}")
+    return
+  }
+  // Scan all files
+  let all_steps : Map[String, Array[@scanner.StepFnInfo]] = {}
+  for file in files {
+    let content = @fs.read_file_to_string(file) catch {
+      @fs.IOError(msg) => {
+        eprintln("Warning: could not read \{file}: \{msg}")
+        continue
+      }
+    }
+    let result = @scanner.scan_source(content, file)
+    for step in result.step_fns {
+      match all_steps.get(step.world_type) {
+        Some(arr) => arr.push(step)
+        None => all_steps.set(step.world_type, [step])
+      }
+    }
+  }
+  if all_steps.is_empty() {
+    println("No #moonspec.* attributes found")
+    return
+  }
+  // Generate for each World type
+  for world_type, steps in all_steps {
+    let hash = compute_steps_hash(steps)
+    let code = @scanner.generate_register_steps(world_type, steps, source_hash=hash)
+    let output_path = resolve_output_path(output_mode, world_type, steps)
+    // Ensure output directory exists
+    ensure_parent_dir(output_path)
+    @fs.write_string_to_file(output_path, code) catch {
+      @fs.IOError(msg) => {
+        die("Error writing \{output_path}: \{msg}")
+        return
+      }
+    }
+    println(output_path)
+  }
 }
 
 ///|
