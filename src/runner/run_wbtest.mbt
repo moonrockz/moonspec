@@ -228,3 +228,49 @@ async test "run emits envelopes in canonical order" {
   ]
   assert_eq(types, expected)
 }
+
+///|
+async test "full envelope sequence for two-scenario feature" {
+  let collector = CollectorSink::new()
+  let content = "Feature: Full\n\n  Scenario: A\n    Given a step\n\n  Scenario: B\n    Given a step\n"
+  let features = [FeatureSource::Text("test://full", content)]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let types : Array[String] = []
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::Meta(_) => types.push("Meta")
+      @cucumber_messages.Envelope::Source(_) => types.push("Source")
+      @cucumber_messages.Envelope::GherkinDocument(_) =>
+        types.push("GherkinDocument")
+      @cucumber_messages.Envelope::Pickle(_) => types.push("Pickle")
+      @cucumber_messages.Envelope::TestCase(_) => types.push("TestCase")
+      @cucumber_messages.Envelope::TestRunStarted(_) =>
+        types.push("TestRunStarted")
+      @cucumber_messages.Envelope::TestCaseStarted(_) =>
+        types.push("TestCaseStarted")
+      @cucumber_messages.Envelope::TestStepStarted(_) =>
+        types.push("TestStepStarted")
+      @cucumber_messages.Envelope::TestStepFinished(_) =>
+        types.push("TestStepFinished")
+      @cucumber_messages.Envelope::TestCaseFinished(_) =>
+        types.push("TestCaseFinished")
+      @cucumber_messages.Envelope::TestRunFinished(_) =>
+        types.push("TestRunFinished")
+      _ => types.push("Other")
+    }
+  }
+  // Expected: Meta, Source, GherkinDocument, 2x Pickle, 2x TestCase,
+  // TestRunStarted, 2x (TestCaseStarted, TestStepStarted, TestStepFinished, TestCaseFinished),
+  // TestRunFinished
+  let expected : Array[String] = [
+    "Meta", "Source", "GherkinDocument", "Pickle", "Pickle", "TestCase",
+    "TestCase", "TestRunStarted", "TestCaseStarted", "TestStepStarted",
+    "TestStepFinished", "TestCaseFinished", "TestCaseStarted", "TestStepStarted",
+    "TestStepFinished", "TestCaseFinished", "TestRunFinished",
+  ]
+  assert_eq(types, expected)
+  // Verify first is Meta, last is TestRunFinished
+  guard collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_)
+  guard collector.envelopes[collector.envelopes.length() - 1]
+    is @cucumber_messages.Envelope::TestRunFinished(_)
+}
