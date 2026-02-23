@@ -64,12 +64,9 @@ pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
       }
       self.features[uri] = feature_name
     }
-    Pickle(pickle) => {
+    Pickle(pickle) =>
       self.pickles[pickle.id] = { name: pickle.name, uri: pickle.uri }
-    }
-    TestCase(tc) => {
-      self.test_cases[tc.id] = tc.pickleId
-    }
+    TestCase(tc) => self.test_cases[tc.id] = tc.pickleId
     TestCaseStarted(tcs) => {
       self.test_case_started[tcs.id] = tcs.testCaseId
       self.test_case_worst[tcs.id] = "PASSED"
@@ -155,30 +152,27 @@ pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
         }
       })
       let writer = @xml.Writer::new()
-      writer.start_element(
-        "testsuites",
-        [
-          ("tests", total_tests.to_string()),
-          ("failures", total_failures.to_string()),
-        ],
-      )
+      writer.start_element("testsuites", [
+        ("tests", total_tests.to_string()),
+        ("failures", total_failures.to_string()),
+      ])
       // Iterate features in insertion order
       self.feature_results.each(fn(uri, cases) {
         let suite_name = match self.features.get(uri) {
           Some(n) => n
           None => uri
         }
-        writer.start_element(
-          "testsuite",
-          [("name", suite_name), ("tests", cases.length().to_string())],
-        )
+        writer.start_element("testsuite", [
+          ("name", suite_name),
+          ("tests", cases.length().to_string()),
+        ])
         for tc in cases {
           match tc.status {
             "FAILED" => {
-              writer.start_element(
-                "testcase",
-                [("name", tc.name), ("classname", tc.classname)],
-              )
+              writer.start_element("testcase", [
+                ("name", tc.name),
+                ("classname", tc.classname),
+              ])
               let msg = match tc.failure_message {
                 Some(m) => m
                 None => "unknown failure"
@@ -187,19 +181,19 @@ pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
               writer.end_element("testcase")
             }
             "SKIPPED" => {
-              writer.start_element(
-                "testcase",
-                [("name", tc.name), ("classname", tc.classname)],
-              )
+              writer.start_element("testcase", [
+                ("name", tc.name),
+                ("classname", tc.classname),
+              ])
               writer.empty_element("skipped", [])
               writer.end_element("testcase")
             }
             _ => {
               // PASSED or other
-              writer.start_element(
-                "testcase",
-                [("name", tc.name), ("classname", tc.classname)],
-              )
+              writer.start_element("testcase", [
+                ("name", tc.name),
+                ("classname", tc.classname),
+              ])
               writer.end_element("testcase")
             }
           }
@@ -213,4 +207,3 @@ pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
     _ => ()
   }
 }
-

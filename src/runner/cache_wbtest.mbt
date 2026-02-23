@@ -80,8 +80,7 @@ test "FeatureCache::load_from_source returns empty errors on valid feature" {
   let cache = FeatureCache::new()
   let errors = cache.load_from_source(
     FeatureSource::Text(
-      "test://valid",
-      "Feature: Valid\n\n  Scenario: Works\n    Given something\n",
+      "test://valid", "Feature: Valid\n\n  Scenario: Works\n    Given something\n",
     ),
   )
   assert_eq(errors.length(), 0)

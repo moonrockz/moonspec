@@ -264,8 +264,8 @@ async test "run emits envelopes in canonical order" {
   }
   let expected : Array[String] = [
     "Meta", "Source", "GherkinDocument", "Pickle", "StepDefinition", "TestCase",
-    "TestRunStarted", "TestCaseStarted", "TestStepStarted", "TestStepFinished",
-    "TestCaseFinished", "TestRunFinished",
+    "TestRunStarted", "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
+    "TestRunFinished",
   ]
   assert_eq(types, expected)
 }
@@ -307,10 +307,10 @@ async test "full envelope sequence for two-scenario feature" {
   // 2x (TestCaseStarted, TestStepStarted, TestStepFinished, TestCaseFinished),
   // TestRunFinished
   let expected : Array[String] = [
-    "Meta", "Source", "GherkinDocument", "Pickle", "Pickle", "StepDefinition",
-    "TestCase", "TestCase", "TestRunStarted", "TestCaseStarted", "TestStepStarted",
-    "TestStepFinished", "TestCaseFinished", "TestCaseStarted", "TestStepStarted",
-    "TestStepFinished", "TestCaseFinished", "TestRunFinished",
+    "Meta", "Source", "GherkinDocument", "Pickle", "Pickle", "StepDefinition", "TestCase",
+    "TestCase", "TestRunStarted", "TestCaseStarted", "TestStepStarted", "TestStepFinished",
+    "TestCaseFinished", "TestCaseStarted", "TestStepStarted", "TestStepFinished",
+    "TestCaseFinished", "TestRunFinished",
   ]
   assert_eq(types, expected)
   // Verify first is Meta, last is TestRunFinished

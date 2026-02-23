@@ -66,22 +66,20 @@ pub fn FeatureCache::load_from_source(
       self.load_parsed(path, feature)
       return []
     }
-    Text(path, content) => {
+    Text(path, content) =>
       try {
         self.load_text(path, content)
         []
       } catch {
         e => [{ uri: path, message: e.to_string(), line: None }]
       }
-    }
-    File(path) => {
+    File(path) =>
       try {
         self.load_file(path)
         []
       } catch {
         e => [{ uri: path, message: e.to_string(), line: None }]
       }
-    }
   }
 }
 

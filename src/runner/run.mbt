@@ -279,8 +279,7 @@ pub async fn[W : @core.World] run(
       let source_ref : Map[String, Json] = {}
       source_ref["uri"] = pe.uri.to_json()
       match pe.line {
-        Some(line) =>
-          source_ref["location"] = { "line": line.to_json() }
+        Some(line) => source_ref["location"] = { "line": line.to_json() }
         None => ()
       }
       let json : Json = {
@@ -424,8 +423,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
       let source_ref : Map[String, Json] = {}
       source_ref["uri"] = pe.uri.to_json()
       match pe.line {
-        Some(line) =>
-          source_ref["location"] = { "line": line.to_json() }
+        Some(line) => source_ref["location"] = { "line": line.to_json() }
         None => ()
       }
       let json : Json = {
@@ -629,7 +627,11 @@ fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
     let result = execute_pickle_with_hooks(
-      factory, pickle, sinks~, tc_mappings~, id_gen~,
+      factory,
+      pickle,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
     )
     results.push(result)
   }

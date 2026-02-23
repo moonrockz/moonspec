@@ -8,7 +8,9 @@ import {
 }
 
 // Values
-pub fn[W : @core.World] build_test_cases(() -> W, Array[@cucumber-messages.Pickle], IdGenerator) -> Array[@cucumber-messages.Envelope]
+pub fn build_step_definition_envelopes(@core.StepRegistry) -> Array[@cucumber-messages.Envelope]
+
+pub fn build_test_cases(@core.StepRegistry, Array[@cucumber-messages.Pickle], IdGenerator) -> Array[@cucumber-messages.Envelope]
 
 pub fn compile_pickles(FeatureCache) -> Array[@cucumber-messages.Pickle]
 
@@ -39,7 +41,7 @@ pub fn FeatureCache::features(Self) -> Array[(String, @gherkin.Feature)]
 pub fn FeatureCache::get(Self, String) -> @gherkin.Feature?
 pub fn FeatureCache::length(Self) -> Int
 pub fn FeatureCache::load_file(Self, String) -> Unit raise
-pub fn FeatureCache::load_from_source(Self, FeatureSource) -> Unit raise
+pub fn FeatureCache::load_from_source(Self, FeatureSource) -> Array[ParseErrorInfo]
 pub fn FeatureCache::load_parsed(Self, String, @gherkin.Feature) -> Unit
 pub fn FeatureCache::load_text(Self, String, String) -> Unit raise
 pub fn FeatureCache::new() -> Self
@@ -65,6 +67,14 @@ pub(all) struct IdGenerator {
 pub fn IdGenerator::new() -> Self
 pub fn IdGenerator::next(Self, String) -> String
 
+pub(all) struct ParseErrorInfo {
+  uri : String
+  message : String
+  line : Int?
+}
+pub impl Eq for ParseErrorInfo
+pub impl Show for ParseErrorInfo
+
 pub struct PickleFilter {
   tag_expression : TagExpression
   scenario_names : Array[String]
@@ -77,6 +87,7 @@ pub fn PickleFilter::with_tags(Self, String) -> Self raise
 pub(all) struct RunResult {
   features : Array[FeatureResult]
   summary : RunSummary
+  parse_errors : Array[ParseErrorInfo]
 }
 pub impl Show for RunResult
 

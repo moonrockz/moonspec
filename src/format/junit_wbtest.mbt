@@ -21,7 +21,9 @@ fn make_test_step_finished_with_message_envelope(
       "timestamp": { "seconds": 0, "nanos": 1000000 },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -34,12 +36,9 @@ test "JUnitFormatter produces valid XML structure for passed scenario" {
   let sink : &@core.MessageSink = fmt
   sink.on_message(make_gherkin_doc_envelope("math.feature", "Math"))
   sink.on_message(
-    make_pickle_envelope(
-      "p1",
-      "math.feature",
-      "Addition",
-      [("ps1", "I have 5 cucumbers", "Context")],
-    ),
+    make_pickle_envelope("p1", "math.feature", "Addition", [
+      ("ps1", "I have 5 cucumbers", "Context"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))
   sink.on_message(make_test_case_started_envelope("tcs1", "tc1"))
@@ -67,21 +66,15 @@ test "JUnitFormatter formats failed scenario with failure element" {
   let sink : &@core.MessageSink = fmt
   sink.on_message(make_gherkin_doc_envelope("math.feature", "Math"))
   sink.on_message(
-    make_pickle_envelope(
-      "p2",
-      "math.feature",
-      "Division",
-      [("ps2", "I divide by zero", "Action")],
-    ),
+    make_pickle_envelope("p2", "math.feature", "Division", [
+      ("ps2", "I divide by zero", "Action"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc2", "p2", [("ts2", Some("ps2"))]))
   sink.on_message(make_test_case_started_envelope("tcs2", "tc2"))
   sink.on_message(
     make_test_step_finished_with_message_envelope(
-      "tcs2",
-      "ts2",
-      "FAILED",
-      "division by zero",
+      "tcs2", "ts2", "FAILED", "division by zero",
     ),
   )
   sink.on_message(make_test_case_finished_envelope("tcs2"))
@@ -98,12 +91,9 @@ test "JUnitFormatter formats skipped scenario" {
   let sink : &@core.MessageSink = fmt
   sink.on_message(make_gherkin_doc_envelope("skip.feature", "Skipped Feature"))
   sink.on_message(
-    make_pickle_envelope(
-      "p3",
-      "skip.feature",
-      "Skipped Scenario",
-      [("ps3", "a pending step", "Context")],
-    ),
+    make_pickle_envelope("p3", "skip.feature", "Skipped Scenario", [
+      ("ps3", "a pending step", "Context"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc3", "p3", [("ts3", Some("ps3"))]))
   sink.on_message(make_test_case_started_envelope("tcs3", "tc3"))
@@ -122,12 +112,9 @@ test "JUnitFormatter escapes XML special characters" {
     make_gherkin_doc_envelope("special.feature", "Math <&> \"ops\""),
   )
   sink.on_message(
-    make_pickle_envelope(
-      "p4",
-      "special.feature",
-      "A & B",
-      [("ps4", "some step", "Context")],
-    ),
+    make_pickle_envelope("p4", "special.feature", "A & B", [
+      ("ps4", "some step", "Context"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc4", "p4", [("ts4", Some("ps4"))]))
   sink.on_message(make_test_case_started_envelope("tcs4", "tc4"))
@@ -151,20 +138,14 @@ test "JUnitFormatter handles multiple features" {
   sink.on_message(make_gherkin_doc_envelope("b.feature", "Feature B"))
   // Pickles
   sink.on_message(
-    make_pickle_envelope(
-      "p1",
-      "a.feature",
-      "Scenario A",
-      [("ps1", "step a", "Context")],
-    ),
+    make_pickle_envelope("p1", "a.feature", "Scenario A", [
+      ("ps1", "step a", "Context"),
+    ]),
   )
   sink.on_message(
-    make_pickle_envelope(
-      "p2",
-      "b.feature",
-      "Scenario B",
-      [("ps2", "step b", "Action")],
-    ),
+    make_pickle_envelope("p2", "b.feature", "Scenario B", [
+      ("ps2", "step b", "Action"),
+    ]),
   )
   // Test cases
   sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))

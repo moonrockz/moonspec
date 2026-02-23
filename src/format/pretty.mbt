@@ -59,7 +59,14 @@ pub fn PrettyFormatter::new(no_color? : Bool = false) -> PrettyFormatter {
     pickle_steps: {},
     test_case_worst: {},
     current_feature_uri: "",
-    counts: { total: 0, passed: 0, failed: 0, undefined: 0, pending: 0, skipped: 0 },
+    counts: {
+      total: 0,
+      passed: 0,
+      failed: 0,
+      undefined: 0,
+      pending: 0,
+      skipped: 0,
+    },
   }
 }
 
@@ -143,9 +150,7 @@ fn msg_step_status_marker(
 // ---------------------------------------------------------------------------
 
 ///|
-fn keyword_from_step_type(
-  type_ : @cucumber_messages.PickleStepType?,
-) -> String {
+fn keyword_from_step_type(type_ : @cucumber_messages.PickleStepType?) -> String {
   match type_ {
     Some(Context) => "Given "
     Some(Action) => "When "
@@ -160,9 +165,7 @@ fn keyword_from_step_type(
 // ---------------------------------------------------------------------------
 
 ///|
-fn status_to_severity(
-  status : @cucumber_messages.TestStepResultStatus,
-) -> Int {
+fn status_to_severity(status : @cucumber_messages.TestStepResultStatus) -> Int {
   match status {
     Passed => 0
     Skipped => 1
@@ -249,7 +252,7 @@ pub impl @core.MessageSink for PrettyFormatter with on_message(self, envelope) {
         None => ()
       }
     }
-    TestStepFinished(tsf) => {
+    TestStepFinished(tsf) =>
       // Only format pickle steps (not hook steps)
       match self.test_step_to_pickle_step.get(tsf.testStepId) {
         Some(pickle_step_id) => {
@@ -281,7 +284,6 @@ pub impl @core.MessageSink for PrettyFormatter with on_message(self, envelope) {
         }
         None => () // hook step, skip
       }
-    }
     TestCaseFinished(tcf) => {
       let tcs_id = tcf.testCaseStartedId
       let worst = match self.test_case_worst.get(tcs_id) {

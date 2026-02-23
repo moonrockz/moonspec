@@ -53,11 +53,21 @@ pub(all) struct StepDef {
   pattern : String
   handler : StepHandler
   source : StepSource?
+  mut id : StepDefId?
 }
 pub fn StepDef::given(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
 pub fn StepDef::step(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
 pub fn StepDef::then(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
 pub fn StepDef::when(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
+
+pub(all) struct StepDefId {
+  // private fields
+}
+pub fn StepDefId::from_string(String) -> Self
+pub fn StepDefId::to_string(Self) -> String
+pub impl Eq for StepDefId
+pub impl Hash for StepDefId
+pub impl Show for StepDefId
 
 pub struct StepHandler((Array[StepArg]) -> Unit raise)
 #deprecated
@@ -93,6 +103,7 @@ pub fn StepRegistry::len(Self) -> Int
 pub fn StepRegistry::new() -> Self
 pub fn StepRegistry::register_def(Self, StepDef) -> Unit
 pub fn StepRegistry::step(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn StepRegistry::step_defs(Self) -> Array[StepDef]
 pub fn StepRegistry::then(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
 pub fn[L : StepLibrary] StepRegistry::use_library(Self, L) -> Unit
 pub fn StepRegistry::when(Self, String, (Array[StepArg]) -> Unit raise) -> Unit

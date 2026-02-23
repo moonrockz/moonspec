@@ -23,7 +23,9 @@ fn make_gherkin_doc_envelope(
       },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -56,7 +58,9 @@ fn make_pickle_envelope(
       "astNodeIds": ["sc1"],
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -83,7 +87,9 @@ fn make_test_case_envelope(
       "testSteps": steps_arr.to_json(),
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -100,7 +106,9 @@ fn make_test_case_started_envelope(
       "timestamp": { "seconds": 0, "nanos": 0 },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -121,7 +129,9 @@ fn make_test_step_finished_envelope(
       "timestamp": { "seconds": 0, "nanos": 1000000 },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -136,7 +146,9 @@ fn make_test_case_finished_envelope(
       "willBeRetried": false,
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -148,7 +160,9 @@ fn make_test_run_finished_envelope() -> @cucumber_messages.Envelope {
       "timestamp": { "seconds": 1, "nanos": 0 },
     },
   }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -161,12 +175,9 @@ test "PrettyFormatter formats passed scenario via envelopes" {
   let sink : &@core.MessageSink = fmt
   sink.on_message(make_gherkin_doc_envelope("math.feature", "Math"))
   sink.on_message(
-    make_pickle_envelope(
-      "p1",
-      "math.feature",
-      "Addition",
-      [("ps1", "I have 5 cucumbers", "Context")],
-    ),
+    make_pickle_envelope("p1", "math.feature", "Addition", [
+      ("ps1", "I have 5 cucumbers", "Context"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))
   sink.on_message(make_test_case_started_envelope("tcs1", "tc1"))
@@ -187,12 +198,9 @@ test "PrettyFormatter formats failed scenario via envelopes" {
   let sink : &@core.MessageSink = fmt
   sink.on_message(make_gherkin_doc_envelope("math.feature", "Math"))
   sink.on_message(
-    make_pickle_envelope(
-      "p2",
-      "math.feature",
-      "Division by zero",
-      [("ps2", "I divide by zero", "Action")],
-    ),
+    make_pickle_envelope("p2", "math.feature", "Division by zero", [
+      ("ps2", "I divide by zero", "Action"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc2", "p2", [("ts2", Some("ps2"))]))
   sink.on_message(make_test_case_started_envelope("tcs2", "tc2"))
@@ -213,7 +221,9 @@ test "PrettyFormatter formats summary with mixed results" {
   sink.on_message(make_gherkin_doc_envelope("test.feature", "Test"))
   // Scenario 1: passed
   sink.on_message(
-    make_pickle_envelope("p1", "test.feature", "S1", [("ps1", "step1", "Context")]),
+    make_pickle_envelope("p1", "test.feature", "S1", [
+      ("ps1", "step1", "Context"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))
   sink.on_message(make_test_case_started_envelope("tcs1", "tc1"))
@@ -221,7 +231,9 @@ test "PrettyFormatter formats summary with mixed results" {
   sink.on_message(make_test_case_finished_envelope("tcs1"))
   // Scenario 2: passed
   sink.on_message(
-    make_pickle_envelope("p2", "test.feature", "S2", [("ps2", "step2", "Action")]),
+    make_pickle_envelope("p2", "test.feature", "S2", [
+      ("ps2", "step2", "Action"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc2", "p2", [("ts2", Some("ps2"))]))
   sink.on_message(make_test_case_started_envelope("tcs2", "tc2"))
@@ -229,12 +241,9 @@ test "PrettyFormatter formats summary with mixed results" {
   sink.on_message(make_test_case_finished_envelope("tcs2"))
   // Scenario 3: failed
   sink.on_message(
-    make_pickle_envelope(
-      "p3",
-      "test.feature",
-      "S3",
-      [("ps3", "step3", "Outcome")],
-    ),
+    make_pickle_envelope("p3", "test.feature", "S3", [
+      ("ps3", "step3", "Outcome"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc3", "p3", [("ts3", Some("ps3"))]))
   sink.on_message(make_test_case_started_envelope("tcs3", "tc3"))
@@ -254,12 +263,9 @@ test "PrettyFormatter prints feature header on URI change" {
   let sink : &@core.MessageSink = fmt
   sink.on_message(make_gherkin_doc_envelope("calc.feature", "Calculator"))
   sink.on_message(
-    make_pickle_envelope(
-      "p1",
-      "calc.feature",
-      "Add",
-      [("ps1", "adding", "Context")],
-    ),
+    make_pickle_envelope("p1", "calc.feature", "Add", [
+      ("ps1", "adding", "Context"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))
   sink.on_message(make_test_case_started_envelope("tcs1", "tc1"))
@@ -273,23 +279,18 @@ test "PrettyFormatter step markers with multiple statuses" {
   let sink : &@core.MessageSink = fmt
   sink.on_message(make_gherkin_doc_envelope("test.feature", "Test"))
   sink.on_message(
-    make_pickle_envelope(
-      "p1",
-      "test.feature",
-      "Steps",
-      [
-        ("ps1", "step one", "Context"),
-        ("ps2", "step two", "Action"),
-        ("ps3", "step three", "Outcome"),
-      ],
-    ),
+    make_pickle_envelope("p1", "test.feature", "Steps", [
+      ("ps1", "step one", "Context"),
+      ("ps2", "step two", "Action"),
+      ("ps3", "step three", "Outcome"),
+    ]),
   )
   sink.on_message(
-    make_test_case_envelope(
-      "tc1",
-      "p1",
-      [("ts1", Some("ps1")), ("ts2", Some("ps2")), ("ts3", Some("ps3"))],
-    ),
+    make_test_case_envelope("tc1", "p1", [
+      ("ts1", Some("ps1")),
+      ("ts2", Some("ps2")),
+      ("ts3", Some("ps3")),
+    ]),
   )
   sink.on_message(make_test_case_started_envelope("tcs1", "tc1"))
   sink.on_message(make_test_step_finished_envelope("tcs1", "ts1", "PASSED"))
@@ -309,12 +310,9 @@ test "PrettyFormatter implements MessageSink via envelopes" {
   // Feed a full sequence
   sink.on_message(make_gherkin_doc_envelope("a.feature", "Alpha"))
   sink.on_message(
-    make_pickle_envelope(
-      "p1",
-      "a.feature",
-      "Scenario A",
-      [("ps1", "a given step", "Context")],
-    ),
+    make_pickle_envelope("p1", "a.feature", "Scenario A", [
+      ("ps1", "a given step", "Context"),
+    ]),
   )
   sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))
   sink.on_message(make_test_case_started_envelope("tcs1", "tc1"))
@@ -336,20 +334,10 @@ test "PrettyFormatter handles two features" {
   sink.on_message(make_gherkin_doc_envelope("b.feature", "Feature B"))
   // Pickles
   sink.on_message(
-    make_pickle_envelope(
-      "p1",
-      "a.feature",
-      "S1",
-      [("ps1", "step a", "Context")],
-    ),
+    make_pickle_envelope("p1", "a.feature", "S1", [("ps1", "step a", "Context")]),
   )
   sink.on_message(
-    make_pickle_envelope(
-      "p2",
-      "b.feature",
-      "S2",
-      [("ps2", "step b", "Action")],
-    ),
+    make_pickle_envelope("p2", "b.feature", "S2", [("ps2", "step b", "Action")]),
   )
   // Test cases
   sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))

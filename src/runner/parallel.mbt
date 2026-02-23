@@ -26,9 +26,7 @@ async fn[W : @core.World + @core.Hooks] run_pickles_parallel_with_hooks(
 ) -> Array[ScenarioResult] {
   let tasks : Array[async () -> ScenarioResult] = pickles.map(fn(pickle) {
     fn() -> ScenarioResult {
-      execute_pickle_with_hooks(
-        factory, pickle, sinks~, tc_mappings~, id_gen~,
-      )
+      execute_pickle_with_hooks(factory, pickle, sinks~, tc_mappings~, id_gen~)
     }
   })
   @async.all(tasks[:], max_concurrent~)
