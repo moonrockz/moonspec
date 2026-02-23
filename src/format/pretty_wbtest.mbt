@@ -68,6 +68,7 @@ test "PrettyFormatter formats summary" {
       skipped: 0,
       duration_ms: 100L,
     },
+    parse_errors: [],
   }
   fmt.format_summary(run_result)
   let output = fmt.output()

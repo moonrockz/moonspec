@@ -56,14 +56,32 @@ pub fn FeatureCache::load_parsed(
 
 ///|
 /// Load a feature from any FeatureSource variant.
+/// Returns an array of parse errors (empty on success).
 pub fn FeatureCache::load_from_source(
   self : FeatureCache,
   source : FeatureSource,
-) -> Unit raise Error {
+) -> Array[ParseErrorInfo] {
   match source {
-    Text(path, content) => self.load_text(path, content)
-    File(path) => self.load_file(path)
-    Parsed(path, feature) => self.load_parsed(path, feature)
+    Parsed(path, feature) => {
+      self.load_parsed(path, feature)
+      return []
+    }
+    Text(path, content) => {
+      try {
+        self.load_text(path, content)
+        []
+      } catch {
+        e => [{ uri: path, message: e.to_string(), line: None }]
+      }
+    }
+    File(path) => {
+      try {
+        self.load_file(path)
+        []
+      } catch {
+        e => [{ uri: path, message: e.to_string(), line: None }]
+      }
+    }
   }
 }
 

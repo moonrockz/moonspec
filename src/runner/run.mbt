@@ -241,6 +241,7 @@ pub async fn[W : @core.World] run(
   if sinks.length() > 0 {
     emit(sinks, make_meta_envelope())
   }
+  let all_parse_errors : Array[ParseErrorInfo] = []
   for source in features {
     if sinks.length() > 0 {
       let (uri, data) = match source {
@@ -253,7 +254,8 @@ pub async fn[W : @core.World] run(
       }
       emit(sinks, make_source_envelope(uri, data))
     }
-    cache.load_from_source(source)
+    let errors = cache.load_from_source(source)
+    all_parse_errors.append(errors)
   }
   // Emit GherkinDocument envelopes
   if sinks.length() > 0 {
@@ -342,7 +344,7 @@ pub async fn[W : @core.World] run(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
-  { features: feature_results, summary }
+  { features: feature_results, summary, parse_errors: all_parse_errors }
 }
 
 ///|
@@ -362,6 +364,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   if sinks.length() > 0 {
     emit(sinks, make_meta_envelope())
   }
+  let all_parse_errors : Array[ParseErrorInfo] = []
   for source in features {
     if sinks.length() > 0 {
       let (uri, data) = match source {
@@ -374,7 +377,8 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
       }
       emit(sinks, make_source_envelope(uri, data))
     }
-    cache.load_from_source(source)
+    let errors = cache.load_from_source(source)
+    all_parse_errors.append(errors)
   }
   // Emit GherkinDocument envelopes
   if sinks.length() > 0 {
@@ -469,7 +473,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
-  { features: feature_results, summary }
+  { features: feature_results, summary, parse_errors: all_parse_errors }
 }
 
 ///|

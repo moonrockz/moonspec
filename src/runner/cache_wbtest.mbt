@@ -55,11 +55,12 @@ test "FeatureCache::features returns all entries" {
 ///|
 test "FeatureCache::load_from_source handles Text variant" {
   let cache = FeatureCache::new()
-  cache.load_from_source(
+  let errors = cache.load_from_source(
     FeatureSource::Text(
       "test://text", "Feature: T\n\n  Scenario: S\n    Given a step\n",
     ),
   )
+  assert_eq(errors.length(), 0)
   assert_eq(cache.length(), 1)
 }
 
@@ -72,4 +73,30 @@ test "FeatureCache::load_file is idempotent" {
   // load_file would fail on a nonexistent path, but load_text followed by contains check
   // demonstrates the cache check behavior
   assert_true(cache.contains("test://idem"))
+}
+
+///|
+test "FeatureCache::load_from_source returns empty errors on valid feature" {
+  let cache = FeatureCache::new()
+  let errors = cache.load_from_source(
+    FeatureSource::Text(
+      "test://valid",
+      "Feature: Valid\n\n  Scenario: Works\n    Given something\n",
+    ),
+  )
+  assert_eq(errors.length(), 0)
+  assert_eq(cache.length(), 1)
+  assert_eq(cache.get("test://valid").unwrap().name, "Valid")
+}
+
+///|
+test "FeatureCache::load_from_source returns ParseErrorInfo on invalid feature" {
+  let cache = FeatureCache::new()
+  let errors = cache.load_from_source(
+    FeatureSource::Text("test://bad", "This is not valid Gherkin"),
+  )
+  assert_true(errors.length() > 0)
+  assert_eq(errors[0].uri, "test://bad")
+  assert_true(errors[0].message.length() > 0)
+  assert_eq(errors[0].line, None)
 }

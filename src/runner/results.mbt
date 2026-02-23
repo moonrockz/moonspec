@@ -107,8 +107,17 @@ pub(all) struct RunSummary {
 } derive(Show, Eq)
 
 ///|
+/// Information about a parse error encountered when loading a feature.
+pub(all) struct ParseErrorInfo {
+  uri : String
+  message : String
+  line : Int?
+} derive(Show, Eq)
+
+///|
 /// Complete result of a test run.
 pub(all) struct RunResult {
   features : Array[FeatureResult]
   summary : RunSummary
+  parse_errors : Array[ParseErrorInfo]
 } derive(Show)

@@ -28,6 +28,7 @@ test "JUnitFormatter produces valid XML structure" {
       skipped: 0,
       duration_ms: 50L,
     },
+    parse_errors: [],
   }
   fmt.format_result(run_result)
   let output = fmt.output()
@@ -77,6 +78,7 @@ test "JUnitFormatter formats failed scenario with failure element" {
       skipped: 0,
       duration_ms: 10L,
     },
+    parse_errors: [],
   }
   fmt.format_result(run_result)
   let output = fmt.output()
@@ -115,6 +117,7 @@ test "JUnitFormatter formats skipped scenario" {
       skipped: 1,
       duration_ms: 0L,
     },
+    parse_errors: [],
   }
   fmt.format_result(run_result)
   let output = fmt.output()
@@ -151,6 +154,7 @@ test "JUnitFormatter escapes XML special characters" {
       skipped: 0,
       duration_ms: 5L,
     },
+    parse_errors: [],
   }
   fmt.format_result(run_result)
   let output = fmt.output()
