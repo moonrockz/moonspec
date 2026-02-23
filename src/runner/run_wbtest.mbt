@@ -85,3 +85,15 @@ async test "run_or_fail raises RunFailed on undefined steps" {
   }
   assert_true(caught)
 }
+
+///|
+async test "run accepts sinks parameter" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://sink", "Feature: Sink\n\n  Scenario: Pass\n    Given a step\n",
+    ),
+  ]
+  let result = run(RunWorld::default, features, sinks=[collector])
+  assert_eq(result.summary.passed, 1)
+}

@@ -1,4 +1,12 @@
 ///|
+/// Broadcast an envelope to all sinks.
+fn emit(sinks : Array[&@core.MessageSink], envelope : @cucumber_messages.Envelope) -> Unit {
+  for sink in sinks {
+    sink.on_message(envelope)
+  }
+}
+
+///|
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
@@ -10,6 +18,7 @@ pub async fn[W : @core.World] run(
   tag_expr? : String = "",
   scenario_name? : String = "",
   parallel? : Int = 0,
+  sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
   let cache = FeatureCache::new()
   for source in features {
@@ -31,6 +40,7 @@ pub async fn[W : @core.World] run(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
+  ignore(sinks)
   { features: feature_results, summary }
 }
 
@@ -45,6 +55,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   tag_expr? : String = "",
   scenario_name? : String = "",
   parallel? : Int = 0,
+  sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
   let cache = FeatureCache::new()
   for source in features {
@@ -66,6 +77,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
+  ignore(sinks)
   { features: feature_results, summary }
 }
 
@@ -80,8 +92,9 @@ pub async fn[W : @core.World] run_or_fail(
   tag_expr? : String = "",
   scenario_name? : String = "",
   parallel? : Int = 0,
+  sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
-  let result = run(factory, features, tag_expr~, scenario_name~, parallel~)
+  let result = run(factory, features, tag_expr~, scenario_name~, parallel~, sinks~)
   if result.summary.failed > 0 ||
     result.summary.undefined > 0 ||
     result.summary.pending > 0 {
