@@ -9,7 +9,8 @@
     "moonrockz/cucumber-expressions": "0.1.0",
     "moonrockz/cucumber-messages": "0.2.0",
     "TheWaWaR/clap": "0.2.6",
-    "moonbitlang/parser": "0.1.16"
+    "moonbitlang/parser": "0.1.16",
+    "Milky2018/xml": "0.2.0"
   },
   "readme": "README.mbt.md",
   "repository": "https://github.com/moonrockz/moonspec",

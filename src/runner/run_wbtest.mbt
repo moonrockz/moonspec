@@ -170,6 +170,45 @@ async test "run emits Pickle envelopes after compilation" {
 }
 
 ///|
+async test "run emits StepDefinition envelopes after Pickles" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://sd", "Feature: SD\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let mut sd_count = 0
+  let mut pickle_idx = -1
+  let mut first_sd_idx = -1
+  let mut first_tc_idx = -1
+  for i, env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::Pickle(_) =>
+        if pickle_idx < 0 {
+          pickle_idx = i
+        }
+      @cucumber_messages.Envelope::StepDefinition(_) => {
+        sd_count += 1
+        if first_sd_idx < 0 {
+          first_sd_idx = i
+        }
+      }
+      @cucumber_messages.Envelope::TestCase(_) =>
+        if first_tc_idx < 0 {
+          first_tc_idx = i
+        }
+      _ => ()
+    }
+  }
+  // RunWorld registers one step ("a step"), so exactly one StepDefinition
+  assert_eq(sd_count, 1)
+  // StepDefinition appears after Pickle and before TestCase
+  assert_true(first_sd_idx > pickle_idx)
+  assert_true(first_sd_idx < first_tc_idx)
+}
+
+///|
 async test "run emits TestCase envelopes with test steps" {
   let collector = CollectorSink::new()
   let features = [
@@ -205,6 +244,8 @@ async test "run emits envelopes in canonical order" {
       @cucumber_messages.Envelope::GherkinDocument(_) =>
         types.push("GherkinDocument")
       @cucumber_messages.Envelope::Pickle(_) => types.push("Pickle")
+      @cucumber_messages.Envelope::StepDefinition(_) =>
+        types.push("StepDefinition")
       @cucumber_messages.Envelope::TestCase(_) => types.push("TestCase")
       @cucumber_messages.Envelope::TestRunStarted(_) =>
         types.push("TestRunStarted")
@@ -222,8 +263,8 @@ async test "run emits envelopes in canonical order" {
     }
   }
   let expected : Array[String] = [
-    "Meta", "Source", "GherkinDocument", "Pickle", "TestCase", "TestRunStarted",
-    "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
+    "Meta", "Source", "GherkinDocument", "Pickle", "StepDefinition", "TestCase",
+    "TestRunStarted", "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
     "TestRunFinished",
   ]
   assert_eq(types, expected)
@@ -243,6 +284,8 @@ async test "full envelope sequence for two-scenario feature" {
       @cucumber_messages.Envelope::GherkinDocument(_) =>
         types.push("GherkinDocument")
       @cucumber_messages.Envelope::Pickle(_) => types.push("Pickle")
+      @cucumber_messages.Envelope::StepDefinition(_) =>
+        types.push("StepDefinition")
       @cucumber_messages.Envelope::TestCase(_) => types.push("TestCase")
       @cucumber_messages.Envelope::TestRunStarted(_) =>
         types.push("TestRunStarted")
@@ -259,18 +302,77 @@ async test "full envelope sequence for two-scenario feature" {
       _ => types.push("Other")
     }
   }
-  // Expected: Meta, Source, GherkinDocument, 2x Pickle, 2x TestCase,
-  // TestRunStarted, 2x (TestCaseStarted, TestStepStarted, TestStepFinished, TestCaseFinished),
+  // Expected: Meta, Source, GherkinDocument, 2x Pickle, StepDefinition,
+  // 2x TestCase, TestRunStarted,
+  // 2x (TestCaseStarted, TestStepStarted, TestStepFinished, TestCaseFinished),
   // TestRunFinished
   let expected : Array[String] = [
-    "Meta", "Source", "GherkinDocument", "Pickle", "Pickle", "TestCase", "TestCase",
-    "TestRunStarted", "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
-    "TestCaseStarted", "TestStepStarted", "TestStepFinished", "TestCaseFinished",
-    "TestRunFinished",
+    "Meta", "Source", "GherkinDocument", "Pickle", "Pickle", "StepDefinition", "TestCase",
+    "TestCase", "TestRunStarted", "TestCaseStarted", "TestStepStarted", "TestStepFinished",
+    "TestCaseFinished", "TestCaseStarted", "TestStepStarted", "TestStepFinished",
+    "TestCaseFinished", "TestRunFinished",
   ]
   assert_eq(types, expected)
   // Verify first is Meta, last is TestRunFinished
   guard collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_)
   guard collector.envelopes[collector.envelopes.length() - 1]
     is @cucumber_messages.Envelope::TestRunFinished(_)
+}
+
+///|
+async test "run emits no ParameterType envelopes for built-in types only" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://pt", "Feature: PT\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let mut pt_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::ParameterType(_) {
+      pt_count += 1
+    }
+  }
+  assert_eq(pt_count, 0)
+}
+
+///|
+async test "run emits ParseError envelope for invalid feature" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text("test://bad", "This is not valid Gherkin"),
+    FeatureSource::Text(
+      "test://ok", "Feature: OK\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let result = run(RunWorld::default, features, sinks=[collector])
+  // Run should continue with valid features
+  assert_eq(result.summary.total_scenarios, 1)
+  // Parse errors should be in result
+  assert_eq(result.parse_errors.length(), 1)
+  assert_eq(result.parse_errors[0].uri, "test://bad")
+  // ParseError envelope should be emitted
+  let mut found_parse_error = false
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::ParseError(_) {
+      found_parse_error = true
+    }
+  }
+  assert_true(found_parse_error)
+}
+
+///|
+async test "run_or_fail raises on parse errors" {
+  let mut caught = false
+  try
+    run_or_fail(RunWorld::default, [
+      FeatureSource::Text("test://bad", "Not valid Gherkin"),
+    ])
+    |> ignore
+  catch {
+    @core.RunFailed(..) => caught = true
+    _ => ()
+  }
+  assert_true(caught)
 }

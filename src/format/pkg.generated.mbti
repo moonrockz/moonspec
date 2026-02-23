@@ -4,7 +4,6 @@ package "moonrockz/moonspec/format"
 import {
   "moonrockz/cucumber-messages",
   "moonrockz/moonspec/core",
-  "moonrockz/moonspec/runner",
 }
 
 // Values
@@ -16,7 +15,6 @@ pub fn string_contains(String, String) -> Bool
 pub(all) struct JUnitFormatter {
   // private fields
 }
-pub fn JUnitFormatter::format_result(Self, @runner.RunResult) -> Unit
 pub fn JUnitFormatter::new() -> Self
 pub fn JUnitFormatter::output(Self) -> String
 pub impl @core.MessageSink for JUnitFormatter
@@ -31,10 +29,8 @@ pub impl @core.MessageSink for MessagesFormatter
 pub(all) struct PrettyFormatter {
   no_color : Bool
   mut buffer : String
+  // private fields
 }
-pub fn PrettyFormatter::format_feature_start(Self, String) -> Unit
-pub fn PrettyFormatter::format_scenario(Self, @runner.ScenarioResult) -> Unit
-pub fn PrettyFormatter::format_summary(Self, @runner.RunResult) -> Unit
 pub fn PrettyFormatter::new(no_color? : Bool) -> Self
 pub fn PrettyFormatter::output(Self) -> String
 pub impl @core.MessageSink for PrettyFormatter

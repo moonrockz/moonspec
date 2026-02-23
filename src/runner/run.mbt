@@ -241,6 +241,7 @@ pub async fn[W : @core.World] run(
   if sinks.length() > 0 {
     emit(sinks, make_meta_envelope())
   }
+  let all_parse_errors : Array[ParseErrorInfo] = []
   for source in features {
     if sinks.length() > 0 {
       let (uri, data) = match source {
@@ -253,7 +254,8 @@ pub async fn[W : @core.World] run(
       }
       emit(sinks, make_source_envelope(uri, data))
     }
-    cache.load_from_source(source)
+    let errors = cache.load_from_source(source)
+    all_parse_errors.append(errors)
   }
   // Emit GherkinDocument envelopes
   if sinks.length() > 0 {
@@ -263,6 +265,27 @@ pub async fn[W : @core.World] run(
         "gherkinDocument": {
           "uri": uri.to_json(),
           "comments": ([] : Array[Int]).to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
+  // Emit ParseError envelopes
+  if sinks.length() > 0 {
+    for pe in all_parse_errors {
+      let source_ref : Map[String, Json] = {}
+      source_ref["uri"] = pe.uri.to_json()
+      match pe.line {
+        Some(line) => source_ref["location"] = { "line": line.to_json() }
+        None => ()
+      }
+      let json : Json = {
+        "parseError": {
+          "source": source_ref.to_json(),
+          "message": pe.message.to_json(),
         },
       }
       let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -290,10 +313,25 @@ pub async fn[W : @core.World] run(
     filter
   }
   let filtered = filter.apply(pickles)
+  // Build registry once and share it
+  let registry = @core.StepRegistry::new()
+  let world0 = factory()
+  @core.World::register_steps(world0, registry)
+  // Emit StepDefinition envelopes
+  if sinks.length() > 0 {
+    let sd_envelopes = build_step_definition_envelopes(registry)
+    for env in sd_envelopes {
+      emit(sinks, env)
+    }
+  }
+  // Emit ParameterType envelopes for custom parameter types
+  // TODO: Requires param_types() -> ArrayView[ParamType] accessor
+  // on cucumber-expressions ParamTypeRegistry. Currently no custom
+  // parameter types are supported, so this emits nothing.
   // Test planning phase
   let id_gen = IdGenerator::new()
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
-    let tc_envelopes = build_test_cases(factory, filtered, id_gen)
+    let tc_envelopes = build_test_cases(registry, filtered, id_gen)
     for env in tc_envelopes {
       emit(sinks, env)
     }
@@ -327,7 +365,7 @@ pub async fn[W : @core.World] run(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
-  { features: feature_results, summary }
+  { features: feature_results, summary, parse_errors: all_parse_errors }
 }
 
 ///|
@@ -347,6 +385,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   if sinks.length() > 0 {
     emit(sinks, make_meta_envelope())
   }
+  let all_parse_errors : Array[ParseErrorInfo] = []
   for source in features {
     if sinks.length() > 0 {
       let (uri, data) = match source {
@@ -359,7 +398,8 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
       }
       emit(sinks, make_source_envelope(uri, data))
     }
-    cache.load_from_source(source)
+    let errors = cache.load_from_source(source)
+    all_parse_errors.append(errors)
   }
   // Emit GherkinDocument envelopes
   if sinks.length() > 0 {
@@ -369,6 +409,27 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
         "gherkinDocument": {
           "uri": uri.to_json(),
           "comments": ([] : Array[Int]).to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
+  // Emit ParseError envelopes
+  if sinks.length() > 0 {
+    for pe in all_parse_errors {
+      let source_ref : Map[String, Json] = {}
+      source_ref["uri"] = pe.uri.to_json()
+      match pe.line {
+        Some(line) => source_ref["location"] = { "line": line.to_json() }
+        None => ()
+      }
+      let json : Json = {
+        "parseError": {
+          "source": source_ref.to_json(),
+          "message": pe.message.to_json(),
         },
       }
       let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -396,10 +457,25 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
     filter
   }
   let filtered = filter.apply(pickles)
+  // Build registry once and share it
+  let registry = @core.StepRegistry::new()
+  let world0 = factory()
+  @core.World::register_steps(world0, registry)
+  // Emit StepDefinition envelopes
+  if sinks.length() > 0 {
+    let sd_envelopes = build_step_definition_envelopes(registry)
+    for env in sd_envelopes {
+      emit(sinks, env)
+    }
+  }
+  // Emit ParameterType envelopes for custom parameter types
+  // TODO: Requires param_types() -> ArrayView[ParamType] accessor
+  // on cucumber-expressions ParamTypeRegistry. Currently no custom
+  // parameter types are supported, so this emits nothing.
   // Test planning phase
   let id_gen = IdGenerator::new()
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
-    let tc_envelopes = build_test_cases(factory, filtered, id_gen)
+    let tc_envelopes = build_test_cases(registry, filtered, id_gen)
     for env in tc_envelopes {
       emit(sinks, env)
     }
@@ -439,7 +515,7 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
-  { features: feature_results, summary }
+  { features: feature_results, summary, parse_errors: all_parse_errors }
 }
 
 ///|
@@ -463,7 +539,8 @@ pub async fn[W : @core.World] run_or_fail(
     parallel~,
     sinks~,
   )
-  if result.summary.failed > 0 ||
+  if result.parse_errors.length() > 0 ||
+    result.summary.failed > 0 ||
     result.summary.undefined > 0 ||
     result.summary.pending > 0 {
     let errors = collect_scenario_errors(result)
