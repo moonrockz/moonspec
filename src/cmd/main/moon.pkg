@@ -11,4 +11,11 @@ import {
 
 options(
   "is-main": true,
+  "pre-build": [
+    {
+      "input": "../../../moon.mod.json",
+      "output": "moon_mod_resource.mbt",
+      "command": ":embed -i $input -o $output --text --name moon_mod_json",
+    },
+  ],
 )
