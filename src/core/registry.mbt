@@ -64,7 +64,7 @@ fn StepRegistry::register(
   pattern : String,
   handler : StepHandler,
 ) -> Unit {
-  self.register_def({ keyword, pattern, handler, source: None })
+  self.register_def({ keyword, pattern, handler, source: None, id: None })
 }
 
 ///|

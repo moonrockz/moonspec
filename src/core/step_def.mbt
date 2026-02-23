@@ -1,4 +1,20 @@
 ///|
+/// A unique identifier for a step definition, assigned by the StepRegistry.
+pub(all) struct StepDefId {
+  priv value : String
+} derive(Show, Eq, Hash)
+
+///|
+pub fn StepDefId::from_string(value : String) -> StepDefId {
+  { value, }
+}
+
+///|
+pub fn StepDefId::to_string(self : StepDefId) -> String {
+  self.value
+}
+
+///|
 /// Keyword classification for a step definition.
 pub(all) enum StepKeyword {
   Given
@@ -37,6 +53,7 @@ pub(all) struct StepDef {
   pattern : String
   handler : StepHandler
   source : StepSource?
+  mut id : StepDefId?
 }
 
 ///|
@@ -45,7 +62,7 @@ pub fn StepDef::given(
   handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Given, pattern, handler: StepHandler(handler), source }
+  { keyword: Given, pattern, handler: StepHandler(handler), source, id: None }
 }
 
 ///|
@@ -54,7 +71,7 @@ pub fn StepDef::when(
   handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: When, pattern, handler: StepHandler(handler), source }
+  { keyword: When, pattern, handler: StepHandler(handler), source, id: None }
 }
 
 ///|
@@ -63,7 +80,7 @@ pub fn StepDef::then(
   handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Then, pattern, handler: StepHandler(handler), source }
+  { keyword: Then, pattern, handler: StepHandler(handler), source, id: None }
 }
 
 ///|
@@ -72,5 +89,5 @@ pub fn StepDef::step(
   handler : (Array[StepArg]) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Step, pattern, handler: StepHandler(handler), source }
+  { keyword: Step, pattern, handler: StepHandler(handler), source, id: None }
 }
