@@ -68,7 +68,9 @@ fn ensure_parent_dir(path : String) -> Unit {
   if dir != "." && dir != "/" && not(@fs.path_exists(dir)) {
     // Create parent dirs recursively
     ensure_parent_dir(dir)
-    @fs.create_dir(dir) catch { _ => () }
+    @fs.create_dir(dir) catch {
+      _ => ()
+    }
   }
 }
 
@@ -105,17 +107,25 @@ fn discover_mbt_files(dir : String, files : Array[String]) -> Unit {
 fn resolve_output_path(
   mode : String,
   world_type : String,
-  steps : Array[@scanner.StepFnInfo]
+  steps : Array[@scanner.StepFnInfo],
 ) -> String {
   let lower_world = str_to_lower(world_type)
   match mode {
     "generated" => "_generated/" + lower_world + "_steps.mbt"
     "alongside" => {
-      let dir = if steps.is_empty() { "." } else { dirname(steps[0].source_file) }
+      let dir = if steps.is_empty() {
+        "."
+      } else {
+        dirname(steps[0].source_file)
+      }
       dir + "/" + lower_world + "_steps_gen.mbt"
     }
     "per-package" => {
-      let dir = if steps.is_empty() { "." } else { dirname(steps[0].source_file) }
+      let dir = if steps.is_empty() {
+        "."
+      } else {
+        dirname(steps[0].source_file)
+      }
       dir + "/moonspec_gen.mbt"
     }
     custom_dir => custom_dir + "/" + lower_world + "_steps.mbt"

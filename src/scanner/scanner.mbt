@@ -13,7 +13,7 @@ fn walk_impls(
   impls : @list.List[@syntax.Impl],
   file_name : String,
   step_fns : Array[StepFnInfo],
-  world_configs : Array[WorldConfigInfo]
+  world_configs : Array[WorldConfigInfo],
 ) -> Unit {
   match impls {
     More(head, tail~) => {
@@ -29,11 +29,10 @@ fn process_impl(
   impl_ : @syntax.Impl,
   file_name : String,
   step_fns : Array[StepFnInfo],
-  world_configs : Array[WorldConfigInfo]
+  world_configs : Array[WorldConfigInfo],
 ) -> Unit {
   match impl_ {
-    TopFuncDef(fun_decl~, ..) =>
-      process_func_def(fun_decl, file_name, step_fns)
+    TopFuncDef(fun_decl~, ..) => process_func_def(fun_decl, file_name, step_fns)
     TopTypeDef(type_decl) =>
       process_type_def(type_decl, file_name, world_configs)
     _ => ()
@@ -44,7 +43,7 @@ fn process_impl(
 fn process_func_def(
   fun_decl : @syntax.FunDecl,
   file_name : String,
-  step_fns : Array[StepFnInfo]
+  step_fns : Array[StepFnInfo],
 ) -> Unit {
   walk_attrs_for_step(fun_decl.attrs, fun_decl, file_name, step_fns)
 }
@@ -54,15 +53,13 @@ fn walk_attrs_for_step(
   attrs : @list.List[@attribute.Attribute],
   fun_decl : @syntax.FunDecl,
   file_name : String,
-  step_fns : Array[StepFnInfo]
+  step_fns : Array[StepFnInfo],
 ) -> Unit {
   match attrs {
     More(attr, tail~) => {
       match extract_step_attr(attr) {
         Some((keyword, pattern)) => {
-          let info = build_step_fn_info(
-            keyword, pattern, fun_decl, file_name,
-          )
+          let info = build_step_fn_info(keyword, pattern, fun_decl, file_name)
           step_fns.push(info)
         }
         None => ()
@@ -77,9 +74,7 @@ fn walk_attrs_for_step(
 /// Extract step keyword and pattern from a moonspec step attribute.
 /// Returns Some((keyword, pattern)) for #moonspec.given/when/then("pattern"),
 /// or None if not a moonspec step attribute.
-fn extract_step_attr(
-  attr : @attribute.Attribute
-) -> (String, String)? {
+fn extract_step_attr(attr : @attribute.Attribute) -> (String, String)? {
   match attr.parsed {
     Some(Apply(id, props)) => {
       guard id.qual == Some("moonspec") else { return None }
@@ -98,9 +93,7 @@ fn extract_step_attr(
 }
 
 ///|
-fn extract_string_from_props(
-  props : @list.List[@attribute.Prop]
-) -> String? {
+fn extract_string_from_props(props : @list.List[@attribute.Prop]) -> String? {
   match props {
     More(head, ..) =>
       match head {
@@ -116,7 +109,7 @@ fn build_step_fn_info(
   keyword : String,
   pattern : String,
   fun_decl : @syntax.FunDecl,
-  file_name : String
+  file_name : String,
 ) -> StepFnInfo {
   let fn_name = fun_decl.name.name
   let line = fun_decl.name.loc.start.lnum
@@ -146,9 +139,7 @@ fn has_error_type(error_type : @syntax.ErrorType) -> Bool {
 }
 
 ///|
-fn first_param_is_self(
-  decl_params : @list.List[@syntax.Parameter]?
-) -> Bool {
+fn first_param_is_self(decl_params : @list.List[@syntax.Parameter]?) -> Bool {
   match decl_params {
     Some(More(first, ..)) =>
       match first {
@@ -162,7 +153,7 @@ fn first_param_is_self(
 
 ///|
 fn extract_params(
-  decl_params : @list.List[@syntax.Parameter]?
+  decl_params : @list.List[@syntax.Parameter]?,
 ) -> (String, Array[ParamInfo]) {
   match decl_params {
     Some(params) => extract_params_from_list(params)
@@ -172,7 +163,7 @@ fn extract_params(
 
 ///|
 fn extract_params_from_list(
-  params : @list.List[@syntax.Parameter]
+  params : @list.List[@syntax.Parameter],
 ) -> (String, Array[ParamInfo]) {
   // First param is self/world type, rest are cucumber params
   match params {
@@ -204,8 +195,7 @@ fn type_to_string(ty : @syntax.Type?) -> String {
         Ident(name~) => name
         Dot(pkg~, id~) => pkg + "." + id
       }
-    Some(Option(ty~, ..)) =>
-      type_to_string(Some(ty)) + "?"
+    Some(Option(ty~, ..)) => type_to_string(Some(ty)) + "?"
     Some(Tuple(..)) => "Tuple"
     Some(Arrow(..)) => "Arrow"
     Some(Any(..)) => "_"
@@ -219,9 +209,7 @@ fn type_to_string(ty : @syntax.Type?) -> String {
 }
 
 ///|
-fn collect_params(
-  params : @list.List[@syntax.Parameter]
-) -> Array[ParamInfo] {
+fn collect_params(params : @list.List[@syntax.Parameter]) -> Array[ParamInfo] {
   let result : Array[ParamInfo] = []
   collect_params_loop(params, result)
   result
@@ -230,7 +218,7 @@ fn collect_params(
 ///|
 fn collect_params_loop(
   params : @list.List[@syntax.Parameter],
-  result : Array[ParamInfo]
+  result : Array[ParamInfo],
 ) -> Unit {
   match params {
     More(param, tail~) => {
@@ -253,8 +241,7 @@ fn param_to_info(param : @syntax.Parameter) -> ParamInfo {
       { name: binder.name, type_name: type_to_string(ty) }
     QuestionOptional(binder~, ty~) =>
       { name: binder.name, type_name: type_to_string(ty) }
-    DiscardPositional(ty~, ..) =>
-      { name: "_", type_name: type_to_string(ty) }
+    DiscardPositional(ty~, ..) => { name: "_", type_name: type_to_string(ty) }
   }
 }
 
@@ -262,7 +249,7 @@ fn param_to_info(param : @syntax.Parameter) -> ParamInfo {
 fn process_type_def(
   type_decl : @syntax.TypeDecl,
   file_name : String,
-  world_configs : Array[WorldConfigInfo]
+  world_configs : Array[WorldConfigInfo],
 ) -> Unit {
   walk_attrs_for_world(type_decl.attrs, type_decl, file_name, world_configs)
 }
@@ -272,7 +259,7 @@ fn walk_attrs_for_world(
   attrs : @list.List[@attribute.Attribute],
   type_decl : @syntax.TypeDecl,
   file_name : String,
-  world_configs : Array[WorldConfigInfo]
+  world_configs : Array[WorldConfigInfo],
 ) -> Unit {
   match attrs {
     More(attr, tail~) => {
@@ -300,9 +287,7 @@ fn walk_attrs_for_world(
 ///   None - not a moonspec.world attr
 ///   Some(None) - moonspec.world with no init
 ///   Some(Some(init)) - moonspec.world with init fn
-fn extract_world_attr(
-  attr : @attribute.Attribute
-) -> String?? {
+fn extract_world_attr(attr : @attribute.Attribute) -> String?? {
   match attr.parsed {
     Some(Apply(id, props)) => {
       guard id.qual == Some("moonspec") && id.name == "world" else {
@@ -322,9 +307,7 @@ fn extract_world_attr(
 }
 
 ///|
-fn extract_init_from_props(
-  props : @list.List[@attribute.Prop]
-) -> String? {
+fn extract_init_from_props(props : @list.List[@attribute.Prop]) -> String? {
   match props {
     More(head, tail~) =>
       match head {

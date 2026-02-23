@@ -1,3 +1,4 @@
+///|
 test "generate_register_steps produces valid impl block" {
   let steps : Array[StepFnInfo] = [
     {
@@ -19,8 +20,7 @@ test "generate_register_steps produces valid impl block" {
   // Check impl block
   assert_true(
     str_contains(
-      output,
-      "impl @moonspec.World for MyWorld with register_steps(self, s)",
+      output, "impl @moonspec.World for MyWorld with register_steps(self, s)",
     ),
   )
   // Check step registration
@@ -31,6 +31,7 @@ test "generate_register_steps produces valid impl block" {
   assert_true(str_contains(output, "IntArg(v)"))
 }
 
+///|
 test "generate_register_steps handles multiple params" {
   let steps : Array[StepFnInfo] = [
     {
@@ -54,6 +55,7 @@ test "generate_register_steps handles multiple params" {
   assert_true(str_contains(output, "StringArg(v)"))
 }
 
+///|
 test "generate_register_steps handles no-param steps" {
   let steps : Array[StepFnInfo] = [
     {

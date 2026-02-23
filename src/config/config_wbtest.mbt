@@ -1,3 +1,4 @@
+///|
 test "MoonspecConfig::from_json5 parses simple mode" {
   let json5 = "{ \"world\": \"MyWorld\", \"mode\": \"per-scenario\" }"
   let config = MoonspecConfig::from_json5(json5)
@@ -8,6 +9,7 @@ test "MoonspecConfig::from_json5 parses simple mode" {
   }
 }
 
+///|
 test "MoonspecConfig::from_json5 parses map mode" {
   let json5 =
     #|{
@@ -27,6 +29,7 @@ test "MoonspecConfig::from_json5 parses map mode" {
   }
 }
 
+///|
 test "MoonspecConfig::from_json5 parses steps config" {
   let json5 =
     #|{
@@ -45,6 +48,7 @@ test "MoonspecConfig::from_json5 parses steps config" {
   }
 }
 
+///|
 test "merge: package config overrides module config" {
   let module_config = MoonspecConfig::{
     world: Some("ModuleWorld"),
@@ -68,6 +72,7 @@ test "merge: package config overrides module config" {
   }
 }
 
+///|
 test "resolve_mode with simple mode" {
   let config = MoonspecConfig::{
     world: None,
@@ -77,6 +82,7 @@ test "resolve_mode with simple mode" {
   assert_eq(config.resolve_mode("any/file.feature"), "per-feature")
 }
 
+///|
 test "resolve_mode with per-file map" {
   let map : Map[String, String] = {}
   map.set("features/checkout.feature", "per-feature")
@@ -90,11 +96,13 @@ test "resolve_mode with per-file map" {
   assert_eq(config.resolve_mode("features/other.feature"), "per-scenario")
 }
 
+///|
 test "resolve_mode defaults to per-scenario" {
   let config = MoonspecConfig::empty()
   assert_eq(config.resolve_mode("any.feature"), "per-scenario")
 }
 
+///|
 test "from_json5 handles empty/invalid input" {
   let config = MoonspecConfig::from_json5("")
   assert_eq(config.world, None)

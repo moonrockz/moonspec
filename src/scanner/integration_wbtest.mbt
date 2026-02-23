@@ -1,5 +1,6 @@
 // End-to-end integration test: parse source -> extract attributes -> generate code
 
+///|
 test "end-to-end: scan and generate from attributed source" {
   let source =
     #|struct CucumberWorld { mut cucumbers : Int } derive(Default)
@@ -24,7 +25,11 @@ test "end-to-end: scan and generate from attributed source" {
   let steps = result.step_fns
   assert_eq(steps[0].world_type, "CucumberWorld")
   // Generate
-  let code = generate_register_steps("CucumberWorld", steps, source_hash="test123")
+  let code = generate_register_steps(
+    "CucumberWorld",
+    steps,
+    source_hash="test123",
+  )
   // Verify generated code structure
   assert_true(str_contains(code, "impl @moonspec.World for CucumberWorld"))
   assert_true(str_contains(code, "set_cukes(self"))

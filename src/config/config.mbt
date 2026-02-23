@@ -114,7 +114,7 @@ pub fn MoonspecConfig::resolve_mode(
 ) -> String {
   match self.mode {
     Some(Simple(s)) => s
-    Some(PerFile(map)) => {
+    Some(PerFile(map)) =>
       match map.get(feature_path) {
         Some(m) => m
         None =>
@@ -123,7 +123,6 @@ pub fn MoonspecConfig::resolve_mode(
             None => "per-scenario"
           }
       }
-    }
     None => "per-scenario"
   }
 }

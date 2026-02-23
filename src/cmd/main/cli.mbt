@@ -50,10 +50,10 @@ fn build_parser() -> @clap.Parser {
     help="Generate register_steps from #moonspec.* attributes",
   )
   // -- gen: code generation commands
-  let gen = @clap.SubCommand::new(
-    help="Code generation commands",
-    subcmds={ "tests": gen_tests, "steps": gen_steps },
-  )
+  let gen = @clap.SubCommand::new(help="Code generation commands", subcmds={
+    "tests": gen_tests,
+    "steps": gen_steps,
+  })
   // -- check: parse and validate .feature files
   let check = @clap.SubCommand::new(
     args={
