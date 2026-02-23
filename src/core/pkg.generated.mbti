@@ -3,14 +3,32 @@ package "moonrockz/moonspec/core"
 
 import {
   "moonrockz/cucumber-expressions",
+  "moonrockz/cucumber-messages",
 }
 
 // Values
-pub fn core_version() -> String
+pub fn pending_step_error(step~ : String, keyword~ : String, message~ : String) -> Error
+
+pub fn run_failed_error(summary~ : String, errors~ : Array[MoonspecError]) -> Error
+
+pub fn scenario_failed_error(scenario~ : String, feature~ : String, errors~ : Array[MoonspecError]) -> MoonspecError
+
+pub fn step_failed_error(step~ : String, keyword~ : String, message~ : String) -> Error
+
+pub fn undefined_step_error(step~ : String, keyword~ : String, snippet~ : String, suggestions~ : Array[String]) -> Error
 
 // Errors
+pub suberror MoonspecError {
+  UndefinedStep(step~ : String, keyword~ : String, snippet~ : String, suggestions~ : Array[String])
+  PendingStep(step~ : String, keyword~ : String, message~ : String)
+  StepFailed(step~ : String, keyword~ : String, message~ : String)
+  ScenarioFailed(scenario~ : String, feature~ : String, errors~ : Array[MoonspecError])
+  RunFailed(summary~ : String, errors~ : Array[MoonspecError])
+}
 
 // Types and methods
+type CompiledStep
+
 pub(all) struct ScenarioInfo {
   feature_name : String
   scenario_name : String
@@ -30,7 +48,16 @@ pub fn StepArg::from_param(@cucumber-expressions.Param) -> Self
 pub impl Eq for StepArg
 pub impl Show for StepArg
 
-type StepEntry
+pub(all) struct StepDef {
+  keyword : StepKeyword
+  pattern : String
+  handler : StepHandler
+  source : StepSource?
+}
+pub fn StepDef::given(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::step(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::then(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::when(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
 
 pub struct StepHandler((Array[StepArg]) -> Unit raise)
 #deprecated
@@ -43,16 +70,40 @@ pub(all) struct StepInfo {
 pub impl Eq for StepInfo
 pub impl Show for StepInfo
 
+pub(all) enum StepKeyword {
+  Given
+  When
+  Then
+  Step
+}
+pub impl Eq for StepKeyword
+pub impl Show for StepKeyword
+
+pub(all) enum StepMatchResult {
+  Matched(StepDef, Array[StepArg])
+  Undefined(step_text~ : String, keyword~ : String, snippet~ : String, suggestions~ : Array[String])
+}
+
 pub(all) struct StepRegistry {
   // private fields
 }
-pub fn StepRegistry::find_match(Self, String) -> (StepHandler, Array[StepArg], String)?
+pub fn StepRegistry::find_match(Self, String, keyword? : String) -> StepMatchResult
 pub fn StepRegistry::given(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
 pub fn StepRegistry::len(Self) -> Int
 pub fn StepRegistry::new() -> Self
+pub fn StepRegistry::register_def(Self, StepDef) -> Unit
 pub fn StepRegistry::step(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
 pub fn StepRegistry::then(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn[L : StepLibrary] StepRegistry::use_library(Self, L) -> Unit
 pub fn StepRegistry::when(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+
+pub(all) struct StepSource {
+  uri : String?
+  line : Int?
+}
+pub fn StepSource::new(uri? : String, line? : Int) -> Self
+pub impl Eq for StepSource
+pub impl Show for StepSource
 
 // Type aliases
 
@@ -62,6 +113,14 @@ pub(open) trait Hooks {
   after_scenario(Self, ScenarioInfo, String?) -> Unit raise = _
   before_step(Self, StepInfo) -> Unit raise = _
   after_step(Self, StepInfo, String?) -> Unit raise = _
+}
+
+pub(open) trait MessageSink {
+  on_message(Self, @cucumber-messages.Envelope) -> Unit
+}
+
+pub(open) trait StepLibrary {
+  steps(Self) -> ArrayView[StepDef]
 }
 
 pub(open) trait World {

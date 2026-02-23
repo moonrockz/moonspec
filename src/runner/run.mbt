@@ -1,4 +1,229 @@
 ///|
+/// Broadcast an envelope to all sinks.
+fn emit(
+  sinks : Array[&@core.MessageSink],
+  envelope : @cucumber_messages.Envelope,
+) -> Unit {
+  for sink in sinks {
+    sink.on_message(envelope)
+  }
+}
+
+///|
+fn make_meta_envelope() -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "meta": {
+      "protocolVersion": "25.0.1".to_json(),
+      "implementation": {
+        "name": "moonspec".to_json(),
+        "version": "0.2.0".to_json(),
+      },
+      "runtime": { "name": "moonbit".to_json() },
+      "os": { "name": "unknown".to_json() },
+      "cpu": { "name": "unknown".to_json() },
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_source_envelope(
+  uri : String,
+  data : String,
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "source": {
+      "uri": uri.to_json(),
+      "data": data.to_json(),
+      "mediaType": "text/x.cucumber.gherkin+plain".to_json(),
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_test_run_started_envelope(id : String) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testRunStarted": {
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+      "id": id.to_json(),
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_test_run_finished_envelope(
+  success : Bool,
+  run_id : String,
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testRunFinished": {
+      "success": success.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+      "testRunStartedId": run_id.to_json(),
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_test_case_started_envelope(
+  id : String,
+  test_case_id : String,
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testCaseStarted": {
+      "attempt": (0 : Int).to_json(),
+      "id": id.to_json(),
+      "testCaseId": test_case_id.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_test_case_finished_envelope(
+  test_case_started_id : String,
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testCaseFinished": {
+      "testCaseStartedId": test_case_started_id.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+      "willBeRetried": false.to_json(),
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_test_step_started_envelope(
+  test_case_started_id : String,
+  test_step_id : String,
+) -> @cucumber_messages.Envelope {
+  let json : Json = {
+    "testStepStarted": {
+      "testCaseStartedId": test_case_started_id.to_json(),
+      "testStepId": test_step_id.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_test_step_finished_envelope(
+  test_case_started_id : String,
+  test_step_id : String,
+  status : String,
+  message : String?,
+) -> @cucumber_messages.Envelope {
+  let result_json : Map[String, Json] = {}
+  result_json["duration"] = {
+    "seconds": (0 : Int).to_json(),
+    "nanos": (0 : Int).to_json(),
+  }
+  result_json["status"] = status.to_json()
+  match message {
+    Some(msg) => result_json["message"] = msg.to_json()
+    None => ()
+  }
+  let json : Json = {
+    "testStepFinished": {
+      "testCaseStartedId": test_case_started_id.to_json(),
+      "testStepId": test_step_id.to_json(),
+      "testStepResult": result_json.to_json(),
+      "timestamp": {
+        "seconds": (0 : Int).to_json(),
+        "nanos": (0 : Int).to_json(),
+      },
+    },
+  }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+/// Map a StepStatus to a cucumber-messages status string.
+fn step_status_to_string(status : StepStatus) -> String {
+  match status {
+    StepStatus::Passed => "PASSED"
+    StepStatus::Failed(_) => "FAILED"
+    StepStatus::Skipped => "SKIPPED"
+    StepStatus::Undefined => "UNDEFINED"
+    StepStatus::Pending => "PENDING"
+  }
+}
+
+///|
+/// Map a StepStatus to a failure message (if any).
+fn step_status_message(status : StepStatus) -> String? {
+  match status {
+    StepStatus::Failed(msg) => Some(msg)
+    _ => None
+  }
+}
+
+///|
+/// Mapping from pickle to its test case ID and test step IDs.
+priv struct TestCaseMapping {
+  test_case_id : String
+  test_step_ids : Array[String]
+}
+
+///|
+/// Extract test case mappings from test case envelopes, keyed by pickle ID.
+fn extract_test_case_mappings(
+  tc_envelopes : Array[@cucumber_messages.Envelope],
+) -> Map[String, TestCaseMapping] {
+  let mappings : Map[String, TestCaseMapping] = {}
+  for env in tc_envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestCase(tc) => {
+        let step_ids : Array[String] = []
+        for ts in tc.testSteps {
+          step_ids.push(ts.id)
+        }
+        mappings[tc.pickleId] = { test_case_id: tc.id, test_step_ids: step_ids }
+      }
+      _ => ()
+    }
+  }
+  mappings
+}
+
+///|
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
@@ -10,12 +235,53 @@ pub async fn[W : @core.World] run(
   tag_expr? : String = "",
   scenario_name? : String = "",
   parallel? : Int = 0,
+  sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
   let cache = FeatureCache::new()
+  if sinks.length() > 0 {
+    emit(sinks, make_meta_envelope())
+  }
   for source in features {
+    if sinks.length() > 0 {
+      let (uri, data) = match source {
+        FeatureSource::Text(path, content) => (path, content)
+        FeatureSource::File(path) => {
+          let content = @fs.read_file_to_string(path) catch { _ => "" }
+          (path, content)
+        }
+        FeatureSource::Parsed(path, _) => (path, "")
+      }
+      emit(sinks, make_source_envelope(uri, data))
+    }
     cache.load_from_source(source)
   }
+  // Emit GherkinDocument envelopes
+  if sinks.length() > 0 {
+    for entry in cache.features() {
+      let uri = entry.0
+      let json : Json = {
+        "gherkinDocument": {
+          "uri": uri.to_json(),
+          "comments": ([] : Array[Int]).to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let pickles = compile_pickles(cache)
+  // Emit Pickle envelopes
+  if sinks.length() > 0 {
+    for pickle in pickles {
+      let json : Json = { "pickle": pickle.to_json() }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let filter = PickleFilter::new()
   let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
   let filter = if scenario_name != "" {
@@ -24,10 +290,40 @@ pub async fn[W : @core.World] run(
     filter
   }
   let filtered = filter.apply(pickles)
-  let results = if parallel > 0 {
-    run_pickles_parallel(factory, filtered, max_concurrent=parallel)
+  // Test planning phase
+  let id_gen = IdGenerator::new()
+  let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
+    let tc_envelopes = build_test_cases(factory, filtered, id_gen)
+    for env in tc_envelopes {
+      emit(sinks, env)
+    }
+    extract_test_case_mappings(tc_envelopes)
   } else {
-    run_pickles_sequential(factory, filtered)
+    {}
+  }
+  // Emit TestRunStarted
+  let run_id = id_gen.next("tr")
+  if sinks.length() > 0 {
+    emit(sinks, make_test_run_started_envelope(run_id))
+  }
+  let results = if parallel > 0 {
+    run_pickles_parallel(
+      factory,
+      filtered,
+      max_concurrent=parallel,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
+  } else {
+    run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
+  }
+  // Emit TestRunFinished
+  if sinks.length() > 0 {
+    let all_passed = results
+      .iter()
+      .all(fn(r) { r.status == ScenarioStatus::Passed })
+    emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
@@ -45,12 +341,53 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   tag_expr? : String = "",
   scenario_name? : String = "",
   parallel? : Int = 0,
+  sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
   let cache = FeatureCache::new()
+  if sinks.length() > 0 {
+    emit(sinks, make_meta_envelope())
+  }
   for source in features {
+    if sinks.length() > 0 {
+      let (uri, data) = match source {
+        FeatureSource::Text(path, content) => (path, content)
+        FeatureSource::File(path) => {
+          let content = @fs.read_file_to_string(path) catch { _ => "" }
+          (path, content)
+        }
+        FeatureSource::Parsed(path, _) => (path, "")
+      }
+      emit(sinks, make_source_envelope(uri, data))
+    }
     cache.load_from_source(source)
   }
+  // Emit GherkinDocument envelopes
+  if sinks.length() > 0 {
+    for entry in cache.features() {
+      let uri = entry.0
+      let json : Json = {
+        "gherkinDocument": {
+          "uri": uri.to_json(),
+          "comments": ([] : Array[Int]).to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let pickles = compile_pickles(cache)
+  // Emit Pickle envelopes
+  if sinks.length() > 0 {
+    for pickle in pickles {
+      let json : Json = { "pickle": pickle.to_json() }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   let filter = PickleFilter::new()
   let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
   let filter = if scenario_name != "" {
@@ -59,10 +396,46 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
     filter
   }
   let filtered = filter.apply(pickles)
-  let results = if parallel > 0 {
-    run_pickles_parallel_with_hooks(factory, filtered, max_concurrent=parallel)
+  // Test planning phase
+  let id_gen = IdGenerator::new()
+  let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
+    let tc_envelopes = build_test_cases(factory, filtered, id_gen)
+    for env in tc_envelopes {
+      emit(sinks, env)
+    }
+    extract_test_case_mappings(tc_envelopes)
   } else {
-    run_pickles_sequential_with_hooks(factory, filtered)
+    {}
+  }
+  // Emit TestRunStarted
+  let run_id = id_gen.next("tr")
+  if sinks.length() > 0 {
+    emit(sinks, make_test_run_started_envelope(run_id))
+  }
+  let results = if parallel > 0 {
+    run_pickles_parallel_with_hooks(
+      factory,
+      filtered,
+      max_concurrent=parallel,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
+  } else {
+    run_pickles_sequential_with_hooks(
+      factory,
+      filtered,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
+  }
+  // Emit TestRunFinished
+  if sinks.length() > 0 {
+    let all_passed = results
+      .iter()
+      .all(fn(r) { r.status == ScenarioStatus::Passed })
+    emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results)
@@ -80,8 +453,16 @@ pub async fn[W : @core.World] run_or_fail(
   tag_expr? : String = "",
   scenario_name? : String = "",
   parallel? : Int = 0,
+  sinks? : Array[&@core.MessageSink] = [],
 ) -> RunResult {
-  let result = run(factory, features, tag_expr~, scenario_name~, parallel~)
+  let result = run(
+    factory,
+    features,
+    tag_expr~,
+    scenario_name~,
+    parallel~,
+    sinks~,
+  )
   if result.summary.failed > 0 ||
     result.summary.undefined > 0 ||
     result.summary.pending > 0 {
@@ -145,10 +526,13 @@ fn format_run_summary(summary : RunSummary) -> String {
 fn[W : @core.World] run_pickles_sequential(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
-    let result = execute_pickle(factory, pickle)
+    let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~)
     results.push(result)
   }
   results
@@ -159,10 +543,19 @@ fn[W : @core.World] run_pickles_sequential(
 fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
-    let result = execute_pickle_with_hooks(factory, pickle)
+    let result = execute_pickle_with_hooks(
+      factory,
+      pickle,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+    )
     results.push(result)
   }
   results
@@ -173,18 +566,49 @@ fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
 fn[W : @core.World] execute_pickle(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> ScenarioResult {
   let world = factory()
   let registry = @core.StepRegistry::new()
   @core.World::register_steps(world, registry)
-  execute_scenario(
+  // Emit TestCaseStarted
+  let mapping = tc_mappings.get(pickle.id)
+  let tcs_id = match mapping {
+    Some(m) => {
+      let tcs_id = id_gen.next("tcs")
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_started_envelope(tcs_id, m.test_case_id))
+      }
+      Some(tcs_id)
+    }
+    None => None
+  }
+  let test_step_ids = match mapping {
+    Some(m) => m.test_step_ids
+    None => []
+  }
+  let result = execute_scenario(
     registry,
     feature_name=pickle.uri,
     scenario_name=pickle.name,
     pickle_id=pickle.id,
     tags=pickle.tags.map(fn(t) { t.name }),
     steps=pickle.steps,
+    sinks~,
+    test_case_started_id=tcs_id.unwrap_or(""),
+    test_step_ids~,
   )
+  // Emit TestCaseFinished
+  match tcs_id {
+    Some(id) =>
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_finished_envelope(id))
+      }
+    None => ()
+  }
+  result
 }
 
 ///|
@@ -192,11 +616,30 @@ fn[W : @core.World] execute_pickle(
 fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
+  sinks? : Array[&@core.MessageSink] = [],
+  tc_mappings? : Map[String, TestCaseMapping] = {},
+  id_gen? : IdGenerator = IdGenerator::new(),
 ) -> ScenarioResult {
   let world = factory()
   let registry = @core.StepRegistry::new()
   @core.World::register_steps(world, registry)
-  execute_scenario_with_hooks(
+  // Emit TestCaseStarted
+  let mapping = tc_mappings.get(pickle.id)
+  let tcs_id = match mapping {
+    Some(m) => {
+      let tcs_id = id_gen.next("tcs")
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_started_envelope(tcs_id, m.test_case_id))
+      }
+      Some(tcs_id)
+    }
+    None => None
+  }
+  let test_step_ids = match mapping {
+    Some(m) => m.test_step_ids
+    None => []
+  }
+  let result = execute_scenario_with_hooks(
     world,
     registry,
     feature_name=pickle.uri,
@@ -204,7 +647,19 @@ fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
     pickle_id=pickle.id,
     tags=pickle.tags.map(fn(t) { t.name }),
     steps=pickle.steps,
+    sinks~,
+    test_case_started_id=tcs_id.unwrap_or(""),
+    test_step_ids~,
   )
+  // Emit TestCaseFinished
+  match tcs_id {
+    Some(id) =>
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_finished_envelope(id))
+      }
+    None => ()
+  }
+  result
 }
 
 ///|

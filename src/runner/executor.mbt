@@ -7,17 +7,36 @@ pub fn execute_scenario(
   pickle_id~ : String,
   tags~ : Array[String],
   steps~ : Array[@cucumber_messages.PickleStep],
+  sinks? : Array[&@core.MessageSink] = [],
+  test_case_started_id? : String = "",
+  test_step_ids? : Array[String] = [],
 ) -> ScenarioResult {
   let step_results : Array[StepResult] = []
   let mut failed = false
-  for step in steps {
+  let has_sinks = sinks.length() > 0 && test_step_ids.length() > 0
+  for i, step in steps {
     let keyword = match step.type_ {
       Some(@cucumber_messages.PickleStepType::Context) => "Given "
       Some(@cucumber_messages.PickleStepType::Action) => "When "
       Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
       _ => "* "
     }
+    let ts_id = if i < test_step_ids.length() { test_step_ids[i] } else { "" }
+    if has_sinks {
+      emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
+    }
     if failed {
+      if has_sinks {
+        emit(
+          sinks,
+          make_test_step_finished_envelope(
+            test_case_started_id,
+            ts_id,
+            "SKIPPED",
+            None,
+          ),
+        )
+      }
       step_results.push({
         text: step.text,
         keyword,
@@ -64,6 +83,17 @@ pub fn execute_scenario(
             )
         }
     }
+    if has_sinks {
+      emit(
+        sinks,
+        make_test_step_finished_envelope(
+          test_case_started_id,
+          ts_id,
+          step_status_to_string(status),
+          step_status_message(status),
+        ),
+      )
+    }
     match status {
       StepStatus::Failed(_) | StepStatus::Undefined | StepStatus::Pending =>
         failed = true
@@ -100,8 +130,12 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
   pickle_id~ : String,
   tags~ : Array[String],
   steps~ : Array[@cucumber_messages.PickleStep],
+  sinks? : Array[&@core.MessageSink] = [],
+  test_case_started_id? : String = "",
+  test_step_ids? : Array[String] = [],
 ) -> ScenarioResult {
   let info : @core.ScenarioInfo = { feature_name, scenario_name, tags }
+  let has_sinks = sinks.length() > 0 && test_step_ids.length() > 0
   // before_scenario hook
   let hook_err = try {
     @core.Hooks::before_scenario(world, info)
@@ -111,21 +145,38 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
   }
   if hook_err is Some(msg) {
     // All steps skipped when before_scenario fails
-    let step_results = steps.map(fn(step) {
+    let step_results : Array[StepResult] = []
+    for i, step in steps {
       let keyword = match step.type_ {
         Some(@cucumber_messages.PickleStepType::Context) => "Given "
         Some(@cucumber_messages.PickleStepType::Action) => "When "
         Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
         _ => "* "
       }
-      {
+      let ts_id = if i < test_step_ids.length() { test_step_ids[i] } else { "" }
+      if has_sinks {
+        emit(
+          sinks,
+          make_test_step_started_envelope(test_case_started_id, ts_id),
+        )
+        emit(
+          sinks,
+          make_test_step_finished_envelope(
+            test_case_started_id,
+            ts_id,
+            "SKIPPED",
+            None,
+          ),
+        )
+      }
+      step_results.push({
         text: step.text,
         keyword,
         status: StepStatus::Skipped,
         duration_ms: 0L,
         diagnostic: None,
-      }
-    })
+      })
+    }
     let _ = @core.Hooks::after_scenario(world, info, Some(msg)) catch {
       _ => ()
     }
@@ -143,14 +194,29 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
   let step_results : Array[StepResult] = []
   let mut failed = false
   let mut scenario_error : String? = None
-  for step in steps {
+  for i, step in steps {
     let keyword = match step.type_ {
       Some(@cucumber_messages.PickleStepType::Context) => "Given "
       Some(@cucumber_messages.PickleStepType::Action) => "When "
       Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
       _ => "* "
     }
+    let ts_id = if i < test_step_ids.length() { test_step_ids[i] } else { "" }
+    if has_sinks {
+      emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
+    }
     if failed {
+      if has_sinks {
+        emit(
+          sinks,
+          make_test_step_finished_envelope(
+            test_case_started_id,
+            ts_id,
+            "SKIPPED",
+            None,
+          ),
+        )
+      }
       step_results.push({
         text: step.text,
         keyword,
@@ -210,6 +276,17 @@ pub fn[W : @core.Hooks] execute_scenario_with_hooks(
               )
           }
       }
+    }
+    if has_sinks {
+      emit(
+        sinks,
+        make_test_step_finished_envelope(
+          test_case_started_id,
+          ts_id,
+          step_status_to_string(status),
+          step_status_message(status),
+        ),
+      )
     }
     // after_step hook
     let step_result_msg : String? = match status {

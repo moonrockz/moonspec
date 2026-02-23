@@ -29,7 +29,7 @@ test "JUnitFormatter produces valid XML structure" {
       duration_ms: 50L,
     },
   }
-  fmt.on_run_finish(run_result)
+  fmt.format_result(run_result)
   let output = fmt.output()
   assert_true(string_contains(output, "<?xml"))
   assert_true(string_contains(output, "<testsuites"))
@@ -78,7 +78,7 @@ test "JUnitFormatter formats failed scenario with failure element" {
       duration_ms: 10L,
     },
   }
-  fmt.on_run_finish(run_result)
+  fmt.format_result(run_result)
   let output = fmt.output()
   assert_true(string_contains(output, "<failure"))
   assert_true(string_contains(output, "division by zero"))
@@ -116,7 +116,7 @@ test "JUnitFormatter formats skipped scenario" {
       duration_ms: 0L,
     },
   }
-  fmt.on_run_finish(run_result)
+  fmt.format_result(run_result)
   let output = fmt.output()
   assert_true(string_contains(output, "<skipped/>"))
 }
@@ -152,7 +152,7 @@ test "JUnitFormatter escapes XML special characters" {
       duration_ms: 5L,
     },
   }
-  fmt.on_run_finish(run_result)
+  fmt.format_result(run_result)
   let output = fmt.output()
   assert_true(string_contains(output, "&amp;"))
   assert_true(string_contains(output, "&lt;"))

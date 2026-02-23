@@ -2,8 +2,6 @@
 package "moonrockz/moonspec/codegen"
 
 // Values
-pub fn codegen_version() -> String
-
 pub fn feature_to_test_filename(String) -> String
 
 pub fn generate_test_file(String, String, config? : CodegenConfig) -> String

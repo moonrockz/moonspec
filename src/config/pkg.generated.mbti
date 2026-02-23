@@ -1,0 +1,38 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec/config"
+
+// Values
+
+// Errors
+
+// Types and methods
+pub(all) enum ModeConfig {
+  Simple(String)
+  PerFile(Map[String, String])
+}
+pub impl Eq for ModeConfig
+pub impl Show for ModeConfig
+
+pub(all) struct MoonspecConfig {
+  world : String?
+  mode : ModeConfig?
+  steps : StepsConfig?
+}
+pub fn MoonspecConfig::empty() -> Self
+pub fn MoonspecConfig::from_json5(String) -> Self
+pub fn MoonspecConfig::merge(Self, Self) -> Self
+pub fn MoonspecConfig::resolve_mode(Self, String) -> String
+pub impl Eq for MoonspecConfig
+pub impl Show for MoonspecConfig
+
+pub(all) struct StepsConfig {
+  output : String?
+  exclude : Array[String]?
+}
+pub impl Eq for StepsConfig
+pub impl Show for StepsConfig
+
+// Type aliases
+
+// Traits
+

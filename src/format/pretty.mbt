@@ -96,16 +96,33 @@ fn scenario_status_marker(
 }
 
 // ---------------------------------------------------------------------------
-// Formatter trait implementation
+// MessageSink implementation
 // ---------------------------------------------------------------------------
 
 ///|
-pub impl Formatter for PrettyFormatter with on_feature_start(self, name) {
+pub impl @core.MessageSink for PrettyFormatter with on_message(_self, _envelope) {
+  // Future: accumulate state from envelopes for streaming output.
+  // Currently a no-op; use format_feature_start/format_scenario/format_summary directly.
+  ()
+}
+
+// ---------------------------------------------------------------------------
+// Formatting methods (called directly, not via trait dispatch)
+// ---------------------------------------------------------------------------
+
+///|
+pub fn PrettyFormatter::format_feature_start(
+  self : PrettyFormatter,
+  name : String,
+) -> Unit {
   self.buffer = self.buffer + "Feature: " + name + "\n\n"
 }
 
 ///|
-pub impl Formatter for PrettyFormatter with on_scenario_finish(self, result) {
+pub fn PrettyFormatter::format_scenario(
+  self : PrettyFormatter,
+  result : @runner.ScenarioResult,
+) -> Unit {
   let marker = scenario_status_marker(result.status, self.no_color)
   self.buffer = self.buffer +
     "  " +
@@ -127,7 +144,10 @@ pub impl Formatter for PrettyFormatter with on_scenario_finish(self, result) {
 }
 
 ///|
-pub impl Formatter for PrettyFormatter with on_run_finish(self, result) {
+pub fn PrettyFormatter::format_summary(
+  self : PrettyFormatter,
+  result : @runner.RunResult,
+) -> Unit {
   let s = result.summary
   let scenario_word = if s.total_scenarios == 1 {
     "scenario"

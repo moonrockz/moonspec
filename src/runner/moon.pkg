@@ -4,4 +4,5 @@ import {
   "moonrockz/cucumber-messages" as @cucumber_messages,
   "moonbitlang/async",
   "moonbitlang/x/fs",
+  "moonbitlang/core/json",
 }

@@ -1,4 +1,5 @@
 import {
   "moonrockz/cucumber-expressions" as @cucumber_expressions,
+  "moonrockz/cucumber-messages" as @cucumber_messages,
   "moonbitlang/core/strconv",
 }
