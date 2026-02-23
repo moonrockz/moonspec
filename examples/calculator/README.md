@@ -85,11 +85,11 @@ Feature: Calculator
 
 ### 5. Generate test files
 
-Run `moonspec gen` to generate test files from your `.feature` files. The `--world`
-(`-w`) flag specifies the World type that holds step definitions:
+Run `moonspec gen tests` to generate test files from your `.feature` files. The
+`--world` (`-w`) flag specifies the World type that holds step definitions:
 
 ```bash
-moonspec gen features/calculator.feature -w CalcWorld -o src/
+moonspec gen tests features/calculator.feature -w CalcWorld -o src/
 ```
 
 This generates `src/calculator_feature_wbtest.mbt` containing one `async test` per
@@ -137,7 +137,7 @@ are regenerated automatically on every build:
     {
       "input": "../features/calculator.feature",
       "output": "calculator_feature_wbtest.mbt",
-      "command": "moonspec gen features/calculator.feature -w CalcWorld -o src/"
+      "command": "moonspec gen tests features/calculator.feature -w CalcWorld -o src/"
     }
   ]
 }
@@ -240,7 +240,7 @@ moonspec check features/calculator.feature
 
 ## What This Example Demonstrates
 
-- **Codegen**: `moonspec gen -w CalcWorld` generates runner tests from `.feature` files
+- **Codegen**: `moonspec gen tests -w CalcWorld` generates runner tests from `.feature` files
 - **World trait**: Per-scenario state isolation via `derive(Default)` + `@moonspec.World`
 - **Cucumber Expressions**: Type-safe step matching with `{int}` parameters
 - **Background steps**: Shared setup (`Given a calculator`) before each scenario

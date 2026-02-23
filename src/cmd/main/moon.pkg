@@ -1,5 +1,7 @@
 import {
   "moonrockz/moonspec/codegen",
+  "moonrockz/moonspec/config",
+  "moonrockz/moonspec/scanner",
   "moonrockz/gherkin",
   "TheWaWaR/clap",
   "moonbitlang/x/fs",

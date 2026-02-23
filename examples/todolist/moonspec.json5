@@ -1,0 +1,7 @@
+{
+  "world": "TodoWorld",
+  "mode": "per-scenario",
+  "steps": {
+    "output": "alongside"
+  }
+}
