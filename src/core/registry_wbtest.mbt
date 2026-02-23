@@ -87,9 +87,7 @@ test "StepRegistry use_library registers library steps" {
   let world : TestWorld = { value: 0 }
   let lib = MathSteps::new(world)
   setup.use_library(lib)
-  assert_true(
-    setup.step_registry().find_match("a value of 5") is Matched(_, _),
-  )
+  assert_true(setup.step_registry().find_match("a value of 5") is Matched(_, _))
 }
 
 ///|

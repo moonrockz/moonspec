@@ -136,11 +136,7 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
   // Generate for each World type
   for world_type, steps in all_steps {
     let hash = compute_steps_hash(steps)
-    let code = @scanner.generate_configure(
-      world_type,
-      steps,
-      source_hash=hash,
-    )
+    let code = @scanner.generate_configure(world_type, steps, source_hash=hash)
     let output_path = resolve_output_path(output_mode, world_type, steps)
     // Ensure output directory exists
     ensure_parent_dir(output_path)

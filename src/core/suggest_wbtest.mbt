@@ -20,7 +20,10 @@ test "find_suggestions returns close matches" {
   setup.given("I have {int} cucumbers", fn(_args) {  })
   setup.given("I have {int} tomatoes", fn(_args) {  })
   setup.given("something completely different", fn(_args) {  })
-  let suggestions = find_suggestions(setup.step_registry(), "I have many cucumbers")
+  let suggestions = find_suggestions(
+    setup.step_registry(),
+    "I have many cucumbers",
+  )
   assert_true(suggestions.length() > 0)
   assert_true(suggestions.length() <= 3)
 }

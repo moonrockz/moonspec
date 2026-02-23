@@ -2,6 +2,7 @@
 /// A unique identifier for a step definition, assigned by the StepRegistry.
 pub(all) struct StepDefId {
   priv value : String
+
   fn new(value : String) -> StepDefId
 } derive(Show, Eq, Hash)
 

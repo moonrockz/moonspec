@@ -351,8 +351,7 @@ async test "run emits ParameterType envelopes for custom types" {
   let collector = CollectorSink::new()
   let features = [
     FeatureSource::Text(
-      "test://pt",
-      "Feature: PT\n\n  Scenario: S\n    Given I pick a red cucumber\n",
+      "test://pt", "Feature: PT\n\n  Scenario: S\n    Given I pick a red cucumber\n",
     ),
   ]
   let _ = run(ParamWorld::default, features, sinks=[collector])
@@ -370,8 +369,7 @@ async test "run emits ParameterType after StepDefinition before TestCase" {
   let collector = CollectorSink::new()
   let features = [
     FeatureSource::Text(
-      "test://pt-order",
-      "Feature: PTO\n\n  Scenario: S\n    Given I pick a blue cucumber\n",
+      "test://pt-order", "Feature: PTO\n\n  Scenario: S\n    Given I pick a blue cucumber\n",
     ),
   ]
   let _ = run(ParamWorld::default, features, sinks=[collector])
@@ -381,11 +379,14 @@ async test "run emits ParameterType after StepDefinition before TestCase" {
   for i, env in collector.envelopes {
     match env {
       @cucumber_messages.Envelope::StepDefinition(_) =>
-        if sd_idx < 0 { sd_idx = i }
+        if sd_idx < 0 {
+          sd_idx = i
+        }
       @cucumber_messages.Envelope::ParameterType(_) =>
-        if pt_idx < 0 { pt_idx = i }
-      @cucumber_messages.Envelope::TestCase(_) =>
-        if tc_idx < 0 { tc_idx = i }
+        if pt_idx < 0 {
+          pt_idx = i
+        }
+      @cucumber_messages.Envelope::TestCase(_) => if tc_idx < 0 { tc_idx = i }
       _ => ()
     }
   }
