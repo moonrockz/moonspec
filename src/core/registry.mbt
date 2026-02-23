@@ -23,7 +23,7 @@ fn IdGenerator::new() -> IdGenerator {
 ///|
 fn IdGenerator::next_step_def_id(self : IdGenerator) -> StepDefId {
   self.counter += 1
-  StepDefId::from_string("sd-" + self.counter.to_string())
+  StepDefId("sd-" + self.counter.to_string())
 }
 
 ///|

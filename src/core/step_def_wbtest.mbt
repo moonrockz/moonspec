@@ -35,16 +35,22 @@ test "StepDef with source" {
 }
 
 ///|
-test "StepDefId from_string/to_string round-trip" {
-  let id = StepDefId::from_string("step-def-abc-123")
+test "StepDefId struct constructor" {
+  let id = StepDefId("sd-1")
+  assert_eq(id.to_string(), "sd-1")
+}
+
+///|
+test "StepDefId from constructor/to_string round-trip" {
+  let id = StepDefId("step-def-abc-123")
   assert_eq(id.to_string(), "step-def-abc-123")
 }
 
 ///|
 test "StepDefId equality" {
-  let a = StepDefId::from_string("id-1")
-  let b = StepDefId::from_string("id-1")
-  let c = StepDefId::from_string("id-2")
+  let a = StepDefId("id-1")
+  let b = StepDefId("id-1")
+  let c = StepDefId("id-2")
   assert_eq(a, b)
   assert_not_eq(a, c)
 }
