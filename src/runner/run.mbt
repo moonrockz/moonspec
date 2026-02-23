@@ -108,6 +108,14 @@ pub async fn[W : @core.World] run(
     filter
   }
   let filtered = filter.apply(pickles)
+  // Test planning phase
+  if sinks.length() > 0 {
+    let id_gen = IdGenerator::new()
+    let tc_envelopes = build_test_cases(factory, filtered, id_gen)
+    for env in tc_envelopes {
+      emit(sinks, env)
+    }
+  }
   let results = if parallel > 0 {
     run_pickles_parallel(factory, filtered, max_concurrent=parallel)
   } else {
@@ -184,6 +192,14 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
     filter
   }
   let filtered = filter.apply(pickles)
+  // Test planning phase
+  if sinks.length() > 0 {
+    let id_gen = IdGenerator::new()
+    let tc_envelopes = build_test_cases(factory, filtered, id_gen)
+    for env in tc_envelopes {
+      emit(sinks, env)
+    }
+  }
   let results = if parallel > 0 {
     run_pickles_parallel_with_hooks(factory, filtered, max_concurrent=parallel)
   } else {

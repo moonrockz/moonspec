@@ -168,3 +168,22 @@ async test "run emits Pickle envelopes after compilation" {
   }
   assert_eq(pickle_count, 2)
 }
+
+///|
+async test "run emits TestCase envelopes with test steps" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://tc", "Feature: TC\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ]
+  let _ = run(RunWorld::default, features, sinks=[collector])
+  let mut found = false
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::TestCase(_) {
+      found = true
+      break
+    }
+  }
+  assert_true(found)
+}
