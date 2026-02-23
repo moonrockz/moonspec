@@ -2,4 +2,5 @@ import {
   "moonrockz/moonspec/core",
   "moonrockz/moonspec/runner",
   "moonrockz/cucumber-messages" as @cucumber_messages,
+  "moonbitlang/core/json",
 }

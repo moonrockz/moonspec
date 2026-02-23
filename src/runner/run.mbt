@@ -7,12 +7,6 @@ fn emit(sinks : Array[&@core.MessageSink], envelope : @cucumber_messages.Envelop
 }
 
 ///|
-fn zero_timestamp() -> @cucumber_messages.Timestamp {
-  let json : Json = { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() }
-  @json.from_json(json) catch { _ => panic() }
-}
-
-///|
 fn make_meta_envelope() -> @cucumber_messages.Envelope {
   let json : Json = {
     "meta": {
@@ -181,7 +175,7 @@ fn step_status_message(status : StepStatus) -> String? {
 
 ///|
 /// Mapping from pickle to its test case ID and test step IDs.
-struct TestCaseMapping {
+priv struct TestCaseMapping {
   test_case_id : String
   test_step_ids : Array[String]
 }
