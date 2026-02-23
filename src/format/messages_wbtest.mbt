@@ -1,89 +1,63 @@
 ///|
-test "MessagesFormatter emits TestRunStarted envelope" {
+test "MessagesFormatter serializes TestRunStarted envelope" {
   let fmt = MessagesFormatter::new()
-  fmt.on_run_start({ feature_count: 1, scenario_count: 2 })
+  let json : Json = {
+    "testRunStarted": {
+      "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+    },
+  }
+  let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+    _ => panic()
+  }
+  @core.MessageSink::on_message(fmt, envelope)
   let output = fmt.output()
   assert_true(string_contains(output, "testRunStarted"))
 }
 
 ///|
-test "MessagesFormatter emits TestRunFinished envelope" {
+test "MessagesFormatter serializes TestRunFinished envelope" {
   let fmt = MessagesFormatter::new()
-  let run_result : @runner.RunResult = {
-    features: [],
-    summary: {
-      total_scenarios: 1,
-      passed: 1,
-      failed: 0,
-      undefined: 0,
-      pending: 0,
-      skipped: 0,
-      duration_ms: 50L,
+  let json : Json = {
+    "testRunFinished": {
+      "success": true.to_json(),
+      "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
     },
   }
-  fmt.on_run_finish(run_result)
+  let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+    _ => panic()
+  }
+  @core.MessageSink::on_message(fmt, envelope)
   let output = fmt.output()
   assert_true(string_contains(output, "testRunFinished"))
-}
-
-///|
-test "MessagesFormatter TestRunFinished success is true when no failures" {
-  let fmt = MessagesFormatter::new()
-  let run_result : @runner.RunResult = {
-    features: [],
-    summary: {
-      total_scenarios: 3,
-      passed: 3,
-      failed: 0,
-      undefined: 0,
-      pending: 0,
-      skipped: 0,
-      duration_ms: 100L,
-    },
-  }
-  fmt.on_run_finish(run_result)
-  let output = fmt.output()
   assert_true(string_contains(output, "\"success\":true"))
 }
 
 ///|
-test "MessagesFormatter TestRunFinished success is false when failures exist" {
+test "MessagesFormatter emits NDJSON with multiple envelopes" {
   let fmt = MessagesFormatter::new()
-  let run_result : @runner.RunResult = {
-    features: [],
-    summary: {
-      total_scenarios: 3,
-      passed: 2,
-      failed: 1,
-      undefined: 0,
-      pending: 0,
-      skipped: 0,
-      duration_ms: 100L,
+  let json1 : Json = {
+    "testRunStarted": {
+      "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
     },
   }
-  fmt.on_run_finish(run_result)
-  let output = fmt.output()
-  assert_true(string_contains(output, "\"success\":false"))
-}
-
-///|
-test "MessagesFormatter emits NDJSON with both start and finish" {
-  let fmt = MessagesFormatter::new()
-  fmt.on_run_start({ feature_count: 1, scenario_count: 1 })
-  let run_result : @runner.RunResult = {
-    features: [],
-    summary: {
-      total_scenarios: 1,
-      passed: 1,
-      failed: 0,
-      undefined: 0,
-      pending: 0,
-      skipped: 0,
-      duration_ms: 10L,
+  let json2 : Json = {
+    "testRunFinished": {
+      "success": true.to_json(),
+      "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
     },
   }
-  fmt.on_run_finish(run_result)
+  let env1 : @cucumber_messages.Envelope = @json.from_json(json1) catch {
+    _ => panic()
+  }
+  let env2 : @cucumber_messages.Envelope = @json.from_json(json2) catch {
+    _ => panic()
+  }
+  @core.MessageSink::on_message(fmt, env1)
+  @core.MessageSink::on_message(fmt, env2)
   let output = fmt.output()
   assert_true(string_contains(output, "testRunStarted"))
   assert_true(string_contains(output, "testRunFinished"))
+  // Verify NDJSON format (newline-separated)
+  let lines = output.split("\n").collect()
+  assert_eq(lines.length(), 2)
 }
