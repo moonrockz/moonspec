@@ -314,8 +314,9 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
     println("No .mbt files found in \{scan_dir}")
     return
   }
-  // Scan all files
+  // Scan all files, caching contents for reuse in conflict detection
   let all_steps : Map[String, Array[@scanner.StepFnInfo]] = {}
+  let file_contents : Map[String, String] = {}
   for file in files {
     let content = @fs.read_file_to_string(file) catch {
       @fs.IOError(msg) => {
@@ -323,6 +324,7 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
         continue
       }
     }
+    file_contents.set(file, content)
     let result = @scanner.scan_source(content, file)
     for step in result.step_fns {
       match all_steps.get(step.world_type) {
@@ -334,6 +336,20 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
   if all_steps.is_empty() {
     println("No #moonspec.* attributes found")
     return
+  }
+  // Check for manual register_steps implementations that would conflict
+  for world_type, _ in all_steps {
+    for file in files {
+      let content = match file_contents.get(file) {
+        Some(c) => c
+        None => continue
+      }
+      if @scanner.has_manual_registration(content, world_type) {
+        eprintln(
+          "Warning: \{file} contains a manual register_steps for \{world_type}. Generated code may conflict.",
+        )
+      }
+    }
   }
   // Generate for each World type
   for world_type, steps in all_steps {

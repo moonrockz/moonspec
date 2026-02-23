@@ -1,28 +1,3 @@
-///|
-fn str_contains(haystack : String, needle : String) -> Bool {
-  let h_len = haystack.length()
-  let n_len = needle.length()
-  if n_len == 0 {
-    return true
-  }
-  if n_len > h_len {
-    return false
-  }
-  for i = 0; i <= h_len - n_len; i = i + 1 {
-    let mut found = true
-    for j = 0; j < n_len; j = j + 1 {
-      if haystack[i + j] != needle[j] {
-        found = false
-        break
-      }
-    }
-    if found {
-      return true
-    }
-  }
-  false
-}
-
 test "generate_register_steps produces valid impl block" {
   let steps : Array[StepFnInfo] = [
     {
