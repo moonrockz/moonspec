@@ -25,7 +25,7 @@ test "end-to-end: scan and generate from attributed source" {
   let steps = result.step_fns
   assert_eq(steps[0].world_type, "CucumberWorld")
   // Generate
-  let code = generate_register_steps(
+  let code = generate_configure(
     "CucumberWorld",
     steps,
     source_hash="test123",

@@ -119,7 +119,7 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
     println("No #moonspec.* attributes found")
     return
   }
-  // Check for manual register_steps implementations that would conflict
+  // Check for manual configure implementations that would conflict
   for world_type, _ in all_steps {
     for file in files {
       let content = match file_contents.get(file) {
@@ -128,7 +128,7 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
       }
       if @scanner.has_manual_registration(content, world_type) {
         eprintln(
-          "Warning: \{file} contains a manual register_steps for \{world_type}. Generated code may conflict.",
+          "Warning: \{file} contains a manual configure for \{world_type}. Generated code may conflict.",
         )
       }
     }
@@ -136,7 +136,7 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
   // Generate for each World type
   for world_type, steps in all_steps {
     let hash = compute_steps_hash(steps)
-    let code = @scanner.generate_register_steps(
+    let code = @scanner.generate_configure(
       world_type,
       steps,
       source_hash=hash,

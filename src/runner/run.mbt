@@ -314,9 +314,11 @@ pub async fn[W : @core.World] run(
   }
   let filtered = filter.apply(pickles)
   // Build registry once and share it
-  let registry = @core.StepRegistry::new()
+  let setup = @core.Setup::new()
   let world0 = factory()
-  @core.World::register_steps(world0, registry)
+  @core.World::configure(world0, setup)
+  let registry = setup.step_registry()
+  let _param_registry = setup.param_registry()
   // Emit StepDefinition envelopes
   if sinks.length() > 0 {
     let sd_envelopes = build_step_definition_envelopes(registry)
@@ -458,9 +460,11 @@ pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
   }
   let filtered = filter.apply(pickles)
   // Build registry once and share it
-  let registry = @core.StepRegistry::new()
+  let setup = @core.Setup::new()
   let world0 = factory()
-  @core.World::register_steps(world0, registry)
+  @core.World::configure(world0, setup)
+  let registry = setup.step_registry()
+  let _param_registry = setup.param_registry()
   // Emit StepDefinition envelopes
   if sinks.length() > 0 {
     let sd_envelopes = build_step_definition_envelopes(registry)
@@ -648,8 +652,9 @@ fn[W : @core.World] execute_pickle(
   id_gen? : IdGenerator = IdGenerator::new(),
 ) -> ScenarioResult {
   let world = factory()
-  let registry = @core.StepRegistry::new()
-  @core.World::register_steps(world, registry)
+  let setup = @core.Setup::new()
+  @core.World::configure(world, setup)
+  let registry = setup.step_registry()
   // Emit TestCaseStarted
   let mapping = tc_mappings.get(pickle.id)
   let tcs_id = match mapping {
@@ -698,8 +703,9 @@ fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
   id_gen? : IdGenerator = IdGenerator::new(),
 ) -> ScenarioResult {
   let world = factory()
-  let registry = @core.StepRegistry::new()
-  @core.World::register_steps(world, registry)
+  let setup = @core.Setup::new()
+  @core.World::configure(world, setup)
+  let registry = setup.step_registry()
   // Emit TestCaseStarted
   let mapping = tc_mappings.get(pickle.id)
   let tcs_id = match mapping {

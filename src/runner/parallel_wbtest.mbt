@@ -2,10 +2,10 @@
 struct ParWorld {} derive(Default)
 
 ///|
-impl @core.World for ParWorld with register_steps(_self, s) {
-  s.given("a step", fn(_args) {  })
-  s.given("step a", fn(_args) {  })
-  s.given("step b", fn(_args) {  })
+impl @core.World for ParWorld with configure(_self, setup) {
+  setup.given("a step", fn(_args) {  })
+  setup.given("step a", fn(_args) {  })
+  setup.given("step b", fn(_args) {  })
 }
 
 ///|

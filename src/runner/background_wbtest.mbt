@@ -4,10 +4,10 @@ struct BgWorld {
 } derive(Default)
 
 ///|
-impl @core.World for BgWorld with register_steps(self, s) {
-  s.given("a common setup", fn(_args) { self.context = "setup" })
-  s.when("I do something", fn(_args) {  })
-  s.then("it works", fn(_args) raise { assert_eq(self.context, "setup") })
+impl @core.World for BgWorld with configure(self, setup) {
+  setup.given("a common setup", fn(_args) { self.context = "setup" })
+  setup.when("I do something", fn(_args) {  })
+  setup.then("it works", fn(_args) raise { assert_eq(self.context, "setup") })
 }
 
 ///|

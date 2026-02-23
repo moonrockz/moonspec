@@ -2,8 +2,8 @@
 struct RunWorld {} derive(Default)
 
 ///|
-impl @core.World for RunWorld with register_steps(_self, s) {
-  s.given("a step", fn(_args) {  })
+impl @core.World for RunWorld with configure(_self, setup) {
+  setup.given("a step", fn(_args) {  })
 }
 
 ///|
@@ -23,9 +23,9 @@ async test "run single feature and collect summary" {
 struct RunWorld2 {} derive(Default)
 
 ///|
-impl @core.World for RunWorld2 with register_steps(_self, s) {
-  s.given("pass", fn(_args) {  })
-  s.given("fail", fn(_args) raise { raise Failure::Failure("fail") })
+impl @core.World for RunWorld2 with configure(_self, setup) {
+  setup.given("pass", fn(_args) {  })
+  setup.given("fail", fn(_args) raise { raise Failure::Failure("fail") })
 }
 
 ///|
@@ -49,8 +49,8 @@ async test "run multiple features" {
 struct PassWorld {} derive(Default)
 
 ///|
-impl @core.World for PassWorld with register_steps(_self, s) {
-  s.given("a calculator", fn(_args) {  })
+impl @core.World for PassWorld with configure(_self, setup) {
+  setup.given("a calculator", fn(_args) {  })
 }
 
 ///|
@@ -66,7 +66,7 @@ async test "run_or_fail succeeds when all pass" {
 struct NoStepsWorld {} derive(Default)
 
 ///|
-impl @core.World for NoStepsWorld with register_steps(_self, _s) {
+impl @core.World for NoStepsWorld with configure(_self, _setup) {
 
 }
 

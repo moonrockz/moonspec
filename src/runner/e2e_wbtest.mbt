@@ -4,30 +4,30 @@ struct CalcWorld {
 } derive(Default)
 
 ///|
-impl @core.World for CalcWorld with register_steps(self, s) {
-  s.given("a calculator", fn(_args) { self.result_val = 0 })
-  s.when("I add {int} and {int}", fn(args) {
+impl @core.World for CalcWorld with configure(self, setup) {
+  setup.given("a calculator", fn(_args) { self.result_val = 0 })
+  setup.when("I add {int} and {int}", fn(args) {
     match (args[0], args[1]) {
       (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) =>
         self.result_val = a + b
       _ => ()
     }
   })
-  s.when("I subtract {int} from {int}", fn(args) {
+  setup.when("I subtract {int} from {int}", fn(args) {
     match (args[0], args[1]) {
       (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) =>
         self.result_val = b - a
       _ => ()
     }
   })
-  s.when("I multiply {int} and {int}", fn(args) {
+  setup.when("I multiply {int} and {int}", fn(args) {
     match (args[0], args[1]) {
       (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) =>
         self.result_val = a * b
       _ => ()
     }
   })
-  s.then("the result should be {int}", fn(args) raise {
+  setup.then("the result should be {int}", fn(args) raise {
     match args[0] {
       @core.StepArg::IntArg(expected) => assert_eq(self.result_val, expected)
       _ => ()
@@ -50,10 +50,10 @@ async test "end-to-end: calculator feature" {
 struct TagWorld {} derive(Default)
 
 ///|
-impl @core.World for TagWorld with register_steps(_self, s) {
-  s.given("a calculator", fn(_args) {  })
-  s.when("I add {int} and {int}", fn(_args) {  })
-  s.then("the result should be {int}", fn(_args) {  })
+impl @core.World for TagWorld with configure(_self, setup) {
+  setup.given("a calculator", fn(_args) {  })
+  setup.when("I add {int} and {int}", fn(_args) {  })
+  setup.then("the result should be {int}", fn(_args) {  })
 }
 
 ///|

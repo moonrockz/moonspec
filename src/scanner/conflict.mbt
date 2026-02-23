@@ -1,8 +1,8 @@
 ///|
-/// Check if source contains a manual `impl World for <type> with register_steps` block.
+/// Check if source contains a manual `impl World for <type> with configure` block.
 /// Uses simple substring matching — no AST parsing needed.
 pub fn has_manual_registration(source : String, world_type : String) -> Bool {
-  let needle = "impl @moonspec.World for " + world_type + " with register_steps"
+  let needle = "impl @moonspec.World for " + world_type + " with configure"
   str_contains(source, needle)
 }
 

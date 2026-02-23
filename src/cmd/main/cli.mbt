@@ -43,7 +43,7 @@ fn build_parser() -> @clap.Parser {
     },
     help="Generate _test.mbt files from .feature files",
   )
-  // -- gen steps: generate register_steps from #moonspec.* attributes
+  // -- gen steps: generate configure from #moonspec.* attributes
   let gen_steps = @clap.SubCommand::new(
     args={
       "dir": @clap.Arg::named(
@@ -57,7 +57,7 @@ fn build_parser() -> @clap.Parser {
         help="Path to moonspec.json5 config file",
       ),
     },
-    help="Generate register_steps from #moonspec.* attributes",
+    help="Generate configure from #moonspec.* attributes",
   )
   // -- gen: code generation commands
   let gen = @clap.SubCommand::new(help="Code generation commands", subcmds={

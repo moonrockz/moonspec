@@ -19,8 +19,8 @@ struct EcomWorld {
 
 ///|
 /// Compose all step libraries into the world.
-impl @moonspec.World for EcomWorld with register_steps(self, s) {
-  s.use_library(CartSteps::new(self))
-  s.use_library(CheckoutSteps::new(self))
-  s.use_library(InventorySteps::new(self))
+impl @moonspec.World for EcomWorld with configure(self, setup) {
+  setup.use_library(CartSteps::new(self))
+  setup.use_library(CheckoutSteps::new(self))
+  setup.use_library(InventorySteps::new(self))
 }

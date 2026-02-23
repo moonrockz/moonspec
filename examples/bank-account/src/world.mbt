@@ -93,7 +93,7 @@ impl @moonspec.StepLibrary for TransactionSteps with steps(self) {
 
 ///|
 /// Compose step libraries into the world.
-impl @moonspec.World for BankWorld with register_steps(self, s) {
-  s.use_library(AccountSteps::new(self))
-  s.use_library(TransactionSteps::new(self))
+impl @moonspec.World for BankWorld with configure(self, setup) {
+  setup.use_library(AccountSteps::new(self))
+  setup.use_library(TransactionSteps::new(self))
 }
