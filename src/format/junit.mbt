@@ -1,11 +1,48 @@
 ///|
 pub(all) struct JUnitFormatter {
   priv mut buffer : String
+  // uri -> feature name
+  priv features : Map[String, String]
+  // pickle id -> pickle data
+  priv pickles : Map[String, JUnitPickleData]
+  // test case id -> pickle id
+  priv test_cases : Map[String, String]
+  // test case started id -> test case id
+  priv test_case_started : Map[String, String]
+  // tcs id -> worst status string
+  priv test_case_worst : Map[String, String]
+  // tcs id -> failure message
+  priv test_case_failure : Map[String, String]
+  // accumulated results per feature uri
+  priv feature_results : Map[String, Array[JUnitTestCaseData]]
+}
+
+///|
+priv struct JUnitPickleData {
+  name : String
+  uri : String
+}
+
+///|
+priv struct JUnitTestCaseData {
+  name : String
+  classname : String
+  status : String
+  failure_message : String?
 }
 
 ///|
 pub fn JUnitFormatter::new() -> JUnitFormatter {
-  { buffer: "" }
+  {
+    buffer: "",
+    features: {},
+    pickles: {},
+    test_cases: {},
+    test_case_started: {},
+    test_case_worst: {},
+    test_case_failure: {},
+    feature_results: {},
+  }
 }
 
 ///|
@@ -14,92 +51,166 @@ pub fn JUnitFormatter::output(self : JUnitFormatter) -> String {
 }
 
 ///|
-pub impl @core.MessageSink for JUnitFormatter with on_message(_self, _envelope) {
-  ()
-}
-
-///|
-pub fn JUnitFormatter::format_result(
-  self : JUnitFormatter,
-  result : @runner.RunResult,
-) -> Unit {
-  let mut xml = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n"
-  xml = xml +
-    "<testsuites tests=\"" +
-    result.summary.total_scenarios.to_string() +
-    "\""
-  xml = xml + " failures=\"" + result.summary.failed.to_string() + "\""
-  xml = xml + " time=\"" + ms_to_seconds(result.summary.duration_ms) + "\">\n"
-  for feature in result.features {
-    xml = xml + "  <testsuite name=\"" + escape_xml(feature.name) + "\""
-    xml = xml + " tests=\"" + feature.scenarios.length().to_string() + "\""
-    xml = xml + " time=\"" + ms_to_seconds(feature.duration_ms) + "\">\n"
-    for scenario in feature.scenarios {
-      xml = xml +
-        "    <testcase name=\"" +
-        escape_xml(scenario.scenario_name) +
-        "\""
-      xml = xml + " classname=\"" + escape_xml(scenario.feature_name) + "\""
-      xml = xml + " time=\"" + ms_to_seconds(scenario.duration_ms) + "\">\n"
-      match scenario.status {
-        @runner.ScenarioStatus::Failed => {
-          let msg = find_failure_message(scenario.steps)
-          xml = xml + "      <failure message=\"" + escape_xml(msg) + "\"/>\n"
+pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
+  match envelope {
+    GherkinDocument(doc) => {
+      let uri = match doc.uri {
+        Some(u) => u
+        None => ""
+      }
+      let feature_name = match doc.feature {
+        Some(f) => f.name
+        None => uri
+      }
+      self.features[uri] = feature_name
+    }
+    Pickle(pickle) => {
+      self.pickles[pickle.id] = { name: pickle.name, uri: pickle.uri }
+    }
+    TestCase(tc) => {
+      self.test_cases[tc.id] = tc.pickleId
+    }
+    TestCaseStarted(tcs) => {
+      self.test_case_started[tcs.id] = tcs.testCaseId
+      self.test_case_worst[tcs.id] = "PASSED"
+    }
+    TestStepFinished(tsf) => {
+      let tcs_id = tsf.testCaseStartedId
+      let status = tsf.testStepResult.status
+      match status {
+        Failed => {
+          self.test_case_worst[tcs_id] = "FAILED"
+          let msg = match tsf.testStepResult.message {
+            Some(m) => m
+            None => "unknown failure"
+          }
+          self.test_case_failure[tcs_id] = msg
         }
-        @runner.ScenarioStatus::Skipped => xml = xml + "      <skipped/>\n"
+        Undefined | Pending | Ambiguous => {
+          // Only upgrade if not already FAILED
+          let current = match self.test_case_worst.get(tcs_id) {
+            Some(w) => w
+            None => "PASSED"
+          }
+          if current != "FAILED" {
+            self.test_case_worst[tcs_id] = "SKIPPED"
+          }
+        }
+        Skipped => {
+          let current = match self.test_case_worst.get(tcs_id) {
+            Some(w) => w
+            None => "PASSED"
+          }
+          if current == "PASSED" {
+            self.test_case_worst[tcs_id] = "SKIPPED"
+          }
+        }
         _ => ()
       }
-      xml = xml + "    </testcase>\n"
     }
-    xml = xml + "  </testsuite>\n"
+    TestCaseFinished(tcf) => {
+      let tcs_id = tcf.testCaseStartedId
+      let tc_id = match self.test_case_started.get(tcs_id) {
+        Some(id) => id
+        None => return
+      }
+      let pickle_id = match self.test_cases.get(tc_id) {
+        Some(id) => id
+        None => return
+      }
+      let pickle = match self.pickles.get(pickle_id) {
+        Some(p) => p
+        None => return
+      }
+      let feature_name = match self.features.get(pickle.uri) {
+        Some(n) => n
+        None => pickle.uri
+      }
+      let status = match self.test_case_worst.get(tcs_id) {
+        Some(s) => s
+        None => "PASSED"
+      }
+      let failure_message = self.test_case_failure.get(tcs_id)
+      let data : JUnitTestCaseData = {
+        name: pickle.name,
+        classname: feature_name,
+        status,
+        failure_message,
+      }
+      match self.feature_results.get(pickle.uri) {
+        Some(arr) => arr.push(data)
+        None => self.feature_results[pickle.uri] = [data]
+      }
+    }
+    TestRunFinished(_) => {
+      // Count totals
+      let mut total_tests = 0
+      let mut total_failures = 0
+      self.feature_results.each(fn(_uri, cases) {
+        for tc in cases {
+          total_tests = total_tests + 1
+          if tc.status == "FAILED" {
+            total_failures = total_failures + 1
+          }
+        }
+      })
+      let writer = @xml.Writer::new()
+      writer.start_element(
+        "testsuites",
+        [
+          ("tests", total_tests.to_string()),
+          ("failures", total_failures.to_string()),
+        ],
+      )
+      // Iterate features in insertion order
+      self.feature_results.each(fn(uri, cases) {
+        let suite_name = match self.features.get(uri) {
+          Some(n) => n
+          None => uri
+        }
+        writer.start_element(
+          "testsuite",
+          [("name", suite_name), ("tests", cases.length().to_string())],
+        )
+        for tc in cases {
+          match tc.status {
+            "FAILED" => {
+              writer.start_element(
+                "testcase",
+                [("name", tc.name), ("classname", tc.classname)],
+              )
+              let msg = match tc.failure_message {
+                Some(m) => m
+                None => "unknown failure"
+              }
+              writer.empty_element("failure", [("message", msg)])
+              writer.end_element("testcase")
+            }
+            "SKIPPED" => {
+              writer.start_element(
+                "testcase",
+                [("name", tc.name), ("classname", tc.classname)],
+              )
+              writer.empty_element("skipped", [])
+              writer.end_element("testcase")
+            }
+            _ => {
+              // PASSED or other
+              writer.start_element(
+                "testcase",
+                [("name", tc.name), ("classname", tc.classname)],
+              )
+              writer.end_element("testcase")
+            }
+          }
+        }
+        writer.end_element("testsuite")
+      })
+      writer.end_element("testsuites")
+      self.buffer = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+        writer.to_string()
+    }
+    _ => ()
   }
-  xml = xml + "</testsuites>\n"
-  self.buffer = xml
 }
 
-///|
-fn ms_to_seconds(ms : Int64) -> String {
-  let s = ms / 1000L
-  let frac = ms % 1000L
-  let frac_str = frac.to_string()
-  // Zero-pad to 3 digits
-  let padded = if frac_str.length() == 1 {
-    "00" + frac_str
-  } else if frac_str.length() == 2 {
-    "0" + frac_str
-  } else {
-    frac_str
-  }
-  s.to_string() + "." + padded
-}
-
-///|
-fn escape_xml(s : String) -> String {
-  let buf = StringBuilder::new()
-  for i = 0; i < s.length(); i = i + 1 {
-    let c = s[i]
-    if c == '&' {
-      buf.write_string("&amp;")
-    } else if c == '<' {
-      buf.write_string("&lt;")
-    } else if c == '>' {
-      buf.write_string("&gt;")
-    } else if c == '"' {
-      buf.write_string("&quot;")
-    } else {
-      buf.write_char(c.to_int().unsafe_to_char())
-    }
-  }
-  buf.to_string()
-}
-
-///|
-fn find_failure_message(steps : Array[@runner.StepResult]) -> String {
-  for step in steps {
-    match step.status {
-      @runner.StepStatus::Failed(msg) => return msg
-      _ => continue
-    }
-  }
-  "unknown failure"
-}
