@@ -424,6 +424,78 @@ git add src/config/
 git commit -m "feat(config): add hierarchical moonspec config package"
 ```
 
+### Task 2b: Generate JSON Schema for moonspec.json5 (YAML format)
+
+**Files:**
+- Create: `schemas/moonspec.schema.yaml`
+
+**Step 1: Write the schema**
+
+```yaml
+# schemas/moonspec.schema.yaml
+$schema: "https://json-schema.org/draft/2020-12/schema"
+$id: "https://moonrockz.github.io/moonspec/schemas/moonspec.schema.json"
+title: Moonspec Configuration
+description: Configuration for the moonspec BDD test framework.
+type: object
+additionalProperties: false
+
+properties:
+  world:
+    type: string
+    description: >
+      World type name used for test generation (e.g. "CalcWorld").
+      Must match a MoonBit struct that implements the World trait.
+
+  mode:
+    description: >
+      Codegen mode for feature-to-test generation. Either a single mode
+      applied to all features, or a map of feature file paths/globs to modes.
+    oneOf:
+      - type: string
+        enum: ["per-scenario", "per-feature"]
+        description: Apply this mode to all feature files.
+      - type: object
+        description: >
+          Map of feature file paths or glob patterns to modes.
+          Use "*" as the fallback default. More specific paths take precedence.
+        additionalProperties:
+          type: string
+          enum: ["per-scenario", "per-feature"]
+        examples:
+          - {"features/checkout.feature": "per-feature", "*": "per-scenario"}
+
+  steps:
+    type: object
+    description: Configuration for `moonspec gen steps` attribute scanning.
+    additionalProperties: false
+    properties:
+      output:
+        type: string
+        description: >
+          Where to write generated register_steps code.
+          Built-in modes: "generated" (_generated/ directory),
+          "alongside" (next to source files), "per-package" (one file per package).
+          Any other value is treated as a custom output directory path.
+        default: "generated"
+        examples: ["generated", "alongside", "per-package", "my_gen/"]
+      exclude:
+        type: array
+        description: >
+          Glob patterns for files/directories to skip when scanning
+          for #moonspec.* attributes.
+        items:
+          type: string
+        examples: [["lib/*", "vendor/*"]]
+```
+
+**Step 2: Commit**
+
+```bash
+git add schemas/moonspec.schema.yaml
+git commit -m "docs(schema): add JSON Schema for moonspec.json5 in YAML format"
+```
+
 ### Task 3: Migrate CLI to use new config package
 
 **Files:**
