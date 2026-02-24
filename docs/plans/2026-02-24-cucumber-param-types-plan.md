@@ -4,7 +4,7 @@
 
 **Goal:** Add 6 missing built-in parameter types and transformer functions to the cucumber-expressions library, then update moonspec with `StepArg` struct (typed value + raw text), `StepValue` hybrid enum, and custom type transformer support.
 
-**Architecture:** Two repos. First, extend cucumber-expressions with `ParamType` variants, `Transformer` type using `tonyfettes/any`, built-in transformers, and updated `Param` struct. Then update moonspec's `StepArg`/`StepValue` types, simplify `from_param`, and wire transformer callbacks through `Setup`.
+**Architecture:** Two repos. First, extend cucumber-expressions with `ParamType` variants, `ParamValue` enum (closed for built-ins, `CustomVal(@any.Any)` for customs), `Transformer` type, built-in transformers, and updated `Param` struct. Then update moonspec's `StepArg`/`StepValue` types, simplify `from_param`, and wire transformer callbacks through `Setup`.
 
 **Tech Stack:** MoonBit, tonyfettes/any, moonbitlang/core/bigint, moonbitlang/x/decimal, moonbitlang/core/strconv
 
@@ -83,7 +83,7 @@ test "ParamType equality" {
 **Step 2: Run tests to verify they fail**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/cucumber-expressions && mise run test:unit`
-Expected: FAIL — `Double_`, `Long`, `Byte`, `Short`, `BigDecimal`, `BigInteger` not members of `ParamType`
+Expected: FAIL — `Double_`, `Long`, etc. not members of `ParamType`
 
 **Step 3: Add 6 new variants to ParamType enum**
 
@@ -123,19 +123,20 @@ git commit -m "feat: add 6 new ParamType variants for full spec compliance"
 
 ---
 
-### Task 2: Add Transformer type and tonyfettes/any dependency
+### Task 2: Add ParamValue enum, Transformer type, and tonyfettes/any dependency
 
 **Files:**
 - Modify: `moon.mod.json` (add `tonyfettes/any` dependency)
 - Modify: `src/moon.pkg` (add imports)
-- Modify: `src/param_type.mbt` (add Transformer type, update ParamTypeEntry, update register)
+- Create: `src/param_value.mbt` (ParamValue enum + Transformer type)
+- Modify: `src/param_type.mbt` (update ParamTypeEntry, update register)
 - Modify: `src/param_type_wbtest.mbt`
 
-**Step 1: Add tonyfettes/any dependency**
+**Step 1: Add dependencies**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/cucumber-expressions && moon add tonyfettes/any`
 
-Add imports to `src/moon.pkg`:
+Update `src/moon.pkg`:
 
 ```
 import {
@@ -147,14 +148,32 @@ import {
 }
 ```
 
-**Step 2: Write failing test for Transformer on ParamTypeEntry**
+**Step 2: Write failing test for ParamValue and Transformer**
 
 Add to `src/param_type_wbtest.mbt`:
 
 ```moonbit
 ///|
+test "ParamValue::IntVal" {
+  let v = ParamValue::IntVal(42)
+  inspect(v, content="IntVal(42)")
+}
+
+///|
+test "ParamValue::CustomVal wraps Any" {
+  let v = ParamValue::CustomVal(@any.of("red"))
+  match v {
+    CustomVal(any) => {
+      let s : String = any.to()
+      assert_eq(s, "red")
+    }
+    _ => fail("expected CustomVal")
+  }
+}
+
+///|
 test "ParamTypeEntry with transformer" {
-  let transformer : Transformer = fn(groups) { @any.of(@strconv.parse_int(groups[0])) }
+  let transformer : Transformer = fn(groups) { ParamValue::IntVal(@strconv.parse_int(groups[0])) }
   let entry : ParamTypeEntry = {
     name: "test",
     type_: ParamType::Int,
@@ -163,26 +182,49 @@ test "ParamTypeEntry with transformer" {
   }
   assert_eq(entry.name, "test")
   let result = (entry.transformer._)(["42"])
-  let value : Int = result.to()
-  assert_eq(value, 42)
+  assert_eq(result, ParamValue::IntVal(42))
 }
 ```
 
 **Step 3: Run tests to verify they fail**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/cucumber-expressions && mise run test:unit`
-Expected: FAIL — `Transformer` type not defined, `transformer` field not on `ParamTypeEntry`
+Expected: FAIL — `ParamValue` and `Transformer` not defined
 
-**Step 4: Add Transformer type and update ParamTypeEntry**
+**Step 4: Create ParamValue enum and Transformer type**
 
-In `src/param_type.mbt`, add the Transformer type and update ParamTypeEntry:
+Create `src/param_value.mbt`:
 
 ```moonbit
 ///|
-/// A transformer function that converts captured regex group strings into a typed value.
-/// Receives an array of captured group strings (arity matches capture groups in the regex).
-pub(all) type Transformer (Array[String]) -> @any.Any raise Error
+/// A typed value produced by a transformer function.
+/// Built-in types have concrete variants for compile-time pattern matching.
+/// Custom types use `CustomVal(@any.Any)` for type-erased transformer results.
+pub(all) enum ParamValue {
+  IntVal(Int)
+  FloatVal(Double)
+  DoubleVal(Double)
+  LongVal(Int64)
+  ByteVal(Byte)
+  ShortVal(Int)
+  StringVal(String)
+  WordVal(String)
+  BigDecimalVal(@decimal.Decimal)
+  BigIntegerVal(BigInt)
+  CustomVal(@any.Any)
+} derive(Show, Eq)
 
+///|
+/// A transformer function that converts captured regex group strings into a typed ParamValue.
+/// Receives an array of captured group strings (arity matches capture groups in the regex).
+pub(all) type Transformer (Array[String]) -> ParamValue raise Error
+```
+
+**Step 5: Update ParamTypeEntry and register**
+
+In `src/param_type.mbt`, update `ParamTypeEntry`:
+
+```moonbit
 ///|
 /// A registered parameter type entry with name, type, regex patterns, and transformer.
 pub(all) struct ParamTypeEntry {
@@ -193,7 +235,7 @@ pub(all) struct ParamTypeEntry {
 } derive(Show, Eq)
 ```
 
-Update `ParamTypeRegistry::register` to accept a transformer:
+Update `ParamTypeRegistry::register` to accept a transformer with a default:
 
 ```moonbit
 ///|
@@ -202,25 +244,23 @@ pub fn ParamTypeRegistry::register(
   name : String,
   type_ : ParamType,
   patterns : Array[RegexPattern],
-  transformer~ : Transformer = fn(groups) { @any.of(groups[0]) },
+  transformer~ : Transformer = fn(groups) { ParamValue::CustomVal(@any.of(groups[0])) },
 ) -> Unit {
   self.entries.push({ name, type_, patterns, transformer })
 }
 ```
 
-The default transformer boxes the first captured group string.
-
-**Step 5: Run tests to verify they pass**
+**Step 6: Run tests to verify they pass**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/cucumber-expressions && mise run test:unit`
-Expected: ALL PASS (existing tests keep working because `transformer~` has a default)
+Expected: ALL PASS
 
-**Step 6: Commit**
+**Step 7: Commit**
 
 ```bash
 cd /home/damian/code/repos/github/moonrockz/cucumber-expressions
-git add moon.mod.json src/moon.pkg src/param_type.mbt src/param_type_wbtest.mbt
-git commit -m "feat: add Transformer type with tonyfettes/any for type-erased values"
+git add moon.mod.json src/moon.pkg src/param_value.mbt src/param_type.mbt src/param_type_wbtest.mbt
+git commit -m "feat: add ParamValue enum and Transformer type with tonyfettes/any"
 ```
 
 ---
@@ -233,7 +273,7 @@ git commit -m "feat: add Transformer type with tonyfettes/any for type-erased va
 
 **Step 1: Write failing tests for new registry entries and transformers**
 
-Replace the existing `"ParamTypeRegistry::default has 5 built-in types"` test and add new tests in `src/param_type_wbtest.mbt`:
+Replace the existing `"ParamTypeRegistry::default has 5 built-in types"` test. Add tests for each new type's registration and transformer in `src/param_type_wbtest.mbt`:
 
 ```moonbit
 ///|
@@ -243,163 +283,135 @@ test "ParamTypeRegistry::default has 11 built-in types" {
 }
 
 ///|
-test "Registry int transformer converts string to Int" {
+test "Registry int transformer produces IntVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("int").unwrap()
   let result = (entry.transformer._)(["42"])
-  let value : Int = result.to()
-  assert_eq(value, 42)
+  assert_eq(result, ParamValue::IntVal(42))
 }
 
 ///|
-test "Registry float transformer converts string to Double" {
+test "Registry float transformer produces FloatVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("float").unwrap()
   let result = (entry.transformer._)(["3.14"])
-  let value : Double = result.to()
-  assert_eq(value, 3.14)
+  assert_eq(result, ParamValue::FloatVal(3.14))
 }
 
 ///|
-test "Registry double transformer converts string to Double" {
+test "Registry double transformer produces DoubleVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("double").unwrap()
   let result = (entry.transformer._)(["3.14"])
-  let value : Double = result.to()
-  assert_eq(value, 3.14)
+  assert_eq(result, ParamValue::DoubleVal(3.14))
 }
 
 ///|
-test "Registry long transformer converts string to Int64" {
+test "Registry long transformer produces LongVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("long").unwrap()
   let result = (entry.transformer._)(["9223372036854775807"])
-  let value : Int64 = result.to()
-  assert_eq(value, 9223372036854775807L)
+  assert_eq(result, ParamValue::LongVal(9223372036854775807L))
 }
 
 ///|
-test "Registry byte transformer converts string to Byte" {
+test "Registry byte transformer produces ByteVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("byte").unwrap()
   let result = (entry.transformer._)(["255"])
-  let value : Byte = result.to()
-  assert_eq(value, b'\xFF')
+  assert_eq(result, ParamValue::ByteVal(b'\xFF'))
 }
 
 ///|
-test "Registry short transformer converts string to Int" {
+test "Registry short transformer produces ShortVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("short").unwrap()
   let result = (entry.transformer._)(["8080"])
-  let value : Int = result.to()
-  assert_eq(value, 8080)
+  assert_eq(result, ParamValue::ShortVal(8080))
 }
 
 ///|
-test "Registry string transformer returns String" {
+test "Registry string transformer produces StringVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("string").unwrap()
   let result = (entry.transformer._)(["hello"])
-  let value : String = result.to()
-  assert_eq(value, "hello")
+  assert_eq(result, ParamValue::StringVal("hello"))
 }
 
 ///|
-test "Registry word transformer returns String" {
+test "Registry word transformer produces WordVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("word").unwrap()
   let result = (entry.transformer._)(["banana"])
-  let value : String = result.to()
-  assert_eq(value, "banana")
+  assert_eq(result, ParamValue::WordVal("banana"))
 }
 
 ///|
-test "Registry bigdecimal transformer converts string to Decimal" {
+test "Registry bigdecimal transformer produces BigDecimalVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("bigdecimal").unwrap()
   let result = (entry.transformer._)(["99.99"])
-  let value : @decimal.Decimal = result.to()
-  assert_eq(value, @decimal.Decimal::from_string("99.99").unwrap())
+  assert_eq(result, ParamValue::BigDecimalVal(@decimal.Decimal::from_string("99.99").unwrap()))
 }
 
 ///|
-test "Registry biginteger transformer converts string to BigInt" {
+test "Registry biginteger transformer produces BigIntegerVal" {
   let reg = ParamTypeRegistry::default()
   let entry = reg.get("biginteger").unwrap()
   let result = (entry.transformer._)(["123456789012345678901234567890"])
-  let value : BigInt = result.to()
-  assert_eq(value, BigInt::from_string("123456789012345678901234567890"))
+  assert_eq(result, ParamValue::BigIntegerVal(BigInt::from_string("123456789012345678901234567890")))
 }
 
 ///|
-test "Registry get double returns correct type and patterns" {
+test "Registry get double returns correct type" {
   let reg = ParamTypeRegistry::default()
   match reg.get("double") {
-    Some(entry) => {
-      assert_true(entry.type_ == ParamType::Double_)
-      inspect(entry.patterns.length(), content="1")
-    }
+    Some(entry) => assert_true(entry.type_ == ParamType::Double_)
     None => abort("expected double to be registered")
   }
 }
 
 ///|
-test "Registry get long returns correct type and patterns" {
+test "Registry get long returns correct type" {
   let reg = ParamTypeRegistry::default()
   match reg.get("long") {
-    Some(entry) => {
-      assert_true(entry.type_ == ParamType::Long)
-      inspect(entry.patterns.length(), content="2")
-    }
+    Some(entry) => assert_true(entry.type_ == ParamType::Long)
     None => abort("expected long to be registered")
   }
 }
 
 ///|
-test "Registry get byte returns correct type and patterns" {
+test "Registry get byte returns correct type" {
   let reg = ParamTypeRegistry::default()
   match reg.get("byte") {
-    Some(entry) => {
-      assert_true(entry.type_ == ParamType::Byte)
-      inspect(entry.patterns.length(), content="2")
-    }
+    Some(entry) => assert_true(entry.type_ == ParamType::Byte)
     None => abort("expected byte to be registered")
   }
 }
 
 ///|
-test "Registry get short returns correct type and patterns" {
+test "Registry get short returns correct type" {
   let reg = ParamTypeRegistry::default()
   match reg.get("short") {
-    Some(entry) => {
-      assert_true(entry.type_ == ParamType::Short)
-      inspect(entry.patterns.length(), content="2")
-    }
+    Some(entry) => assert_true(entry.type_ == ParamType::Short)
     None => abort("expected short to be registered")
   }
 }
 
 ///|
-test "Registry get bigdecimal returns correct type and patterns" {
+test "Registry get bigdecimal returns correct type" {
   let reg = ParamTypeRegistry::default()
   match reg.get("bigdecimal") {
-    Some(entry) => {
-      assert_true(entry.type_ == ParamType::BigDecimal)
-      inspect(entry.patterns.length(), content="1")
-    }
+    Some(entry) => assert_true(entry.type_ == ParamType::BigDecimal)
     None => abort("expected bigdecimal to be registered")
   }
 }
 
 ///|
-test "Registry get biginteger returns correct type and patterns" {
+test "Registry get biginteger returns correct type" {
   let reg = ParamTypeRegistry::default()
   match reg.get("biginteger") {
-    Some(entry) => {
-      assert_true(entry.type_ == ParamType::BigInteger)
-      inspect(entry.patterns.length(), content="2")
-    }
+    Some(entry) => assert_true(entry.type_ == ParamType::BigInteger)
     None => abort("expected biginteger to be registered")
   }
 }
@@ -408,7 +420,7 @@ test "Registry get biginteger returns correct type and patterns" {
 **Step 2: Run tests to verify they fail**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/cucumber-expressions && mise run test:unit`
-Expected: FAIL — registry has 5 types not 11, `get("double")` returns None, etc.
+Expected: FAIL — registry has 5 types not 11, `get("double")` returns None
 
 **Step 3: Implement built-in transformers and register all 11 types**
 
@@ -425,34 +437,34 @@ pub fn ParamTypeRegistry::default() -> ParamTypeRegistry {
     RegexPattern("(?:\\d+)"),
   ]
   reg.register("int", ParamType::Int, int_patterns,
-    transformer=fn(groups) { @any.of(@strconv.parse_int(groups[0])) },
+    transformer=fn(groups) { IntVal(@strconv.parse_int(groups[0])) },
   )
   reg.register("long", ParamType::Long, int_patterns,
-    transformer=fn(groups) { @any.of(Int64::from_string(groups[0])) },
+    transformer=fn(groups) { LongVal(Int64::from_string(groups[0])) },
   )
   reg.register("byte", ParamType::Byte, int_patterns,
-    transformer=fn(groups) { @any.of(@strconv.parse_int(groups[0]).to_byte()) },
+    transformer=fn(groups) { ByteVal(@strconv.parse_int(groups[0]).to_byte()) },
   )
   reg.register("short", ParamType::Short, int_patterns,
-    transformer=fn(groups) { @any.of(@strconv.parse_int(groups[0])) },
+    transformer=fn(groups) { ShortVal(@strconv.parse_int(groups[0])) },
   )
   reg.register("biginteger", ParamType::BigInteger, int_patterns,
-    transformer=fn(groups) { @any.of(BigInt::from_string(groups[0])) },
+    transformer=fn(groups) { BigIntegerVal(BigInt::from_string(groups[0])) },
   )
   // Float types (all share the same regex pattern)
   let float_patterns = [
     RegexPattern("(?:[+-]?(?:\\d+|\\d+\\.\\d*|\\d*\\.\\d+)(?:[eE][+-]?\\d+)?)"),
   ]
   reg.register("float", ParamType::Float, float_patterns,
-    transformer=fn(groups) { @any.of(@strconv.parse_double(groups[0])) },
+    transformer=fn(groups) { FloatVal(@strconv.parse_double(groups[0])) },
   )
   reg.register("double", ParamType::Double_, float_patterns,
-    transformer=fn(groups) { @any.of(@strconv.parse_double(groups[0])) },
+    transformer=fn(groups) { DoubleVal(@strconv.parse_double(groups[0])) },
   )
   reg.register("bigdecimal", ParamType::BigDecimal, float_patterns,
     transformer=fn(groups) {
       match @decimal.Decimal::from_string(groups[0]) {
-        Some(d) => @any.of(d)
+        Some(d) => BigDecimalVal(d)
         None => raise Error("Invalid bigdecimal: " + groups[0])
       }
     },
@@ -462,13 +474,13 @@ pub fn ParamTypeRegistry::default() -> ParamTypeRegistry {
     RegexPattern("\"([^\"\\\\]*(\\\\.[^\"\\\\]*)*)\""),
     RegexPattern("'([^'\\\\]*(\\\\.[^'\\\\]*)*)'"),
   ],
-    transformer=fn(groups) { @any.of(groups[0]) },
+    transformer=fn(groups) { StringVal(groups[0]) },
   )
   reg.register("word", ParamType::Word, [RegexPattern("[^\\s]+")],
-    transformer=fn(groups) { @any.of(groups[0]) },
+    transformer=fn(groups) { WordVal(groups[0]) },
   )
   reg.register("", ParamType::Anonymous, [RegexPattern(".*")],
-    transformer=fn(groups) { @any.of(groups[0]) },
+    transformer=fn(groups) { StringVal(groups[0]) },
   )
   reg
 }
@@ -505,33 +517,30 @@ Add to `src/expression_wbtest.mbt`:
 
 ```moonbit
 ///|
-test "match returns transformed Int value" {
+test "match returns transformed IntVal" {
   let expr = Expression::parse("I have {int} cucumbers")
   let result = expr.match_("I have 42 cucumbers")
   guard result is Some(m) else { fail("expected match") }
-  let value : Int = m.params[0].value.to()
-  assert_eq(value, 42)
+  assert_eq(m.params[0].value, ParamValue::IntVal(42))
   assert_eq(m.params[0].raw, "42")
   assert_eq(m.params[0].type_, ParamType::Int)
 }
 
 ///|
-test "match returns transformed Double value for float" {
+test "match returns transformed FloatVal" {
   let expr = Expression::parse("price is {float}")
   let result = expr.match_("price is 3.14")
   guard result is Some(m) else { fail("expected match") }
-  let value : Double = m.params[0].value.to()
-  assert_eq(value, 3.14)
+  assert_eq(m.params[0].value, ParamValue::FloatVal(3.14))
   assert_eq(m.params[0].raw, "3.14")
 }
 
 ///|
-test "match returns transformed String for string" {
+test "match returns transformed StringVal" {
   let expr = Expression::parse("I select {string}")
   let result = expr.match_("I select \"hello\"")
   guard result is Some(m) else { fail("expected match") }
-  let value : String = m.params[0].value.to()
-  assert_eq(value, "hello")
+  assert_eq(m.params[0].value, ParamValue::StringVal("hello"))
   assert_eq(m.params[0].raw, "hello")
 }
 
@@ -548,23 +557,23 @@ test "match preserves raw text" {
 **Step 2: Run tests to verify they fail**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/cucumber-expressions && mise run test:unit`
-Expected: FAIL — `Param` doesn't have `value` as `Any` or `raw` field
+Expected: FAIL — `Param` doesn't have `value` as `ParamValue` or `raw` field
 
-**Step 3: Update Param struct and Expression.match_**
+**Step 3: Update Param struct**
 
 In `src/expression.mbt`, update the Param struct:
 
 ```moonbit
 ///|
-/// An extracted parameter value with type-erased transformed value and raw text.
+/// An extracted parameter with typed transformed value and raw text.
 pub(all) struct Param {
-  value : @any.Any    // type-erased transformed value
+  value : ParamValue  // typed transformed value
   type_ : ParamType   // which parameter type matched
   raw : String        // original matched text
 } derive(Show, Eq)
 ```
 
-Update `Expression` struct to store transformers alongside param_types:
+**Step 4: Update Expression struct to store transformers**
 
 ```moonbit
 pub(all) struct Expression {
@@ -599,7 +608,7 @@ pub fn Expression::parse_with_registry(
 }
 ```
 
-Add `collect_transformers` function (follows same pattern as `collect_param_types`):
+Add `collect_transformers` (follows same pattern as `collect_param_types` in `src/expression.mbt`):
 
 ```moonbit
 fn collect_transformers(
@@ -632,7 +641,7 @@ fn collect_transformers(
 }
 ```
 
-Update `Expression::match_` to apply transformers and populate `raw`:
+**Step 5: Update Expression::match_ to apply transformers**
 
 ```moonbit
 pub fn Expression::match_(self : Expression, text : String) -> Match? {
@@ -664,11 +673,11 @@ pub fn Expression::match_(self : Expression, text : String) -> Match? {
           None => ""
         }
     }
-    // Apply transformer
+    // Apply transformer, fallback to StringVal on error
     let transformed = try {
       (self.transformers[i]._)([raw_value])
     } catch {
-      _ => @any.of(raw_value)  // fallback to raw string on transform error
+      _ => ParamValue::StringVal(raw_value)
     }
     params.push({ value: transformed, type_, raw: raw_value })
     group_idx = group_idx + num_groups
@@ -677,11 +686,9 @@ pub fn Expression::match_(self : Expression, text : String) -> Match? {
 }
 ```
 
-**Step 4: Fix existing tests**
+**Step 6: Fix existing tests**
 
-Existing tests in `src/expression_wbtest.mbt` and `src/spec_wbtest.mbt` reference `m.params[0].value` as a `String`. These need updating to use `m.params[0].raw` for string comparisons, or extract via `.value.to()`.
-
-Update all existing `spec_wbtest.mbt` tests that check `m.params[0].value` to use `m.params[0].raw`:
+Existing tests in `src/expression_wbtest.mbt` and `src/spec_wbtest.mbt` reference `m.params[0].value` as a `String`. Update to use `m.params[0].raw` for string checks:
 
 ```moonbit
 // Before:
@@ -691,19 +698,17 @@ inspect(m.params[0].value, content="42")
 inspect(m.params[0].raw, content="42")
 ```
 
-Also update `inspect(m.params[0].type_, content="Int")` — these should still work since `type_` hasn't changed.
-
-**Step 5: Run tests to verify they pass**
+**Step 7: Run tests to verify they pass**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/cucumber-expressions && mise run test:unit`
 Expected: ALL PASS
 
-**Step 6: Commit**
+**Step 8: Commit**
 
 ```bash
 cd /home/damian/code/repos/github/moonrockz/cucumber-expressions
 git add src/expression.mbt src/expression_wbtest.mbt src/spec_wbtest.mbt
-git commit -m "feat: Expression.match_ applies transformers, Param carries Any + raw"
+git commit -m "feat: Expression.match_ applies transformers, Param carries ParamValue + raw"
 ```
 
 ---
@@ -723,8 +728,7 @@ test "spec/match: double" {
   let expr = Expression::parse("the value is {double}")
   let result = expr.match_("the value is 3.14")
   guard result is Some(m) else { fail("expected match") }
-  let value : Double = m.params[0].value.to()
-  assert_eq(value, 3.14)
+  assert_eq(m.params[0].value, ParamValue::DoubleVal(3.14))
   assert_eq(m.params[0].raw, "3.14")
   assert_eq(m.params[0].type_, ParamType::Double_)
 }
@@ -734,7 +738,6 @@ test "spec/match: double scientific notation" {
   let expr = Expression::parse("the value is {double}")
   let result = expr.match_("the value is 1.5e10")
   guard result is Some(m) else { fail("expected match") }
-  let value : Double = m.params[0].value.to()
   assert_eq(m.params[0].raw, "1.5e10")
 }
 
@@ -743,8 +746,7 @@ test "spec/match: long" {
   let expr = Expression::parse("I have {long} items")
   let result = expr.match_("I have 9223372036854775807 items")
   guard result is Some(m) else { fail("expected match") }
-  let value : Int64 = m.params[0].value.to()
-  assert_eq(value, 9223372036854775807L)
+  assert_eq(m.params[0].value, ParamValue::LongVal(9223372036854775807L))
   assert_eq(m.params[0].raw, "9223372036854775807")
 }
 
@@ -753,8 +755,7 @@ test "spec/match: byte" {
   let expr = Expression::parse("value is {byte}")
   let result = expr.match_("value is 127")
   guard result is Some(m) else { fail("expected match") }
-  let value : Byte = m.params[0].value.to()
-  assert_eq(value, b'\x7F')
+  assert_eq(m.params[0].value, ParamValue::ByteVal(b'\x7F'))
   assert_eq(m.params[0].raw, "127")
 }
 
@@ -763,8 +764,7 @@ test "spec/match: short" {
   let expr = Expression::parse("port is {short}")
   let result = expr.match_("port is 8080")
   guard result is Some(m) else { fail("expected match") }
-  let value : Int = m.params[0].value.to()
-  assert_eq(value, 8080)
+  assert_eq(m.params[0].value, ParamValue::ShortVal(8080))
   assert_eq(m.params[0].raw, "8080")
 }
 
@@ -773,8 +773,7 @@ test "spec/match: bigdecimal" {
   let expr = Expression::parse("price is {bigdecimal}")
   let result = expr.match_("price is 99.99")
   guard result is Some(m) else { fail("expected match") }
-  let value : @decimal.Decimal = m.params[0].value.to()
-  assert_eq(value, @decimal.Decimal::from_string("99.99").unwrap())
+  assert_eq(m.params[0].value, ParamValue::BigDecimalVal(@decimal.Decimal::from_string("99.99").unwrap()))
   assert_eq(m.params[0].raw, "99.99")
 }
 
@@ -783,8 +782,7 @@ test "spec/match: biginteger" {
   let expr = Expression::parse("count is {biginteger}")
   let result = expr.match_("count is 123456789012345678901234567890")
   guard result is Some(m) else { fail("expected match") }
-  let value : BigInt = m.params[0].value.to()
-  assert_eq(value, BigInt::from_string("123456789012345678901234567890"))
+  assert_eq(m.params[0].value, ParamValue::BigIntegerVal(BigInt::from_string("123456789012345678901234567890")))
   assert_eq(m.params[0].raw, "123456789012345678901234567890")
 }
 ```
@@ -804,34 +802,39 @@ git commit -m "test: add expression matching tests for 6 new parameter types"
 
 ---
 
-### Task 6: Add custom transformer test
+### Task 6: Add custom transformer tests
 
 **Files:**
 - Modify: `src/custom_param_wbtest.mbt`
 
-**Step 1: Write test for custom type with transformer**
+**Step 1: Write tests for custom types with and without transformers**
 
 Add to `src/custom_param_wbtest.mbt`:
 
 ```moonbit
 ///|
-test "Custom type with transformer returns typed value" {
+test "Custom type with transformer returns CustomVal with typed Any" {
   let reg = ParamTypeRegistry::default()
   reg.register("color", ParamType::Custom("color"), [
     RegexPattern("red|green|blue"),
   ],
-    transformer=fn(groups) { @any.of(groups[0].to_upper()) },
+    transformer=fn(groups) { CustomVal(@any.of(groups[0].to_upper())) },
   )
   let expr = Expression::parse_with_registry("I select {color}", reg)
   let result = expr.match_("I select red")
   guard result is Some(m) else { fail("expected match") }
-  let value : String = m.params[0].value.to()
-  assert_eq(value, "RED")
+  match m.params[0].value {
+    CustomVal(any) => {
+      let s : String = any.to()
+      assert_eq(s, "RED")
+    }
+    _ => fail("expected CustomVal")
+  }
   assert_eq(m.params[0].raw, "red")
 }
 
 ///|
-test "Custom type without transformer defaults to raw string" {
+test "Custom type without transformer defaults to CustomVal with raw string" {
   let reg = ParamTypeRegistry::default()
   reg.register("direction", ParamType::Custom("direction"), [
     RegexPattern("north|south|east|west"),
@@ -839,8 +842,13 @@ test "Custom type without transformer defaults to raw string" {
   let expr = Expression::parse_with_registry("go {direction}", reg)
   let result = expr.match_("go north")
   guard result is Some(m) else { fail("expected match") }
-  let value : String = m.params[0].value.to()
-  assert_eq(value, "north")
+  match m.params[0].value {
+    CustomVal(any) => {
+      let s : String = any.to()
+      assert_eq(s, "north")
+    }
+    _ => fail("expected CustomVal")
+  }
   assert_eq(m.params[0].raw, "north")
 }
 ```
@@ -923,12 +931,7 @@ import {
 }
 ```
 
-**Step 3: Build to verify imports resolve**
-
-Run: `cd /home/damian/code/repos/github/moonrockz/moonspec && moon check`
-Expected: May have compile errors from `Param` struct changes — that's expected, we fix in next task.
-
-**Step 4: Commit**
+**Step 3: Commit**
 
 ```bash
 cd /home/damian/code/repos/github/moonrockz/moonspec
@@ -943,223 +946,52 @@ git commit -m "build: update cucumber-expressions to 0.3.0, add tonyfettes/any"
 **Files:**
 - Modify: `src/core/types.mbt`
 - Modify: `src/core/types_wbtest.mbt`
-- Modify: `src/core/registry.mbt:3` (StepHandler type)
-- Modify: `src/core/step_def.mbt` (StepDef handler signatures)
-- Modify: `src/core/setup.mbt` (given/when/then/step handler signatures)
-- Modify: `src/lib.mbt` (re-exports)
+- Modify: `src/lib.mbt` (add StepValue re-export)
 
 **Step 1: Write failing tests for new StepArg struct**
 
-Replace `src/core/types_wbtest.mbt` entirely:
+Replace `src/core/types_wbtest.mbt` with tests that exercise struct destructuring, `from_param` for all 11 types + custom, and raw text access. See the design doc for the full `StepArg::from_param` mapping. Key test patterns:
 
 ```moonbit
 ///|
-test "StepArg struct has value and raw fields" {
+test "StepArg struct destructuring" {
   let arg = StepArg::{ value: IntVal(42), raw: "42" }
-  assert_eq(arg.raw, "42")
   match arg {
-    { value: IntVal(n), .. } => assert_eq(n, 42)
-    _ => fail("expected IntVal")
-  }
-}
-
-///|
-test "StepArg pattern match with both fields" {
-  let arg = StepArg::{ value: StringVal("hello"), raw: "hello" }
-  match arg {
-    { value: StringVal(s), raw } => {
-      assert_eq(s, "hello")
-      assert_eq(raw, "hello")
+    { value: IntVal(n), raw } => {
+      assert_eq(n, 42)
+      assert_eq(raw, "42")
     }
-    _ => fail("expected StringVal")
-  }
-}
-
-///|
-test "StepArg pattern match with wildcard on raw" {
-  let arg = StepArg::{ value: IntVal(42), raw: "42" }
-  match arg {
-    { value: IntVal(n), raw: _ } => assert_eq(n, 42)
     _ => fail("expected IntVal")
   }
 }
 
 ///|
-test "StepArg from_param converts Int param" {
+test "StepArg from_param Int" {
   let param = @cucumber_expressions.Param::{
-    value: @any.of(42),
+    value: @cucumber_expressions.ParamValue::IntVal(42),
     type_: @cucumber_expressions.ParamType::Int,
     raw: "42",
   }
   let arg = StepArg::from_param(param)
   assert_eq(arg.raw, "42")
-  match arg {
-    { value: IntVal(n), .. } => assert_eq(n, 42)
-    _ => fail("expected IntVal")
-  }
-}
-
-///|
-test "StepArg from_param converts Float param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of(3.14),
-    type_: @cucumber_expressions.ParamType::Float,
-    raw: "3.14",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: FloatVal(f), .. } => assert_eq(f, 3.14)
-    _ => fail("expected FloatVal")
-  }
-}
-
-///|
-test "StepArg from_param converts Double_ param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of(3.14),
-    type_: @cucumber_expressions.ParamType::Double_,
-    raw: "3.14",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: DoubleVal(f), .. } => assert_eq(f, 3.14)
-    _ => fail("expected DoubleVal")
-  }
-}
-
-///|
-test "StepArg from_param converts Long param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of(9223372036854775807L),
-    type_: @cucumber_expressions.ParamType::Long,
-    raw: "9223372036854775807",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: LongVal(n), .. } => assert_eq(n, 9223372036854775807L)
-    _ => fail("expected LongVal")
-  }
-}
-
-///|
-test "StepArg from_param converts Byte param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of(b'\xFF'),
-    type_: @cucumber_expressions.ParamType::Byte,
-    raw: "255",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: ByteVal(b), .. } => assert_eq(b, b'\xFF')
-    _ => fail("expected ByteVal")
-  }
-}
-
-///|
-test "StepArg from_param converts Short param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of(8080),
-    type_: @cucumber_expressions.ParamType::Short,
-    raw: "8080",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: ShortVal(n), .. } => assert_eq(n, 8080)
-    _ => fail("expected ShortVal")
-  }
-}
-
-///|
-test "StepArg from_param converts BigDecimal param" {
-  let dec = @decimal.Decimal::from_string("99.99").unwrap()
-  let param = @cucumber_expressions.Param::{
-    value: @any.of(dec),
-    type_: @cucumber_expressions.ParamType::BigDecimal,
-    raw: "99.99",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: BigDecimalVal(d), .. } =>
-      assert_eq(d, @decimal.Decimal::from_string("99.99").unwrap())
-    _ => fail("expected BigDecimalVal")
-  }
-}
-
-///|
-test "StepArg from_param converts BigInteger param" {
-  let bi = BigInt::from_string("123456789012345678901234567890")
-  let param = @cucumber_expressions.Param::{
-    value: @any.of(bi),
-    type_: @cucumber_expressions.ParamType::BigInteger,
-    raw: "123456789012345678901234567890",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: BigIntegerVal(v), .. } =>
-      assert_eq(v, BigInt::from_string("123456789012345678901234567890"))
-    _ => fail("expected BigIntegerVal")
-  }
-}
-
-///|
-test "StepArg from_param converts String_ param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of("hello"),
-    type_: @cucumber_expressions.ParamType::String_,
-    raw: "hello",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: StringVal(s), .. } => assert_eq(s, "hello")
-    _ => fail("expected StringVal")
-  }
-}
-
-///|
-test "StepArg from_param converts Word param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of("banana"),
-    type_: @cucumber_expressions.ParamType::Word,
-    raw: "banana",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: WordVal(s), .. } => assert_eq(s, "banana")
-    _ => fail("expected WordVal")
-  }
-}
-
-///|
-test "StepArg from_param converts Custom param" {
-  let param = @cucumber_expressions.Param::{
-    value: @any.of("red"),
-    type_: @cucumber_expressions.ParamType::Custom("color"),
-    raw: "red",
-  }
-  let arg = StepArg::from_param(param)
-  match arg {
-    { value: CustomVal(any), .. } => {
-      let s : String = any.to()
-      assert_eq(s, "red")
-    }
-    _ => fail("expected CustomVal")
-  }
+  match arg { { value: IntVal(n), .. } => assert_eq(n, 42); _ => fail("") }
 }
 ```
+
+Write similar tests for Float, Double_, Long, Byte, Short, String_, Word, Anonymous, BigDecimal, BigInteger, and Custom.
 
 **Step 2: Run tests to verify they fail**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/moonspec && mise run test:unit`
-Expected: FAIL — `StepArg` is still an enum, `StepValue` doesn't exist
+Expected: FAIL — `StepArg` is still an enum
 
 **Step 3: Implement StepValue enum and StepArg struct**
 
-Replace `src/core/types.mbt`:
+In `src/core/types.mbt`, replace the StepArg enum and from_param:
 
 ```moonbit
 ///|
 /// A typed value extracted from step text, pattern-matchable for built-in types.
-/// Custom types use `CustomVal(@any.Any)` for type-erased transformer results.
 pub(all) enum StepValue {
   IntVal(Int)
   FloatVal(Double)
@@ -1183,124 +1015,41 @@ pub(all) struct StepArg {
 
 ///|
 /// Convert a cucumber-expressions Param to a StepArg.
-/// Uses ParamType to dispatch the Any value to the correct StepValue variant.
 pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
-  let value : StepValue = match param.type_ {
-    @cucumber_expressions.ParamType::Int => {
-      let n : Int = param.value.try_to().or(0)
-      IntVal(n)
-    }
-    @cucumber_expressions.ParamType::Float => {
-      let f : Double = param.value.try_to().or(0.0)
-      FloatVal(f)
-    }
-    @cucumber_expressions.ParamType::Double_ => {
-      let f : Double = param.value.try_to().or(0.0)
-      DoubleVal(f)
-    }
-    @cucumber_expressions.ParamType::Long => {
-      let n : Int64 = param.value.try_to().or(0L)
-      LongVal(n)
-    }
-    @cucumber_expressions.ParamType::Byte => {
-      let b : Byte = param.value.try_to().or(b'\x00')
-      ByteVal(b)
-    }
-    @cucumber_expressions.ParamType::Short => {
-      let n : Int = param.value.try_to().or(0)
-      ShortVal(n)
-    }
-    @cucumber_expressions.ParamType::String_ => {
-      let s : String = param.value.try_to().or("")
-      StringVal(s)
-    }
-    @cucumber_expressions.ParamType::Word => {
-      let s : String = param.value.try_to().or("")
-      WordVal(s)
-    }
-    @cucumber_expressions.ParamType::Anonymous => {
-      let s : String = param.value.try_to().or("")
-      StringVal(s)
-    }
-    @cucumber_expressions.ParamType::BigDecimal => {
-      let d : @decimal.Decimal = param.value.try_to().or(
-        @decimal.Decimal::from_string("0").unwrap(),
-      )
-      BigDecimalVal(d)
-    }
-    @cucumber_expressions.ParamType::BigInteger => {
-      let bi : BigInt = param.value.try_to().or(0N)
-      BigIntegerVal(bi)
-    }
-    @cucumber_expressions.ParamType::Custom(_) => CustomVal(param.value)
+  let value : StepValue = match param.value {
+    @cucumber_expressions.ParamValue::IntVal(n) => IntVal(n)
+    @cucumber_expressions.ParamValue::FloatVal(f) => FloatVal(f)
+    @cucumber_expressions.ParamValue::DoubleVal(f) => DoubleVal(f)
+    @cucumber_expressions.ParamValue::LongVal(n) => LongVal(n)
+    @cucumber_expressions.ParamValue::ByteVal(b) => ByteVal(b)
+    @cucumber_expressions.ParamValue::ShortVal(n) => ShortVal(n)
+    @cucumber_expressions.ParamValue::StringVal(s) => StringVal(s)
+    @cucumber_expressions.ParamValue::WordVal(s) => WordVal(s)
+    @cucumber_expressions.ParamValue::BigDecimalVal(d) => BigDecimalVal(d)
+    @cucumber_expressions.ParamValue::BigIntegerVal(bi) => BigIntegerVal(bi)
+    @cucumber_expressions.ParamValue::CustomVal(any) => CustomVal(any)
   }
   { value, raw: param.raw }
 }
-
-///|
-/// Result of matching step text against the registry.
-pub(all) enum StepMatchResult {
-  Matched(StepDef, Array[StepArg])
-  Undefined(
-    step_text~ : String,
-    keyword~ : String,
-    snippet~ : String,
-    suggestions~ : Array[String]
-  )
-}
-
-///|
-/// Information about a scenario being executed.
-pub(all) struct ScenarioInfo {
-  feature_name : String
-  scenario_name : String
-  tags : Array[String]
-} derive(Show, Eq)
-
-///|
-/// Information about a step being executed.
-pub(all) struct StepInfo {
-  keyword : String
-  text : String
-} derive(Show, Eq)
 ```
 
-**Step 4: Update StepHandler type**
+Keep `StepMatchResult`, `ScenarioInfo`, `StepInfo` unchanged.
 
-In `src/core/registry.mbt`, the StepHandler type stays the same — it uses `Array[StepArg]`. No change needed since `StepArg` is now a struct not an enum, but handlers still receive `Array[StepArg]`.
-
-**Step 5: Update lib.mbt re-exports**
-
-Add `StepValue` to re-exports in `src/lib.mbt`:
+**Step 4: Add StepValue to lib.mbt re-exports**
 
 ```moonbit
 pub using @core {
-  trait World,
-  trait StepLibrary,
-  type StepRegistry,
-  type StepDef,
-  type StepArg,
+  // ... existing ...
   type StepValue,
-  type StepKeyword,
-  type StepSource,
-  type StepMatchResult,
-  type MoonspecError,
-  type ScenarioInfo,
-  type StepInfo,
-  type Setup,
-  type HookRegistry,
-  type HookType,
-  type HookHandler,
-  type RegisteredHook,
 }
 ```
 
-**Step 6: Run tests to verify they pass**
+**Step 5: Run tests**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/moonspec && mise run test:unit`
-Expected: FAIL — runner tests still use old `StepArg::IntArg(n)` pattern. Fix in next task.
+Expected: types_wbtest passes, runner tests fail (old pattern matches)
 
-**Step 7: Commit (types compile, unit tests for types pass)**
+**Step 6: Commit**
 
 ```bash
 cd /home/damian/code/repos/github/moonrockz/moonspec
@@ -1318,11 +1067,11 @@ git commit -m "feat: StepArg struct with StepValue enum and raw text access"
 - Modify: `src/runner/hooks_wbtest.mbt`
 - Modify: `src/core/registry_wbtest.mbt`
 - Modify: `src/core/step_library_wbtest.mbt`
-- Any other files referencing `StepArg::IntArg`, `StepArg::FloatArg`, etc.
+- Any other files referencing old `StepArg::IntArg` pattern
 
-**Step 1: Update all pattern matches from enum to struct destructuring**
+**Step 1: Update all pattern matches**
 
-Replace all occurrences of `StepArg::IntArg(n)` with `{ value: IntVal(n), .. }` (or the appropriate variant).
+Replace all `StepArg::IntArg(n)` → `{ value: @core.StepValue::IntVal(n), .. }` etc.
 
 Example from `src/runner/feature_wbtest.mbt`:
 
@@ -1334,7 +1083,7 @@ Example from `src/runner/feature_wbtest.mbt`:
 { value: @core.StepValue::IntVal(n), .. } => self.total = n
 ```
 
-Example from `src/runner/e2e_wbtest.mbt`:
+From `src/runner/e2e_wbtest.mbt`:
 
 ```moonbit
 // Before:
@@ -1354,7 +1103,7 @@ Expected: ALL PASS
 ```bash
 cd /home/damian/code/repos/github/moonrockz/moonspec
 git add -u
-git commit -m "refactor: migrate step handlers from StepArg enum to struct destructuring"
+git commit -m "refactor: migrate step handlers to StepArg struct destructuring"
 ```
 
 ---
@@ -1371,10 +1120,12 @@ Add to `src/core/setup_wbtest.mbt`:
 
 ```moonbit
 ///|
-test "Setup.add_param_type with transformer" {
+test "Setup.add_param_type_strings with transformer" {
   let setup = Setup::new()
   setup.add_param_type_strings("upper", ["\\w+"],
-    transformer=fn(groups) { @any.of(groups[0].to_upper()) },
+    transformer=fn(groups) {
+      @cucumber_expressions.ParamValue::CustomVal(@any.of(groups[0].to_upper()))
+    },
   )
   setup.given("I say {upper}", fn(args) {
     match args[0] {
@@ -1391,21 +1142,21 @@ test "Setup.add_param_type with transformer" {
 
 **Step 2: Run tests to verify they fail**
 
-Run: `cd /home/damian/code/repos/github/moonrockz/moonspec && mise run test:unit`
 Expected: FAIL — `add_param_type_strings` doesn't accept `transformer~`
 
-**Step 3: Update Setup.add_param_type methods**
+**Step 3: Update Setup methods**
 
-In `src/core/setup.mbt`, update both `add_param_type` and `add_param_type_strings`:
+In `src/core/setup.mbt`:
 
 ```moonbit
 ///|
-/// Register a custom parameter type with name, regex patterns, and optional transformer.
 pub fn Setup::add_param_type(
   self : Setup,
   name : String,
   patterns : Array[@cucumber_expressions.RegexPattern],
-  transformer~ : @cucumber_expressions.Transformer = fn(groups) { @any.of(groups[0]) },
+  transformer~ : @cucumber_expressions.Transformer = fn(groups) {
+    @cucumber_expressions.ParamValue::CustomVal(@any.of(groups[0]))
+  },
 ) -> Unit {
   self.param_reg.register(
     name,
@@ -1416,12 +1167,13 @@ pub fn Setup::add_param_type(
 }
 
 ///|
-/// Register a custom parameter type with string patterns and optional transformer.
 pub fn Setup::add_param_type_strings(
   self : Setup,
   name : String,
   patterns : Array[String],
-  transformer~ : @cucumber_expressions.Transformer = fn(groups) { @any.of(groups[0]) },
+  transformer~ : @cucumber_expressions.Transformer = fn(groups) {
+    @cucumber_expressions.ParamValue::CustomVal(@any.of(groups[0]))
+  },
 ) -> Unit {
   self.param_reg.register(
     name,
@@ -1432,7 +1184,7 @@ pub fn Setup::add_param_type_strings(
 }
 ```
 
-Also update `custom_param_types` to include all new built-in type names:
+Update `custom_param_types` to exclude new built-in names:
 
 ```moonbit
 pub fn Setup::custom_param_types(self : Setup) -> Array[CustomParamTypeInfo] {
@@ -1444,7 +1196,7 @@ pub fn Setup::custom_param_types(self : Setup) -> Array[CustomParamTypeInfo] {
 }
 ```
 
-**Step 4: Run tests to verify they pass**
+**Step 4: Run tests**
 
 Run: `cd /home/damian/code/repos/github/moonrockz/moonspec && mise run test:unit`
 Expected: ALL PASS
@@ -1460,9 +1212,6 @@ git commit -m "feat: Setup.add_param_type accepts transformer callback"
 ---
 
 ### Task 12: Final cleanup
-
-**Files:**
-- Various
 
 **Step 1: Run `moon fmt`**
 

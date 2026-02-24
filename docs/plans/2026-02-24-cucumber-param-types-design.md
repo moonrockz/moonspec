@@ -11,21 +11,21 @@ Two gaps in our cucumber-expressions library vs the upstream spec:
 
 Two repos, three concerns:
 
-1. **cucumber-expressions library** — add 6 new `ParamType` variants, transformer functions on `ParamTypeEntry`, built-in transformers for all 11 types, `tonyfettes/any` for type-erased custom transformer return values
-2. **moonspec core** — `StepArg` becomes a struct with `value: StepValue` (pattern-matchable enum) + `raw: String` (original text). Add 6 new `StepValue` variants. Update `Setup.add_param_type` to accept transformer callbacks. Simplify `from_param`.
+1. **cucumber-expressions library** — add 6 new `ParamType` variants, `ParamValue` enum with typed built-in values + `CustomVal(@any.Any)` for custom types, transformer functions on `ParamTypeEntry`, built-in transformers for all 11 types
+2. **moonspec core** — `StepArg` becomes a struct with `value: StepValue` (pattern-matchable enum mirroring `ParamValue`) + `raw: String` (original text). Update `Setup.add_param_type` to accept transformer callbacks. Simplify `from_param`.
 
 ## Design
 
 ### Transformer Architecture
 
-Matching upstream (Java, JavaScript, etc.): the transformer lives in the cucumber-expressions library alongside the regex pattern. `Expression.match_` returns already-transformed values instead of raw strings.
+Matching upstream (Java, JavaScript, etc.): the transformer lives in the cucumber-expressions library alongside the regex pattern. `Expression.match_` returns already-transformed `ParamValue` values instead of raw strings.
 
 ```
 Expression.match_("I have 42 cucumbers")
   → regex matches "42"
   → looks up {int} transformer
-  → transformer(["42"]) → @any.of(42)
-  → returns Param { value: @any.of(42), type_: Int, raw: "42" }
+  → transformer(["42"]) → ParamValue::IntVal(42)
+  → returns Param { value: IntVal(42), type_: Int, raw: "42" }
 ```
 
 ### Layer 1: cucumber-expressions library
@@ -40,13 +40,33 @@ pub(all) enum ParamType {
 } derive(Show, Eq, ToJson, FromJson)
 ```
 
-**Transformer function type** — uses `tonyfettes/any` for type erasure:
+**New `ParamValue` enum** — hybrid: closed variants for built-ins, `Any` for customs:
 
 ```moonbit
-type Transformer (Array[String]) -> @any.Any raise Error
+pub(all) enum ParamValue {
+  IntVal(Int)
+  FloatVal(Double)
+  DoubleVal(Double)
+  LongVal(Int64)
+  ByteVal(Byte)
+  ShortVal(Int)
+  StringVal(String)
+  WordVal(String)
+  BigDecimalVal(@decimal.Decimal)
+  BigIntegerVal(BigInt)
+  CustomVal(@any.Any)
+} derive(Show, Eq)
 ```
 
-Receives captured group strings (arity matches capture groups in the regex). Returns a type-erased `Any` value. Can raise on parse failure.
+Built-in types get concrete typed variants with compile-time pattern matching. Custom types use `CustomVal(@any.Any)` for type-erased transformer results — this is the only place `Any` appears.
+
+**Transformer function type:**
+
+```moonbit
+type Transformer (Array[String]) -> ParamValue raise Error
+```
+
+Receives captured group strings (arity matches capture groups in the regex). Returns a `ParamValue`. Can raise on parse failure.
 
 **`ParamTypeEntry` gains a transformer field:**
 
@@ -63,7 +83,7 @@ pub(all) struct ParamTypeEntry {
 
 ```moonbit
 pub(all) struct Param {
-  value : @any.Any    // type-erased transformed value
+  value : ParamValue  // typed transformed value
   type_ : ParamType   // which parameter type matched
   raw : String        // original matched text
 } derive(Show, Eq)
@@ -73,32 +93,32 @@ pub(all) struct Param {
 
 | Type | Transformer | Returns |
 |------|------------|---------|
-| `{int}` | `parse_int(groups[0])` | `@any.of(Int)` |
-| `{float}` | `parse_double(groups[0])` | `@any.of(Double)` |
-| `{double}` | `parse_double(groups[0])` | `@any.of(Double)` |
-| `{long}` | `Int64::from_string(groups[0])` | `@any.of(Int64)` |
-| `{byte}` | parse int, cast to Byte | `@any.of(Byte)` |
-| `{short}` | `parse_int(groups[0])` | `@any.of(Int)` |
-| `{string}` | identity | `@any.of(String)` |
-| `{word}` | identity | `@any.of(String)` |
-| `{bigdecimal}` | `Decimal::from_string(groups[0])` | `@any.of(@decimal.Decimal)` |
-| `{biginteger}` | `BigInt::from_string(groups[0])` | `@any.of(BigInt)` |
-| `{}` (anon) | identity | `@any.of(String)` |
+| `{int}` | `parse_int(groups[0])` | `IntVal(Int)` |
+| `{float}` | `parse_double(groups[0])` | `FloatVal(Double)` |
+| `{double}` | `parse_double(groups[0])` | `DoubleVal(Double)` |
+| `{long}` | `Int64::from_string(groups[0])` | `LongVal(Int64)` |
+| `{byte}` | parse int, cast to Byte | `ByteVal(Byte)` |
+| `{short}` | `parse_int(groups[0])` | `ShortVal(Int)` |
+| `{string}` | identity | `StringVal(String)` |
+| `{word}` | identity | `WordVal(String)` |
+| `{bigdecimal}` | `Decimal::from_string(groups[0])` | `BigDecimalVal(Decimal)` |
+| `{biginteger}` | `BigInt::from_string(groups[0])` | `BigIntegerVal(BigInt)` |
+| `{}` (anon) | identity | `StringVal(String)` |
 
-**Custom type transformers** — users provide `(Array[String]) -> @any.Any`:
+**Custom type transformers** — users return `CustomVal(@any.Any)`:
 
 ```moonbit
-// Custom {color} returns an actual Color value
+// Custom {color} returns an actual Color value wrapped in Any
 reg.register("color", ParamType::Custom("color"),
   [RegexPattern("red|green|blue")],
-  transformer=fn(groups) { @any.of(Color::from_string(groups[0])) },
+  transformer=fn(groups) { CustomVal(@any.of(Color::from_string(groups[0]))) },
 )
 ```
 
-Default transformer (no transformer provided) boxes the raw string: `fn(groups) { @any.of(groups[0]) }`.
+Default transformer (no transformer provided): `fn(groups) { CustomVal(@any.of(groups[0])) }`.
 
 **New dependencies for cucumber-expressions:**
-- `tonyfettes/any` — for type-erased `Any` values
+- `tonyfettes/any` — for `CustomVal(@any.Any)` only
 - `moonbitlang/core/strconv` — for `parse_int`, `parse_double`
 - `moonbitlang/x/decimal` — for `Decimal::from_string` (already depends on `moonbitlang/x`)
 
@@ -113,7 +133,7 @@ pub(all) struct StepArg {
 } derive(Show, Eq)
 ```
 
-**New `StepValue` enum** — hybrid: closed enum for built-ins, `Any` for customs:
+**`StepValue` enum** — mirrors `ParamValue` from the library:
 
 ```moonbit
 pub(all) enum StepValue {
@@ -131,9 +151,26 @@ pub(all) enum StepValue {
 } derive(Show, Eq)
 ```
 
-**`StepArg::from_param` maps `Param` → `StepArg`:**
+**`StepArg::from_param` maps `ParamValue` → `StepValue`** — trivial 1:1 mapping:
 
-Extracts the `Any` value from `Param`, uses `any.try_to()` to dispatch to the correct `StepValue` variant based on `ParamType`, and carries the raw string through.
+```moonbit
+pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
+  let value : StepValue = match param.value {
+    IntVal(n) => IntVal(n)
+    FloatVal(f) => FloatVal(f)
+    DoubleVal(f) => DoubleVal(f)
+    LongVal(n) => LongVal(n)
+    ByteVal(b) => ByteVal(b)
+    ShortVal(n) => ShortVal(n)
+    StringVal(s) => StringVal(s)
+    WordVal(s) => WordVal(s)
+    BigDecimalVal(d) => BigDecimalVal(d)
+    BigIntegerVal(bi) => BigIntegerVal(bi)
+    CustomVal(any) => CustomVal(any)
+  }
+  { value, raw: param.raw }
+}
+```
 
 **Pattern matching ergonomics** — struct destructuring works naturally:
 
@@ -148,7 +185,7 @@ match args[0] {
   { value: IntVal(n), raw } => println("\{n} from '\{raw}'")
 }
 
-// Custom types — extract actual typed value
+// Custom types — extract actual typed value from Any
 match args[0] {
   { value: CustomVal(any), .. } => {
     let color : Color = any.to()
@@ -159,12 +196,14 @@ match args[0] {
 **`Setup.add_param_type` gains optional transformer:**
 
 ```moonbit
-// With transformer — returns typed value
+// With transformer — returns typed custom value
 setup.add_param_type("color", ["red|green|blue"],
-  transformer=fn(groups) { @any.of(Color::from_string(groups[0])) },
+  transformer=fn(groups) {
+    @cucumber_expressions.ParamValue::CustomVal(@any.of(Color::from_string(groups[0])))
+  },
 )
 
-// Without transformer — defaults to boxing raw string
+// Without transformer — defaults to CustomVal(@any.of(raw_string))
 setup.add_param_type_strings("direction", ["north|south|east|west"])
 ```
 
@@ -180,6 +219,6 @@ setup.add_param_type_strings("direction", ["north|south|east|west"])
 
 - **Store BigDecimal/BigInteger as raw strings** — rejected. `BigInt` is in core and `Decimal` is in `moonbitlang/x` which we consider a base library.
 - **Transformers in moonspec only** — rejected. Upstream spec places transformers in the expression library.
-- **`ParamValue` closed enum for everything** — rejected. Custom types become second-class (`CustomVal(String)`). With `Any`, custom types are first-class — `{color}` returns actual `Color`, not a string.
-- **`Any` for everything (no enum)** — rejected. Loses compile-time exhaustive matching for built-in types. Hybrid approach gives both: enum for built-ins, `Any` for customs.
+- **`Any` for everything** — rejected. Loses compile-time exhaustive matching for built-in types. `Any` is only used for custom types where the return type is unknown at library compile time.
+- **No `ParamValue` enum, just `Any` on Param** — rejected. Same reason. Built-in types should be pattern-matchable without runtime type checks.
 - **Expose only typed value, hide raw text** — rejected. Users need raw text for diagnostics, logging, and custom parsing.
