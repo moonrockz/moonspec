@@ -259,7 +259,7 @@ test "Ctx attach_url" {
 ///|
 test "Ctx attach with file_name" {
   let ctx : Ctx = { value: IntVal(1), raw: "1", attachments: [] }
-  ctx.attach("some notes", "text/plain", file_name=Some("notes.txt"))
+  ctx.attach("some notes", "text/plain", file_name="notes.txt")
   assert_eq(ctx.attachments.length(), 1)
   match ctx.attachments[0] {
     Embedded(file_name~, ..) => assert_eq(file_name, Some("notes.txt"))

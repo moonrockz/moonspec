@@ -176,7 +176,7 @@ struct AttachWorld {} derive(Default)
 ///|
 impl @core.World for AttachWorld with configure(_self, setup) {
   setup.given("I attach a {string}", fn(args) {
-    args[0].attach("my note", "text/plain", file_name=Some("note.txt"))
+    args[0].attach("my note", "text/plain", file_name="note.txt")
   })
 }
 
@@ -204,7 +204,6 @@ struct UrlAttachWorld {} derive(Default)
 ///|
 impl @core.World for UrlAttachWorld with configure(_self, setup) {
   setup.given("I attach an external {string}", fn(args) {
-    ignore(args)
     args[0].attach_url("https://example.com/img.png", "image/png")
   })
 }

@@ -142,12 +142,12 @@ pub fn Ctx::attach(
   self : Ctx,
   body : String,
   media_type : String,
-  file_name? : String? = None,
+  file_name? : String,
 ) -> Unit {
+  // JSON round-trip: AttachmentContentEncoding constructors are not directly
+  // accessible from outside the cucumber-messages package in MoonBit.
   let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"IDENTITY\"") catch {
-      _ => panic()
-    },
+    @json.parse("\"IDENTITY\"") catch { _ => panic() },
   ) catch {
     _ => panic()
   }
@@ -162,13 +162,12 @@ pub fn Ctx::attach_bytes(
   self : Ctx,
   data : Bytes,
   media_type : String,
-  file_name? : String? = None,
+  file_name? : String,
 ) -> Unit {
   let body = @base64.encode(data[:])
+  // JSON round-trip: see comment in Ctx::attach above.
   let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"BASE64\"") catch {
-      _ => panic()
-    },
+    @json.parse("\"BASE64\"") catch { _ => panic() },
   ) catch {
     _ => panic()
   }

@@ -14,8 +14,10 @@ fn emit_attachments(
         media_type~,
         file_name~
       ) => {
+        // AttachmentContentEncoding constructors are not directly accessible
+        // from outside cucumber-messages, so we convert via JSON stringify
+        // and strip the surrounding quotes.
         let enc_str = encoding.to_json().stringify()
-        // Strip quotes from JSON string: "\"IDENTITY\"" -> "IDENTITY"
         let enc_clean = enc_str.substring(start=1, end=enc_str.length() - 1)
         emit(
           sinks,
