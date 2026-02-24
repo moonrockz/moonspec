@@ -28,7 +28,7 @@ fn generate_step_registration(buf : StringBuilder, step : StepFnInfo) -> Unit {
     step.keyword +
     "(\"" +
     escape_pattern(step.pattern) +
-    "\", fn(args) raise {\n",
+    "\", fn(ctx) raise {\n",
   )
   // Generate arg extraction for each param
   for i, param in step.params {
@@ -49,12 +49,12 @@ fn generate_step_registration(buf : StringBuilder, step : StepFnInfo) -> Unit {
 ///|
 fn generate_arg_match(idx : String, type_name : String) -> String {
   if type_name == "Int" {
-    "match args[" + idx + "] { { value: IntVal(v), .. } => v; _ => 0 }"
+    "match ctx[" + idx + "] { { value: IntVal(v), .. } => v; _ => 0 }"
   } else if type_name == "Double" {
-    "match args[" + idx + "] { { value: FloatVal(v), .. } => v; _ => 0.0 }"
+    "match ctx[" + idx + "] { { value: FloatVal(v), .. } => v; _ => 0.0 }"
   } else {
     // String and any other type
-    "match args[" +
+    "match ctx[" +
     idx +
     "] { { value: StringVal(v), .. } => v; { value: WordVal(v), .. } => v; _ => \"\" }"
   }

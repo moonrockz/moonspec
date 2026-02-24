@@ -5,9 +5,9 @@ struct BgWorld {
 
 ///|
 impl @core.World for BgWorld with configure(self, setup) {
-  setup.given("a common setup", fn(_args) { self.context = "setup" })
-  setup.when("I do something", fn(_args) {  })
-  setup.then("it works", fn(_args) raise { assert_eq(self.context, "setup") })
+  setup.given("a common setup", fn(_ctx) { self.context = "setup" })
+  setup.when("I do something", fn(_ctx) {  })
+  setup.then("it works", fn(_ctx) raise { assert_eq(self.context, "setup") })
 }
 
 ///|

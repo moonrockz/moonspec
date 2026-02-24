@@ -9,6 +9,7 @@ pub using @core {
   type StepRegistry,
   type StepDef,
   type StepArg,
+  type Ctx,
   type StepValue,
   type StepKeyword,
   type StepSource,
@@ -27,6 +28,7 @@ pub using @core {
   type HookRegistry,
   type HookType,
   type HookHandler,
+  type PendingAttachment,
   type RegisteredHook,
 }
 

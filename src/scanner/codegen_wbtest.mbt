@@ -50,8 +50,8 @@ test "generate_configure handles multiple params" {
     },
   ]
   let output = generate_configure("W", steps, source_hash="00000000")
-  assert_true(str_contains(output, "args[0]"))
-  assert_true(str_contains(output, "args[1]"))
+  assert_true(str_contains(output, "ctx[0]"))
+  assert_true(str_contains(output, "ctx[1]"))
   assert_true(str_contains(output, "StringVal(v)"))
 }
 
@@ -73,5 +73,5 @@ test "generate_configure handles no-param steps" {
   let output = generate_configure("W", steps, source_hash="00000000")
   assert_true(str_contains(output, "login(self)"))
   // Should not have any arg extraction
-  assert_true(not(str_contains(output, "args[")))
+  assert_true(not(str_contains(output, "ctx[")))
 }

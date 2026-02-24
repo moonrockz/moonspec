@@ -61,7 +61,7 @@ pub(all) struct StepDef {
 ///|
 pub fn StepDef::given(
   pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
+  handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
   { keyword: Given, pattern, handler: StepHandler(handler), source, id: None }
@@ -70,7 +70,7 @@ pub fn StepDef::given(
 ///|
 pub fn StepDef::when(
   pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
+  handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
   { keyword: When, pattern, handler: StepHandler(handler), source, id: None }
@@ -79,7 +79,7 @@ pub fn StepDef::when(
 ///|
 pub fn StepDef::then(
   pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
+  handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
   { keyword: Then, pattern, handler: StepHandler(handler), source, id: None }
@@ -88,7 +88,7 @@ pub fn StepDef::then(
 ///|
 pub fn StepDef::step(
   pattern : String,
-  handler : (Array[StepArg]) -> Unit raise Error,
+  handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
   { keyword: Step, pattern, handler: StepHandler(handler), source, id: None }

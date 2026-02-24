@@ -323,6 +323,20 @@ pub impl @core.MessageSink for PrettyFormatter with on_message(self, envelope) {
         detail +
         ")\n"
     }
+    Attachment(att) => {
+      let name = match att.fileName {
+        Some(f) => f
+        None => att.mediaType
+      }
+      self.buffer = self.buffer + "    [attached: " + name + "]\n"
+    }
+    ExternalAttachment(ext) =>
+      self.buffer = self.buffer +
+        "    [attached: " +
+        ext.url +
+        " (" +
+        ext.mediaType +
+        ")]\n"
     _ => () // Ignore other envelope types
   }
 }

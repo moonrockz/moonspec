@@ -17,9 +17,9 @@ test "levenshtein_distance empty strings" {
 ///|
 test "find_suggestions returns close matches" {
   let setup = Setup::new()
-  setup.given("I have {int} cucumbers", fn(_args) {  })
-  setup.given("I have {int} tomatoes", fn(_args) {  })
-  setup.given("something completely different", fn(_args) {  })
+  setup.given("I have {int} cucumbers", fn(_ctx) {  })
+  setup.given("I have {int} tomatoes", fn(_ctx) {  })
+  setup.given("something completely different", fn(_ctx) {  })
   let suggestions = find_suggestions(
     setup.step_registry(),
     "I have many cucumbers",

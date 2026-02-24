@@ -1,4 +1,51 @@
 ///|
+/// Drain pending attachments from args and emit as envelopes.
+fn emit_attachments(
+  sinks : Array[&@core.MessageSink],
+  attachments : Array[@core.PendingAttachment],
+  test_case_started_id : String,
+  test_step_id : String?,
+) -> Unit {
+  for att in attachments {
+    match att {
+      @core.PendingAttachment::Embedded(
+        body~,
+        encoding~,
+        media_type~,
+        file_name~
+      ) => {
+        // AttachmentContentEncoding constructors are not directly accessible
+        // from outside cucumber-messages, so we convert via JSON stringify
+        // and strip the surrounding quotes.
+        let enc_str = encoding.to_json().stringify()
+        let enc_clean = enc_str.substring(start=1, end=enc_str.length() - 1)
+        emit(
+          sinks,
+          make_attachment_envelope(
+            body,
+            enc_clean,
+            media_type,
+            file_name,
+            Some(test_case_started_id),
+            test_step_id,
+          ),
+        )
+      }
+      @core.PendingAttachment::External(url~, media_type~) =>
+        emit(
+          sinks,
+          make_external_attachment_envelope(
+            url,
+            media_type,
+            Some(test_case_started_id),
+            test_step_id,
+          ),
+        )
+    }
+  }
+}
+
+///|
 /// Execute a single scenario from a compiled Pickle.
 ///
 /// When a `hook_registry` is provided (and contains hooks), lifecycle hooks
@@ -212,6 +259,7 @@ pub fn execute_scenario(
     } else {
       None
     }
+    let mut ctx_for_drain : @core.Ctx? = None
     let (status, diagnostic) : (StepStatus, Error?) = if before_err is Some(msg) {
       (
         StepStatus::Failed(msg),
@@ -261,7 +309,9 @@ pub fn execute_scenario(
                 }
               None => ()
             }
-            (step_def.handler.0)(args)
+            let ctx = @core.Ctx::new(args, info, step_info)
+            (step_def.handler.0)(ctx)
+            ctx_for_drain = Some(ctx)
             (StepStatus::Passed, None)
           } catch {
             @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
@@ -293,6 +343,22 @@ pub fn execute_scenario(
           step_status_message(status),
         ),
       )
+    }
+    // Drain attachments from ctx
+    if has_sinks {
+      match ctx_for_drain {
+        Some(c) =>
+          if c.attachments.length() > 0 {
+            emit_attachments(
+              sinks,
+              c.attachments,
+              test_case_started_id,
+              Some(ts_id),
+            )
+            c.attachments.clear()
+          }
+        None => ()
+      }
     }
     // after_test_step hooks
     if after_step_hooks.length() > 0 {

@@ -3,7 +3,7 @@ test "UndefinedStep carries step text and snippet" {
   let err : Error = UndefinedStep(
     step="I have 5 bananas",
     keyword="Given",
-    snippet="s.given(\"I have {int} bananas\", fn(args) { ... })",
+    snippet="s.given(\"I have {int} bananas\", fn(ctx) { ... })",
     suggestions=["I have {int} cucumbers"],
   )
   match err {

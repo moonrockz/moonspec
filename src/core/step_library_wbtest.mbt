@@ -16,14 +16,14 @@ fn MathSteps::new(world : TestWorld) -> MathSteps {
 ///|
 impl StepLibrary for MathSteps with steps(self) {
   [
-    StepDef::given("a value of {int}", fn(args) {
-      match args[0] {
+    StepDef::given("a value of {int}", fn(ctx) {
+      match ctx[0] {
         { value: StepValue::IntVal(n), .. } => self.world.value = n
         _ => ()
       }
     }),
-    StepDef::then("the value is {int}", fn(args) raise {
-      match args[0] {
+    StepDef::then("the value is {int}", fn(ctx) raise {
+      match ctx[0] {
         { value: StepValue::IntVal(n), .. } => assert_eq(self.world.value, n)
         _ => ()
       }

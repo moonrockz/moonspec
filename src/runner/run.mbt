@@ -175,6 +175,65 @@ fn make_test_step_finished_envelope(
 }
 
 ///|
+fn make_attachment_envelope(
+  body : String,
+  content_encoding : String,
+  media_type : String,
+  file_name : String?,
+  test_case_started_id : String?,
+  test_step_id : String?,
+) -> @cucumber_messages.Envelope {
+  let json_map : Map[String, Json] = {}
+  json_map["body"] = body.to_json()
+  json_map["contentEncoding"] = content_encoding.to_json()
+  json_map["mediaType"] = media_type.to_json()
+  match file_name {
+    Some(f) => json_map["fileName"] = f.to_json()
+    None => ()
+  }
+  match test_case_started_id {
+    Some(id) => json_map["testCaseStartedId"] = id.to_json()
+    None => ()
+  }
+  match test_step_id {
+    Some(id) => json_map["testStepId"] = id.to_json()
+    None => ()
+  }
+  json_map["timestamp"] = (
+    { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
+  let json : Json = { "attachment": json_map.to_json() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
+fn make_external_attachment_envelope(
+  url : String,
+  media_type : String,
+  test_case_started_id : String?,
+  test_step_id : String?,
+) -> @cucumber_messages.Envelope {
+  let json_map : Map[String, Json] = {}
+  json_map["url"] = url.to_json()
+  json_map["mediaType"] = media_type.to_json()
+  match test_case_started_id {
+    Some(id) => json_map["testCaseStartedId"] = id.to_json()
+    None => ()
+  }
+  match test_step_id {
+    Some(id) => json_map["testStepId"] = id.to_json()
+    None => ()
+  }
+  json_map["timestamp"] = (
+    { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
+  let json : Json = { "externalAttachment": json_map.to_json() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
+}
+
+///|
 /// Map a StepStatus to a cucumber-messages status string.
 fn step_status_to_string(status : StepStatus) -> String {
   match status {

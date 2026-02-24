@@ -8,14 +8,14 @@ struct IsolationWorld {
 
 ///|
 impl @core.World for IsolationWorld with configure(self, setup) {
-  setup.given("I set counter to {int}", fn(args) {
-    match args[0] {
+  setup.given("I set counter to {int}", fn(ctx) {
+    match ctx[0] {
       { value: @core.StepValue::IntVal(n), .. } => self.counter = n
       _ => ()
     }
   })
-  setup.then("counter should be {int}", fn(args) raise {
-    match args[0] {
+  setup.then("counter should be {int}", fn(ctx) raise {
+    match ctx[0] {
       { value: @core.StepValue::IntVal(expected), .. } =>
         assert_eq(self.counter, expected)
       _ => ()
@@ -59,8 +59,8 @@ struct HookWorld {
 
 ///|
 impl @core.World for HookWorld with configure(self, setup) {
-  setup.given("a step", fn(_args) { () })
-  setup.then("it passes", fn(_args) { () })
+  setup.given("a step", fn(_ctx) { () })
+  setup.then("it passes", fn(_ctx) { () })
   setup.before_test_case(fn(info) {
     self.log.push("before_scenario:" + info.scenario_name)
   })
@@ -127,7 +127,7 @@ struct FailHookWorld {
 
 ///|
 impl @core.World for FailHookWorld with configure(self, setup) {
-  setup.given("a step", fn(_args) { () })
+  setup.given("a step", fn(_ctx) { () })
   setup.before_test_case(fn(_info) raise {
     self.log.push("before_scenario")
     raise Failure::Failure("setup failed")

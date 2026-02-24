@@ -12,8 +12,8 @@
 /// struct MyWorld { mut count : Int } derive(Default)
 ///
 /// impl @moonspec.World for MyWorld with configure(self, s) {
-///   s.given("a count of {int}", fn(args) {
-///     match args[0] { { value: IntVal(n), .. } => self.count = n; _ => () }
+///   s.given("a count of {int}", fn(ctx) {
+///     match ctx[0] { { value: IntVal(n), .. } => self.count = n; _ => () }
 ///   })
 /// }
 /// ```

@@ -66,6 +66,49 @@ impl Eq for StepValue with equal(self, other) -> Bool {
 }
 
 ///|
+/// A buffered attachment waiting to be emitted as an envelope.
+pub(all) enum PendingAttachment {
+  Embedded(
+    body~ : String,
+    encoding~ : @cucumber_messages.AttachmentContentEncoding,
+    media_type~ : String,
+    file_name~ : String?
+  )
+  External(url~ : String, media_type~ : String)
+}
+
+///|
+impl Show for PendingAttachment with output(self, logger) {
+  match self {
+    Embedded(body~, encoding~, media_type~, file_name~) => {
+      let enc_str = encoding.to_json().stringify()
+      logger.write_string(
+        "Embedded(body=\{body}, encoding=\{enc_str}, media_type=\{media_type}, file_name=\{file_name})",
+      )
+    }
+    External(url~, media_type~) =>
+      logger.write_string("External(url=\{url}, media_type=\{media_type})")
+  }
+}
+
+///|
+impl Eq for PendingAttachment with equal(self, other) -> Bool {
+  match (self, other) {
+    (
+      Embedded(body=b1, encoding=e1, media_type=m1, file_name=f1),
+      Embedded(body=b2, encoding=e2, media_type=m2, file_name=f2),
+    ) =>
+      b1 == b2 &&
+      e1.to_json().stringify() == e2.to_json().stringify() &&
+      m1 == m2 &&
+      f1 == f2
+    (External(url=u1, media_type=m1), External(url=u2, media_type=m2)) =>
+      u1 == u2 && m1 == m2
+    _ => false
+  }
+}
+
+///|
 /// A step argument carrying both the typed value and the original matched text.
 pub(all) struct StepArg {
   value : StepValue
@@ -90,6 +133,107 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
     @cucumber_expressions.ParamValue::CustomVal(any) => CustomVal(any)
   }
   { value, raw: param.raw }
+}
+
+///|
+/// Step execution context. Wraps matched arguments with scenario/step metadata
+/// and an attachment buffer.
+pub(all) struct Ctx {
+  priv step_args : Array[StepArg]
+  priv scenario_info : ScenarioInfo
+  priv step_info : StepInfo
+  attachments : Array[PendingAttachment]
+}
+
+///|
+/// Create a new Ctx.
+pub fn Ctx::new(
+  args : Array[StepArg],
+  scenario : ScenarioInfo,
+  step : StepInfo,
+) -> Ctx {
+  { step_args: args, scenario_info: scenario, step_info: step, attachments: [] }
+}
+
+///|
+/// Index access to step arguments.
+pub fn Ctx::op_get(self : Ctx, index : Int) -> StepArg {
+  self.step_args[index]
+}
+
+///|
+/// Explicit index access to a step argument.
+pub fn Ctx::arg(self : Ctx, index : Int) -> StepArg {
+  self.step_args[index]
+}
+
+///|
+/// View of all step arguments.
+pub fn Ctx::args(self : Ctx) -> ArrayView[StepArg] {
+  self.step_args[:]
+}
+
+///|
+/// Convenience accessor: returns the StepValue at the given argument index.
+pub fn Ctx::value(self : Ctx, index : Int) -> StepValue {
+  self.step_args[index].value
+}
+
+///|
+/// Scenario metadata (feature name, scenario name, tags).
+pub fn Ctx::scenario(self : Ctx) -> ScenarioInfo {
+  self.scenario_info
+}
+
+///|
+/// Step metadata (keyword, text).
+pub fn Ctx::step(self : Ctx) -> StepInfo {
+  self.step_info
+}
+
+///|
+/// Parse an AttachmentContentEncoding from a JSON string literal.
+/// Workaround: enum constructors from external packages are not directly
+/// accessible in MoonBit, so we round-trip through JSON.
+fn parse_encoding(s : String) -> @cucumber_messages.AttachmentContentEncoding {
+  @json.from_json(@json.parse(s) catch { _ => panic() }) catch {
+    _ => panic()
+  }
+}
+
+///|
+/// Attach text content to the current step/hook.
+pub fn Ctx::attach(
+  self : Ctx,
+  body : String,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let encoding = parse_encoding("\"IDENTITY\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+/// Attach binary content (Base64 encoded) to the current step/hook.
+pub fn Ctx::attach_bytes(
+  self : Ctx,
+  data : Bytes,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let body = @base64.encode(data[:])
+  let encoding = parse_encoding("\"BASE64\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+/// Attach an external URL reference to the current step/hook.
+pub fn Ctx::attach_url(self : Ctx, url : String, media_type : String) -> Unit {
+  self.attachments.push(PendingAttachment::External(url~, media_type~))
 }
 
 ///|

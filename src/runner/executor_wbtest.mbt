@@ -2,9 +2,9 @@
 test "execute_scenario with all steps passing" {
   let setup = @core.Setup::new()
   let mut count = 0
-  setup.given("a passing step", fn(_args) { count = count + 1 })
-  setup.when("another passing step", fn(_args) { count = count + 1 })
-  setup.then("all is well", fn(_args) { count = count + 1 })
+  setup.given("a passing step", fn(_ctx) { count = count + 1 })
+  setup.when("another passing step", fn(_ctx) { count = count + 1 })
+  setup.then("all is well", fn(_ctx) { count = count + 1 })
   let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
@@ -45,11 +45,9 @@ test "execute_scenario with all steps passing" {
 ///|
 test "execute_scenario skips remaining steps after failure" {
   let setup = @core.Setup::new()
-  setup.given("a passing step", fn(_args) {  })
-  setup.when("a failing step", fn(_args) raise {
-    raise Failure::Failure("boom")
-  })
-  setup.then("this should be skipped", fn(_args) {  })
+  setup.given("a passing step", fn(_ctx) {  })
+  setup.when("a failing step", fn(_ctx) raise { raise Failure::Failure("boom") })
+  setup.then("this should be skipped", fn(_ctx) {  })
   let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
@@ -115,7 +113,7 @@ test "execute_scenario marks undefined steps" {
 ///|
 test "execute_scenario carries UndefinedStep diagnostic" {
   let setup = @core.Setup::new()
-  setup.given("I have {int} cucumbers", fn(_args) {  })
+  setup.given("I have {int} cucumbers", fn(_ctx) {  })
   let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
@@ -141,7 +139,7 @@ test "execute_scenario carries UndefinedStep diagnostic" {
 ///|
 test "execute_scenario catches PendingStep" {
   let setup = @core.Setup::new()
-  setup.given("a pending step", fn(_args) raise {
+  setup.given("a pending step", fn(_ctx) raise {
     raise @core.pending_step_error(
       step="a pending step",
       keyword="Given",
@@ -174,8 +172,8 @@ test "execute_scenario passes doc string as last arg" {
   let setup = @core.Setup::new()
   let mut received_content = ""
   let mut received_media_type : String? = None
-  setup.given("a payload", fn(args) {
-    match args[0] {
+  setup.given("a payload", fn(ctx) {
+    match ctx[0] {
       { value: @core.StepValue::DocStringVal(doc), .. } => {
         received_content = doc.content
         received_media_type = doc.media_type
@@ -214,8 +212,8 @@ test "execute_scenario passes data table as last arg" {
   let setup = @core.Setup::new()
   let mut received_rows = 0
   let mut first_name = ""
-  setup.given("the following users", fn(args) {
-    match args[0] {
+  setup.given("the following users", fn(ctx) {
+    match ctx[0] {
       { value: @core.StepValue::DataTableVal(table), .. } => {
         received_rows = table.row_count()
         first_name = table.rows.get(1).cells.get(0)
@@ -259,12 +257,12 @@ test "execute_scenario appends doc string after text params" {
   let setup = @core.Setup::new()
   let mut url = ""
   let mut body = ""
-  setup.when("I POST to {string}", fn(args) {
-    match args[0] {
+  setup.when("I POST to {string}", fn(ctx) {
+    match ctx[0] {
       { value: @core.StepValue::StringVal(u), .. } => url = u
       _ => ()
     }
-    match args[1] {
+    match ctx[1] {
       { value: @core.StepValue::DocStringVal(doc), .. } => body = doc.content
       _ => ()
     }

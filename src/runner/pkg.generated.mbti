@@ -95,6 +95,7 @@ pub fn RunOptions::get_sinks(Self) -> Array[&@core.MessageSink]
 pub fn RunOptions::get_tag_expr(Self) -> String
 pub fn RunOptions::is_parallel(Self) -> Bool
 pub fn RunOptions::max_concurrent(Self, Int) -> Unit
+pub fn RunOptions::new(Array[FeatureSource]) -> Self
 pub fn RunOptions::parallel(Self, Bool) -> Unit
 pub fn RunOptions::scenario_name(Self, String) -> Unit
 pub fn RunOptions::tag_expr(Self, String) -> Unit
