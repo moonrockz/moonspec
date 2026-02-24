@@ -210,3 +210,59 @@ test "StepArg with DataTableVal" {
     _ => fail("expected DataTableVal")
   }
 }
+
+///|
+test "Ctx op_get returns StepArg" {
+  let args = [StepArg::{ value: IntVal(42), raw: "42" }]
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
+  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let ctx = Ctx::new(args, info, step)
+  assert_eq(ctx[0].value, IntVal(42))
+}
+
+///|
+test "Ctx arg method" {
+  let args = [StepArg::{ value: StringVal("hello"), raw: "hello" }]
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
+  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let ctx = Ctx::new(args, info, step)
+  assert_eq(ctx.arg(0).raw, "hello")
+}
+
+///|
+test "Ctx args returns view" {
+  let args = [
+    StepArg::{ value: IntVal(1), raw: "1" },
+    StepArg::{ value: IntVal(2), raw: "2" },
+  ]
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
+  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let ctx = Ctx::new(args, info, step)
+  let view = ctx.args()
+  assert_eq(view.length(), 2)
+}
+
+///|
+test "Ctx scenario and step accessors" {
+  let args : Array[StepArg] = []
+  let info : ScenarioInfo = { feature_name: "MyFeature", scenario_name: "MyScenario", tags: ["@smoke"] }
+  let step : StepInfo = { keyword: "When ", text: "I do something" }
+  let ctx = Ctx::new(args, info, step)
+  assert_eq(ctx.scenario().feature_name, "MyFeature")
+  assert_eq(ctx.scenario().tags[0], "@smoke")
+  assert_eq(ctx.step().keyword, "When ")
+  assert_eq(ctx.step().text, "I do something")
+}
+
+///|
+test "Ctx value convenience accessor" {
+  let args = [
+    StepArg::{ value: IntVal(42), raw: "42" },
+    StepArg::{ value: StringVal("hello"), raw: "hello" },
+  ]
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
+  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let ctx = Ctx::new(args, info, step)
+  assert_eq(ctx.value(0), IntVal(42))
+  assert_eq(ctx.value(1), StringVal("hello"))
+}

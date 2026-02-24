@@ -136,6 +136,67 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
 }
 
 ///|
+/// Step execution context. Wraps matched arguments with scenario/step metadata
+/// and an attachment buffer.
+pub(all) struct Ctx {
+  priv step_args : Array[StepArg]
+  priv scenario_info : ScenarioInfo
+  priv step_info : StepInfo
+  attachments : Array[PendingAttachment]
+}
+
+///|
+/// Create a new Ctx.
+pub fn Ctx::new(
+  args : Array[StepArg],
+  scenario : ScenarioInfo,
+  step : StepInfo,
+) -> Ctx {
+  {
+    step_args: args,
+    scenario_info: scenario,
+    step_info: step,
+    attachments: [],
+  }
+}
+
+///|
+/// Index access to step arguments.
+pub fn Ctx::op_get(self : Ctx, index : Int) -> StepArg {
+  self.step_args[index]
+}
+
+///|
+/// Explicit index access to a step argument.
+pub fn Ctx::arg(self : Ctx, index : Int) -> StepArg {
+  self.step_args[index]
+}
+
+///|
+/// View of all step arguments.
+pub fn Ctx::args(self : Ctx) -> ArrayView[StepArg] {
+  self.step_args[:]
+}
+
+///|
+/// Convenience accessor: returns the StepValue at the given argument index.
+pub fn Ctx::value(self : Ctx, index : Int) -> StepValue {
+  self.step_args[index].value
+}
+
+///|
+/// Scenario metadata (feature name, scenario name, tags).
+pub fn Ctx::scenario(self : Ctx) -> ScenarioInfo {
+  self.scenario_info
+}
+
+///|
+/// Step metadata (keyword, text).
+pub fn Ctx::step(self : Ctx) -> StepInfo {
+  self.step_info
+}
+
+///|
 /// Result of matching step text against the registry.
 pub(all) enum StepMatchResult {
   Matched(StepDef, Array[StepArg])
