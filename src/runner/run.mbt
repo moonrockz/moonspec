@@ -1,4 +1,10 @@
 ///|
+/// Error raised to signal a failed attempt that should be retried.
+priv suberror RetryableFailure {
+  RetryableFailure(ScenarioResult)
+}
+
+///|
 /// Broadcast an envelope to all sinks.
 fn emit(
   sinks : Array[&@core.MessageSink],
@@ -85,10 +91,11 @@ fn make_test_run_finished_envelope(
 fn make_test_case_started_envelope(
   id : String,
   test_case_id : String,
+  attempt? : Int = 0,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseStarted": {
-      "attempt": (0 : Int).to_json(),
+      "attempt": attempt.to_json(),
       "id": id.to_json(),
       "testCaseId": test_case_id.to_json(),
       "timestamp": {
@@ -105,6 +112,7 @@ fn make_test_case_started_envelope(
 ///|
 fn make_test_case_finished_envelope(
   test_case_started_id : String,
+  will_be_retried? : Bool = false,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseFinished": {
@@ -113,7 +121,7 @@ fn make_test_case_finished_envelope(
         "seconds": (0 : Int).to_json(),
         "nanos": (0 : Int).to_json(),
       },
-      "willBeRetried": false.to_json(),
+      "willBeRetried": will_be_retried.to_json(),
     },
   }
   @json.from_json(json) catch {
@@ -333,6 +341,53 @@ fn extract_test_case_mappings(
     }
   }
   mappings
+}
+
+///|
+/// Parse a retry count from pickle tags.
+///
+/// Scans for a tag matching `@retry(N)` where N is a non-negative integer.
+/// Returns `Some(n)` for the first match, or `None` if no retry tag is found.
+/// Invalid formats like `@retry()`, `@retry(abc)`, or `@retry(-1)` are ignored.
+///
+/// ```
+/// parse_retry_tag(["@smoke", "@retry(3)"]) // => Some(3)
+/// parse_retry_tag(["@smoke", "@slow"])      // => None
+/// ```
+fn parse_retry_tag(tags : Array[String]) -> Int? {
+  let prefix = "@retry("
+  let prefix_len = prefix.length()
+  for tag in tags {
+    let tag_len = tag.length()
+    if tag_len > prefix_len &&
+      tag.substring(start=0, end=prefix_len) == prefix &&
+      tag[tag_len - 1] == ')' {
+      let inner = tag.substring(start=prefix_len, end=tag_len - 1)
+      let inner_len = inner.length()
+      if inner_len == 0 {
+        continue
+      }
+      let mut n = 0
+      let mut valid = true
+      let max_retries = 100
+      for i = 0; i < inner_len; i = i + 1 {
+        let ch = inner[i]
+        if ch >= '0' && ch <= '9' {
+          n = n * 10 + (ch.to_int() - '0'.to_int())
+          if n > max_retries {
+            n = max_retries
+          }
+        } else {
+          valid = false
+          break
+        }
+      }
+      if valid {
+        return Some(n)
+      }
+    }
+  }
+  None
 }
 
 ///|
@@ -578,7 +633,8 @@ pub async fn[W : @core.World] run(
       emit(sinks, envelope)
     }
   }
-  let results = if options.is_parallel() {
+  let retries = options.get_retries()
+  let paired_results = if options.is_parallel() {
     run_pickles_parallel(
       factory,
       filtered,
@@ -586,10 +642,22 @@ pub async fn[W : @core.World] run(
       sinks~,
       tc_mappings~,
       id_gen~,
+      retries~,
     )
   } else {
-    run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
+    run_pickles_sequential(
+      factory,
+      filtered,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+      retries~,
+    )
   }
+  let results : Array[ScenarioResult] = paired_results.map(fn(pr) { pr.result })
+  let retried_count = paired_results
+    .iter()
+    .fold(init=0, fn(acc, pr) { if pr.was_retried { acc + 1 } else { acc } })
   // Execute after_test_run hooks
   let run_errors : Array[@core.HookError] = []
   for r in results {
@@ -691,7 +759,7 @@ pub async fn[W : @core.World] run(
     emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
-  let summary = compute_summary(feature_results)
+  let summary = compute_summary(feature_results, retried=retried_count)
   { features: feature_results, summary, parse_errors: all_parse_errors }
 }
 
@@ -761,78 +829,155 @@ fn format_run_summary(summary : RunSummary) -> String {
   if summary.pending > 0 {
     parts.push(summary.pending.to_string() + " pending")
   }
+  if summary.retried > 0 {
+    parts.push(summary.retried.to_string() + " retried")
+  }
   parts.push(summary.total_scenarios.to_string() + " total")
   parts.join(", ")
 }
 
 ///|
 /// Run pickles sequentially (the default path).
-fn[W : @core.World] run_pickles_sequential(
+async fn[W : @core.World] run_pickles_sequential(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
-) -> Array[ScenarioResult] {
-  let results : Array[ScenarioResult] = []
+  retries? : Int = 0,
+) -> Array[PickleResult] {
+  let results : Array[PickleResult] = []
   for pickle in pickles {
-    let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~)
+    let result = execute_pickle(
+      factory,
+      pickle,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+      retries~,
+    )
     results.push(result)
   }
   results
 }
 
 ///|
-/// Execute a single pickle with a fresh world.
-fn[W : @core.World] execute_pickle(
+/// Execute a single pickle with a fresh world, with optional retry.
+///
+/// When `retries > 0` or the pickle has a `@retry(N)` tag, failed scenarios are
+/// re-executed using `@async.retry(Immediate)`. Each attempt creates a fresh
+/// World instance via `factory()` and emits its own `TestCaseStarted`/
+/// `TestCaseFinished` envelope pair with the correct `attempt` number and
+/// `willBeRetried` flag.
+///
+/// The `@retry(N)` tag takes priority over the global `retries` parameter.
+/// Returns a `PickleResult` containing the final attempt's `ScenarioResult` and
+/// a flag indicating whether the scenario was retried.
+async fn[W : @core.World] execute_pickle(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
-) -> ScenarioResult {
-  let world = factory()
-  let setup = @core.Setup::new()
-  @core.World::configure(world, setup)
-  let registry = setup.step_registry()
-  let hook_registry = setup.hook_registry()
-  // Emit TestCaseStarted
+  retries? : Int = 0,
+) -> PickleResult {
+  let tags = pickle.tags.map(fn(t) { t.name })
+  let tag_retries = parse_retry_tag(tags)
+  let max_retries = match tag_retries {
+    Some(n) => n
+    None => retries
+  }
   let mapping = tc_mappings.get(pickle.id)
-  let tcs_id = match mapping {
-    Some(m) => {
-      let tcs_id = id_gen.next("tcs")
-      if sinks.length() > 0 {
-        emit(sinks, make_test_case_started_envelope(tcs_id, m.test_case_id))
-      }
-      Some(tcs_id)
-    }
-    None => None
+  let test_case_id = match mapping {
+    Some(m) => m.test_case_id
+    None => ""
   }
   let test_step_ids = match mapping {
     Some(m) => m.test_step_ids
     None => []
   }
-  let result = execute_scenario(
-    registry,
-    feature_name=pickle.uri,
-    scenario_name=pickle.name,
-    pickle_id=pickle.id,
-    tags=pickle.tags.map(fn(t) { t.name }),
-    steps=pickle.steps,
-    hook_registry~,
-    sinks~,
-    test_case_started_id=tcs_id.unwrap_or(""),
-    test_step_ids~,
-  )
-  // Emit TestCaseFinished
-  match tcs_id {
-    Some(id) =>
-      if sinks.length() > 0 {
-        emit(sinks, make_test_case_finished_envelope(id))
+  let attempt : Ref[Int] = { val: 0 }
+  let execute_attempt : async () -> ScenarioResult = () => {
+    let current_attempt = attempt.val
+    attempt.val += 1
+    let world = factory()
+    let setup = @core.Setup::new()
+    @core.World::configure(world, setup)
+    let registry = setup.step_registry()
+    let hook_registry = setup.hook_registry()
+    // Emit TestCaseStarted
+    let tcs_id = match mapping {
+      Some(_) => {
+        let tcs_id = id_gen.next("tcs")
+        if sinks.length() > 0 {
+          emit(
+            sinks,
+            make_test_case_started_envelope(
+              tcs_id,
+              test_case_id,
+              attempt=current_attempt,
+            ),
+          )
+        }
+        Some(tcs_id)
       }
-    None => ()
+      None => None
+    }
+    let result = execute_scenario(
+      registry,
+      feature_name=pickle.uri,
+      scenario_name=pickle.name,
+      pickle_id=pickle.id,
+      tags~,
+      steps=pickle.steps,
+      hook_registry~,
+      sinks~,
+      test_case_started_id=tcs_id.unwrap_or(""),
+      test_step_ids~,
+    )
+    // Only retry on actual failures — not Undefined, Pending, or Skipped
+    let is_failed = result.status == ScenarioStatus::Failed
+    let has_retries_left = current_attempt < max_retries
+    // Emit TestCaseFinished
+    match tcs_id {
+      Some(id) =>
+        if sinks.length() > 0 {
+          emit(
+            sinks,
+            make_test_case_finished_envelope(
+              id,
+              will_be_retried=is_failed && has_retries_left,
+            ),
+          )
+        }
+      None => ()
+    }
+    // If failed and retries remain, raise to trigger @async.retry
+    if is_failed && has_retries_left {
+      raise RetryableFailure(result)
+    }
+    result
   }
-  result
+  let result = if max_retries > 0 {
+    @async.retry(
+      @async.Immediate,
+      max_retry=max_retries,
+      fatal_error=fn(e) {
+        match e {
+          RetryableFailure(_) => false
+          _ => true
+        }
+      },
+      execute_attempt,
+    ) catch {
+      RetryableFailure(r) => r
+      _ => panic()
+    }
+  } else {
+    execute_attempt()
+  }
+  let was_retried = attempt.val > 1
+  { result, was_retried }
 }
 
 ///|
@@ -869,7 +1014,10 @@ fn group_by_feature(
 }
 
 ///|
-fn compute_summary(features : Array[FeatureResult]) -> RunSummary {
+fn compute_summary(
+  features : Array[FeatureResult],
+  retried? : Int = 0,
+) -> RunSummary {
   let mut total = 0
   let mut passed = 0
   let mut failed = 0
@@ -895,6 +1043,7 @@ fn compute_summary(features : Array[FeatureResult]) -> RunSummary {
     undefined,
     pending,
     skipped,
+    retried,
     duration_ms: 0L,
   }
 }

@@ -30,3 +30,16 @@ test "RunOptions builder methods" {
   assert_eq(opts.get_tag_expr(), "@smoke")
   assert_eq(opts.get_scenario_name(), "My Scenario")
 }
+
+///|
+test "retries defaults to zero" {
+  let opts = RunOptions::new([])
+  assert_eq(opts.get_retries(), 0)
+}
+
+///|
+test "retries can be set" {
+  let opts = RunOptions::new([])
+  opts.retries(3)
+  assert_eq(opts.get_retries(), 3)
+}

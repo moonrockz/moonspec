@@ -279,3 +279,155 @@ async test "end-to-end: step hook attachment emits envelope" {
   let output = messages.output()
   assert_true(output.contains("step trace"))
 }
+
+///|
+struct RetryWorld {
+  call_count : Ref[Int]
+} derive(Show)
+
+///|
+impl Default for RetryWorld with default() {
+  { call_count: { val: 0 } }
+}
+
+///|
+impl @core.World for RetryWorld with configure(self, setup) {
+  setup.given("a step that fails once", fn(_ctx) raise {
+    self.call_count.val += 1
+    if self.call_count.val <= 1 {
+      raise Failure::Failure("transient failure")
+    }
+  })
+  setup.given("a step that always passes", fn(_ctx) {  })
+}
+
+///|
+async test "retry: failed scenario retries and passes on second attempt" {
+  let counter : Ref[Int] = { val: 0 }
+  let content =
+    #|Feature: Retry
+    #|
+    #|  @retry(1)
+    #|  Scenario: Flaky
+    #|    Given a step that fails once
+  let result = run(
+    fn() -> RetryWorld { { call_count: counter } },
+    RunOptions([FeatureSource::Text("test://retry", content)]),
+  )
+  assert_eq(result.summary.passed, 1)
+  assert_eq(result.summary.failed, 0)
+  assert_eq(result.summary.retried, 1)
+}
+
+///|
+async test "retry: scenario without retry tag uses global retries" {
+  let counter : Ref[Int] = { val: 0 }
+  let content =
+    #|Feature: GlobalRetry
+    #|
+    #|  Scenario: Flaky
+    #|    Given a step that fails once
+  let opts = RunOptions([FeatureSource::Text("test://global-retry", content)])
+  opts.retries(1)
+  let result = run(fn() -> RetryWorld { { call_count: counter } }, opts)
+  assert_eq(result.summary.passed, 1)
+  assert_eq(result.summary.failed, 0)
+  assert_eq(result.summary.retried, 1)
+}
+
+///|
+async test "retry: no retry when retries is zero" {
+  let counter : Ref[Int] = { val: 0 }
+  let content =
+    #|Feature: NoRetry
+    #|
+    #|  Scenario: Flaky
+    #|    Given a step that fails once
+  let result = run(
+    fn() -> RetryWorld { { call_count: counter } },
+    RunOptions([FeatureSource::Text("test://no-retry", content)]),
+  )
+  assert_eq(result.summary.passed, 0)
+  assert_eq(result.summary.failed, 1)
+  assert_eq(result.summary.retried, 0)
+}
+
+///|
+async test "retry: passing scenario is not counted as retried" {
+  let content =
+    #|Feature: NoRetryNeeded
+    #|
+    #|  @retry(2)
+    #|  Scenario: Stable
+    #|    Given a step that always passes
+  let result = run(
+    RetryWorld::default,
+    RunOptions([FeatureSource::Text("test://stable", content)]),
+  )
+  assert_eq(result.summary.passed, 1)
+  assert_eq(result.summary.retried, 0)
+}
+
+///|
+struct UndefinedRetryWorld {} derive(Default)
+
+///|
+impl @core.World for UndefinedRetryWorld with configure(_self, _setup) {
+  // No steps defined — scenario will be Undefined
+}
+
+///|
+async test "retry: undefined scenario is not retried" {
+  let content =
+    #|Feature: UndefinedRetry
+    #|
+    #|  @retry(2)
+    #|  Scenario: Missing steps
+    #|    Given a step that does not exist
+  let collector = CollectorSink::new()
+  let opts = RunOptions([FeatureSource::Text("test://undef-retry", content)])
+  opts.add_sink(collector)
+  let result = run(UndefinedRetryWorld::default, opts)
+  assert_eq(result.summary.undefined, 1)
+  assert_eq(result.summary.retried, 0)
+  // Only one TestCaseStarted — no retry attempts
+  let mut tcs_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::TestCaseStarted(_) {
+      tcs_count += 1
+    }
+  }
+  assert_eq(tcs_count, 1)
+}
+
+///|
+async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
+  let counter : Ref[Int] = { val: 0 }
+  let content =
+    #|Feature: RetryEnvelopes
+    #|
+    #|  @retry(1)
+    #|  Scenario: Flaky
+    #|    Given a step that fails once
+  let collector = CollectorSink::new()
+  let opts = RunOptions([FeatureSource::Text("test://retry-env", content)])
+  opts.add_sink(collector)
+  let _ = run(fn() -> RetryWorld { { call_count: counter } }, opts)
+  let mut tcs_count = 0
+  let mut tcf_will_retry_count = 0
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestCaseStarted(tcs) => {
+        assert_eq(tcs.attempt, tcs_count)
+        tcs_count += 1
+      }
+      @cucumber_messages.Envelope::TestCaseFinished(tcf) =>
+        if tcf.willBeRetried {
+          tcf_will_retry_count += 1
+        }
+      _ => ()
+    }
+  }
+  assert_eq(tcs_count, 2)
+  assert_eq(tcf_will_retry_count, 1)
+}

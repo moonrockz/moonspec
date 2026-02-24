@@ -6,10 +6,11 @@ async fn[W : @core.World] run_pickles_parallel(
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
-) -> Array[ScenarioResult] {
-  let tasks : Array[async () -> ScenarioResult] = pickles.map(fn(pickle) {
-    fn() -> ScenarioResult {
-      execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~)
+  retries? : Int = 0,
+) -> Array[PickleResult] {
+  let tasks : Array[async () -> PickleResult] = pickles.map(fn(pickle) {
+    async fn() -> PickleResult {
+      execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~, retries~)
     }
   })
   @async.all(tasks[:], max_concurrent~)

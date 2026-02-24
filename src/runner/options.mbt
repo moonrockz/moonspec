@@ -7,6 +7,7 @@ pub(all) struct RunOptions {
   priv sinks_ : Array[&@core.MessageSink]
   priv mut tag_expr_ : String
   priv mut scenario_name_ : String
+  priv mut retries_ : Int
 
   fn new(features : Array[FeatureSource]) -> RunOptions
 }
@@ -20,6 +21,7 @@ pub fn RunOptions::new(features : Array[FeatureSource]) -> RunOptions {
     sinks_: [],
     tag_expr_: "",
     scenario_name_: "",
+    retries_: 0,
   }
 }
 
@@ -90,4 +92,28 @@ pub fn RunOptions::get_tag_expr(self : RunOptions) -> String {
 /// Get the scenario name filter.
 pub fn RunOptions::get_scenario_name(self : RunOptions) -> String {
   self.scenario_name_
+}
+
+///|
+/// Set the global retry count for failed scenarios.
+///
+/// When a scenario fails, it will be re-executed up to `value` additional times.
+/// A fresh World instance is created for each attempt. Only the final attempt's
+/// result counts toward the run summary.
+///
+/// Per-scenario `@retry(N)` tags override this global setting. Negative values
+/// are clamped to 0.
+///
+/// ```moonbit nocheck
+/// let opts = RunOptions::new(features)
+/// opts.retries(2) // retry failed scenarios up to 2 times
+/// ```
+pub fn RunOptions::retries(self : RunOptions, value : Int) -> Unit {
+  self.retries_ = if value < 0 { 0 } else { value }
+}
+
+///|
+/// Get the global retry count for failed scenarios.
+pub fn RunOptions::get_retries(self : RunOptions) -> Int {
+  self.retries_
 }

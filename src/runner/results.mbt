@@ -96,6 +96,10 @@ pub(all) struct FeatureResult {
 
 ///|
 /// Summary of an entire run.
+///
+/// The `retried` field counts scenarios that required more than one attempt,
+/// regardless of their final outcome. A scenario that fails on the first
+/// attempt but passes on retry is counted as both `passed` and `retried`.
 pub(all) struct RunSummary {
   total_scenarios : Int
   passed : Int
@@ -103,6 +107,7 @@ pub(all) struct RunSummary {
   undefined : Int
   pending : Int
   skipped : Int
+  retried : Int
   duration_ms : Int64
 } derive(Show, Eq)
 
@@ -113,6 +118,13 @@ pub(all) struct ParseErrorInfo {
   message : String
   line : Int?
 } derive(Show, Eq)
+
+///|
+/// Result of executing a pickle, including whether it was retried.
+priv struct PickleResult {
+  result : ScenarioResult
+  was_retried : Bool
+}
 
 ///|
 /// Complete result of a test run.

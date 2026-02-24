@@ -90,6 +90,7 @@ pub(all) struct RunOptions {
 pub fn RunOptions::add_sink(Self, &@core.MessageSink) -> Unit
 pub fn RunOptions::features(Self) -> Array[FeatureSource]
 pub fn RunOptions::get_max_concurrent(Self) -> Int
+pub fn RunOptions::get_retries(Self) -> Int
 pub fn RunOptions::get_scenario_name(Self) -> String
 pub fn RunOptions::get_sinks(Self) -> Array[&@core.MessageSink]
 pub fn RunOptions::get_tag_expr(Self) -> String
@@ -97,6 +98,7 @@ pub fn RunOptions::is_parallel(Self) -> Bool
 pub fn RunOptions::max_concurrent(Self, Int) -> Unit
 pub fn RunOptions::new(Array[FeatureSource]) -> Self
 pub fn RunOptions::parallel(Self, Bool) -> Unit
+pub fn RunOptions::retries(Self, Int) -> Unit
 pub fn RunOptions::scenario_name(Self, String) -> Unit
 pub fn RunOptions::tag_expr(Self, String) -> Unit
 
@@ -114,6 +116,7 @@ pub(all) struct RunSummary {
   undefined : Int
   pending : Int
   skipped : Int
+  retried : Int
   duration_ms : Int64
 }
 pub impl Eq for RunSummary
