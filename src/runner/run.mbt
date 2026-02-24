@@ -1,4 +1,10 @@
 ///|
+/// Error raised to signal a failed attempt that should be retried.
+priv suberror RetryableFailure {
+  RetryableFailure(ScenarioResult)
+}
+
+///|
 /// Broadcast an envelope to all sinks.
 fn emit(
   sinks : Array[&@core.MessageSink],
@@ -613,6 +619,7 @@ pub async fn[W : @core.World] run(
       emit(sinks, envelope)
     }
   }
+  let retries = options.get_retries()
   let results = if options.is_parallel() {
     run_pickles_parallel(
       factory,
@@ -621,9 +628,10 @@ pub async fn[W : @core.World] run(
       sinks~,
       tc_mappings~,
       id_gen~,
+      retries~,
     )
   } else {
-    run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
+    run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~, retries~)
   }
   // Execute after_test_run hooks
   let run_errors : Array[@core.HookError] = []
@@ -802,72 +810,124 @@ fn format_run_summary(summary : RunSummary) -> String {
 
 ///|
 /// Run pickles sequentially (the default path).
-fn[W : @core.World] run_pickles_sequential(
+async fn[W : @core.World] run_pickles_sequential(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
+  retries? : Int = 0,
 ) -> Array[ScenarioResult] {
   let results : Array[ScenarioResult] = []
   for pickle in pickles {
-    let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~)
+    let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~, retries~)
     results.push(result)
   }
   results
 }
 
 ///|
-/// Execute a single pickle with a fresh world.
-fn[W : @core.World] execute_pickle(
+/// Execute a single pickle with a fresh world, with optional retry.
+async fn[W : @core.World] execute_pickle(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
   sinks? : Array[&@core.MessageSink] = [],
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
+  retries? : Int = 0,
 ) -> ScenarioResult {
-  let world = factory()
-  let setup = @core.Setup::new()
-  @core.World::configure(world, setup)
-  let registry = setup.step_registry()
-  let hook_registry = setup.hook_registry()
-  // Emit TestCaseStarted
+  let tags = pickle.tags.map(fn(t) { t.name })
+  let tag_retries = parse_retry_tag(tags)
+  let max_retries = match tag_retries {
+    Some(n) => n
+    None => retries
+  }
   let mapping = tc_mappings.get(pickle.id)
-  let tcs_id = match mapping {
-    Some(m) => {
-      let tcs_id = id_gen.next("tcs")
-      if sinks.length() > 0 {
-        emit(sinks, make_test_case_started_envelope(tcs_id, m.test_case_id))
-      }
-      Some(tcs_id)
-    }
-    None => None
+  let test_case_id = match mapping {
+    Some(m) => m.test_case_id
+    None => ""
   }
   let test_step_ids = match mapping {
     Some(m) => m.test_step_ids
     None => []
   }
-  let result = execute_scenario(
-    registry,
-    feature_name=pickle.uri,
-    scenario_name=pickle.name,
-    pickle_id=pickle.id,
-    tags=pickle.tags.map(fn(t) { t.name }),
-    steps=pickle.steps,
-    hook_registry~,
-    sinks~,
-    test_case_started_id=tcs_id.unwrap_or(""),
-    test_step_ids~,
-  )
-  // Emit TestCaseFinished
-  match tcs_id {
-    Some(id) =>
-      if sinks.length() > 0 {
-        emit(sinks, make_test_case_finished_envelope(id))
+  let attempt : Ref[Int] = { val: 0 }
+  let execute_attempt : async () -> ScenarioResult = () => {
+    let current_attempt = attempt.val
+    attempt.val += 1
+    let world = factory()
+    let setup = @core.Setup::new()
+    @core.World::configure(world, setup)
+    let registry = setup.step_registry()
+    let hook_registry = setup.hook_registry()
+    // Emit TestCaseStarted
+    let tcs_id = match mapping {
+      Some(_) => {
+        let tcs_id = id_gen.next("tcs")
+        if sinks.length() > 0 {
+          emit(
+            sinks,
+            make_test_case_started_envelope(
+              tcs_id,
+              test_case_id,
+              attempt=current_attempt,
+            ),
+          )
+        }
+        Some(tcs_id)
       }
-    None => ()
+      None => None
+    }
+    let result = execute_scenario(
+      registry,
+      feature_name=pickle.uri,
+      scenario_name=pickle.name,
+      pickle_id=pickle.id,
+      tags~,
+      steps=pickle.steps,
+      hook_registry~,
+      sinks~,
+      test_case_started_id=tcs_id.unwrap_or(""),
+      test_step_ids~,
+    )
+    // Determine if this attempt failed and has retries left
+    let is_failed = result.status != ScenarioStatus::Passed
+    let has_retries_left = current_attempt < max_retries
+    // Emit TestCaseFinished
+    match tcs_id {
+      Some(id) =>
+        if sinks.length() > 0 {
+          emit(
+            sinks,
+            make_test_case_finished_envelope(
+              id,
+              will_be_retried=(is_failed && has_retries_left),
+            ),
+          )
+        }
+      None => ()
+    }
+    // If failed and retries remain, raise to trigger @async.retry
+    if is_failed && has_retries_left {
+      raise RetryableFailure(result)
+    }
+    result
   }
-  result
+  if max_retries > 0 {
+    @async.retry(
+      @async.Immediate,
+      max_retry=max_retries,
+      fatal_error=fn(e) {
+        match e {
+          RetryableFailure(_) => false
+          _ => true
+        }
+      },
+      execute_attempt,
+    )
+  } else {
+    execute_attempt()
+  }
 }
 
 ///|
