@@ -105,3 +105,181 @@ pub(all) struct StepInfo {
   keyword : String
   text : String
 } derive(Show, Eq)
+
+///|
+/// Immutable wrapper around an array of cell values in a DataTable row.
+pub struct Cells {
+  priv data : Array[String]
+  fn new(data : Array[String]) -> Cells
+} derive(Show, Eq)
+
+///|
+fn Cells::new(data : Array[String]) -> Cells {
+  { data, }
+}
+
+///|
+pub fn Cells::values(self : Cells) -> ArrayView[String] {
+  self.data[:]
+}
+
+///|
+pub fn Cells::get(self : Cells, index : Int) -> String {
+  self.data[index]
+}
+
+///|
+pub fn Cells::length(self : Cells) -> Int {
+  self.data.length()
+}
+
+///|
+/// A single row in a DataTable, wrapping its cell values in an immutable Cells.
+pub(all) struct Row {
+  cells : Cells
+  fn new(cells : Array[String]) -> Row
+} derive(Show, Eq)
+
+///|
+fn Row::new(cells : Array[String]) -> Row {
+  { cells: Cells(cells) }
+}
+
+///|
+/// Immutable wrapper around an array of rows in a DataTable.
+pub struct Rows {
+  priv data : Array[Row]
+  fn new(data : Array[Row]) -> Rows
+} derive(Show, Eq)
+
+///|
+fn Rows::new(data : Array[Row]) -> Rows {
+  { data, }
+}
+
+///|
+pub fn Rows::values(self : Rows) -> ArrayView[Row] {
+  self.data[:]
+}
+
+///|
+pub fn Rows::get(self : Rows, index : Int) -> Row {
+  self.data[index]
+}
+
+///|
+pub fn Rows::length(self : Rows) -> Int {
+  self.data.length()
+}
+
+///|
+/// A named column in a DataTable, derived from the header row.
+pub(all) struct Column {
+  name : String
+  index : Int
+  fn new(name~ : String, index~ : Int) -> Column
+} derive(Show, Eq)
+
+///|
+fn Column::new(name~ : String, index~ : Int) -> Column {
+  { name, index }
+}
+
+///|
+/// Immutable wrapper around an array of columns in a DataTable.
+pub struct Columns {
+  priv data : Array[Column]
+  fn new(data : Array[Column]) -> Columns
+} derive(Show, Eq)
+
+///|
+fn Columns::new(data : Array[Column]) -> Columns {
+  { data, }
+}
+
+///|
+pub fn Columns::values(self : Columns) -> ArrayView[Column] {
+  self.data[:]
+}
+
+///|
+pub fn Columns::get(self : Columns, index : Int) -> Column {
+  self.data[index]
+}
+
+///|
+pub fn Columns::length(self : Columns) -> Int {
+  self.data.length()
+}
+
+///|
+pub fn Columns::find(self : Columns, name : String) -> Column? {
+  for col in self.data {
+    if col.name == name {
+      return Some(col)
+    }
+  }
+  None
+}
+
+///|
+/// A DataTable from a Gherkin step. First row is treated as column headers.
+pub(all) struct DataTable {
+  rows : Rows
+  columns : Columns
+  fn new(raw_rows : Array[Array[String]]) -> DataTable
+} derive(Show, Eq)
+
+///|
+fn DataTable::new(raw_rows : Array[Array[String]]) -> DataTable {
+  let columns = if raw_rows.length() > 0 {
+    Columns(
+      raw_rows[0].mapi(fn(i, name) { Column(name~, index=i) }),
+    )
+  } else {
+    Columns([])
+  }
+  let rows = Rows(raw_rows.map(fn(cells) { Row(cells) }))
+  { rows, columns }
+}
+
+///|
+pub fn DataTable::row_count(self : DataTable) -> Int {
+  self.rows.length()
+}
+
+///|
+pub fn DataTable::col_count(self : DataTable) -> Int {
+  self.columns.length()
+}
+
+///|
+pub fn DataTable::as_maps(self : DataTable) -> Array[Map[String, String]] {
+  let result : Array[Map[String, String]] = []
+  if self.rows.length() <= 1 {
+    return result
+  }
+  let headers = self.columns.values()
+  for i = 1; i < self.rows.length(); i = i + 1 {
+    let row = self.rows.get(i)
+    let map : Map[String, String] = {}
+    for j = 0; j < headers.length(); j = j + 1 {
+      map[headers[j].name] = row.cells.get(j)
+    }
+    result.push(map)
+  }
+  result
+}
+
+///|
+/// A DocString from a Gherkin step — multi-line text with optional media type.
+pub(all) struct DocString {
+  content : String
+  media_type : String?
+  fn new(content~ : String, media_type? : String) -> DocString
+} derive(Show, Eq)
+
+///|
+fn DocString::new(content~ : String, media_type? : String) -> DocString {
+  { content, media_type }
+}
