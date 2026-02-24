@@ -816,6 +816,9 @@ fn format_run_summary(summary : RunSummary) -> String {
   if summary.pending > 0 {
     parts.push(summary.pending.to_string() + " pending")
   }
+  if summary.retried > 0 {
+    parts.push(summary.retried.to_string() + " retried")
+  }
   parts.push(summary.total_scenarios.to_string() + " total")
   parts.join(", ")
 }

@@ -97,7 +97,7 @@ pub fn RunOptions::get_scenario_name(self : RunOptions) -> String {
 ///|
 /// Set the number of retries for failed scenarios.
 pub fn RunOptions::retries(self : RunOptions, value : Int) -> Unit {
-  self.retries_ = value
+  self.retries_ = if value < 0 { 0 } else { value }
 }
 
 ///|
