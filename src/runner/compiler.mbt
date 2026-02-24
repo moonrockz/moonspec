@@ -105,12 +105,44 @@ fn compile_step(
   for i = 0; i < headers.length(); i = i + 1 {
     text = string_replace_compiler(text, "<" + headers[i] + ">", values[i])
   }
+  let argument : @cucumber_messages.PickleStepArgument? = match step.argument {
+    Some(@gherkin.StepArgument::DocString(ds)) => {
+      let mut content = ds.content
+      for i = 0; i < headers.length(); i = i + 1 {
+        content = string_replace_compiler(
+          content, "<" + headers[i] + ">", values[i],
+        )
+      }
+      Some({
+        docString: Some({ content, mediaType: ds.media_type }),
+        dataTable: None,
+      })
+    }
+    Some(@gherkin.StepArgument::DataTable(dt)) => {
+      let rows : Array[@cucumber_messages.PickleTableRow] = []
+      for row in dt.rows {
+        let cells : Array[@cucumber_messages.PickleTableCell] = []
+        for cell in row.cells {
+          let mut value = cell.value
+          for i = 0; i < headers.length(); i = i + 1 {
+            value = string_replace_compiler(
+              value, "<" + headers[i] + ">", values[i],
+            )
+          }
+          cells.push({ value, })
+        }
+        rows.push({ cells, })
+      }
+      Some({ docString: None, dataTable: Some({ rows, }) })
+    }
+    None => None
+  }
   let pickle_step : @cucumber_messages.PickleStep = {
     id: ids.next_step_id(),
     text,
     astNodeIds: [step.id],
     type_: effective_type,
-    argument: None,
+    argument,
   }
   (pickle_step, effective_type)
 }
