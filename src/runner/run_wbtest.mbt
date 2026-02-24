@@ -13,7 +13,7 @@ async test "run single feature and collect summary" {
       "test://one", "Feature: One\n\n  Scenario: Pass\n    Given a step\n",
     ),
   ]
-  let result = run(RunWorld::default, features)
+  let result = run(RunWorld::default, RunOptions(features))
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.summary.passed, 1)
   assert_eq(result.summary.failed, 0)
@@ -38,7 +38,7 @@ async test "run multiple features" {
       "test://b", "Feature: B\n\n  Scenario: Fail\n    Given fail\n",
     ),
   ]
-  let result = run(RunWorld2::default, features)
+  let result = run(RunWorld2::default, RunOptions(features))
   assert_eq(result.summary.total_scenarios, 2)
   assert_eq(result.summary.passed, 1)
   assert_eq(result.summary.failed, 1)
@@ -56,9 +56,9 @@ impl @core.World for PassWorld with configure(_self, setup) {
 ///|
 async test "run_or_fail succeeds when all pass" {
   let content = "Feature: Simple\n\n  Scenario: Pass\n    Given a calculator\n"
-  let result = run_or_fail(PassWorld::default, [
+  let result = run_or_fail(PassWorld::default, RunOptions([
     FeatureSource::Text("test://pass", content),
-  ])
+  ]))
   assert_eq(result.summary.passed, 1)
 }
 
@@ -75,9 +75,9 @@ async test "run_or_fail raises RunFailed on undefined steps" {
   let content = "Feature: Fail\n\n  Scenario: Undefined\n    Given an undefined step\n"
   let mut caught = false
   try
-    run_or_fail(NoStepsWorld::default, [
+    run_or_fail(NoStepsWorld::default, RunOptions([
       FeatureSource::Text("test://fail", content),
-    ])
+    ]))
     |> ignore
   catch {
     @core.RunFailed(..) => caught = true
@@ -94,7 +94,9 @@ async test "run accepts sinks parameter" {
       "test://sink", "Feature: Sink\n\n  Scenario: Pass\n    Given a step\n",
     ),
   ]
-  let result = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let result = run(RunWorld::default, opts)
   assert_eq(result.summary.passed, 1)
 }
 
@@ -106,7 +108,9 @@ async test "run emits Meta envelope first" {
       "test://meta", "Feature: Meta\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   assert_true(collector.envelopes.length() > 0)
   guard collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_)
 }
@@ -116,7 +120,9 @@ async test "run emits Source envelope for each feature" {
   let collector = CollectorSink::new()
   let content = "Feature: Src\n\n  Scenario: S\n    Given a step\n"
   let features = [FeatureSource::Text("test://src", content)]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut found = false
   for env in collector.envelopes {
     match env {
@@ -140,7 +146,9 @@ async test "run emits GherkinDocument envelope after parsing" {
       "test://gdoc", "Feature: GDoc\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut found = false
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::GherkinDocument(_) {
@@ -159,7 +167,9 @@ async test "run emits Pickle envelopes after compilation" {
       "test://pickle", "Feature: P\n\n  Scenario: One\n    Given a step\n  Scenario: Two\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut pickle_count = 0
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::Pickle(_) {
@@ -177,7 +187,9 @@ async test "run emits StepDefinition envelopes after Pickles" {
       "test://sd", "Feature: SD\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut sd_count = 0
   let mut pickle_idx = -1
   let mut first_sd_idx = -1
@@ -216,7 +228,9 @@ async test "run emits TestCase envelopes with test steps" {
       "test://tc", "Feature: TC\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut found = false
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::TestCase(_) {
@@ -235,7 +249,9 @@ async test "run emits envelopes in canonical order" {
       "test://order", "Feature: Order\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let types : Array[String] = []
   for env in collector.envelopes {
     match env {
@@ -275,7 +291,9 @@ async test "full envelope sequence for two-scenario feature" {
   let collector = CollectorSink::new()
   let content = "Feature: Full\n\n  Scenario: A\n    Given a step\n\n  Scenario: B\n    Given a step\n"
   let features = [FeatureSource::Text("test://full", content)]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let types : Array[String] = []
   for env in collector.envelopes {
     match env {
@@ -327,7 +345,9 @@ async test "run emits no ParameterType envelopes for built-in types only" {
       "test://pt", "Feature: PT\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut pt_count = 0
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::ParameterType(_) {
@@ -354,7 +374,9 @@ async test "run emits ParameterType envelopes for custom types" {
       "test://pt", "Feature: PT\n\n  Scenario: S\n    Given I pick a red cucumber\n",
     ),
   ]
-  let _ = run(ParamWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(ParamWorld::default, opts)
   let mut pt_count = 0
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::ParameterType(_) {
@@ -372,7 +394,9 @@ async test "run emits ParameterType after StepDefinition before TestCase" {
       "test://pt-order", "Feature: PTO\n\n  Scenario: S\n    Given I pick a blue cucumber\n",
     ),
   ]
-  let _ = run(ParamWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(ParamWorld::default, opts)
   let mut sd_idx = -1
   let mut pt_idx = -1
   let mut tc_idx = -1
@@ -403,7 +427,9 @@ async test "run emits ParseError envelope for invalid feature" {
       "test://ok", "Feature: OK\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let result = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let result = run(RunWorld::default, opts)
   // Run should continue with valid features
   assert_eq(result.summary.total_scenarios, 1)
   // Parse errors should be in result
@@ -423,9 +449,9 @@ async test "run emits ParseError envelope for invalid feature" {
 async test "run_or_fail raises on parse errors" {
   let mut caught = false
   try
-    run_or_fail(RunWorld::default, [
+    run_or_fail(RunWorld::default, RunOptions([
       FeatureSource::Text("test://bad", "Not valid Gherkin"),
-    ])
+    ]))
     |> ignore
   catch {
     @core.RunFailed(..) => caught = true

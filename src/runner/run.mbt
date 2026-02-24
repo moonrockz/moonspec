@@ -229,14 +229,15 @@ fn extract_test_case_mappings(
 /// A fresh world is created per scenario via `factory()` for isolation.
 /// When `parallel` is greater than 0, pickles are executed concurrently using
 /// `@async.all()` with bounded concurrency. Otherwise, pickles run sequentially.
+/// Lifecycle hooks registered via `Setup` are called automatically when present.
 pub async fn[W : @core.World] run(
   factory : () -> W,
-  features : Array[FeatureSource],
-  tag_expr? : String = "",
-  scenario_name? : String = "",
-  parallel? : Int = 0,
-  sinks? : Array[&@core.MessageSink] = [],
+  options : RunOptions,
 ) -> RunResult {
+  let features = options.features()
+  let sinks = options.get_sinks()
+  let tag_expr = options.get_tag_expr()
+  let scenario_name = options.get_scenario_name()
   let cache = FeatureCache::new()
   if sinks.length() > 0 {
     emit(sinks, make_meta_envelope())
@@ -313,7 +314,7 @@ pub async fn[W : @core.World] run(
     filter
   }
   let filtered = filter.apply(pickles)
-  // Build registry once and share it
+  // Build shared registry for envelope metadata
   let setup = @core.Setup::new()
   let world0 = factory()
   @core.World::configure(world0, setup)
@@ -361,11 +362,11 @@ pub async fn[W : @core.World] run(
   if sinks.length() > 0 {
     emit(sinks, make_test_run_started_envelope(run_id))
   }
-  let results = if parallel > 0 {
+  let results = if options.is_parallel() {
     run_pickles_parallel(
       factory,
       filtered,
-      max_concurrent=parallel,
+      max_concurrent=options.get_max_concurrent(),
       sinks~,
       tc_mappings~,
       id_gen~,
@@ -386,194 +387,15 @@ pub async fn[W : @core.World] run(
 }
 
 ///|
-/// Run all features with lifecycle hooks and collect results.
-///
-/// Like `run`, but calls before/after_scenario and before/after_step hooks
-/// on the world. The world must implement both `World` and `Hooks` traits.
-pub async fn[W : @core.World + @core.Hooks] run_with_hooks(
-  factory : () -> W,
-  features : Array[FeatureSource],
-  tag_expr? : String = "",
-  scenario_name? : String = "",
-  parallel? : Int = 0,
-  sinks? : Array[&@core.MessageSink] = [],
-) -> RunResult {
-  let cache = FeatureCache::new()
-  if sinks.length() > 0 {
-    emit(sinks, make_meta_envelope())
-  }
-  let all_parse_errors : Array[ParseErrorInfo] = []
-  for source in features {
-    if sinks.length() > 0 {
-      let (uri, data) = match source {
-        FeatureSource::Text(path, content) => (path, content)
-        FeatureSource::File(path) => {
-          let content = @fs.read_file_to_string(path) catch { _ => "" }
-          (path, content)
-        }
-        FeatureSource::Parsed(path, _) => (path, "")
-      }
-      emit(sinks, make_source_envelope(uri, data))
-    }
-    let errors = cache.load_from_source(source)
-    all_parse_errors.append(errors)
-  }
-  // Emit GherkinDocument envelopes
-  if sinks.length() > 0 {
-    for entry in cache.features() {
-      let uri = entry.0
-      let json : Json = {
-        "gherkinDocument": {
-          "uri": uri.to_json(),
-          "comments": ([] : Array[Int]).to_json(),
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  // Emit ParseError envelopes
-  if sinks.length() > 0 {
-    for pe in all_parse_errors {
-      let source_ref : Map[String, Json] = {}
-      source_ref["uri"] = pe.uri.to_json()
-      match pe.line {
-        Some(line) => source_ref["location"] = { "line": line.to_json() }
-        None => ()
-      }
-      let json : Json = {
-        "parseError": {
-          "source": source_ref.to_json(),
-          "message": pe.message.to_json(),
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  let pickles = compile_pickles(cache)
-  // Emit Pickle envelopes
-  if sinks.length() > 0 {
-    for pickle in pickles {
-      let json : Json = { "pickle": pickle.to_json() }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  let filter = PickleFilter::new()
-  let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
-  let filter = if scenario_name != "" {
-    filter.with_names([scenario_name])
-  } else {
-    filter
-  }
-  let filtered = filter.apply(pickles)
-  // Build registry once and share it
-  let setup = @core.Setup::new()
-  let world0 = factory()
-  @core.World::configure(world0, setup)
-  let registry = setup.step_registry()
-  let custom_param_types = setup.custom_param_types()
-  // Emit StepDefinition envelopes
-  let id_gen = IdGenerator::new()
-  if sinks.length() > 0 {
-    let sd_envelopes = build_step_definition_envelopes(registry)
-    for env in sd_envelopes {
-      emit(sinks, env)
-    }
-  }
-  // Emit ParameterType envelopes for custom parameter types
-  if sinks.length() > 0 {
-    for cpt in custom_param_types {
-      let regex_json : Array[Json] = cpt.patterns.map(fn(p) { p.to_json() })
-      let json : Json = {
-        "parameterType": {
-          "id": id_gen.next_param_type_id().to_json(),
-          "name": cpt.name.to_json(),
-          "regularExpressions": regex_json.to_json(),
-          "preferForRegularExpressionMatch": false.to_json(),
-          "useForSnippets": true.to_json(),
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  // Test planning phase
-  let id_gen = IdGenerator::new()
-  let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
-    let tc_envelopes = build_test_cases(registry, filtered, id_gen)
-    for env in tc_envelopes {
-      emit(sinks, env)
-    }
-    extract_test_case_mappings(tc_envelopes)
-  } else {
-    {}
-  }
-  // Emit TestRunStarted
-  let run_id = id_gen.next("tr")
-  if sinks.length() > 0 {
-    emit(sinks, make_test_run_started_envelope(run_id))
-  }
-  let results = if parallel > 0 {
-    run_pickles_parallel_with_hooks(
-      factory,
-      filtered,
-      max_concurrent=parallel,
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-    )
-  } else {
-    run_pickles_sequential_with_hooks(
-      factory,
-      filtered,
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-    )
-  }
-  // Emit TestRunFinished
-  if sinks.length() > 0 {
-    let all_passed = results
-      .iter()
-      .all(fn(r) { r.status == ScenarioStatus::Passed })
-    emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
-  }
-  let feature_results = group_by_feature(results, cache)
-  let summary = compute_summary(feature_results)
-  { features: feature_results, summary, parse_errors: all_parse_errors }
-}
-
-///|
 /// Run all features, raising MoonspecError on any failure.
 ///
 /// This is the ergonomic test API. Use in generated tests and manual tests
 /// where you want structured error output instead of manual result inspection.
 pub async fn[W : @core.World] run_or_fail(
   factory : () -> W,
-  features : Array[FeatureSource],
-  tag_expr? : String = "",
-  scenario_name? : String = "",
-  parallel? : Int = 0,
-  sinks? : Array[&@core.MessageSink] = [],
+  options : RunOptions,
 ) -> RunResult {
-  let result = run(
-    factory,
-    features,
-    tag_expr~,
-    scenario_name~,
-    parallel~,
-    sinks~,
-  )
+  let result = run(factory, options)
   if result.parse_errors.length() > 0 ||
     result.summary.failed > 0 ||
     result.summary.undefined > 0 ||
@@ -651,29 +473,6 @@ fn[W : @core.World] run_pickles_sequential(
 }
 
 ///|
-/// Run pickles sequentially with hooks.
-fn[W : @core.World + @core.Hooks] run_pickles_sequential_with_hooks(
-  factory : () -> W,
-  pickles : Array[@cucumber_messages.Pickle],
-  sinks? : Array[&@core.MessageSink] = [],
-  tc_mappings? : Map[String, TestCaseMapping] = {},
-  id_gen? : IdGenerator = IdGenerator::new(),
-) -> Array[ScenarioResult] {
-  let results : Array[ScenarioResult] = []
-  for pickle in pickles {
-    let result = execute_pickle_with_hooks(
-      factory,
-      pickle,
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-    )
-    results.push(result)
-  }
-  results
-}
-
-///|
 /// Execute a single pickle with a fresh world.
 fn[W : @core.World] execute_pickle(
   factory : () -> W,
@@ -686,6 +485,7 @@ fn[W : @core.World] execute_pickle(
   let setup = @core.Setup::new()
   @core.World::configure(world, setup)
   let registry = setup.step_registry()
+  let hook_registry = setup.hook_registry()
   // Emit TestCaseStarted
   let mapping = tc_mappings.get(pickle.id)
   let tcs_id = match mapping {
@@ -709,58 +509,7 @@ fn[W : @core.World] execute_pickle(
     pickle_id=pickle.id,
     tags=pickle.tags.map(fn(t) { t.name }),
     steps=pickle.steps,
-    sinks~,
-    test_case_started_id=tcs_id.unwrap_or(""),
-    test_step_ids~,
-  )
-  // Emit TestCaseFinished
-  match tcs_id {
-    Some(id) =>
-      if sinks.length() > 0 {
-        emit(sinks, make_test_case_finished_envelope(id))
-      }
-    None => ()
-  }
-  result
-}
-
-///|
-/// Execute a single pickle with hooks and a fresh world.
-fn[W : @core.World + @core.Hooks] execute_pickle_with_hooks(
-  factory : () -> W,
-  pickle : @cucumber_messages.Pickle,
-  sinks? : Array[&@core.MessageSink] = [],
-  tc_mappings? : Map[String, TestCaseMapping] = {},
-  id_gen? : IdGenerator = IdGenerator::new(),
-) -> ScenarioResult {
-  let world = factory()
-  let setup = @core.Setup::new()
-  @core.World::configure(world, setup)
-  let registry = setup.step_registry()
-  // Emit TestCaseStarted
-  let mapping = tc_mappings.get(pickle.id)
-  let tcs_id = match mapping {
-    Some(m) => {
-      let tcs_id = id_gen.next("tcs")
-      if sinks.length() > 0 {
-        emit(sinks, make_test_case_started_envelope(tcs_id, m.test_case_id))
-      }
-      Some(tcs_id)
-    }
-    None => None
-  }
-  let test_step_ids = match mapping {
-    Some(m) => m.test_step_ids
-    None => []
-  }
-  let result = execute_scenario_with_hooks(
-    world,
-    registry,
-    feature_name=pickle.uri,
-    scenario_name=pickle.name,
-    pickle_id=pickle.id,
-    tags=pickle.tags.map(fn(t) { t.name }),
-    steps=pickle.steps,
+    hook_registry~,
     sinks~,
     test_case_started_id=tcs_id.unwrap_or(""),
     test_step_ids~,
