@@ -209,6 +209,7 @@ pub(all) enum ParamValue {
   ShortVal(Int)
   StringVal(String)
   WordVal(String)
+  AnonymousVal(String)
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(BigInt)
   CustomVal(@any.Any)
@@ -480,7 +481,7 @@ pub fn ParamTypeRegistry::default() -> ParamTypeRegistry {
     transformer=fn(groups) { WordVal(groups[0]) },
   )
   reg.register("", ParamType::Anonymous, [RegexPattern(".*")],
-    transformer=fn(groups) { StringVal(groups[0]) },
+    transformer=fn(groups) { AnonymousVal(groups[0]) },
   )
   reg
 }
@@ -677,7 +678,7 @@ pub fn Expression::match_(self : Expression, text : String) -> Match? {
     let transformed = try {
       (self.transformers[i]._)([raw_value])
     } catch {
-      _ => ParamValue::StringVal(raw_value)
+      _ => ParamValue::AnonymousVal(raw_value)
     }
     params.push({ value: transformed, type_, raw: raw_value })
     group_idx = group_idx + num_groups
@@ -1001,6 +1002,7 @@ pub(all) enum StepValue {
   ShortVal(Int)
   StringVal(String)
   WordVal(String)
+  AnonymousVal(String)
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(BigInt)
   CustomVal(@any.Any)

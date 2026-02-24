@@ -52,6 +52,7 @@ pub(all) enum ParamValue {
   ShortVal(Int)
   StringVal(String)
   WordVal(String)
+  AnonymousVal(String)
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(BigInt)
   CustomVal(@any.Any)
@@ -103,7 +104,7 @@ pub(all) struct Param {
 | `{word}` | identity | `WordVal(String)` |
 | `{bigdecimal}` | `Decimal::from_string(groups[0])` | `BigDecimalVal(Decimal)` |
 | `{biginteger}` | `BigInt::from_string(groups[0])` | `BigIntegerVal(BigInt)` |
-| `{}` (anon) | identity | `StringVal(String)` |
+| `{}` (anon) | identity | `AnonymousVal(String)` |
 
 **Custom type transformers** — users return `CustomVal(@any.Any)`:
 
@@ -145,6 +146,7 @@ pub(all) enum StepValue {
   ShortVal(Int)
   StringVal(String)
   WordVal(String)
+  AnonymousVal(String)
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(BigInt)
   CustomVal(@any.Any)
@@ -164,6 +166,7 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
     ShortVal(n) => ShortVal(n)
     StringVal(s) => StringVal(s)
     WordVal(s) => WordVal(s)
+    AnonymousVal(s) => AnonymousVal(s)
     BigDecimalVal(d) => BigDecimalVal(d)
     BigIntegerVal(bi) => BigIntegerVal(bi)
     CustomVal(any) => CustomVal(any)
