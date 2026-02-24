@@ -19,8 +19,9 @@ async test "tag filtering skips non-matching scenarios" {
 ///|
 async test "no tag filter runs all" {
   let content = "Feature: All\n\n  Scenario: One\n    Given a step\n\n  Scenario: Two\n    Given a step\n"
-  let result = run(FilterWorld::default, RunOptions([
-    FeatureSource::Text("test://all", content),
-  ]))
+  let result = run(
+    FilterWorld::default,
+    RunOptions([FeatureSource::Text("test://all", content)]),
+  )
   assert_eq(result.summary.total_scenarios, 2)
 }

@@ -37,7 +37,10 @@ pub fn RunOptions::max_concurrent(self : RunOptions, value : Int) -> Unit {
 
 ///|
 /// Add a message sink for envelope output.
-pub fn RunOptions::add_sink(self : RunOptions, sink : &@core.MessageSink) -> Unit {
+pub fn RunOptions::add_sink(
+  self : RunOptions,
+  sink : &@core.MessageSink,
+) -> Unit {
   self.sinks_.push(sink)
 }
 

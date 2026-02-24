@@ -388,7 +388,12 @@ pub async fn[W : @core.World] run(
   }
   // Test planning phase
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
-    let tc_envelopes = build_test_cases(registry, setup.hook_registry(), filtered, id_gen)
+    let tc_envelopes = build_test_cases(
+      registry,
+      setup.hook_registry(),
+      filtered,
+      id_gen,
+    )
     for env in tc_envelopes {
       emit(sinks, env)
     }
@@ -402,7 +407,9 @@ pub async fn[W : @core.World] run(
     emit(sinks, make_test_run_started_envelope(run_id))
   }
   // Execute before_test_run hooks
-  let before_run_hooks = setup.hook_registry().by_type(@core.HookType::BeforeTestRun)
+  let before_run_hooks = setup
+    .hook_registry()
+    .by_type(@core.HookType::BeforeTestRun)
   for hook in before_run_hooks {
     let trhs_id = id_gen.next("trhs")
     if sinks.length() > 0 {
@@ -411,10 +418,15 @@ pub async fn[W : @core.World] run(
           "id": trhs_id.to_json(),
           "testRunStartedId": run_id.to_json(),
           "hookId": hook.id.to_json(),
-          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+          "timestamp": {
+            "seconds": (0 : Int).to_json(),
+            "nanos": (0 : Int).to_json(),
+          },
         },
       }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
       emit(sinks, envelope)
     }
     let result_status = try {
@@ -431,13 +443,21 @@ pub async fn[W : @core.World] run(
         "testRunHookFinished": {
           "testRunHookStartedId": trhs_id.to_json(),
           "result": {
-            "duration": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+            "duration": {
+              "seconds": (0 : Int).to_json(),
+              "nanos": (0 : Int).to_json(),
+            },
             "status": result_status.to_json(),
           },
-          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+          "timestamp": {
+            "seconds": (0 : Int).to_json(),
+            "nanos": (0 : Int).to_json(),
+          },
         },
       }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
       emit(sinks, envelope)
     }
   }
@@ -454,7 +474,9 @@ pub async fn[W : @core.World] run(
     run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
   }
   // Execute after_test_run hooks
-  let after_run_hooks = setup.hook_registry().by_type(@core.HookType::AfterTestRun)
+  let after_run_hooks = setup
+    .hook_registry()
+    .by_type(@core.HookType::AfterTestRun)
   for hook in after_run_hooks {
     let trhs_id = id_gen.next("trhs")
     if sinks.length() > 0 {
@@ -463,10 +485,15 @@ pub async fn[W : @core.World] run(
           "id": trhs_id.to_json(),
           "testRunStartedId": run_id.to_json(),
           "hookId": hook.id.to_json(),
-          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+          "timestamp": {
+            "seconds": (0 : Int).to_json(),
+            "nanos": (0 : Int).to_json(),
+          },
         },
       }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
       emit(sinks, envelope)
     }
     let result_status = try {
@@ -483,13 +510,21 @@ pub async fn[W : @core.World] run(
         "testRunHookFinished": {
           "testRunHookStartedId": trhs_id.to_json(),
           "result": {
-            "duration": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+            "duration": {
+              "seconds": (0 : Int).to_json(),
+              "nanos": (0 : Int).to_json(),
+            },
             "status": result_status.to_json(),
           },
-          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+          "timestamp": {
+            "seconds": (0 : Int).to_json(),
+            "nanos": (0 : Int).to_json(),
+          },
         },
       }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
       emit(sinks, envelope)
     }
   }

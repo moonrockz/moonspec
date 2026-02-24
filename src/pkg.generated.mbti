@@ -7,11 +7,9 @@ import {
 }
 
 // Values
-pub async fn[W : @core.World] run(() -> W, Array[@runner.FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int, sinks? : Array[&@core.MessageSink]) -> @runner.RunResult
+pub async fn[W : @core.World] run(() -> W, @runner.RunOptions) -> @runner.RunResult
 
-pub async fn[W : @core.World] run_or_fail(() -> W, Array[@runner.FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int, sinks? : Array[&@core.MessageSink]) -> @runner.RunResult
-
-pub async fn[W : @core.World + @core.Hooks] run_with_hooks(() -> W, Array[@runner.FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int, sinks? : Array[&@core.MessageSink]) -> @runner.RunResult
+pub async fn[W : @core.World] run_or_fail(() -> W, @runner.RunOptions) -> @runner.RunResult
 
 // Errors
 
@@ -22,7 +20,17 @@ pub using @runner {type FeatureResult}
 
 pub using @runner {type FeatureSource}
 
+pub using @core {type HookHandler}
+
+pub using @core {type HookRegistry}
+
+pub using @core {type HookType}
+
 pub using @core {type MoonspecError}
+
+pub using @core {type RegisteredHook}
+
+pub using @runner {type RunOptions}
 
 pub using @runner {type RunResult}
 
@@ -33,6 +41,8 @@ pub using @core {type ScenarioInfo}
 pub using @runner {type ScenarioResult}
 
 pub using @runner {type ScenarioStatus}
+
+pub using @core {type Setup}
 
 pub using @core {type StepArg}
 
@@ -51,8 +61,6 @@ pub using @runner {type StepResult}
 pub using @core {type StepSource}
 
 pub using @runner {type StepStatus}
-
-pub using @core {trait Hooks}
 
 pub using @core {trait StepLibrary}
 

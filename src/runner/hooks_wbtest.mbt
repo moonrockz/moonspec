@@ -27,9 +27,10 @@ async test "isolation: each scenario gets a fresh world" {
   // Scenario 1 sets counter to 42, scenario 2 expects default (0).
   // If isolation is broken, scenario 2 would see 42.
   let content = "Feature: Isolation\n\n  Scenario: Set counter\n    Given I set counter to 42\n    Then counter should be 42\n\n  Scenario: Fresh world\n    Then counter should be 0\n"
-  let result = run(IsolationWorld::default, RunOptions([
-    FeatureSource::Text("test://isolation", content),
-  ]))
+  let result = run(
+    IsolationWorld::default,
+    RunOptions([FeatureSource::Text("test://isolation", content)]),
+  )
   assert_eq(result.summary.total_scenarios, 2)
   assert_eq(result.summary.passed, 2)
   assert_eq(result.summary.failed, 0)
@@ -69,9 +70,7 @@ impl @core.World for HookWorld with configure(self, setup) {
     }
     self.log.push("after_scenario:" + info.scenario_name + ":" + status)
   })
-  setup.before_test_step(fn(info) {
-    self.log.push("before_step:" + info.text)
-  })
+  setup.before_test_step(fn(info) { self.log.push("before_step:" + info.text) })
   setup.after_test_step(fn(info, result) {
     let status = match result {
       None => "ok"
@@ -132,9 +131,7 @@ impl @core.World for FailHookWorld with configure(self, setup) {
     self.log.push("before_scenario")
     raise Failure::Failure("setup failed")
   })
-  setup.after_test_case(fn(_info, _result) {
-    self.log.push("after_scenario")
-  })
+  setup.after_test_case(fn(_info, _result) { self.log.push("after_scenario") })
 }
 
 ///|
@@ -171,9 +168,10 @@ test "hooks: before_scenario failure skips all steps" {
 ///|
 async test "hooks: run end-to-end with hooks" {
   let content = "Feature: Hooks E2E\n\n  Scenario: Pass\n    Given a step\n    Then it passes\n"
-  let result = run(HookWorld::default, RunOptions([
-    FeatureSource::Text("test://hooks-e2e", content),
-  ]))
+  let result = run(
+    HookWorld::default,
+    RunOptions([FeatureSource::Text("test://hooks-e2e", content)]),
+  )
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.summary.passed, 1)
 }

@@ -34,10 +34,7 @@ pub fn execute_scenario(
     }
     step_idx += 1
     if has_sinks {
-      emit(
-        sinks,
-        make_test_step_started_envelope(test_case_started_id, ts_id),
-      )
+      emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
     }
     let status_str = if hook_err is Some(_) {
       "SKIPPED"
@@ -64,10 +61,7 @@ pub fn execute_scenario(
       emit(
         sinks,
         make_test_step_finished_envelope(
-          test_case_started_id,
-          ts_id,
-          status_str,
-          err_msg,
+          test_case_started_id, ts_id, status_str, err_msg,
         ),
       )
     }
@@ -208,9 +202,7 @@ pub fn execute_scenario(
         }
         match hook.handler {
           @core.StepHandler(h) =>
-            try {
-              h(step_info, None)
-            } catch {
+            h(step_info, None) catch {
               e => err = Some(e.to_string())
             }
           _ => ()
@@ -317,10 +309,7 @@ pub fn execute_scenario(
     }
     step_idx += 1
     if has_sinks {
-      emit(
-        sinks,
-        make_test_step_started_envelope(test_case_started_id, ts_id),
-      )
+      emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
     }
     let after_status = match hook.handler {
       @core.CaseHandler(h) =>

@@ -34,6 +34,38 @@ pub(all) struct CustomParamTypeInfo {
   patterns : Array[String]
 }
 
+pub(all) enum HookHandler {
+  RunHandler(() -> Unit raise)
+  CaseHandler((ScenarioInfo, String?) -> Unit raise)
+  StepHandler((StepInfo, String?) -> Unit raise)
+}
+
+pub(all) struct HookRegistry {
+  // private fields
+}
+pub fn HookRegistry::add(Self, HookType, HookHandler, source? : StepSource?) -> Unit
+pub fn HookRegistry::by_type(Self, HookType) -> Array[RegisteredHook]
+pub fn HookRegistry::hooks(Self) -> ArrayView[RegisteredHook]
+pub fn HookRegistry::new() -> Self
+
+pub(all) enum HookType {
+  BeforeTestRun
+  AfterTestRun
+  BeforeTestCase
+  AfterTestCase
+  BeforeTestStep
+  AfterTestStep
+}
+pub impl Eq for HookType
+pub impl Show for HookType
+
+pub(all) struct RegisteredHook {
+  id : String
+  type_ : HookType
+  handler : HookHandler
+  source : StepSource?
+}
+
 pub(all) struct ScenarioInfo {
   feature_name : String
   scenario_name : String
@@ -47,8 +79,21 @@ pub(all) struct Setup {
 }
 pub fn Setup::add_param_type(Self, String, Array[@cucumber-expressions.RegexPattern]) -> Unit
 pub fn Setup::add_param_type_strings(Self, String, Array[String]) -> Unit
+#callsite(autofill(loc))
+pub fn Setup::after_test_case(Self, (ScenarioInfo, String?) -> Unit raise, loc~ : SourceLoc) -> Unit
+#callsite(autofill(loc))
+pub fn Setup::after_test_run(Self, () -> Unit raise, loc~ : SourceLoc) -> Unit
+#callsite(autofill(loc))
+pub fn Setup::after_test_step(Self, (StepInfo, String?) -> Unit raise, loc~ : SourceLoc) -> Unit
+#callsite(autofill(loc))
+pub fn Setup::before_test_case(Self, (ScenarioInfo) -> Unit raise, loc~ : SourceLoc) -> Unit
+#callsite(autofill(loc))
+pub fn Setup::before_test_run(Self, () -> Unit raise, loc~ : SourceLoc) -> Unit
+#callsite(autofill(loc))
+pub fn Setup::before_test_step(Self, (StepInfo) -> Unit raise, loc~ : SourceLoc) -> Unit
 pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
 pub fn Setup::given(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn Setup::hook_registry(Self) -> HookRegistry
 pub fn Setup::new() -> Self
 pub fn Setup::param_registry(Self) -> @cucumber-expressions.ParamTypeRegistry
 pub fn Setup::step(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
@@ -136,13 +181,6 @@ pub impl Show for StepSource
 // Type aliases
 
 // Traits
-pub(open) trait Hooks {
-  before_scenario(Self, ScenarioInfo) -> Unit raise = _
-  after_scenario(Self, ScenarioInfo, String?) -> Unit raise = _
-  before_step(Self, StepInfo) -> Unit raise = _
-  after_step(Self, StepInfo, String?) -> Unit raise = _
-}
-
 pub(open) trait MessageSink {
   on_message(Self, @cucumber-messages.Envelope) -> Unit
 }

@@ -45,7 +45,7 @@ pub fn HookRegistry::add(
   self : HookRegistry,
   type_ : HookType,
   handler : HookHandler,
-  source~ : StepSource? = None,
+  source? : StepSource? = None,
 ) -> Unit {
   self.counter += 1
   let id = "hook-" + self.counter.to_string()

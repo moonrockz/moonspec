@@ -56,9 +56,10 @@ impl @core.World for PassWorld with configure(_self, setup) {
 ///|
 async test "run_or_fail succeeds when all pass" {
   let content = "Feature: Simple\n\n  Scenario: Pass\n    Given a calculator\n"
-  let result = run_or_fail(PassWorld::default, RunOptions([
-    FeatureSource::Text("test://pass", content),
-  ]))
+  let result = run_or_fail(
+    PassWorld::default,
+    RunOptions([FeatureSource::Text("test://pass", content)]),
+  )
   assert_eq(result.summary.passed, 1)
 }
 
@@ -75,9 +76,10 @@ async test "run_or_fail raises RunFailed on undefined steps" {
   let content = "Feature: Fail\n\n  Scenario: Undefined\n    Given an undefined step\n"
   let mut caught = false
   try
-    run_or_fail(NoStepsWorld::default, RunOptions([
-      FeatureSource::Text("test://fail", content),
-    ]))
+    run_or_fail(
+      NoStepsWorld::default,
+      RunOptions([FeatureSource::Text("test://fail", content)]),
+    )
     |> ignore
   catch {
     @core.RunFailed(..) => caught = true
@@ -449,9 +451,10 @@ async test "run emits ParseError envelope for invalid feature" {
 async test "run_or_fail raises on parse errors" {
   let mut caught = false
   try
-    run_or_fail(RunWorld::default, RunOptions([
-      FeatureSource::Text("test://bad", "Not valid Gherkin"),
-    ]))
+    run_or_fail(
+      RunWorld::default,
+      RunOptions([FeatureSource::Text("test://bad", "Not valid Gherkin")]),
+    )
     |> ignore
   catch {
     @core.RunFailed(..) => caught = true
@@ -467,12 +470,8 @@ struct HookEnvWorld {
 
 ///|
 impl @core.World for HookEnvWorld with configure(self, setup) {
-  setup.before_test_case(fn(_info) {
-    self.log.push("before")
-  })
-  setup.after_test_case(fn(_info, _result) {
-    self.log.push("after")
-  })
+  setup.before_test_case(fn(_info) { self.log.push("before") })
+  setup.after_test_case(fn(_info, _result) { self.log.push("after") })
   setup.given("a step", fn(_args) {  })
 }
 
@@ -480,9 +479,10 @@ impl @core.World for HookEnvWorld with configure(self, setup) {
 async test "run emits Hook envelopes for registered hooks" {
   let collector = CollectorSink::new()
   let opts = RunOptions([
-    FeatureSource::Text("test://hooks", "Feature: H\n\n  Scenario: S\n    Given a step\n"),
-  ])
-    ..add_sink(collector)
+    FeatureSource::Text(
+      "test://hooks", "Feature: H\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
   let _ = run(HookEnvWorld::default, opts)
   let mut hook_count = 0
   for env in collector.envelopes {
@@ -498,9 +498,10 @@ async test "run emits Hook envelopes for registered hooks" {
 async test "run emits Hook envelopes in correct position" {
   let collector = CollectorSink::new()
   let opts = RunOptions([
-    FeatureSource::Text("test://hook-order", "Feature: HO\n\n  Scenario: S\n    Given a step\n"),
-  ])
-    ..add_sink(collector)
+    FeatureSource::Text(
+      "test://hook-order", "Feature: HO\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
   let _ = run(HookEnvWorld::default, opts)
   let mut sd_idx = -1
   let mut hook_idx = -1
@@ -508,11 +509,11 @@ async test "run emits Hook envelopes in correct position" {
   for i, env in collector.envelopes {
     match env {
       @cucumber_messages.Envelope::StepDefinition(_) =>
-        if sd_idx < 0 { sd_idx = i }
-      @cucumber_messages.Envelope::Hook(_) =>
-        if hook_idx < 0 { hook_idx = i }
-      @cucumber_messages.Envelope::TestCase(_) =>
-        if tc_idx < 0 { tc_idx = i }
+        if sd_idx < 0 {
+          sd_idx = i
+        }
+      @cucumber_messages.Envelope::Hook(_) => if hook_idx < 0 { hook_idx = i }
+      @cucumber_messages.Envelope::TestCase(_) => if tc_idx < 0 { tc_idx = i }
       _ => ()
     }
   }
@@ -533,9 +534,10 @@ impl @core.World for RunHookWorld with configure(_self, setup) {
 async test "run emits TestRunHookStarted and TestRunHookFinished" {
   let collector = CollectorSink::new()
   let opts = RunOptions([
-    FeatureSource::Text("test://run-hooks", "Feature: RH\n\n  Scenario: S\n    Given a step\n"),
-  ])
-    ..add_sink(collector)
+    FeatureSource::Text(
+      "test://run-hooks", "Feature: RH\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
   let _ = run(RunHookWorld::default, opts)
   let mut trhs_count = 0
   let mut trhf_count = 0
@@ -555,11 +557,9 @@ async test "TestCase envelope includes hook steps" {
   let collector = CollectorSink::new()
   let opts = RunOptions([
     FeatureSource::Text(
-      "test://tc-hooks",
-      "Feature: TC\n\n  Scenario: S\n    Given a step\n",
+      "test://tc-hooks", "Feature: TC\n\n  Scenario: S\n    Given a step\n",
     ),
-  ])
-    ..add_sink(collector)
+  ])..add_sink(collector)
   let _ = run(HookEnvWorld::default, opts)
   for env in collector.envelopes {
     match env {
@@ -586,11 +586,9 @@ async test "hook steps emit TestStepStarted and TestStepFinished" {
   let collector = CollectorSink::new()
   let opts = RunOptions([
     FeatureSource::Text(
-      "test://hook-steps",
-      "Feature: HS\n\n  Scenario: S\n    Given a step\n",
+      "test://hook-steps", "Feature: HS\n\n  Scenario: S\n    Given a step\n",
     ),
-  ])
-    ..add_sink(collector)
+  ])..add_sink(collector)
   let _ = run(HookEnvWorld::default, opts)
   let types : Array[String] = []
   for env in collector.envelopes {

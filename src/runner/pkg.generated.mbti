@@ -10,19 +10,15 @@ import {
 // Values
 pub fn build_step_definition_envelopes(@core.StepRegistry) -> Array[@cucumber-messages.Envelope]
 
-pub fn build_test_cases(@core.StepRegistry, Array[@cucumber-messages.Pickle], IdGenerator) -> Array[@cucumber-messages.Envelope]
+pub fn build_test_cases(@core.StepRegistry, @core.HookRegistry, Array[@cucumber-messages.Pickle], IdGenerator) -> Array[@cucumber-messages.Envelope]
 
 pub fn compile_pickles(FeatureCache) -> Array[@cucumber-messages.Pickle]
 
-pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep], sinks? : Array[&@core.MessageSink], test_case_started_id? : String, test_step_ids? : Array[String]) -> ScenarioResult
+pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep], hook_registry? : @core.HookRegistry, sinks? : Array[&@core.MessageSink], test_case_started_id? : String, test_step_ids? : Array[String]) -> ScenarioResult
 
-pub fn[W : @core.Hooks] execute_scenario_with_hooks(W, @core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep], sinks? : Array[&@core.MessageSink], test_case_started_id? : String, test_step_ids? : Array[String]) -> ScenarioResult
+pub async fn[W : @core.World] run(() -> W, RunOptions) -> RunResult
 
-pub async fn[W : @core.World] run(() -> W, Array[FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int, sinks? : Array[&@core.MessageSink]) -> RunResult
-
-pub async fn[W : @core.World] run_or_fail(() -> W, Array[FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int, sinks? : Array[&@core.MessageSink]) -> RunResult
-
-pub async fn[W : @core.World + @core.Hooks] run_with_hooks(() -> W, Array[FeatureSource], tag_expr? : String, scenario_name? : String, parallel? : Int, sinks? : Array[&@core.MessageSink]) -> RunResult
+pub async fn[W : @core.World] run_or_fail(() -> W, RunOptions) -> RunResult
 
 // Errors
 
@@ -66,6 +62,7 @@ pub(all) struct IdGenerator {
 }
 pub fn IdGenerator::new() -> Self
 pub fn IdGenerator::next(Self, String) -> String
+pub fn IdGenerator::next_hook_id(Self) -> String
 pub fn IdGenerator::next_param_type_id(Self) -> String
 
 pub(all) struct ParseErrorInfo {
@@ -84,6 +81,23 @@ pub fn PickleFilter::apply(Self, Array[@cucumber-messages.Pickle]) -> Array[@cuc
 pub fn PickleFilter::new() -> Self
 pub fn PickleFilter::with_names(Self, Array[String]) -> Self
 pub fn PickleFilter::with_tags(Self, String) -> Self raise
+
+pub(all) struct RunOptions {
+  // private fields
+
+  fn new(Array[FeatureSource]) -> RunOptions
+}
+pub fn RunOptions::add_sink(Self, &@core.MessageSink) -> Unit
+pub fn RunOptions::features(Self) -> Array[FeatureSource]
+pub fn RunOptions::get_max_concurrent(Self) -> Int
+pub fn RunOptions::get_scenario_name(Self) -> String
+pub fn RunOptions::get_sinks(Self) -> Array[&@core.MessageSink]
+pub fn RunOptions::get_tag_expr(Self) -> String
+pub fn RunOptions::is_parallel(Self) -> Bool
+pub fn RunOptions::max_concurrent(Self, Int) -> Unit
+pub fn RunOptions::parallel(Self, Bool) -> Unit
+pub fn RunOptions::scenario_name(Self, String) -> Unit
+pub fn RunOptions::tag_expr(Self, String) -> Unit
 
 pub(all) struct RunResult {
   features : Array[FeatureResult]

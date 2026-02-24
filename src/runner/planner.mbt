@@ -41,10 +41,7 @@ pub fn build_test_cases(
     // Prepend before_test_case hook steps
     for hook in before_case_hooks {
       let step_id = id_gen.next("ts")
-      test_steps.push({
-        "id": step_id.to_json(),
-        "hookId": hook.id.to_json(),
-      })
+      test_steps.push({ "id": step_id.to_json(), "hookId": hook.id.to_json() })
     }
     for step in pickle.steps {
       let keyword = match step.type_ {
@@ -72,10 +69,7 @@ pub fn build_test_cases(
     // Append after_test_case hook steps
     for hook in after_case_hooks {
       let step_id = id_gen.next("ts")
-      test_steps.push({
-        "id": step_id.to_json(),
-        "hookId": hook.id.to_json(),
-      })
+      test_steps.push({ "id": step_id.to_json(), "hookId": hook.id.to_json() })
     }
     let tc_id = id_gen.next("tc")
     let json : Json = {
