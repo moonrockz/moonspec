@@ -1,6 +1,7 @@
 import {
   "moonrockz/cucumber-expressions" as @cucumber_expressions,
   "moonrockz/cucumber-messages" as @cucumber_messages,
+  "moonbitlang/core/json",
   "moonbitlang/core/strconv",
   "moonbitlang/x/decimal" as @decimal,
   "tonyfettes/any" as @any,

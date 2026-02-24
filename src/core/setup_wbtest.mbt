@@ -49,7 +49,7 @@ test "Setup.add_param_type_strings with transformer" {
   )
   setup.given("I say {upper}", fn(args) {
     match args[0] {
-      { value: CustomVal(any), raw } => {
+      { value: CustomVal(any), raw, .. } => {
         let v : String = any.to()
         assert_eq(v, "HELLO")
         assert_eq(raw, "hello")

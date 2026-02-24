@@ -1,8 +1,8 @@
 ///|
 test "Ctx struct destructuring" {
-  let arg = Ctx::{ value: IntVal(42), raw: "42" }
+  let arg = Ctx::{ value: IntVal(42), raw: "42", attachments: [] }
   match arg {
-    { value: IntVal(n), raw } => {
+    { value: IntVal(n), raw, .. } => {
       assert_eq(n, 42)
       assert_eq(raw, "42")
     }
@@ -12,7 +12,7 @@ test "Ctx struct destructuring" {
 
 ///|
 test "Ctx struct wildcard" {
-  let arg = Ctx::{ value: IntVal(42), raw: "42" }
+  let arg = Ctx::{ value: IntVal(42), raw: "42", attachments: [] }
   match arg {
     { value: IntVal(n), .. } => assert_eq(n, 42)
     _ => fail("expected IntVal")
@@ -188,7 +188,7 @@ test "DocString constructor without media type" {
 ///|
 test "Ctx with DocStringVal" {
   let doc = DocString(content="hello", media_type="json")
-  let arg : Ctx = { value: DocStringVal(doc), raw: "" }
+  let arg : Ctx = { value: DocStringVal(doc), raw: "", attachments: [] }
   match arg {
     { value: DocStringVal(d), .. } => {
       assert_eq(d.content, "hello")
@@ -201,7 +201,7 @@ test "Ctx with DocStringVal" {
 ///|
 test "Ctx with DataTableVal" {
   let table = DataTable([["name"], ["Alice"]])
-  let arg : Ctx = { value: DataTableVal(table), raw: "" }
+  let arg : Ctx = { value: DataTableVal(table), raw: "", attachments: [] }
   match arg {
     { value: DataTableVal(t), .. } => {
       assert_eq(t.row_count(), 2)
@@ -209,4 +209,21 @@ test "Ctx with DataTableVal" {
     }
     _ => fail("expected DataTableVal")
   }
+}
+
+///|
+test "Ctx attach text" {
+  let ctx : Ctx = { value: IntVal(42), raw: "42", attachments: [] }
+  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
+    @json.parse("\"IDENTITY\"") catch { _ => panic() },
+  ) catch { _ => panic() }
+  ctx.attachments.push(
+    PendingAttachment::Embedded(
+      body="hello world",
+      encoding~,
+      media_type="text/plain",
+      file_name=None,
+    ),
+  )
+  assert_eq(ctx.attachments.length(), 1)
 }

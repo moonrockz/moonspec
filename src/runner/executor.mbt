@@ -245,6 +245,7 @@ pub fn execute_scenario(
                     args.push(@core.Ctx::{
                       value: DocStringVal(doc),
                       raw: ds.content,
+                      attachments: [],
                     })
                   }
                   (_, Some(dt)) => {
@@ -255,6 +256,7 @@ pub fn execute_scenario(
                     args.push(@core.Ctx::{
                       value: DataTableVal(table),
                       raw: "",
+                      attachments: [],
                     })
                   }
                   _ => ()
