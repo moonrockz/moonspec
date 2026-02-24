@@ -104,7 +104,7 @@ pub fn RunOptions::get_scenario_name(self : RunOptions) -> String {
 /// Per-scenario `@retry(N)` tags override this global setting. Negative values
 /// are clamped to 0.
 ///
-/// ```moonbit
+/// ```moonbit nocheck
 /// let opts = RunOptions::new(features)
 /// opts.retries(2) // retry failed scenarios up to 2 times
 /// ```
