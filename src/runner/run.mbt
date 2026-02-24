@@ -242,7 +242,12 @@ fn emit_run_hook_attachments(
 ) -> Unit {
   for att in attachments {
     match att {
-      @core.PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~) => {
+      @core.PendingAttachment::Embedded(
+        body~,
+        encoding~,
+        media_type~,
+        file_name~
+      ) => {
         let enc_str = encoding.to_json().stringify()
         let enc_clean = enc_str.substring(start=1, end=enc_str.length() - 1)
         let json_map : Map[String, Json] = {}
@@ -255,7 +260,8 @@ fn emit_run_hook_attachments(
         }
         json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
         json_map["timestamp"] = (
-          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
+          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } :
+          Json)
         let json : Json = { "attachment": json_map.to_json() }
         let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
           _ => continue
@@ -268,7 +274,8 @@ fn emit_run_hook_attachments(
         json_map["mediaType"] = media_type.to_json()
         json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
         json_map["timestamp"] = (
-          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
+          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } :
+          Json)
         let json : Json = { "externalAttachment": json_map.to_json() }
         let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
           _ => continue
@@ -545,11 +552,7 @@ pub async fn[W : @core.World] run(
       _ => "FAILED"
     }
     if sinks.length() > 0 && hook_ctx.pending_attachments().length() > 0 {
-      emit_run_hook_attachments(
-        sinks,
-        hook_ctx.pending_attachments(),
-        trhs_id,
-      )
+      emit_run_hook_attachments(sinks, hook_ctx.pending_attachments(), trhs_id)
       hook_ctx.pending_attachments().clear()
     }
     if sinks.length() > 0 {
@@ -591,9 +594,15 @@ pub async fn[W : @core.World] run(
   let run_errors : Array[@core.HookError] = []
   for r in results {
     if r.status != ScenarioStatus::Passed {
-      let msg = match r.steps.iter().find_first(
-        fn(s) { match s.status { StepStatus::Failed(_) => true; _ => false } },
-      ) {
+      let msg = match
+        r.steps
+        .iter()
+        .find_first(fn(s) {
+          match s.status {
+            StepStatus::Failed(_) => true
+            _ => false
+          }
+        }) {
         Some(s) =>
           match s.status {
             StepStatus::Failed(m) => m
@@ -648,11 +657,7 @@ pub async fn[W : @core.World] run(
       _ => "FAILED"
     }
     if sinks.length() > 0 && hook_ctx.pending_attachments().length() > 0 {
-      emit_run_hook_attachments(
-        sinks,
-        hook_ctx.pending_attachments(),
-        trhs_id,
-      )
+      emit_run_hook_attachments(sinks, hook_ctx.pending_attachments(), trhs_id)
       hook_ctx.pending_attachments().clear()
     }
     if sinks.length() > 0 {
@@ -725,7 +730,8 @@ fn collect_scenario_errors(result : RunResult) -> Array[@core.MoonspecError] {
             match step.diagnostic {
               Some(@core.UndefinedStep(..) as e) => step_errors.push(e)
               Some(@core.PendingStep(..) as e) => step_errors.push(e)
-              Some(@core.MoonspecError::StepFailed(..) as e) => step_errors.push(e)
+              Some(@core.MoonspecError::StepFailed(..) as e) =>
+                step_errors.push(e)
               _ => ()
             }
           }

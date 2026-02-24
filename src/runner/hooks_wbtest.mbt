@@ -67,12 +67,11 @@ impl @core.World for HookWorld with configure(self, setup) {
   setup.after_test_case(fn(ctx, result) {
     let status = match result {
       @core.HookResult::Passed => "ok"
-      @core.HookResult::Failed(errors) => {
+      @core.HookResult::Failed(errors) =>
         match errors[0] {
           @core.HookError::StepFailed(message~, ..) => message
           @core.HookError::ScenarioFailed(message~, ..) => message
         }
-      }
     }
     self.log.push(
       "after_scenario:" + ctx.scenario().scenario_name + ":" + status,
@@ -84,12 +83,11 @@ impl @core.World for HookWorld with configure(self, setup) {
   setup.after_test_step(fn(ctx, result) {
     let status = match result {
       @core.HookResult::Passed => "ok"
-      @core.HookResult::Failed(errors) => {
+      @core.HookResult::Failed(errors) =>
         match errors[0] {
           @core.HookError::StepFailed(message~, ..) => message
           @core.HookError::ScenarioFailed(message~, ..) => message
         }
-      }
     }
     self.log.push("after_step:" + ctx.step().text + ":" + status)
   })

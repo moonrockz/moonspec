@@ -285,7 +285,7 @@ pub(all) enum HookError {
   ScenarioFailed(
     feature_name~ : String,
     scenario_name~ : String,
-    message~ : String,
+    message~ : String
   )
 } derive(Show, Eq)
 

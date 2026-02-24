@@ -230,9 +230,7 @@ struct CaseHookAttachWorld {} derive(Default)
 ///|
 impl @core.World for CaseHookAttachWorld with configure(_self, setup) {
   setup.given("a step", fn(_ctx) { () })
-  setup.before_test_case(fn(ctx) {
-    ctx.attach("case setup log", "text/plain")
-  })
+  setup.before_test_case(fn(ctx) { ctx.attach("case setup log", "text/plain") })
 }
 
 ///|
@@ -243,7 +241,9 @@ async test "end-to-end: case hook attachment emits envelope" {
     #|  Scenario: With hook attachment
     #|    Given a step
   let messages = @format.MessagesFormatter::new()
-  let opts = RunOptions([FeatureSource::Text("test://case-hook-attach", content)])
+  let opts = RunOptions([
+    FeatureSource::Text("test://case-hook-attach", content),
+  ])
   opts.add_sink(messages)
   let result = run(CaseHookAttachWorld::default, opts)
   assert_eq(result.summary.passed, 1)
@@ -270,7 +270,9 @@ async test "end-to-end: step hook attachment emits envelope" {
     #|  Scenario: With step hook attachment
     #|    Given a step
   let messages = @format.MessagesFormatter::new()
-  let opts = RunOptions([FeatureSource::Text("test://step-hook-attach", content)])
+  let opts = RunOptions([
+    FeatureSource::Text("test://step-hook-attach", content),
+  ])
   opts.add_sink(messages)
   let result = run(StepHookAttachWorld::default, opts)
   assert_eq(result.summary.passed, 1)

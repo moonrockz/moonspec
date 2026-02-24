@@ -34,7 +34,11 @@ test "PendingStep carries message" {
 test "ScenarioFailed aggregates step errors" {
   let step_errors : Array[MoonspecError] = [
     UndefinedStep(step="undefined one", keyword="Given", snippet="", suggestions=[]),
-    MoonspecError::StepFailed(step="failed one", keyword="Then", message="assertion failed"),
+    MoonspecError::StepFailed(
+      step="failed one",
+      keyword="Then",
+      message="assertion failed",
+    ),
   ]
   let err : Error = MoonspecError::ScenarioFailed(
     scenario="My Scenario",

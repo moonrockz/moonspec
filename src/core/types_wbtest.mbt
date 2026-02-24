@@ -341,11 +341,10 @@ test "Ctx attach with file_name" {
 
 ///|
 test "Ctx implements Attachable via pending_attachments" {
-  let ctx = Ctx::new(
-    [],
-    { feature_name: "F", scenario_name: "S", tags: [] },
-    { keyword: "Given ", text: "step" },
-  )
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+    keyword: "Given ",
+    text: "step",
+  })
   ctx.attach("hello", "text/plain")
   let pending = ctx.pending_attachments()
   assert_eq(pending.length(), 1)

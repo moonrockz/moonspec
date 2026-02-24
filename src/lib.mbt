@@ -29,6 +29,12 @@ pub using @core {
   type HookType,
   type HookHandler,
   type PendingAttachment,
+  type HookError,
+  type HookResult,
+  type RunHookCtx,
+  type CaseHookCtx,
+  type StepHookCtx,
+  trait Attachable,
   type RegisteredHook,
 }
 
