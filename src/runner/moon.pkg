@@ -6,3 +6,7 @@ import {
   "moonbitlang/x/fs",
   "moonbitlang/core/json",
 }
+
+import "wbtest" {
+  "moonrockz/moonspec/format",
+}
