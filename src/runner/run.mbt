@@ -336,6 +336,39 @@ fn extract_test_case_mappings(
 }
 
 ///|
+/// Parse a retry count from pickle tags. Returns Some(n) if @retry(n) is found.
+fn parse_retry_tag(tags : Array[String]) -> Int? {
+  let prefix = "@retry("
+  let prefix_len = prefix.length()
+  for tag in tags {
+    let tag_len = tag.length()
+    if tag_len > prefix_len && tag.substring(start=0, end=prefix_len) == prefix &&
+      tag[tag_len - 1] == ')' {
+      let inner = tag.substring(start=prefix_len, end=tag_len - 1)
+      let inner_len = inner.length()
+      if inner_len == 0 {
+        continue
+      }
+      let mut n = 0
+      let mut valid = true
+      for i = 0; i < inner_len; i = i + 1 {
+        let ch = inner[i]
+        if ch >= '0' && ch <= '9' {
+          n = n * 10 + (ch.to_int() - '0'.to_int())
+        } else {
+          valid = false
+          break
+        }
+      }
+      if valid {
+        return Some(n)
+      }
+    }
+  }
+  None
+}
+
+///|
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
