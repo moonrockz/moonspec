@@ -152,7 +152,10 @@ pub(all) struct CustomParamTypeInfo {
 /// Return custom (non-built-in) parameter types for envelope emission.
 /// Built-in types (int, float, string, word, anonymous "") are excluded.
 pub fn Setup::custom_param_types(self : Setup) -> Array[CustomParamTypeInfo] {
-  let builtin = ["int", "float", "string", "word", ""]
+  let builtin = [
+    "int", "float", "string", "word", "",
+    "double", "long", "byte", "short", "bigdecimal", "biginteger",
+  ]
   let result : Array[CustomParamTypeInfo] = []
   for entry in self.param_reg.entries_view() {
     if builtin.contains(entry.name) {

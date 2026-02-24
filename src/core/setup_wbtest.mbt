@@ -23,8 +23,8 @@ test "Setup registers custom param type" {
   setup.given("I pick a {color} cucumber", fn(_args) {  })
   assert_eq(setup.step_registry().len(), 1)
   let entries = setup.param_registry().entries_view()
-  // 5 built-in + 1 custom = 6
-  assert_eq(entries.length(), 6)
+  // 11 built-in + 1 custom = 12
+  assert_eq(entries.length(), 12)
 }
 
 ///|

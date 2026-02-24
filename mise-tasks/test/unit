@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 #MISE description="Run MoonBit unit tests"
 set -euo pipefail
-moon test
+moon test --target js
