@@ -233,6 +233,32 @@ pub fn execute_scenario(
           )
         Matched(step_def, args) =>
           try {
+            // Append block argument (DocString/DataTable) as last StepArg
+            match step.argument {
+              Some(arg) =>
+                match (arg.docString, arg.dataTable) {
+                  (Some(ds), _) => {
+                    let doc : @core.DocString = {
+                      content: ds.content,
+                      media_type: ds.mediaType,
+                    }
+                    args.push(
+                      @core.StepArg::{ value: DocStringVal(doc), raw: ds.content },
+                    )
+                  }
+                  (_, Some(dt)) => {
+                    let raw_rows = dt.rows.map(fn(row) {
+                      row.cells.map(fn(cell) { cell.value })
+                    })
+                    let table = @core.DataTable::from_rows(raw_rows)
+                    args.push(
+                      @core.StepArg::{ value: DataTableVal(table), raw: "" },
+                    )
+                  }
+                  _ => ()
+                }
+              None => ()
+            }
             (step_def.handler.0)(args)
             (StepStatus::Passed, None)
           } catch {

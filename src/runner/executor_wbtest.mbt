@@ -168,3 +168,132 @@ test "execute_scenario catches PendingStep" {
   )
   assert_eq(result.steps[0].status, StepStatus::Pending)
 }
+
+///|
+test "execute_scenario passes doc string as last arg" {
+  let setup = @core.Setup::new()
+  let mut received_content = ""
+  let mut received_media_type : String? = None
+  setup.given("a payload", fn(args) {
+    match args[0] {
+      { value: @core.StepValue::DocStringVal(doc), .. } => {
+        received_content = doc.content
+        received_media_type = doc.media_type
+      }
+      _ => ()
+    }
+  })
+  let registry = setup.step_registry()
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a payload",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: Some({
+        docString: Some({ content: "hello world", mediaType: Some("json") }),
+        dataTable: None,
+      }),
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test",
+    scenario_name="DocString",
+    pickle_id="p1",
+    tags=[],
+    steps~,
+  )
+  assert_eq(result.status, ScenarioStatus::Passed)
+  assert_eq(received_content, "hello world")
+  assert_eq(received_media_type, Some("json"))
+}
+
+///|
+test "execute_scenario passes data table as last arg" {
+  let setup = @core.Setup::new()
+  let mut received_rows = 0
+  let mut first_name = ""
+  setup.given("the following users", fn(args) {
+    match args[0] {
+      { value: @core.StepValue::DataTableVal(table), .. } => {
+        received_rows = table.row_count()
+        first_name = table.rows.get(1).cells.get(0)
+      }
+      _ => ()
+    }
+  })
+  let registry = setup.step_registry()
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "the following users",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: Some({
+        docString: None,
+        dataTable: Some({
+          rows: [
+            { cells: [{ value: "name" }, { value: "age" }] },
+            { cells: [{ value: "Alice" }, { value: "30" }] },
+          ],
+        }),
+      }),
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test",
+    scenario_name="DataTable",
+    pickle_id="p1",
+    tags=[],
+    steps~,
+  )
+  assert_eq(result.status, ScenarioStatus::Passed)
+  assert_eq(received_rows, 2)
+  assert_eq(first_name, "Alice")
+}
+
+///|
+test "execute_scenario appends doc string after text params" {
+  let setup = @core.Setup::new()
+  let mut url = ""
+  let mut body = ""
+  setup.when("I POST to {string}", fn(args) {
+    match args[0] {
+      { value: @core.StepValue::StringVal(u), .. } => url = u
+      _ => ()
+    }
+    match args[1] {
+      { value: @core.StepValue::DocStringVal(doc), .. } => body = doc.content
+      _ => ()
+    }
+  })
+  let registry = setup.step_registry()
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "I POST to \"http://example.com\"",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Action),
+      argument: Some({
+        docString: Some({
+          content: "{\"name\":\"Alice\"}",
+          mediaType: Some("json"),
+        }),
+        dataTable: None,
+      }),
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test",
+    scenario_name="Mixed",
+    pickle_id="p1",
+    tags=[],
+    steps~,
+  )
+  assert_eq(result.status, ScenarioStatus::Passed)
+  assert_eq(url, "http://example.com")
+  assert_eq(body, "{\"name\":\"Alice\"}")
+}

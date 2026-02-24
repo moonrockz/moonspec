@@ -256,6 +256,12 @@ fn DataTable::new(raw_rows : Array[Array[String]]) -> DataTable {
 }
 
 ///|
+/// Construct a DataTable from raw row data (public factory).
+pub fn DataTable::from_rows(raw_rows : Array[Array[String]]) -> DataTable {
+  DataTable::new(raw_rows)
+}
+
+///|
 pub fn DataTable::row_count(self : DataTable) -> Int {
   self.rows.length()
 }
