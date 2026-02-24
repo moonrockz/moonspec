@@ -369,10 +369,14 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
       }
       let mut n = 0
       let mut valid = true
+      let max_retries = 100
       for i = 0; i < inner_len; i = i + 1 {
         let ch = inner[i]
         if ch >= '0' && ch <= '9' {
           n = n * 10 + (ch.to_int() - '0'.to_int())
+          if n > max_retries {
+            n = max_retries
+          }
         } else {
           valid = false
           break
@@ -931,8 +935,8 @@ async fn[W : @core.World] execute_pickle(
       test_case_started_id=tcs_id.unwrap_or(""),
       test_step_ids~,
     )
-    // Determine if this attempt failed and has retries left
-    let is_failed = result.status != ScenarioStatus::Passed
+    // Only retry on actual failures — not Undefined, Pending, or Skipped
+    let is_failed = result.status == ScenarioStatus::Failed
     let has_retries_left = current_attempt < max_retries
     // Emit TestCaseFinished
     match tcs_id {

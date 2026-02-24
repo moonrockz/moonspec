@@ -633,3 +633,15 @@ test "parse_retry_tag handles @retry(1)" {
   let result = parse_retry_tag(["@retry(1)"])
   assert_eq(result, Some(1))
 }
+
+///|
+test "parse_retry_tag clamps large values to 100" {
+  let result = parse_retry_tag(["@retry(99999)"])
+  assert_eq(result, Some(100))
+}
+
+///|
+test "parse_retry_tag allows value at cap boundary" {
+  let result = parse_retry_tag(["@retry(100)"])
+  assert_eq(result, Some(100))
+}

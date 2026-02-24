@@ -369,6 +369,38 @@ async test "retry: passing scenario is not counted as retried" {
 }
 
 ///|
+struct UndefinedRetryWorld {} derive(Default)
+
+///|
+impl @core.World for UndefinedRetryWorld with configure(_self, _setup) {
+  // No steps defined — scenario will be Undefined
+}
+
+///|
+async test "retry: undefined scenario is not retried" {
+  let content =
+    #|Feature: UndefinedRetry
+    #|
+    #|  @retry(2)
+    #|  Scenario: Missing steps
+    #|    Given a step that does not exist
+  let collector = CollectorSink::new()
+  let opts = RunOptions([FeatureSource::Text("test://undef-retry", content)])
+  opts.add_sink(collector)
+  let result = run(UndefinedRetryWorld::default, opts)
+  assert_eq(result.summary.undefined, 1)
+  assert_eq(result.summary.retried, 0)
+  // Only one TestCaseStarted — no retry attempts
+  let mut tcs_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::TestCaseStarted(_) {
+      tcs_count += 1
+    }
+  }
+  assert_eq(tcs_count, 1)
+}
+
+///|
 async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
   let counter : Ref[Int] = { val: 0 }
   let content =
