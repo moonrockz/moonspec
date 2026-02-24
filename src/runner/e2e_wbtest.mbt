@@ -72,3 +72,100 @@ async test "end-to-end: tag filtering" {
   let result = run(TagWorld::default, opts)
   assert_eq(result.summary.total_scenarios, 1)
 }
+
+///|
+struct DocWorld {
+  mut payload : String
+  mut media : String?
+  mut users : Array[Map[String, String]]
+} derive(Default)
+
+///|
+impl @core.World for DocWorld with configure(self, setup) {
+  setup.given("a JSON payload", fn(args) {
+    match args[0] {
+      { value: @core.StepValue::DocStringVal(doc), .. } => {
+        self.payload = doc.content
+        self.media = doc.media_type
+      }
+      _ => ()
+    }
+  })
+  setup.given("the following users", fn(args) {
+    match args[0] {
+      { value: @core.StepValue::DataTableVal(table), .. } =>
+        self.users = table.as_maps()
+      _ => ()
+    }
+  })
+  setup.then("the payload should contain {string}", fn(args) raise {
+    match args[0] {
+      { value: @core.StepValue::StringVal(expected), .. } =>
+        assert_true(self.payload.contains(expected))
+      _ => ()
+    }
+  })
+  setup.then("the media type should be {string}", fn(args) raise {
+    match args[0] {
+      { value: @core.StepValue::StringVal(expected), .. } =>
+        assert_eq(self.media, Some(expected))
+      _ => ()
+    }
+  })
+  setup.then("there should be {int} users", fn(args) raise {
+    match args[0] {
+      { value: @core.StepValue::IntVal(n), .. } =>
+        assert_eq(self.users.length(), n)
+      _ => ()
+    }
+  })
+  setup.then("user {int} should have name {string}", fn(args) raise {
+    match (args[0], args[1]) {
+      (
+        { value: @core.StepValue::IntVal(idx), .. },
+        { value: @core.StepValue::StringVal(name), .. },
+      ) => assert_eq(self.users[idx - 1]["name"], name)
+      _ => ()
+    }
+  })
+}
+
+///|
+async test "end-to-end: doc string with media type" {
+  let content =
+    #|Feature: DocString
+    #|
+    #|  Scenario: JSON payload
+    #|    Given a JSON payload
+    #|      """json
+    #|      {"key": "value"}
+    #|      """
+    #|    Then the payload should contain "key"
+    #|    Then the media type should be "json"
+  let result = run(
+    DocWorld::default,
+    RunOptions([FeatureSource::Text("test://docstring", content)]),
+  )
+  assert_eq(result.summary.passed, 1)
+  assert_eq(result.summary.failed, 0)
+}
+
+///|
+async test "end-to-end: data table" {
+  let content =
+    #|Feature: DataTable
+    #|
+    #|  Scenario: Users
+    #|    Given the following users
+    #|      | name  | age |
+    #|      | Alice | 30  |
+    #|      | Bob   | 25  |
+    #|    Then there should be 2 users
+    #|    Then user 1 should have name "Alice"
+  let result = run(
+    DocWorld::default,
+    RunOptions([FeatureSource::Text("test://datatable", content)]),
+  )
+  assert_eq(result.summary.passed, 1)
+  assert_eq(result.summary.failed, 0)
+}
