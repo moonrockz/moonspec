@@ -4,6 +4,7 @@
 pub(all) struct Setup {
   priv step_reg : StepRegistry
   priv param_reg : @cucumber_expressions.ParamTypeRegistry
+  priv hook_reg : HookRegistry
 }
 
 ///|
@@ -11,6 +12,7 @@ pub fn Setup::new() -> Setup {
   {
     step_reg: StepRegistry::new(),
     param_reg: @cucumber_expressions.ParamTypeRegistry::default(),
+    hook_reg: HookRegistry::new(),
   }
 }
 
@@ -26,6 +28,12 @@ pub fn Setup::param_registry(
   self : Setup,
 ) -> @cucumber_expressions.ParamTypeRegistry {
   self.param_reg
+}
+
+///|
+/// Access the underlying hook registry (for runner internals).
+pub fn Setup::hook_registry(self : Setup) -> HookRegistry {
+  self.hook_reg
 }
 
 ///|
@@ -162,4 +170,84 @@ pub fn Setup::custom_param_types(self : Setup) -> Array[CustomParamTypeInfo] {
 /// Compose a StepLibrary into this setup's registry.
 pub fn[L : StepLibrary] Setup::use_library(self : Setup, library : L) -> Unit {
   self.step_reg.use_library(library, self.param_reg)
+}
+
+///|
+/// Register a hook to run before the entire test run.
+#callsite(autofill(loc))
+pub fn Setup::before_test_run(
+  self : Setup,
+  handler : () -> Unit raise Error,
+  loc~ : SourceLoc,
+) -> Unit {
+  let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
+  self.hook_reg.add(HookType::BeforeTestRun, RunHandler(handler), source~)
+}
+
+///|
+/// Register a hook to run after the entire test run.
+#callsite(autofill(loc))
+pub fn Setup::after_test_run(
+  self : Setup,
+  handler : () -> Unit raise Error,
+  loc~ : SourceLoc,
+) -> Unit {
+  let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
+  self.hook_reg.add(HookType::AfterTestRun, RunHandler(handler), source~)
+}
+
+///|
+/// Register a hook to run before each test case (scenario).
+#callsite(autofill(loc))
+pub fn Setup::before_test_case(
+  self : Setup,
+  handler : (ScenarioInfo) -> Unit raise Error,
+  loc~ : SourceLoc,
+) -> Unit {
+  let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
+  self.hook_reg.add(
+    HookType::BeforeTestCase,
+    CaseHandler((info, _result) => handler(info)),
+    source~,
+  )
+}
+
+///|
+/// Register a hook to run after each test case (scenario).
+#callsite(autofill(loc))
+pub fn Setup::after_test_case(
+  self : Setup,
+  handler : (ScenarioInfo, String?) -> Unit raise Error,
+  loc~ : SourceLoc,
+) -> Unit {
+  let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
+  self.hook_reg.add(HookType::AfterTestCase, CaseHandler(handler), source~)
+}
+
+///|
+/// Register a hook to run before each test step.
+#callsite(autofill(loc))
+pub fn Setup::before_test_step(
+  self : Setup,
+  handler : (StepInfo) -> Unit raise Error,
+  loc~ : SourceLoc,
+) -> Unit {
+  let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
+  self.hook_reg.add(
+    HookType::BeforeTestStep,
+    StepHandler((info, _result) => handler(info)),
+    source~,
+  )
+}
+
+///|
+/// Register a hook to run after each test step.
+#callsite(autofill(loc))
+pub fn Setup::after_test_step(
+  self : Setup,
+  handler : (StepInfo, String?) -> Unit raise Error,
+  loc~ : SourceLoc,
+) -> Unit {
+  let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
+  self.hook_reg.add(HookType::AfterTestStep, StepHandler(handler), source~)
 }

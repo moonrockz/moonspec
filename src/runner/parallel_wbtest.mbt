@@ -18,19 +18,22 @@ async test "run with parallel parameter executes all features" {
       "test://par-b", "Feature: B\n\n  Scenario: S2\n    Given a step\n",
     ),
   ]
-  let result = run(ParWorld::default, features, parallel=2)
+  let opts = RunOptions(features)
+  opts.parallel(true)
+  opts.max_concurrent(2)
+  let result = run(ParWorld::default, opts)
   assert_eq(result.summary.total_scenarios, 2)
   assert_eq(result.summary.passed, 2)
 }
 
 ///|
-async test "run with parallel=0 falls back to sequential" {
+async test "run with parallel=false falls back to sequential" {
   let features = [
     FeatureSource::Text(
       "test://par-seq", "Feature: A\n\n  Scenario: S1\n    Given a step\n",
     ),
   ]
-  let result = run(ParWorld::default, features, parallel=0)
+  let result = run(ParWorld::default, RunOptions(features))
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.summary.passed, 1)
 }
@@ -45,7 +48,10 @@ async test "run with parallel preserves feature order" {
       "test://par-second", "Feature: Second\n\n  Scenario: S2\n    Given step b\n",
     ),
   ]
-  let result = run(ParWorld::default, features, parallel=4)
+  let opts = RunOptions(features)
+  opts.parallel(true)
+  opts.max_concurrent(4)
+  let result = run(ParWorld::default, opts)
   assert_eq(result.features[0].name, "First")
   assert_eq(result.features[1].name, "Second")
 }
@@ -60,7 +66,11 @@ async test "run with parallel and tag filtering" {
       "test://par-tag-b", "Feature: B\n\n  Scenario: S2\n    Given a step\n",
     ),
   ]
-  let result = run(ParWorld::default, features, parallel=2, tag_expr="@smoke")
+  let opts = RunOptions(features)
+  opts.parallel(true)
+  opts.max_concurrent(2)
+  opts.tag_expr("@smoke")
+  let result = run(ParWorld::default, opts)
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.summary.passed, 1)
 }

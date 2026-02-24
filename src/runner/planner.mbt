@@ -21,15 +21,28 @@ pub fn IdGenerator::next_param_type_id(self : IdGenerator) -> String {
 }
 
 ///|
+pub fn IdGenerator::next_hook_id(self : IdGenerator) -> String {
+  self.next("hook")
+}
+
+///|
 /// Build TestCase envelopes by matching pickle steps against a shared registry.
 pub fn build_test_cases(
   registry : @core.StepRegistry,
+  hook_registry : @core.HookRegistry,
   pickles : Array[@cucumber_messages.Pickle],
   id_gen : IdGenerator,
 ) -> Array[@cucumber_messages.Envelope] {
+  let before_case_hooks = hook_registry.by_type(@core.HookType::BeforeTestCase)
+  let after_case_hooks = hook_registry.by_type(@core.HookType::AfterTestCase)
   let envelopes : Array[@cucumber_messages.Envelope] = []
   for pickle in pickles {
     let test_steps : Array[Json] = []
+    // Prepend before_test_case hook steps
+    for hook in before_case_hooks {
+      let step_id = id_gen.next("ts")
+      test_steps.push({ "id": step_id.to_json(), "hookId": hook.id.to_json() })
+    }
     for step in pickle.steps {
       let keyword = match step.type_ {
         Some(@cucumber_messages.PickleStepType::Context) => "Given "
@@ -52,6 +65,11 @@ pub fn build_test_cases(
         "pickleStepId": step.id.to_json(),
         "stepDefinitionIds": step_def_ids.to_json(),
       })
+    }
+    // Append after_test_case hook steps
+    for hook in after_case_hooks {
+      let step_id = id_gen.next("ts")
+      test_steps.push({ "id": step_id.to_json(), "hookId": hook.id.to_json() })
     }
     let tc_id = id_gen.next("tc")
     let json : Json = {

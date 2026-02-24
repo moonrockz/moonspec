@@ -29,10 +29,11 @@ moonrockz/moonspec
 │   ├── core/            # Foundation types, step registry, and step definitions
 │   │   ├── types.mbt        # StepArg (ADT), ScenarioInfo, StepInfo, StepHandler
 │   │   ├── registry.mbt     # StepRegistry — given/when/then/step + find_match + use_library
-│   │   ├── setup.mbt        # Setup facade — wraps StepRegistry + ParamTypeRegistry
+│   │   ├── setup.mbt        # Setup facade — wraps StepRegistry + ParamTypeRegistry + HookRegistry
+│   │   ├── hook_registry.mbt # HookRegistry — registration-based lifecycle hooks (6 types)
 │   │   ├── step_def.mbt     # StepDef — first-class step definitions (given/when/then/step constructors)
 │   │   ├── step_library.mbt # StepLibrary trait — composable step definition groups
-│   │   ├── world.mbt        # World and Hooks traits
+│   │   ├── world.mbt        # World trait
 │   │   ├── error.mbt        # MoonspecError hierarchy (ParseError, UndefinedStep, etc.)
 │   │   ├── snippet.mbt      # Snippet generator for undefined steps
 │   │   ├── suggest.mbt      # "Did you mean?" suggestions for undefined steps

@@ -5,7 +5,6 @@
 /// `moonrockz/moonspec` and use `@moonspec.World`, `@moonspec.run`, etc.
 pub using @core {
   trait World,
-  trait Hooks,
   trait StepLibrary,
   type StepRegistry,
   type StepDef,
@@ -16,6 +15,11 @@ pub using @core {
   type MoonspecError,
   type ScenarioInfo,
   type StepInfo,
+  type Setup,
+  type HookRegistry,
+  type HookType,
+  type HookHandler,
+  type RegisteredHook,
 }
 
 ///|
@@ -28,7 +32,7 @@ pub using @runner {
   type StepResult,
   type ScenarioStatus,
   type StepStatus,
+  type RunOptions,
   run,
-  run_with_hooks,
   run_or_fail,
 }

@@ -9,11 +9,9 @@ impl @core.World for FilterWorld with configure(_self, setup) {
 ///|
 async test "tag filtering skips non-matching scenarios" {
   let content = "Feature: Tagged\n\n  @smoke\n  Scenario: Tagged\n    Given a step\n\n  Scenario: Untagged\n    Given a step\n"
-  let result = run(
-    FilterWorld::default,
-    [FeatureSource::Text("test://filter", content)],
-    tag_expr="@smoke",
-  )
+  let opts = RunOptions([FeatureSource::Text("test://filter", content)])
+  opts.tag_expr("@smoke")
+  let result = run(FilterWorld::default, opts)
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.features[0].scenarios[0].scenario_name, "Tagged")
 }
@@ -21,8 +19,9 @@ async test "tag filtering skips non-matching scenarios" {
 ///|
 async test "no tag filter runs all" {
   let content = "Feature: All\n\n  Scenario: One\n    Given a step\n\n  Scenario: Two\n    Given a step\n"
-  let result = run(FilterWorld::default, [
-    FeatureSource::Text("test://all", content),
-  ])
+  let result = run(
+    FilterWorld::default,
+    RunOptions([FeatureSource::Text("test://all", content)]),
+  )
   assert_eq(result.summary.total_scenarios, 2)
 }

@@ -1,2 +1,2 @@
 ///|
-/// moonspec core — World, Steps, and Hooks traits.
+/// moonspec core — World trait, Steps, Setup, and Hook registry.

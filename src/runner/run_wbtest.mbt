@@ -13,7 +13,7 @@ async test "run single feature and collect summary" {
       "test://one", "Feature: One\n\n  Scenario: Pass\n    Given a step\n",
     ),
   ]
-  let result = run(RunWorld::default, features)
+  let result = run(RunWorld::default, RunOptions(features))
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.summary.passed, 1)
   assert_eq(result.summary.failed, 0)
@@ -38,7 +38,7 @@ async test "run multiple features" {
       "test://b", "Feature: B\n\n  Scenario: Fail\n    Given fail\n",
     ),
   ]
-  let result = run(RunWorld2::default, features)
+  let result = run(RunWorld2::default, RunOptions(features))
   assert_eq(result.summary.total_scenarios, 2)
   assert_eq(result.summary.passed, 1)
   assert_eq(result.summary.failed, 1)
@@ -56,9 +56,10 @@ impl @core.World for PassWorld with configure(_self, setup) {
 ///|
 async test "run_or_fail succeeds when all pass" {
   let content = "Feature: Simple\n\n  Scenario: Pass\n    Given a calculator\n"
-  let result = run_or_fail(PassWorld::default, [
-    FeatureSource::Text("test://pass", content),
-  ])
+  let result = run_or_fail(
+    PassWorld::default,
+    RunOptions([FeatureSource::Text("test://pass", content)]),
+  )
   assert_eq(result.summary.passed, 1)
 }
 
@@ -75,9 +76,10 @@ async test "run_or_fail raises RunFailed on undefined steps" {
   let content = "Feature: Fail\n\n  Scenario: Undefined\n    Given an undefined step\n"
   let mut caught = false
   try
-    run_or_fail(NoStepsWorld::default, [
-      FeatureSource::Text("test://fail", content),
-    ])
+    run_or_fail(
+      NoStepsWorld::default,
+      RunOptions([FeatureSource::Text("test://fail", content)]),
+    )
     |> ignore
   catch {
     @core.RunFailed(..) => caught = true
@@ -94,7 +96,9 @@ async test "run accepts sinks parameter" {
       "test://sink", "Feature: Sink\n\n  Scenario: Pass\n    Given a step\n",
     ),
   ]
-  let result = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let result = run(RunWorld::default, opts)
   assert_eq(result.summary.passed, 1)
 }
 
@@ -106,7 +110,9 @@ async test "run emits Meta envelope first" {
       "test://meta", "Feature: Meta\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   assert_true(collector.envelopes.length() > 0)
   guard collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_)
 }
@@ -116,7 +122,9 @@ async test "run emits Source envelope for each feature" {
   let collector = CollectorSink::new()
   let content = "Feature: Src\n\n  Scenario: S\n    Given a step\n"
   let features = [FeatureSource::Text("test://src", content)]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut found = false
   for env in collector.envelopes {
     match env {
@@ -140,7 +148,9 @@ async test "run emits GherkinDocument envelope after parsing" {
       "test://gdoc", "Feature: GDoc\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut found = false
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::GherkinDocument(_) {
@@ -159,7 +169,9 @@ async test "run emits Pickle envelopes after compilation" {
       "test://pickle", "Feature: P\n\n  Scenario: One\n    Given a step\n  Scenario: Two\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut pickle_count = 0
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::Pickle(_) {
@@ -177,7 +189,9 @@ async test "run emits StepDefinition envelopes after Pickles" {
       "test://sd", "Feature: SD\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut sd_count = 0
   let mut pickle_idx = -1
   let mut first_sd_idx = -1
@@ -216,7 +230,9 @@ async test "run emits TestCase envelopes with test steps" {
       "test://tc", "Feature: TC\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut found = false
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::TestCase(_) {
@@ -235,7 +251,9 @@ async test "run emits envelopes in canonical order" {
       "test://order", "Feature: Order\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let types : Array[String] = []
   for env in collector.envelopes {
     match env {
@@ -275,7 +293,9 @@ async test "full envelope sequence for two-scenario feature" {
   let collector = CollectorSink::new()
   let content = "Feature: Full\n\n  Scenario: A\n    Given a step\n\n  Scenario: B\n    Given a step\n"
   let features = [FeatureSource::Text("test://full", content)]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let types : Array[String] = []
   for env in collector.envelopes {
     match env {
@@ -327,7 +347,9 @@ async test "run emits no ParameterType envelopes for built-in types only" {
       "test://pt", "Feature: PT\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let _ = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(RunWorld::default, opts)
   let mut pt_count = 0
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::ParameterType(_) {
@@ -354,7 +376,9 @@ async test "run emits ParameterType envelopes for custom types" {
       "test://pt", "Feature: PT\n\n  Scenario: S\n    Given I pick a red cucumber\n",
     ),
   ]
-  let _ = run(ParamWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(ParamWorld::default, opts)
   let mut pt_count = 0
   for env in collector.envelopes {
     if env is @cucumber_messages.Envelope::ParameterType(_) {
@@ -372,7 +396,9 @@ async test "run emits ParameterType after StepDefinition before TestCase" {
       "test://pt-order", "Feature: PTO\n\n  Scenario: S\n    Given I pick a blue cucumber\n",
     ),
   ]
-  let _ = run(ParamWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let _ = run(ParamWorld::default, opts)
   let mut sd_idx = -1
   let mut pt_idx = -1
   let mut tc_idx = -1
@@ -403,7 +429,9 @@ async test "run emits ParseError envelope for invalid feature" {
       "test://ok", "Feature: OK\n\n  Scenario: S\n    Given a step\n",
     ),
   ]
-  let result = run(RunWorld::default, features, sinks=[collector])
+  let opts = RunOptions(features)
+  opts.add_sink(collector)
+  let result = run(RunWorld::default, opts)
   // Run should continue with valid features
   assert_eq(result.summary.total_scenarios, 1)
   // Parse errors should be in result
@@ -423,13 +451,161 @@ async test "run emits ParseError envelope for invalid feature" {
 async test "run_or_fail raises on parse errors" {
   let mut caught = false
   try
-    run_or_fail(RunWorld::default, [
-      FeatureSource::Text("test://bad", "Not valid Gherkin"),
-    ])
+    run_or_fail(
+      RunWorld::default,
+      RunOptions([FeatureSource::Text("test://bad", "Not valid Gherkin")]),
+    )
     |> ignore
   catch {
     @core.RunFailed(..) => caught = true
     _ => ()
   }
   assert_true(caught)
+}
+
+///|
+struct HookEnvWorld {
+  log : Array[String]
+} derive(Default)
+
+///|
+impl @core.World for HookEnvWorld with configure(self, setup) {
+  setup.before_test_case(fn(_info) { self.log.push("before") })
+  setup.after_test_case(fn(_info, _result) { self.log.push("after") })
+  setup.given("a step", fn(_args) {  })
+}
+
+///|
+async test "run emits Hook envelopes for registered hooks" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text(
+      "test://hooks", "Feature: H\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  let mut hook_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::Hook(_) {
+      hook_count += 1
+    }
+  }
+  // 2 hooks: before_test_case + after_test_case
+  assert_eq(hook_count, 2)
+}
+
+///|
+async test "run emits Hook envelopes in correct position" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text(
+      "test://hook-order", "Feature: HO\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  let mut sd_idx = -1
+  let mut hook_idx = -1
+  let mut tc_idx = -1
+  for i, env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::StepDefinition(_) =>
+        if sd_idx < 0 {
+          sd_idx = i
+        }
+      @cucumber_messages.Envelope::Hook(_) => if hook_idx < 0 { hook_idx = i }
+      @cucumber_messages.Envelope::TestCase(_) => if tc_idx < 0 { tc_idx = i }
+      _ => ()
+    }
+  }
+  assert_true(hook_idx > sd_idx)
+  assert_true(hook_idx < tc_idx)
+}
+
+///|
+struct RunHookWorld {} derive(Default)
+
+///|
+impl @core.World for RunHookWorld with configure(_self, setup) {
+  setup.before_test_run(fn() {  })
+  setup.given("a step", fn(_args) {  })
+}
+
+///|
+async test "run emits TestRunHookStarted and TestRunHookFinished" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text(
+      "test://run-hooks", "Feature: RH\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
+  let _ = run(RunHookWorld::default, opts)
+  let mut trhs_count = 0
+  let mut trhf_count = 0
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestRunHookStarted(_) => trhs_count += 1
+      @cucumber_messages.Envelope::TestRunHookFinished(_) => trhf_count += 1
+      _ => ()
+    }
+  }
+  assert_eq(trhs_count, 1)
+  assert_eq(trhf_count, 1)
+}
+
+///|
+async test "TestCase envelope includes hook steps" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text(
+      "test://tc-hooks", "Feature: TC\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestCase(tc) => {
+        // Should have: before_test_case step + 1 regular step + after_test_case step = 3
+        assert_eq(tc.testSteps.length(), 3)
+        // First step should have hookId (before_test_case)
+        assert_true(tc.testSteps[0].hookId is Some(_))
+        assert_true(tc.testSteps[0].pickleStepId is None)
+        // Middle step should have pickleStepId (regular step)
+        assert_true(tc.testSteps[1].pickleStepId is Some(_))
+        assert_true(tc.testSteps[1].hookId is None)
+        // Last step should have hookId (after_test_case)
+        assert_true(tc.testSteps[2].hookId is Some(_))
+        assert_true(tc.testSteps[2].pickleStepId is None)
+      }
+      _ => ()
+    }
+  }
+}
+
+///|
+async test "hook steps emit TestStepStarted and TestStepFinished" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text(
+      "test://hook-steps", "Feature: HS\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  let types : Array[String] = []
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestStepStarted(_) =>
+        types.push("TestStepStarted")
+      @cucumber_messages.Envelope::TestStepFinished(_) =>
+        types.push("TestStepFinished")
+      _ => ()
+    }
+  }
+  // 3 steps: before_test_case hook + regular step + after_test_case hook
+  // Each gets Started + Finished = 6 envelopes
+  assert_eq(types.length(), 6)
+  let expected : Array[String] = [
+    "TestStepStarted", "TestStepFinished", "TestStepStarted", "TestStepFinished",
+    "TestStepStarted", "TestStepFinished",
+  ]
+  assert_eq(types, expected)
 }
