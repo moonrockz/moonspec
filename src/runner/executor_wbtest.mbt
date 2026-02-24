@@ -46,9 +46,7 @@ test "execute_scenario with all steps passing" {
 test "execute_scenario skips remaining steps after failure" {
   let setup = @core.Setup::new()
   setup.given("a passing step", fn(_ctx) {  })
-  setup.when("a failing step", fn(_ctx) raise {
-    raise Failure::Failure("boom")
-  })
+  setup.when("a failing step", fn(_ctx) raise { raise Failure::Failure("boom") })
   setup.then("this should be skipped", fn(_ctx) {  })
   let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [

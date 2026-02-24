@@ -245,7 +245,11 @@ test "Ctx args returns view" {
 ///|
 test "Ctx scenario and step accessors" {
   let args : Array[StepArg] = []
-  let info : ScenarioInfo = { feature_name: "MyFeature", scenario_name: "MyScenario", tags: ["@smoke"] }
+  let info : ScenarioInfo = {
+    feature_name: "MyFeature",
+    scenario_name: "MyScenario",
+    tags: ["@smoke"],
+  }
   let step : StepInfo = { keyword: "When ", text: "I do something" }
   let ctx = Ctx::new(args, info, step)
   assert_eq(ctx.scenario().feature_name, "MyFeature")
@@ -269,11 +273,10 @@ test "Ctx value convenience accessor" {
 
 ///|
 test "Ctx attach text" {
-  let ctx = Ctx::new(
-    [],
-    { feature_name: "F", scenario_name: "S", tags: [] },
-    { keyword: "Given ", text: "step" },
-  )
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+    keyword: "Given ",
+    text: "step",
+  })
   ctx.attach("hello", "text/plain")
   assert_eq(ctx.attachments.length(), 1)
   match ctx.attachments[0] {
@@ -289,11 +292,10 @@ test "Ctx attach text" {
 
 ///|
 test "Ctx attach_bytes base64 encodes" {
-  let ctx = Ctx::new(
-    [],
-    { feature_name: "F", scenario_name: "S", tags: [] },
-    { keyword: "Given ", text: "step" },
-  )
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+    keyword: "Given ",
+    text: "step",
+  })
   ctx.attach_bytes(b"hello", "application/octet-stream")
   assert_eq(ctx.attachments.length(), 1)
   match ctx.attachments[0] {
@@ -308,11 +310,10 @@ test "Ctx attach_bytes base64 encodes" {
 
 ///|
 test "Ctx attach_url" {
-  let ctx = Ctx::new(
-    [],
-    { feature_name: "F", scenario_name: "S", tags: [] },
-    { keyword: "Given ", text: "step" },
-  )
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+    keyword: "Given ",
+    text: "step",
+  })
   ctx.attach_url("https://example.com/img.png", "image/png")
   assert_eq(ctx.attachments.length(), 1)
   match ctx.attachments[0] {
@@ -326,11 +327,10 @@ test "Ctx attach_url" {
 
 ///|
 test "Ctx attach with file_name" {
-  let ctx = Ctx::new(
-    [],
-    { feature_name: "F", scenario_name: "S", tags: [] },
-    { keyword: "Given ", text: "step" },
-  )
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+    keyword: "Given ",
+    text: "step",
+  })
   ctx.attach("some notes", "text/plain", file_name="notes.txt")
   assert_eq(ctx.attachments.length(), 1)
   match ctx.attachments[0] {

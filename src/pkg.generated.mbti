@@ -62,6 +62,8 @@ pub using @runner {type ScenarioStatus}
 
 pub using @core {type Setup}
 
+pub using @core {type StepArg}
+
 pub using @core {type StepDef}
 
 pub using @core {type StepInfo}

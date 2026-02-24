@@ -65,16 +65,19 @@ pub impl Show for Columns
 type CompiledStep
 
 pub(all) struct Ctx {
-  value : StepValue
-  raw : String
   attachments : Array[PendingAttachment]
+  // private fields
 }
-pub fn Ctx::attach(Self, String, String, file_name? : String?) -> Unit
-pub fn Ctx::attach_bytes(Self, Bytes, String, file_name? : String?) -> Unit
+pub fn Ctx::arg(Self, Int) -> StepArg
+pub fn Ctx::args(Self) -> ArrayView[StepArg]
+pub fn Ctx::attach(Self, String, String, file_name? : String) -> Unit
+pub fn Ctx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
 pub fn Ctx::attach_url(Self, String, String) -> Unit
-pub fn Ctx::from_param(@cucumber-expressions.Param) -> Self
-pub impl Eq for Ctx
-pub impl Show for Ctx
+pub fn Ctx::new(Array[StepArg], ScenarioInfo, StepInfo) -> Self
+pub fn Ctx::op_get(Self, Int) -> StepArg
+pub fn Ctx::scenario(Self) -> ScenarioInfo
+pub fn Ctx::step(Self) -> StepInfo
+pub fn Ctx::value(Self, Int) -> StepValue
 
 pub(all) struct CustomParamTypeInfo {
   name : String
@@ -185,15 +188,23 @@ pub fn Setup::before_test_run(Self, () -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
 pub fn Setup::before_test_step(Self, (StepInfo) -> Unit raise, loc~ : SourceLoc) -> Unit
 pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
-pub fn Setup::given(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
+pub fn Setup::given(Self, String, (Ctx) -> Unit raise) -> Unit
 pub fn Setup::hook_registry(Self) -> HookRegistry
 pub fn Setup::new() -> Self
 pub fn Setup::param_registry(Self) -> @cucumber-expressions.ParamTypeRegistry
-pub fn Setup::step(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
+pub fn Setup::step(Self, String, (Ctx) -> Unit raise) -> Unit
 pub fn Setup::step_registry(Self) -> StepRegistry
-pub fn Setup::then(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
+pub fn Setup::then(Self, String, (Ctx) -> Unit raise) -> Unit
 pub fn[L : StepLibrary] Setup::use_library(Self, L) -> Unit
-pub fn Setup::when(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
+pub fn Setup::when(Self, String, (Ctx) -> Unit raise) -> Unit
+
+pub(all) struct StepArg {
+  value : StepValue
+  raw : String
+}
+pub fn StepArg::from_param(@cucumber-expressions.Param) -> Self
+pub impl Eq for StepArg
+pub impl Show for StepArg
 
 pub(all) struct StepDef {
   keyword : StepKeyword
@@ -202,10 +213,10 @@ pub(all) struct StepDef {
   source : StepSource?
   mut id : StepDefId?
 }
-pub fn StepDef::given(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
-pub fn StepDef::step(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
-pub fn StepDef::then(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
-pub fn StepDef::when(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::given(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::step(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::then(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::when(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
 
 pub(all) struct StepDefId {
   // private fields
@@ -217,9 +228,9 @@ pub impl Eq for StepDefId
 pub impl Hash for StepDefId
 pub impl Show for StepDefId
 
-pub struct StepHandler((Array[Ctx]) -> Unit raise)
+pub struct StepHandler((Ctx) -> Unit raise)
 #deprecated
-pub fn StepHandler::inner(Self) -> (Array[Ctx]) -> Unit raise
+pub fn StepHandler::inner(Self) -> (Ctx) -> Unit raise
 
 pub(all) struct StepInfo {
   keyword : String
@@ -238,7 +249,7 @@ pub impl Eq for StepKeyword
 pub impl Show for StepKeyword
 
 pub(all) enum StepMatchResult {
-  Matched(StepDef, Array[Ctx])
+  Matched(StepDef, Array[StepArg])
   Undefined(step_text~ : String, keyword~ : String, snippet~ : String, suggestions~ : Array[String])
 }
 

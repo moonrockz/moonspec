@@ -37,16 +37,16 @@ struct CalcWorld {
 } derive(Default)
 
 impl @moonspec.World for CalcWorld with configure(self, setup) {
-  setup.given("a calculator", fn(_args) { self.result = 0 })
-  setup.when("I add {int} and {int}", fn(args) {
-    match (args[0], args[1]) {
+  setup.given("a calculator", fn(_ctx) { self.result = 0 })
+  setup.when("I add {int} and {int}", fn(ctx) {
+    match (ctx[0], ctx[1]) {
       ({ value: @moonspec.StepValue::IntVal(a), .. }, { value: @moonspec.StepValue::IntVal(b), .. }) =>
         self.result = a + b
       _ => ()
     }
   })
-  setup.then("the result should be {int}", fn(args) raise {
-    match args[0] {
+  setup.then("the result should be {int}", fn(ctx) raise {
+    match ctx[0] {
       { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.result, expected)
       _ => ()
     }
@@ -137,26 +137,28 @@ struct MyWorld {
 ### Configuring Steps
 
 Implement the `World` trait to configure step definitions. The `self` parameter is
-your world instance -- closures capture it to share state between steps:
+your world instance -- closures capture it to share state between steps. Step
+handlers receive a `Ctx` wrapper that provides indexed access to arguments,
+scenario/step metadata, and attachment methods:
 
 ```moonbit
 impl @moonspec.World for MyWorld with configure(self, setup) {
-  setup.given("I have {int} cucumbers", fn(args) {
-    match args[0] {
+  setup.given("I have {int} cucumbers", fn(ctx) {
+    match ctx[0] {
       { value: @moonspec.StepValue::IntVal(n), .. } => self.cucumbers = n
       _ => ()
     }
   })
 
-  setup.when("I eat {int} cucumbers", fn(args) {
-    match args[0] {
+  setup.when("I eat {int} cucumbers", fn(ctx) {
+    match ctx[0] {
       { value: @moonspec.StepValue::IntVal(n), .. } => self.cucumbers = self.cucumbers - n
       _ => ()
     }
   })
 
-  setup.then("I should have {int} cucumbers", fn(args) raise {
-    match args[0] {
+  setup.then("I should have {int} cucumbers", fn(ctx) raise {
+    match ctx[0] {
       { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.cucumbers, expected)
       _ => ()
     }
@@ -180,13 +182,15 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 | `{word}` | `WordVal(String)` | `"as {word}"` |
 | custom | `CustomVal(@any.Any)` | user-defined types (see [Custom Parameter Types](#custom-parameter-types)) |
 
-### Ctx Destructuring
+### Ctx and StepArg Destructuring
 
-Arguments are passed as `Array[Ctx]` where each `Ctx` is a struct with `value` (typed `StepValue`) and `raw` (the original matched string). Use struct destructuring to extract values:
+Step handlers receive a `Ctx` object. Use `ctx[i]` or `ctx.arg(i)` to access
+individual `StepArg` values (each has `value : StepValue` and `raw : String`).
+Use struct destructuring on `StepArg` to extract typed values:
 
 ```moonbit
-setup.when("I transfer {float} from {string} to {string}", fn(args) {
-  match (args[0], args[1], args[2]) {
+setup.when("I transfer {float} from {string} to {string}", fn(ctx) {
+  match (ctx[0], ctx[1], ctx[2]) {
     ({ value: @moonspec.StepValue::FloatVal(amount), .. },
      { value: @moonspec.StepValue::StringVal(from), .. },
      { value: @moonspec.StepValue::StringVal(to), .. }) =>
@@ -198,18 +202,19 @@ setup.when("I transfer {float} from {string} to {string}", fn(args) {
 
 ### Attachments
 
-Steps can attach content to test results for reporting:
+Steps can attach content to test results for reporting. Attachment methods are
+called directly on the `Ctx` object:
 
 ```moonbit
-setup.given("I take a screenshot", fn(args) {
+setup.given("I take a screenshot", fn(ctx) {
   // Attach text
-  args[0].attach("log output here", "text/plain")
+  ctx.attach("log output here", "text/plain")
 
   // Attach binary (auto base64-encoded)
-  args[0].attach_bytes(screenshot_bytes, "image/png", file_name=Some("screenshot.png"))
+  ctx.attach_bytes(screenshot_bytes, "image/png", file_name="screenshot.png")
 
   // Attach external URL
-  args[0].attach_url("https://ci.example.com/artifacts/log.txt", "text/plain")
+  ctx.attach_url("https://ci.example.com/artifacts/log.txt", "text/plain")
 })
 ```
 
@@ -220,9 +225,9 @@ Attachments are emitted as `Attachment` and `ExternalAttachment` envelopes in th
 Use `setup.step()` to register a step that matches any keyword (Given/When/Then):
 
 ```moonbit
-setup.step("I wait {int} seconds", fn(args) {
+setup.step("I wait {int} seconds", fn(ctx) {
   // matches "Given I wait 5 seconds", "When I wait 5 seconds", etc.
-  ignore(args)
+  ignore(ctx)
 })
 ```
 
@@ -236,14 +241,14 @@ struct AccountSteps { world : BankWorld }
 
 impl @moonspec.StepLibrary for AccountSteps with steps(self) {
   [
-    @moonspec.StepDef::given("a bank account with balance {int}", fn(args) {
-      match args[0] {
+    @moonspec.StepDef::given("a bank account with balance {int}", fn(ctx) {
+      match ctx[0] {
         { value: @moonspec.StepValue::IntVal(n), .. } => self.world.balance = n
         _ => ()
       }
     }),
-    @moonspec.StepDef::then("the balance should be {int}", fn(args) raise {
-      match args[0] {
+    @moonspec.StepDef::then("the balance should be {int}", fn(ctx) raise {
+      match ctx[0] {
         { value: @moonspec.StepValue::IntVal(n), .. } => assert_eq(self.world.balance, n)
         _ => ()
       }
@@ -272,8 +277,8 @@ built-in `{int}`, `{float}`, `{string}`, and `{word}` types:
 impl @moonspec.World for MyWorld with configure(self, setup) {
   setup.add_param_type("color", [@cucumber_expressions.RegexPattern("red|green|blue")])
 
-  setup.then("the light should be {color}", fn(args) raise {
-    match args[0] {
+  setup.then("the light should be {color}", fn(ctx) raise {
+    match ctx[0] {
       { value: @moonspec.StepValue::CustomVal(any), .. } => {
         let color : String = any.to()
         assert_eq(self.light_color, color)
@@ -327,7 +332,7 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
     ignore(result)
   })
   // Register steps as usual
-  setup.given("a step", fn(_args) {  })
+  setup.given("a step", fn(_ctx) {  })
 }
 ```
 

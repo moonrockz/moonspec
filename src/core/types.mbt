@@ -152,12 +152,7 @@ pub fn Ctx::new(
   scenario : ScenarioInfo,
   step : StepInfo,
 ) -> Ctx {
-  {
-    step_args: args,
-    scenario_info: scenario,
-    step_info: step,
-    attachments: [],
-  }
+  { step_args: args, scenario_info: scenario, step_info: step, attachments: [] }
 }
 
 ///|
@@ -197,6 +192,16 @@ pub fn Ctx::step(self : Ctx) -> StepInfo {
 }
 
 ///|
+/// Parse an AttachmentContentEncoding from a JSON string literal.
+/// Workaround: enum constructors from external packages are not directly
+/// accessible in MoonBit, so we round-trip through JSON.
+fn parse_encoding(s : String) -> @cucumber_messages.AttachmentContentEncoding {
+  @json.from_json(@json.parse(s) catch { _ => panic() }) catch {
+    _ => panic()
+  }
+}
+
+///|
 /// Attach text content to the current step/hook.
 pub fn Ctx::attach(
   self : Ctx,
@@ -204,13 +209,7 @@ pub fn Ctx::attach(
   media_type : String,
   file_name? : String,
 ) -> Unit {
-  // JSON round-trip: AttachmentContentEncoding constructors are not directly
-  // accessible from outside the cucumber-messages package in MoonBit.
-  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"IDENTITY\"") catch { _ => panic() },
-  ) catch {
-    _ => panic()
-  }
+  let encoding = parse_encoding("\"IDENTITY\"")
   self.attachments.push(
     PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
   )
@@ -225,12 +224,7 @@ pub fn Ctx::attach_bytes(
   file_name? : String,
 ) -> Unit {
   let body = @base64.encode(data[:])
-  // JSON round-trip: see comment in Ctx::attach above.
-  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"BASE64\"") catch { _ => panic() },
-  ) catch {
-    _ => panic()
-  }
+  let encoding = parse_encoding("\"BASE64\"")
   self.attachments.push(
     PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
   )

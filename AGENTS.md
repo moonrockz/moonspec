@@ -163,7 +163,8 @@ before implementing them:
 pub fn StepRegistry::find_match(
   self : StepRegistry,
   text : String,
-) -> (StepHandler, Array[Ctx], String)? {
+  keyword? : String,
+) -> StepMatchResult {
   ...
 }
 ```
