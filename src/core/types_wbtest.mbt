@@ -409,3 +409,36 @@ test "HookResult Failed with ScenarioFailed" {
     _ => fail("expected Failed")
   }
 }
+
+///|
+test "RunHookCtx attach and drain" {
+  let ctx = RunHookCtx::new()
+  ctx.attach("run log", "text/plain")
+  ctx.attach_url("https://example.com/log", "text/plain")
+  assert_eq(ctx.pending_attachments().length(), 2)
+}
+
+///|
+test "CaseHookCtx scenario accessor and attach" {
+  let info : ScenarioInfo = {
+    feature_name: "F",
+    scenario_name: "S",
+    tags: ["@smoke"],
+  }
+  let ctx = CaseHookCtx::new(info)
+  assert_eq(ctx.scenario().feature_name, "F")
+  assert_eq(ctx.scenario().tags[0], "@smoke")
+  ctx.attach("case log", "text/plain")
+  assert_eq(ctx.pending_attachments().length(), 1)
+}
+
+///|
+test "StepHookCtx scenario and step accessors and attach" {
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
+  let step : StepInfo = { keyword: "When ", text: "I do something" }
+  let ctx = StepHookCtx::new(info, step)
+  assert_eq(ctx.scenario().scenario_name, "S")
+  assert_eq(ctx.step().keyword, "When ")
+  ctx.attach_bytes(b"data", "application/octet-stream")
+  assert_eq(ctx.pending_attachments().length(), 1)
+}
