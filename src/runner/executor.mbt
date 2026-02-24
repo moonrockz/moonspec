@@ -46,6 +46,16 @@ fn emit_attachments(
 }
 
 ///|
+fn parse_keyword_string(s : String) -> @core.StepKeyword {
+  match s {
+    "Given " => @core.StepKeyword::Given
+    "When " => @core.StepKeyword::When
+    "Then " => @core.StepKeyword::Then
+    _ => @core.StepKeyword::Step
+  }
+}
+
+///|
 /// Execute a single scenario from a compiled Pickle.
 ///
 /// When a `hook_registry` is provided (and contains hooks), lifecycle hooks
@@ -89,7 +99,17 @@ pub fn execute_scenario(
       match hook.handler {
         @core.CaseHandler(h) =>
           try {
-            h(info, None)
+            let hook_ctx = @core.CaseHookCtx::new(info)
+            h(hook_ctx)
+            if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+              emit_attachments(
+                sinks,
+                hook_ctx.pending_attachments(),
+                test_case_started_id,
+                Some(ts_id),
+              )
+              hook_ctx.pending_attachments().clear()
+            }
             "PASSED"
           } catch {
             e => {
@@ -153,6 +173,13 @@ pub fn execute_scenario(
       })
     }
     // after_test_case hooks still run even on before failure
+    let case_hook_result : @core.HookResult = @core.HookResult::Failed([
+      @core.HookError::StepFailed(
+        step="",
+        keyword=@core.StepKeyword::Step,
+        message=msg,
+      ),
+    ])
     for hook in after_case_hooks {
       let ts_id = if step_idx < test_step_ids.length() {
         test_step_ids[step_idx]
@@ -167,9 +194,19 @@ pub fn execute_scenario(
         )
       }
       let after_status = match hook.handler {
-        @core.CaseHandler(h) =>
+        @core.CaseAfterHandler(h) =>
           try {
-            h(info, Some(msg))
+            let hook_ctx = @core.CaseHookCtx::new(info)
+            h(hook_ctx, case_hook_result)
+            if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+              emit_attachments(
+                sinks,
+                hook_ctx.pending_attachments(),
+                test_case_started_id,
+                Some(ts_id),
+              )
+              hook_ctx.pending_attachments().clear()
+            }
             "PASSED"
           } catch {
             _ => "FAILED"
@@ -201,7 +238,6 @@ pub fn execute_scenario(
   // Execute steps with optional before/after_step hooks
   let step_results : Array[StepResult] = []
   let mut failed = false
-  let mut scenario_error : String? = None
   for _i, step in steps {
     let keyword = match step.type_ {
       Some(@cucumber_messages.PickleStepType::Context) => "Given "
@@ -248,10 +284,21 @@ pub fn execute_scenario(
           break
         }
         match hook.handler {
-          @core.StepHandler(h) =>
-            h(step_info, None) catch {
+          @core.StepHandler(h) => {
+            let hook_ctx = @core.StepHookCtx::new(info, step_info)
+            h(hook_ctx) catch {
               e => err = Some(e.to_string())
             }
+            if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+              emit_attachments(
+                sinks,
+                hook_ctx.pending_attachments(),
+                test_case_started_id,
+                Some(ts_id),
+              )
+              hook_ctx.pending_attachments().clear()
+            }
+          }
           _ => ()
         }
       }
@@ -348,42 +395,53 @@ pub fn execute_scenario(
     if has_sinks {
       match ctx_for_drain {
         Some(c) =>
-          if c.attachments.length() > 0 {
+          if c.pending_attachments().length() > 0 {
             emit_attachments(
               sinks,
-              c.attachments,
+              c.pending_attachments(),
               test_case_started_id,
               Some(ts_id),
             )
-            c.attachments.clear()
+            c.pending_attachments().clear()
           }
         None => ()
       }
     }
     // after_test_step hooks
     if after_step_hooks.length() > 0 {
-      let step_result_msg : String? = match status {
-        StepStatus::Failed(msg) => Some(msg)
-        _ => None
+      let step_hook_result : @core.HookResult = match status {
+        StepStatus::Failed(msg) =>
+          @core.HookResult::Failed([
+            @core.HookError::StepFailed(
+              step=step.text,
+              keyword=parse_keyword_string(keyword),
+              message=msg,
+            ),
+          ])
+        _ => @core.HookResult::Passed
       }
       for hook in after_step_hooks {
         match hook.handler {
-          @core.StepHandler(h) => {
-            let _ = h(step_info, step_result_msg) catch { _ => () }
+          @core.StepAfterHandler(h) => {
+            let hook_ctx = @core.StepHookCtx::new(info, step_info)
+            let _ = h(hook_ctx, step_hook_result) catch { _ => () }
+            if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+              emit_attachments(
+                sinks,
+                hook_ctx.pending_attachments(),
+                test_case_started_id,
+                Some(ts_id),
+              )
+              hook_ctx.pending_attachments().clear()
+            }
           }
           _ => ()
         }
       }
     }
     match status {
-      StepStatus::Failed(msg) => {
+      StepStatus::Failed(_) | StepStatus::Undefined | StepStatus::Pending =>
         failed = true
-        scenario_error = Some(msg)
-      }
-      StepStatus::Undefined | StepStatus::Pending => {
-        failed = true
-        scenario_error = None
-      }
       _ => ()
     }
     step_results.push({
@@ -395,6 +453,25 @@ pub fn execute_scenario(
     })
   }
   // after_test_case hooks — emit TestStepStarted/Finished for each
+  let step_errors : Array[@core.HookError] = []
+  for r in step_results {
+    match r.status {
+      StepStatus::Failed(msg) =>
+        step_errors.push(
+          @core.HookError::StepFailed(
+            step=r.text,
+            keyword=parse_keyword_string(r.keyword),
+            message=msg,
+          ),
+        )
+      _ => ()
+    }
+  }
+  let case_hook_result : @core.HookResult = if step_errors.length() > 0 {
+    @core.HookResult::Failed(step_errors)
+  } else {
+    @core.HookResult::Passed
+  }
   for hook in after_case_hooks {
     let ts_id = if step_idx < test_step_ids.length() {
       test_step_ids[step_idx]
@@ -406,9 +483,19 @@ pub fn execute_scenario(
       emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
     }
     let after_status = match hook.handler {
-      @core.CaseHandler(h) =>
+      @core.CaseAfterHandler(h) =>
         try {
-          h(info, scenario_error)
+          let hook_ctx = @core.CaseHookCtx::new(info)
+          h(hook_ctx, case_hook_result)
+          if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+            emit_attachments(
+              sinks,
+              hook_ctx.pending_attachments(),
+              test_case_started_id,
+              Some(ts_id),
+            )
+            hook_ctx.pending_attachments().clear()
+          }
           "PASSED"
         } catch {
           _ => "FAILED"

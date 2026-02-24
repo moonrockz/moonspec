@@ -142,7 +142,7 @@ pub(all) struct Ctx {
   priv step_args : Array[StepArg]
   priv scenario_info : ScenarioInfo
   priv step_info : StepInfo
-  attachments : Array[PendingAttachment]
+  priv attachments : Array[PendingAttachment]
 }
 
 ///|
@@ -192,6 +192,15 @@ pub fn Ctx::step(self : Ctx) -> StepInfo {
 }
 
 ///|
+/// Trait for any context that can buffer attachments.
+pub trait Attachable {
+  attach(Self, String, String, file_name? : String) -> Unit
+  attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+  attach_url(Self, String, String) -> Unit
+  pending_attachments(Self) -> Array[PendingAttachment]
+}
+
+///|
 /// Parse an AttachmentContentEncoding from a JSON string literal.
 /// Workaround: enum constructors from external packages are not directly
 /// accessible in MoonBit, so we round-trip through JSON.
@@ -237,6 +246,12 @@ pub fn Ctx::attach_url(self : Ctx, url : String, media_type : String) -> Unit {
 }
 
 ///|
+/// Access buffered attachments (for executor draining).
+pub fn Ctx::pending_attachments(self : Ctx) -> Array[PendingAttachment] {
+  self.attachments
+}
+
+///|
 /// Result of matching step text against the registry.
 pub(all) enum StepMatchResult {
   Matched(StepDef, Array[StepArg])
@@ -262,6 +277,207 @@ pub(all) struct StepInfo {
   keyword : String
   text : String
 } derive(Show, Eq)
+
+///|
+/// Structured error reported to after-hooks.
+pub(all) enum HookError {
+  StepFailed(step~ : String, keyword~ : StepKeyword, message~ : String)
+  ScenarioFailed(
+    feature_name~ : String,
+    scenario_name~ : String,
+    message~ : String
+  )
+} derive(Show, Eq)
+
+///|
+/// Result passed to after-hooks indicating pass/fail with structured errors.
+pub(all) enum HookResult {
+  Passed
+  Failed(Array[HookError])
+} derive(Show, Eq)
+
+///|
+/// Hook context for test run-level hooks (before/after_test_run).
+pub(all) struct RunHookCtx {
+  priv attachments : Array[PendingAttachment]
+}
+
+///|
+pub fn RunHookCtx::new() -> RunHookCtx {
+  { attachments: [] }
+}
+
+///|
+pub fn RunHookCtx::pending_attachments(
+  self : RunHookCtx,
+) -> Array[PendingAttachment] {
+  self.attachments
+}
+
+///|
+pub fn RunHookCtx::attach(
+  self : RunHookCtx,
+  body : String,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let encoding = parse_encoding("\"IDENTITY\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+pub fn RunHookCtx::attach_bytes(
+  self : RunHookCtx,
+  data : Bytes,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let body = @base64.encode(data[:])
+  let encoding = parse_encoding("\"BASE64\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+pub fn RunHookCtx::attach_url(
+  self : RunHookCtx,
+  url : String,
+  media_type : String,
+) -> Unit {
+  self.attachments.push(PendingAttachment::External(url~, media_type~))
+}
+
+///|
+/// Hook context for test case-level hooks (before/after_test_case).
+pub(all) struct CaseHookCtx {
+  priv scenario_info : ScenarioInfo
+  priv attachments : Array[PendingAttachment]
+}
+
+///|
+pub fn CaseHookCtx::new(scenario : ScenarioInfo) -> CaseHookCtx {
+  { scenario_info: scenario, attachments: [] }
+}
+
+///|
+pub fn CaseHookCtx::scenario(self : CaseHookCtx) -> ScenarioInfo {
+  self.scenario_info
+}
+
+///|
+pub fn CaseHookCtx::pending_attachments(
+  self : CaseHookCtx,
+) -> Array[PendingAttachment] {
+  self.attachments
+}
+
+///|
+pub fn CaseHookCtx::attach(
+  self : CaseHookCtx,
+  body : String,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let encoding = parse_encoding("\"IDENTITY\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+pub fn CaseHookCtx::attach_bytes(
+  self : CaseHookCtx,
+  data : Bytes,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let body = @base64.encode(data[:])
+  let encoding = parse_encoding("\"BASE64\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+pub fn CaseHookCtx::attach_url(
+  self : CaseHookCtx,
+  url : String,
+  media_type : String,
+) -> Unit {
+  self.attachments.push(PendingAttachment::External(url~, media_type~))
+}
+
+///|
+/// Hook context for test step-level hooks (before/after_test_step).
+pub(all) struct StepHookCtx {
+  priv scenario_info : ScenarioInfo
+  priv step_info : StepInfo
+  priv attachments : Array[PendingAttachment]
+}
+
+///|
+pub fn StepHookCtx::new(
+  scenario : ScenarioInfo,
+  step : StepInfo,
+) -> StepHookCtx {
+  { scenario_info: scenario, step_info: step, attachments: [] }
+}
+
+///|
+pub fn StepHookCtx::scenario(self : StepHookCtx) -> ScenarioInfo {
+  self.scenario_info
+}
+
+///|
+pub fn StepHookCtx::step(self : StepHookCtx) -> StepInfo {
+  self.step_info
+}
+
+///|
+pub fn StepHookCtx::pending_attachments(
+  self : StepHookCtx,
+) -> Array[PendingAttachment] {
+  self.attachments
+}
+
+///|
+pub fn StepHookCtx::attach(
+  self : StepHookCtx,
+  body : String,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let encoding = parse_encoding("\"IDENTITY\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+pub fn StepHookCtx::attach_bytes(
+  self : StepHookCtx,
+  data : Bytes,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let body = @base64.encode(data[:])
+  let encoding = parse_encoding("\"BASE64\"")
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+pub fn StepHookCtx::attach_url(
+  self : StepHookCtx,
+  url : String,
+  media_type : String,
+) -> Unit {
+  self.attachments.push(PendingAttachment::External(url~, media_type~))
+}
 
 ///|
 /// Immutable wrapper around an array of cell values in a DataTable row.

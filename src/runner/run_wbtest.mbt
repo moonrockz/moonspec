@@ -470,8 +470,8 @@ struct HookEnvWorld {
 
 ///|
 impl @core.World for HookEnvWorld with configure(self, setup) {
-  setup.before_test_case(fn(_info) { self.log.push("before") })
-  setup.after_test_case(fn(_info, _result) { self.log.push("after") })
+  setup.before_test_case(fn(_ctx) { self.log.push("before") })
+  setup.after_test_case(fn(_ctx, _result) { self.log.push("after") })
   setup.given("a step", fn(_ctx) {  })
 }
 
@@ -526,7 +526,7 @@ struct RunHookWorld {} derive(Default)
 
 ///|
 impl @core.World for RunHookWorld with configure(_self, setup) {
-  setup.before_test_run(fn() {  })
+  setup.before_test_run(fn(_ctx) {  })
   setup.given("a step", fn(_ctx) {  })
 }
 

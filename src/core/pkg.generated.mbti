@@ -30,6 +30,16 @@ pub suberror MoonspecError {
 }
 
 // Types and methods
+pub(all) struct CaseHookCtx {
+  // private fields
+}
+pub fn CaseHookCtx::attach(Self, String, String, file_name? : String) -> Unit
+pub fn CaseHookCtx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+pub fn CaseHookCtx::attach_url(Self, String, String) -> Unit
+pub fn CaseHookCtx::new(ScenarioInfo) -> Self
+pub fn CaseHookCtx::pending_attachments(Self) -> Array[PendingAttachment]
+pub fn CaseHookCtx::scenario(Self) -> ScenarioInfo
+
 pub struct Cells {
   // private fields
 
@@ -65,7 +75,6 @@ pub impl Show for Columns
 type CompiledStep
 
 pub(all) struct Ctx {
-  attachments : Array[PendingAttachment]
   // private fields
 }
 pub fn Ctx::arg(Self, Int) -> StepArg
@@ -75,6 +84,7 @@ pub fn Ctx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
 pub fn Ctx::attach_url(Self, String, String) -> Unit
 pub fn Ctx::new(Array[StepArg], ScenarioInfo, StepInfo) -> Self
 pub fn Ctx::op_get(Self, Int) -> StepArg
+pub fn Ctx::pending_attachments(Self) -> Array[PendingAttachment]
 pub fn Ctx::scenario(Self) -> ScenarioInfo
 pub fn Ctx::step(Self) -> StepInfo
 pub fn Ctx::value(Self, Int) -> StepValue
@@ -106,10 +116,20 @@ pub(all) struct DocString {
 pub impl Eq for DocString
 pub impl Show for DocString
 
+pub(all) enum HookError {
+  StepFailed(step~ : String, keyword~ : StepKeyword, message~ : String)
+  ScenarioFailed(feature_name~ : String, scenario_name~ : String, message~ : String)
+}
+pub impl Eq for HookError
+pub impl Show for HookError
+
 pub(all) enum HookHandler {
-  RunHandler(() -> Unit raise)
-  CaseHandler((ScenarioInfo, String?) -> Unit raise)
-  StepHandler((StepInfo, String?) -> Unit raise)
+  RunHandler((RunHookCtx) -> Unit raise)
+  RunAfterHandler((RunHookCtx, HookResult) -> Unit raise)
+  CaseHandler((CaseHookCtx) -> Unit raise)
+  CaseAfterHandler((CaseHookCtx, HookResult) -> Unit raise)
+  StepHandler((StepHookCtx) -> Unit raise)
+  StepAfterHandler((StepHookCtx, HookResult) -> Unit raise)
 }
 
 pub(all) struct HookRegistry {
@@ -119,6 +139,13 @@ pub fn HookRegistry::add(Self, HookType, HookHandler, source? : StepSource?) -> 
 pub fn HookRegistry::by_type(Self, HookType) -> Array[RegisteredHook]
 pub fn HookRegistry::hooks(Self) -> ArrayView[RegisteredHook]
 pub fn HookRegistry::new() -> Self
+
+pub(all) enum HookResult {
+  Passed
+  Failed(Array[HookError])
+}
+pub impl Eq for HookResult
+pub impl Show for HookResult
 
 pub(all) enum HookType {
   BeforeTestRun
@@ -162,6 +189,15 @@ pub fn Rows::values(Self) -> ArrayView[Row]
 pub impl Eq for Rows
 pub impl Show for Rows
 
+pub(all) struct RunHookCtx {
+  // private fields
+}
+pub fn RunHookCtx::attach(Self, String, String, file_name? : String) -> Unit
+pub fn RunHookCtx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+pub fn RunHookCtx::attach_url(Self, String, String) -> Unit
+pub fn RunHookCtx::new() -> Self
+pub fn RunHookCtx::pending_attachments(Self) -> Array[PendingAttachment]
+
 pub(all) struct ScenarioInfo {
   feature_name : String
   scenario_name : String
@@ -176,17 +212,17 @@ pub(all) struct Setup {
 pub fn Setup::add_param_type(Self, String, Array[@cucumber-expressions.RegexPattern], transformer? : @cucumber-expressions.Transformer) -> Unit
 pub fn Setup::add_param_type_strings(Self, String, Array[String], transformer? : @cucumber-expressions.Transformer) -> Unit
 #callsite(autofill(loc))
-pub fn Setup::after_test_case(Self, (ScenarioInfo, String?) -> Unit raise, loc~ : SourceLoc) -> Unit
+pub fn Setup::after_test_case(Self, (CaseHookCtx, HookResult) -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
-pub fn Setup::after_test_run(Self, () -> Unit raise, loc~ : SourceLoc) -> Unit
+pub fn Setup::after_test_run(Self, (RunHookCtx, HookResult) -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
-pub fn Setup::after_test_step(Self, (StepInfo, String?) -> Unit raise, loc~ : SourceLoc) -> Unit
+pub fn Setup::after_test_step(Self, (StepHookCtx, HookResult) -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
-pub fn Setup::before_test_case(Self, (ScenarioInfo) -> Unit raise, loc~ : SourceLoc) -> Unit
+pub fn Setup::before_test_case(Self, (CaseHookCtx) -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
-pub fn Setup::before_test_run(Self, () -> Unit raise, loc~ : SourceLoc) -> Unit
+pub fn Setup::before_test_run(Self, (RunHookCtx) -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
-pub fn Setup::before_test_step(Self, (StepInfo) -> Unit raise, loc~ : SourceLoc) -> Unit
+pub fn Setup::before_test_step(Self, (StepHookCtx) -> Unit raise, loc~ : SourceLoc) -> Unit
 pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
 pub fn Setup::given(Self, String, (Ctx) -> Unit raise) -> Unit
 pub fn Setup::hook_registry(Self) -> HookRegistry
@@ -231,6 +267,17 @@ pub impl Show for StepDefId
 pub struct StepHandler((Ctx) -> Unit raise)
 #deprecated
 pub fn StepHandler::inner(Self) -> (Ctx) -> Unit raise
+
+pub(all) struct StepHookCtx {
+  // private fields
+}
+pub fn StepHookCtx::attach(Self, String, String, file_name? : String) -> Unit
+pub fn StepHookCtx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+pub fn StepHookCtx::attach_url(Self, String, String) -> Unit
+pub fn StepHookCtx::new(ScenarioInfo, StepInfo) -> Self
+pub fn StepHookCtx::pending_attachments(Self) -> Array[PendingAttachment]
+pub fn StepHookCtx::scenario(Self) -> ScenarioInfo
+pub fn StepHookCtx::step(Self) -> StepInfo
 
 pub(all) struct StepInfo {
   keyword : String
@@ -291,6 +338,13 @@ pub(all) enum StepValue {
 // Type aliases
 
 // Traits
+pub trait Attachable {
+  attach(Self, String, String, file_name? : String) -> Unit
+  attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+  attach_url(Self, String, String) -> Unit
+  pending_attachments(Self) -> Array[PendingAttachment]
+}
+
 pub(open) trait MessageSink {
   on_message(Self, @cucumber-messages.Envelope) -> Unit
 }

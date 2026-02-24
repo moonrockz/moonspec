@@ -16,6 +16,8 @@ pub async fn[W : @core.World] run_or_fail(() -> W, @runner.RunOptions) -> @runne
 // Types and methods
 
 // Type aliases
+pub using @core {type CaseHookCtx}
+
 pub using @core {type Cells}
 
 pub using @core {type Column}
@@ -32,9 +34,13 @@ pub using @runner {type FeatureResult}
 
 pub using @runner {type FeatureSource}
 
+pub using @core {type HookError}
+
 pub using @core {type HookHandler}
 
 pub using @core {type HookRegistry}
+
+pub using @core {type HookResult}
 
 pub using @core {type HookType}
 
@@ -47,6 +53,8 @@ pub using @core {type RegisteredHook}
 pub using @core {type Row}
 
 pub using @core {type Rows}
+
+pub using @core {type RunHookCtx}
 
 pub using @runner {type RunOptions}
 
@@ -66,6 +74,8 @@ pub using @core {type StepArg}
 
 pub using @core {type StepDef}
 
+pub using @core {type StepHookCtx}
+
 pub using @core {type StepInfo}
 
 pub using @core {type StepKeyword}
@@ -81,6 +91,8 @@ pub using @core {type StepSource}
 pub using @runner {type StepStatus}
 
 pub using @core {type StepValue}
+
+pub using @core {trait Attachable}
 
 pub using @core {trait StepLibrary}
 

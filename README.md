@@ -311,24 +311,36 @@ async test "my feature" {
 
 ## Lifecycle Hooks
 
-Register hooks in your World's `configure` method for setup/teardown logic:
+Register hooks in your World's `configure` method for setup/teardown logic.
+Hook handlers receive typed context objects that provide access to scenario/step
+metadata and support attachments:
 
 ```moonbit
 impl @moonspec.World for MyWorld with configure(self, setup) {
-  setup.before_test_case(fn(info) {
-    // Called before each scenario
-    println("Starting: " + info.scenario_name)
+  setup.before_test_case(fn(ctx) {
+    // ctx is CaseHookCtx -- access scenario info and attach content
+    let name = ctx.scenario().scenario_name
+    ctx.attach("starting: " + name, "text/plain")
   })
-  setup.after_test_case(fn(info, result) {
-    // Called after each scenario (result is None on success, Some(msg) on failure)
-    ignore(info)
-    ignore(result)
+  setup.after_test_case(fn(ctx, result) {
+    // ctx is CaseHookCtx, result is HookResult (Passed or Failed)
+    match result {
+      @moonspec.HookResult::Passed => ()
+      @moonspec.HookResult::Failed(errors) => {
+        for err in errors {
+          println("Hook error: " + err.to_string())
+        }
+      }
+    }
   })
-  setup.before_test_step(fn(info) {
-    ignore(info)
+  setup.before_test_step(fn(ctx) {
+    // ctx is StepHookCtx -- access step info and attach content
+    let text = ctx.step().step_text
+    ctx.attach("running step: " + text, "text/plain")
   })
-  setup.after_test_step(fn(info, result) {
-    ignore(info)
+  setup.after_test_step(fn(ctx, result) {
+    // ctx is StepHookCtx, result is HookResult
+    ignore(ctx)
     ignore(result)
   })
   // Register steps as usual
@@ -341,15 +353,30 @@ Register only the hooks you need -- unregistered hooks are simply not called.
 Additional hook types for test run boundaries:
 
 ```moonbit
-setup.before_test_run(fn() { /* runs once before all scenarios */ })
-setup.after_test_run(fn() { /* runs once after all scenarios */ })
+setup.before_test_run(fn(ctx) {
+  // ctx is RunHookCtx -- supports attachments
+  ctx.attach("test run starting", "text/plain")
+})
+setup.after_test_run(fn(ctx, result) {
+  // ctx is RunHookCtx, result is HookResult
+  ignore(ctx)
+  ignore(result)
+})
 ```
+
+All hook context types (`RunHookCtx`, `CaseHookCtx`, `StepHookCtx`) implement
+the `Attachable` trait, providing these methods:
+
+- `ctx.attach(body, media_type)` -- attach text content
+- `ctx.attach_bytes(bytes, media_type, file_name~)` -- attach binary content (auto base64-encoded)
+- `ctx.attach_url(url, media_type)` -- attach an external URL
 
 Hook behavior:
 - If `before_test_case` raises, all steps are **Skipped** and the scenario is **Failed**
 - `after_test_case` is always called, even when `before_test_case` fails
 - `after_test_step` is always called after each step, regardless of pass/fail
 - Multiple hooks per type are supported and execute in registration order
+- `HookResult` is either `Passed` or `Failed(Array[HookError])`
 
 ## Running Tests
 

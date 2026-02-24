@@ -12,9 +12,12 @@ pub(all) enum HookType {
 ///|
 /// Typed handler for different hook scopes.
 pub(all) enum HookHandler {
-  RunHandler(() -> Unit raise Error)
-  CaseHandler((ScenarioInfo, String?) -> Unit raise Error)
-  StepHandler((StepInfo, String?) -> Unit raise Error)
+  RunHandler((RunHookCtx) -> Unit raise Error)
+  RunAfterHandler((RunHookCtx, HookResult) -> Unit raise Error)
+  CaseHandler((CaseHookCtx) -> Unit raise Error)
+  CaseAfterHandler((CaseHookCtx, HookResult) -> Unit raise Error)
+  StepHandler((StepHookCtx) -> Unit raise Error)
+  StepAfterHandler((StepHookCtx, HookResult) -> Unit raise Error)
 }
 
 ///|

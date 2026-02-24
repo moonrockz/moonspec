@@ -223,3 +223,59 @@ async test "end-to-end: attach_url emits ExternalAttachment" {
   assert_true(output.contains("\"externalAttachment\""))
   assert_true(output.contains("https://example.com/img.png"))
 }
+
+///|
+struct CaseHookAttachWorld {} derive(Default)
+
+///|
+impl @core.World for CaseHookAttachWorld with configure(_self, setup) {
+  setup.given("a step", fn(_ctx) { () })
+  setup.before_test_case(fn(ctx) { ctx.attach("case setup log", "text/plain") })
+}
+
+///|
+async test "end-to-end: case hook attachment emits envelope" {
+  let content =
+    #|Feature: CaseHookAttach
+    #|
+    #|  Scenario: With hook attachment
+    #|    Given a step
+  let messages = @format.MessagesFormatter::new()
+  let opts = RunOptions([
+    FeatureSource::Text("test://case-hook-attach", content),
+  ])
+  opts.add_sink(messages)
+  let result = run(CaseHookAttachWorld::default, opts)
+  assert_eq(result.summary.passed, 1)
+  let output = messages.output()
+  assert_true(output.contains("case setup log"))
+}
+
+///|
+struct StepHookAttachWorld {} derive(Default)
+
+///|
+impl @core.World for StepHookAttachWorld with configure(_self, setup) {
+  setup.given("a step", fn(_ctx) { () })
+  setup.after_test_step(fn(ctx, _result) {
+    ctx.attach("step trace", "text/plain")
+  })
+}
+
+///|
+async test "end-to-end: step hook attachment emits envelope" {
+  let content =
+    #|Feature: StepHookAttach
+    #|
+    #|  Scenario: With step hook attachment
+    #|    Given a step
+  let messages = @format.MessagesFormatter::new()
+  let opts = RunOptions([
+    FeatureSource::Text("test://step-hook-attach", content),
+  ])
+  opts.add_sink(messages)
+  let result = run(StepHookAttachWorld::default, opts)
+  assert_eq(result.summary.passed, 1)
+  let output = messages.output()
+  assert_true(output.contains("step trace"))
+}

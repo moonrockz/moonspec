@@ -234,6 +234,59 @@ fn make_external_attachment_envelope(
 }
 
 ///|
+/// Drain pending attachments from a run-level hook and emit as envelopes.
+fn emit_run_hook_attachments(
+  sinks : Array[&@core.MessageSink],
+  attachments : Array[@core.PendingAttachment],
+  test_run_hook_started_id : String,
+) -> Unit {
+  for att in attachments {
+    match att {
+      @core.PendingAttachment::Embedded(
+        body~,
+        encoding~,
+        media_type~,
+        file_name~
+      ) => {
+        let enc_str = encoding.to_json().stringify()
+        let enc_clean = enc_str.substring(start=1, end=enc_str.length() - 1)
+        let json_map : Map[String, Json] = {}
+        json_map["body"] = body.to_json()
+        json_map["contentEncoding"] = enc_clean.to_json()
+        json_map["mediaType"] = media_type.to_json()
+        match file_name {
+          Some(f) => json_map["fileName"] = f.to_json()
+          None => ()
+        }
+        json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
+        json_map["timestamp"] = (
+          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } :
+          Json)
+        let json : Json = { "attachment": json_map.to_json() }
+        let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+          _ => continue
+        }
+        emit(sinks, envelope)
+      }
+      @core.PendingAttachment::External(url~, media_type~) => {
+        let json_map : Map[String, Json] = {}
+        json_map["url"] = url.to_json()
+        json_map["mediaType"] = media_type.to_json()
+        json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
+        json_map["timestamp"] = (
+          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } :
+          Json)
+        let json : Json = { "externalAttachment": json_map.to_json() }
+        let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+          _ => continue
+        }
+        emit(sinks, envelope)
+      }
+    }
+  }
+}
+
+///|
 /// Map a StepStatus to a cucumber-messages status string.
 fn step_status_to_string(status : StepStatus) -> String {
   match status {
@@ -488,14 +541,19 @@ pub async fn[W : @core.World] run(
       }
       emit(sinks, envelope)
     }
+    let hook_ctx = @core.RunHookCtx::new()
     let result_status = try {
       match hook.handler {
-        @core.HookHandler::RunHandler(h) => h()
+        @core.HookHandler::RunHandler(h) => h(hook_ctx)
         _ => ()
       }
       "PASSED"
     } catch {
       _ => "FAILED"
+    }
+    if sinks.length() > 0 && hook_ctx.pending_attachments().length() > 0 {
+      emit_run_hook_attachments(sinks, hook_ctx.pending_attachments(), trhs_id)
+      hook_ctx.pending_attachments().clear()
     }
     if sinks.length() > 0 {
       let json : Json = {
@@ -533,6 +591,39 @@ pub async fn[W : @core.World] run(
     run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
   }
   // Execute after_test_run hooks
+  let run_errors : Array[@core.HookError] = []
+  for r in results {
+    if r.status != ScenarioStatus::Passed {
+      let msg = match
+        r.steps
+        .iter()
+        .find_first(fn(s) {
+          match s.status {
+            StepStatus::Failed(_) => true
+            _ => false
+          }
+        }) {
+        Some(s) =>
+          match s.status {
+            StepStatus::Failed(m) => m
+            _ => "scenario failed"
+          }
+        None => "scenario failed"
+      }
+      run_errors.push(
+        @core.HookError::ScenarioFailed(
+          feature_name=r.feature_name,
+          scenario_name=r.scenario_name,
+          message=msg,
+        ),
+      )
+    }
+  }
+  let run_hook_result : @core.HookResult = if run_errors.length() > 0 {
+    @core.HookResult::Failed(run_errors)
+  } else {
+    @core.HookResult::Passed
+  }
   let after_run_hooks = setup
     .hook_registry()
     .by_type(@core.HookType::AfterTestRun)
@@ -555,14 +646,19 @@ pub async fn[W : @core.World] run(
       }
       emit(sinks, envelope)
     }
+    let hook_ctx = @core.RunHookCtx::new()
     let result_status = try {
       match hook.handler {
-        @core.HookHandler::RunHandler(h) => h()
+        @core.HookHandler::RunAfterHandler(h) => h(hook_ctx, run_hook_result)
         _ => ()
       }
       "PASSED"
     } catch {
       _ => "FAILED"
+    }
+    if sinks.length() > 0 && hook_ctx.pending_attachments().length() > 0 {
+      emit_run_hook_attachments(sinks, hook_ctx.pending_attachments(), trhs_id)
+      hook_ctx.pending_attachments().clear()
     }
     if sinks.length() > 0 {
       let json : Json = {
@@ -634,7 +730,8 @@ fn collect_scenario_errors(result : RunResult) -> Array[@core.MoonspecError] {
             match step.diagnostic {
               Some(@core.UndefinedStep(..) as e) => step_errors.push(e)
               Some(@core.PendingStep(..) as e) => step_errors.push(e)
-              Some(@core.StepFailed(..) as e) => step_errors.push(e)
+              Some(@core.MoonspecError::StepFailed(..) as e) =>
+                step_errors.push(e)
               _ => ()
             }
           }

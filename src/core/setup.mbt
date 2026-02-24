@@ -186,7 +186,7 @@ pub fn[L : StepLibrary] Setup::use_library(self : Setup, library : L) -> Unit {
 #callsite(autofill(loc))
 pub fn Setup::before_test_run(
   self : Setup,
-  handler : () -> Unit raise Error,
+  handler : (RunHookCtx) -> Unit raise Error,
   loc~ : SourceLoc,
 ) -> Unit {
   let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
@@ -198,11 +198,11 @@ pub fn Setup::before_test_run(
 #callsite(autofill(loc))
 pub fn Setup::after_test_run(
   self : Setup,
-  handler : () -> Unit raise Error,
+  handler : (RunHookCtx, HookResult) -> Unit raise Error,
   loc~ : SourceLoc,
 ) -> Unit {
   let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
-  self.hook_reg.add(HookType::AfterTestRun, RunHandler(handler), source~)
+  self.hook_reg.add(HookType::AfterTestRun, RunAfterHandler(handler), source~)
 }
 
 ///|
@@ -210,15 +210,11 @@ pub fn Setup::after_test_run(
 #callsite(autofill(loc))
 pub fn Setup::before_test_case(
   self : Setup,
-  handler : (ScenarioInfo) -> Unit raise Error,
+  handler : (CaseHookCtx) -> Unit raise Error,
   loc~ : SourceLoc,
 ) -> Unit {
   let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
-  self.hook_reg.add(
-    HookType::BeforeTestCase,
-    CaseHandler((info, _result) => handler(info)),
-    source~,
-  )
+  self.hook_reg.add(HookType::BeforeTestCase, CaseHandler(handler), source~)
 }
 
 ///|
@@ -226,11 +222,11 @@ pub fn Setup::before_test_case(
 #callsite(autofill(loc))
 pub fn Setup::after_test_case(
   self : Setup,
-  handler : (ScenarioInfo, String?) -> Unit raise Error,
+  handler : (CaseHookCtx, HookResult) -> Unit raise Error,
   loc~ : SourceLoc,
 ) -> Unit {
   let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
-  self.hook_reg.add(HookType::AfterTestCase, CaseHandler(handler), source~)
+  self.hook_reg.add(HookType::AfterTestCase, CaseAfterHandler(handler), source~)
 }
 
 ///|
@@ -238,15 +234,11 @@ pub fn Setup::after_test_case(
 #callsite(autofill(loc))
 pub fn Setup::before_test_step(
   self : Setup,
-  handler : (StepInfo) -> Unit raise Error,
+  handler : (StepHookCtx) -> Unit raise Error,
   loc~ : SourceLoc,
 ) -> Unit {
   let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
-  self.hook_reg.add(
-    HookType::BeforeTestStep,
-    StepHandler((info, _result) => handler(info)),
-    source~,
-  )
+  self.hook_reg.add(HookType::BeforeTestStep, StepHandler(handler), source~)
 }
 
 ///|
@@ -254,9 +246,9 @@ pub fn Setup::before_test_step(
 #callsite(autofill(loc))
 pub fn Setup::after_test_step(
   self : Setup,
-  handler : (StepInfo, String?) -> Unit raise Error,
+  handler : (StepHookCtx, HookResult) -> Unit raise Error,
   loc~ : SourceLoc,
 ) -> Unit {
   let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
-  self.hook_reg.add(HookType::AfterTestStep, StepHandler(handler), source~)
+  self.hook_reg.add(HookType::AfterTestStep, StepAfterHandler(handler), source~)
 }
