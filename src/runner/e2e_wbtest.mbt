@@ -170,3 +170,59 @@ async test "end-to-end: data table" {
   assert_eq(result.summary.failed, 0)
 }
 
+///|
+struct AttachWorld {} derive(Default)
+
+///|
+impl @core.World for AttachWorld with configure(_self, setup) {
+  setup.given("I attach a {string}", fn(ctx) {
+    ignore(ctx[0])
+    ctx.attach("my note", "text/plain", file_name="note.txt")
+  })
+}
+
+///|
+async test "end-to-end: step attachment emits envelope" {
+  let content =
+    #|Feature: Attachments
+    #|
+    #|  Scenario: Attach text
+    #|    Given I attach a "note"
+  let messages = @format.MessagesFormatter::new()
+  let opts = RunOptions([FeatureSource::Text("test://attach", content)])
+  opts.add_sink(messages)
+  let result = run(AttachWorld::default, opts)
+  assert_eq(result.summary.passed, 1)
+  let output = messages.output()
+  assert_true(output.contains("\"attachment\""))
+  assert_true(output.contains("my note"))
+}
+
+///|
+struct UrlAttachWorld {} derive(Default)
+
+///|
+impl @core.World for UrlAttachWorld with configure(_self, setup) {
+  setup.given("I attach an external {string}", fn(ctx) {
+    ignore(ctx[0])
+    ctx.attach_url("https://example.com/img.png", "image/png")
+  })
+}
+
+///|
+async test "end-to-end: attach_url emits ExternalAttachment" {
+  let content =
+    #|Feature: External
+    #|
+    #|  Scenario: URL attachment
+    #|    Given I attach an external "image"
+  let messages = @format.MessagesFormatter::new()
+  let opts = RunOptions([FeatureSource::Text("test://extattach", content)])
+  opts.add_sink(messages)
+  let result = run(UrlAttachWorld::default, opts)
+  assert_eq(result.summary.passed, 1)
+  let output = messages.output()
+  assert_true(output.contains("\"externalAttachment\""))
+  assert_true(output.contains("https://example.com/img.png"))
+}
+
