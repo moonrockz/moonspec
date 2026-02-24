@@ -197,6 +197,52 @@ pub fn Ctx::step(self : Ctx) -> StepInfo {
 }
 
 ///|
+/// Attach text content to the current step/hook.
+pub fn Ctx::attach(
+  self : Ctx,
+  body : String,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  // JSON round-trip: AttachmentContentEncoding constructors are not directly
+  // accessible from outside the cucumber-messages package in MoonBit.
+  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
+    @json.parse("\"IDENTITY\"") catch { _ => panic() },
+  ) catch {
+    _ => panic()
+  }
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+/// Attach binary content (Base64 encoded) to the current step/hook.
+pub fn Ctx::attach_bytes(
+  self : Ctx,
+  data : Bytes,
+  media_type : String,
+  file_name? : String,
+) -> Unit {
+  let body = @base64.encode(data[:])
+  // JSON round-trip: see comment in Ctx::attach above.
+  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
+    @json.parse("\"BASE64\"") catch { _ => panic() },
+  ) catch {
+    _ => panic()
+  }
+  self.attachments.push(
+    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
+  )
+}
+
+///|
+/// Attach an external URL reference to the current step/hook.
+pub fn Ctx::attach_url(self : Ctx, url : String, media_type : String) -> Unit {
+  self.attachments.push(PendingAttachment::External(url~, media_type~))
+}
+
+///|
 /// Result of matching step text against the registry.
 pub(all) enum StepMatchResult {
   Matched(StepDef, Array[StepArg])
