@@ -102,8 +102,7 @@ test "compile_pickles: unique pickle ids" {
 test "compile_pickles: step with doc string" {
   let cache = FeatureCache::new()
   cache.load_text(
-    "test://docstring",
-    "Feature: DocString\n\n  Scenario: S1\n    Given a payload\n      \"\"\"\n      hello world\n      \"\"\"\n",
+    "test://docstring", "Feature: DocString\n\n  Scenario: S1\n    Given a payload\n      \"\"\"\n      hello world\n      \"\"\"\n",
   )
   let pickles = compile_pickles(cache)
   assert_eq(pickles.length(), 1)
@@ -125,8 +124,7 @@ test "compile_pickles: step with doc string" {
 test "compile_pickles: step with doc string media type" {
   let cache = FeatureCache::new()
   cache.load_text(
-    "test://docstring-mt",
-    "Feature: DocString\n\n  Scenario: S1\n    Given a payload\n      \"\"\"json\n      {\"key\": \"value\"}\n      \"\"\"\n",
+    "test://docstring-mt", "Feature: DocString\n\n  Scenario: S1\n    Given a payload\n      \"\"\"json\n      {\"key\": \"value\"}\n      \"\"\"\n",
   )
   let pickles = compile_pickles(cache)
   match pickles[0].steps[0].argument {
@@ -143,8 +141,7 @@ test "compile_pickles: step with doc string media type" {
 test "compile_pickles: step with data table" {
   let cache = FeatureCache::new()
   cache.load_text(
-    "test://datatable",
-    "Feature: DataTable\n\n  Scenario: S1\n    Given the following users\n      | name  | age |\n      | Alice | 30  |\n      | Bob   | 25  |\n",
+    "test://datatable", "Feature: DataTable\n\n  Scenario: S1\n    Given the following users\n      | name  | age |\n      | Alice | 30  |\n      | Bob   | 25  |\n",
   )
   let pickles = compile_pickles(cache)
   assert_eq(pickles.length(), 1)
@@ -168,8 +165,7 @@ test "compile_pickles: step with data table" {
 test "compile_pickles: outline substitutes in doc string" {
   let cache = FeatureCache::new()
   cache.load_text(
-    "test://outline-ds",
-    "Feature: Outline DS\n\n  Scenario Outline: S1\n    Given a payload\n      \"\"\"\n      hello <name>\n      \"\"\"\n\n    Examples:\n      | name  |\n      | Alice |\n",
+    "test://outline-ds", "Feature: Outline DS\n\n  Scenario Outline: S1\n    Given a payload\n      \"\"\"\n      hello <name>\n      \"\"\"\n\n    Examples:\n      | name  |\n      | Alice |\n",
   )
   let pickles = compile_pickles(cache)
   match pickles[0].steps[0].argument {
@@ -186,8 +182,7 @@ test "compile_pickles: outline substitutes in doc string" {
 test "compile_pickles: outline substitutes in data table cells" {
   let cache = FeatureCache::new()
   cache.load_text(
-    "test://outline-dt",
-    "Feature: Outline DT\n\n  Scenario Outline: S1\n    Given the data\n      | col   |\n      | <val> |\n\n    Examples:\n      | val   |\n      | hello |\n",
+    "test://outline-dt", "Feature: Outline DT\n\n  Scenario Outline: S1\n    Given the data\n      | col   |\n      | <val> |\n\n    Examples:\n      | val   |\n      | hello |\n",
   )
   let pickles = compile_pickles(cache)
   match pickles[0].steps[0].argument {

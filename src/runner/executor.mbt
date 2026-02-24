@@ -242,18 +242,20 @@ pub fn execute_scenario(
                       content: ds.content,
                       media_type: ds.mediaType,
                     }
-                    args.push(
-                      @core.StepArg::{ value: DocStringVal(doc), raw: ds.content },
-                    )
+                    args.push(@core.StepArg::{
+                      value: DocStringVal(doc),
+                      raw: ds.content,
+                    })
                   }
                   (_, Some(dt)) => {
                     let raw_rows = dt.rows.map(fn(row) {
                       row.cells.map(fn(cell) { cell.value })
                     })
                     let table = @core.DataTable::from_rows(raw_rows)
-                    args.push(
-                      @core.StepArg::{ value: DataTableVal(table), raw: "" },
-                    )
+                    args.push(@core.StepArg::{
+                      value: DataTableVal(table),
+                      raw: "",
+                    })
                   }
                   _ => ()
                 }

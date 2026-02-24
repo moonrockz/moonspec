@@ -110,7 +110,9 @@ fn compile_step(
       let mut content = ds.content
       for i = 0; i < headers.length(); i = i + 1 {
         content = string_replace_compiler(
-          content, "<" + headers[i] + ">", values[i],
+          content,
+          "<" + headers[i] + ">",
+          values[i],
         )
       }
       Some({
@@ -126,7 +128,9 @@ fn compile_step(
           let mut value = cell.value
           for i = 0; i < headers.length(); i = i + 1 {
             value = string_replace_compiler(
-              value, "<" + headers[i] + ">", values[i],
+              value,
+              "<" + headers[i] + ">",
+              values[i],
             )
           }
           cells.push({ value, })

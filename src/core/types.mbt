@@ -39,7 +39,8 @@ impl Show for StepValue with output(self, logger) {
       }
       logger.write_string("DocStringVal(media_type=\{mt})")
     }
-    DataTableVal(t) => logger.write_string("DataTableVal(\{t.row_count()}x\{t.col_count()})")
+    DataTableVal(t) =>
+      logger.write_string("DataTableVal(\{t.row_count()}x\{t.col_count()})")
   }
 }
 
@@ -122,6 +123,7 @@ pub(all) struct StepInfo {
 /// Immutable wrapper around an array of cell values in a DataTable row.
 pub struct Cells {
   priv data : Array[String]
+
   fn new(data : Array[String]) -> Cells
 } derive(Show, Eq)
 
@@ -149,6 +151,7 @@ pub fn Cells::length(self : Cells) -> Int {
 /// A single row in a DataTable, wrapping its cell values in an immutable Cells.
 pub(all) struct Row {
   cells : Cells
+
   fn new(cells : Array[String]) -> Row
 } derive(Show, Eq)
 
@@ -161,6 +164,7 @@ fn Row::new(cells : Array[String]) -> Row {
 /// Immutable wrapper around an array of rows in a DataTable.
 pub struct Rows {
   priv data : Array[Row]
+
   fn new(data : Array[Row]) -> Rows
 } derive(Show, Eq)
 
@@ -189,6 +193,7 @@ pub fn Rows::length(self : Rows) -> Int {
 pub(all) struct Column {
   name : String
   index : Int
+
   fn new(name~ : String, index~ : Int) -> Column
 } derive(Show, Eq)
 
@@ -201,6 +206,7 @@ fn Column::new(name~ : String, index~ : Int) -> Column {
 /// Immutable wrapper around an array of columns in a DataTable.
 pub struct Columns {
   priv data : Array[Column]
+
   fn new(data : Array[Column]) -> Columns
 } derive(Show, Eq)
 
@@ -239,15 +245,14 @@ pub fn Columns::find(self : Columns, name : String) -> Column? {
 pub(all) struct DataTable {
   rows : Rows
   columns : Columns
+
   fn new(raw_rows : Array[Array[String]]) -> DataTable
 } derive(Show, Eq)
 
 ///|
 fn DataTable::new(raw_rows : Array[Array[String]]) -> DataTable {
   let columns = if raw_rows.length() > 0 {
-    Columns(
-      raw_rows[0].mapi(fn(i, name) { Column(name~, index=i) }),
-    )
+    Columns(raw_rows[0].mapi(fn(i, name) { Column(name~, index=i) }))
   } else {
     Columns([])
   }
@@ -294,6 +299,7 @@ pub fn DataTable::as_maps(self : DataTable) -> Array[Map[String, String]] {
 pub(all) struct DocString {
   content : String
   media_type : String?
+
   fn new(content~ : String, media_type? : String) -> DocString
 } derive(Show, Eq)
 
