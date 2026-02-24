@@ -2,8 +2,8 @@
 struct FilterWorld {} derive(Default)
 
 ///|
-impl @core.World for FilterWorld with register_steps(_self, s) {
-  s.given("a step", fn(_args) {  })
+impl @core.World for FilterWorld with configure(_self, setup) {
+  setup.given("a step", fn(_args) {  })
 }
 
 ///|

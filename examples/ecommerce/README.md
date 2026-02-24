@@ -8,7 +8,7 @@ cross-feature tag filtering in moonspec.
 - **Step libraries**: Splitting step definitions across `CartSteps`,
   `CheckoutSteps`, and `InventorySteps`, each implementing `@moonspec.StepLibrary`
 - **World composition**: A single `EcomWorld` struct that wires all three
-  libraries together via `use_library`
+  libraries together via `setup.use_library`
 - **Codegen (PerScenario mode)**: Generated tests in `*_feature_wbtest.mbt`
   — one `async test` per scenario
 - **Programmatic tests**: A single test that loads all three feature files
@@ -39,8 +39,8 @@ ecommerce/
 
 ## World Composition
 
-`EcomWorld` holds shared state for all three domains and registers the step
-libraries in `register_steps`:
+`EcomWorld` holds shared state for all three domains and configures the step
+libraries in `configure`:
 
 ```moonbit
 struct EcomWorld {
@@ -51,10 +51,10 @@ struct EcomWorld {
   mut last_checked_item : String
 } derive(Default)
 
-impl @moonspec.World for EcomWorld with register_steps(self, s) {
-  s.use_library(CartSteps::new(self))
-  s.use_library(CheckoutSteps::new(self))
-  s.use_library(InventorySteps::new(self))
+impl @moonspec.World for EcomWorld with configure(self, setup) {
+  setup.use_library(CartSteps::new(self))
+  setup.use_library(CheckoutSteps::new(self))
+  setup.use_library(InventorySteps::new(self))
 }
 ```
 

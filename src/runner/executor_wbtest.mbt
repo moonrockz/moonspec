@@ -1,10 +1,11 @@
 ///|
 test "execute_scenario with all steps passing" {
-  let registry = @core.StepRegistry::new()
+  let setup = @core.Setup::new()
   let mut count = 0
-  registry.given("a passing step", fn(_args) { count = count + 1 })
-  registry.when("another passing step", fn(_args) { count = count + 1 })
-  registry.then("all is well", fn(_args) { count = count + 1 })
+  setup.given("a passing step", fn(_args) { count = count + 1 })
+  setup.when("another passing step", fn(_args) { count = count + 1 })
+  setup.then("all is well", fn(_args) { count = count + 1 })
+  let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
       id: "s1",
@@ -43,12 +44,13 @@ test "execute_scenario with all steps passing" {
 
 ///|
 test "execute_scenario skips remaining steps after failure" {
-  let registry = @core.StepRegistry::new()
-  registry.given("a passing step", fn(_args) {  })
-  registry.when("a failing step", fn(_args) raise {
+  let setup = @core.Setup::new()
+  setup.given("a passing step", fn(_args) {  })
+  setup.when("a failing step", fn(_args) raise {
     raise Failure::Failure("boom")
   })
-  registry.then("this should be skipped", fn(_args) {  })
+  setup.then("this should be skipped", fn(_args) {  })
+  let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
       id: "s1",
@@ -87,7 +89,8 @@ test "execute_scenario skips remaining steps after failure" {
 
 ///|
 test "execute_scenario marks undefined steps" {
-  let registry = @core.StepRegistry::new()
+  let setup = @core.Setup::new()
+  let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
       id: "s1",
@@ -111,8 +114,9 @@ test "execute_scenario marks undefined steps" {
 
 ///|
 test "execute_scenario carries UndefinedStep diagnostic" {
-  let registry = @core.StepRegistry::new()
-  registry.given("I have {int} cucumbers", fn(_args) {  })
+  let setup = @core.Setup::new()
+  setup.given("I have {int} cucumbers", fn(_args) {  })
+  let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
       id: "s1",
@@ -136,14 +140,15 @@ test "execute_scenario carries UndefinedStep diagnostic" {
 
 ///|
 test "execute_scenario catches PendingStep" {
-  let registry = @core.StepRegistry::new()
-  registry.given("a pending step", fn(_args) raise {
+  let setup = @core.Setup::new()
+  setup.given("a pending step", fn(_args) raise {
     raise @core.pending_step_error(
       step="a pending step",
       keyword="Given",
       message="TODO",
     )
   })
+  let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
       id: "s1",

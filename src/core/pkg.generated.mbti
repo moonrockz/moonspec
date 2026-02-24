@@ -29,6 +29,11 @@ pub suberror MoonspecError {
 // Types and methods
 type CompiledStep
 
+pub(all) struct CustomParamTypeInfo {
+  name : String
+  patterns : Array[String]
+}
+
 pub(all) struct ScenarioInfo {
   feature_name : String
   scenario_name : String
@@ -36,6 +41,21 @@ pub(all) struct ScenarioInfo {
 }
 pub impl Eq for ScenarioInfo
 pub impl Show for ScenarioInfo
+
+pub(all) struct Setup {
+  // private fields
+}
+pub fn Setup::add_param_type(Self, String, Array[@cucumber-expressions.RegexPattern]) -> Unit
+pub fn Setup::add_param_type_strings(Self, String, Array[String]) -> Unit
+pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
+pub fn Setup::given(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn Setup::new() -> Self
+pub fn Setup::param_registry(Self) -> @cucumber-expressions.ParamTypeRegistry
+pub fn Setup::step(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn Setup::step_registry(Self) -> StepRegistry
+pub fn Setup::then(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn[L : StepLibrary] Setup::use_library(Self, L) -> Unit
+pub fn Setup::when(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
 
 pub(all) enum StepArg {
   IntArg(Int)
@@ -62,8 +82,9 @@ pub fn StepDef::when(String, (Array[StepArg]) -> Unit raise, source? : StepSourc
 
 pub(all) struct StepDefId {
   // private fields
+
+  fn new(String) -> StepDefId
 }
-pub fn StepDefId::from_string(String) -> Self
 pub fn StepDefId::to_string(Self) -> String
 pub impl Eq for StepDefId
 pub impl Hash for StepDefId
@@ -98,15 +119,11 @@ pub(all) struct StepRegistry {
   // private fields
 }
 pub fn StepRegistry::find_match(Self, String, keyword? : String) -> StepMatchResult
-pub fn StepRegistry::given(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
 pub fn StepRegistry::len(Self) -> Int
 pub fn StepRegistry::new() -> Self
-pub fn StepRegistry::register_def(Self, StepDef) -> Unit
-pub fn StepRegistry::step(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn StepRegistry::register_def(Self, StepDef, @cucumber-expressions.ParamTypeRegistry) -> Unit
 pub fn StepRegistry::step_defs(Self) -> Array[StepDef]
-pub fn StepRegistry::then(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
-pub fn[L : StepLibrary] StepRegistry::use_library(Self, L) -> Unit
-pub fn StepRegistry::when(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn[L : StepLibrary] StepRegistry::use_library(Self, L, @cucumber-expressions.ParamTypeRegistry) -> Unit
 
 pub(all) struct StepSource {
   uri : String?
@@ -135,6 +152,6 @@ pub(open) trait StepLibrary {
 }
 
 pub(open) trait World {
-  register_steps(Self, StepRegistry) -> Unit
+  configure(Self, Setup) -> Unit
 }
 

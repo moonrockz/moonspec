@@ -2,8 +2,8 @@
 struct RunWorld {} derive(Default)
 
 ///|
-impl @core.World for RunWorld with register_steps(_self, s) {
-  s.given("a step", fn(_args) {  })
+impl @core.World for RunWorld with configure(_self, setup) {
+  setup.given("a step", fn(_args) {  })
 }
 
 ///|
@@ -23,9 +23,9 @@ async test "run single feature and collect summary" {
 struct RunWorld2 {} derive(Default)
 
 ///|
-impl @core.World for RunWorld2 with register_steps(_self, s) {
-  s.given("pass", fn(_args) {  })
-  s.given("fail", fn(_args) raise { raise Failure::Failure("fail") })
+impl @core.World for RunWorld2 with configure(_self, setup) {
+  setup.given("pass", fn(_args) {  })
+  setup.given("fail", fn(_args) raise { raise Failure::Failure("fail") })
 }
 
 ///|
@@ -49,8 +49,8 @@ async test "run multiple features" {
 struct PassWorld {} derive(Default)
 
 ///|
-impl @core.World for PassWorld with register_steps(_self, s) {
-  s.given("a calculator", fn(_args) {  })
+impl @core.World for PassWorld with configure(_self, setup) {
+  setup.given("a calculator", fn(_args) {  })
 }
 
 ///|
@@ -66,7 +66,7 @@ async test "run_or_fail succeeds when all pass" {
 struct NoStepsWorld {} derive(Default)
 
 ///|
-impl @core.World for NoStepsWorld with register_steps(_self, _s) {
+impl @core.World for NoStepsWorld with configure(_self, _setup) {
 
 }
 
@@ -335,6 +335,63 @@ async test "run emits no ParameterType envelopes for built-in types only" {
     }
   }
   assert_eq(pt_count, 0)
+}
+
+///|
+struct ParamWorld {} derive(Default)
+
+///|
+impl @core.World for ParamWorld with configure(_self, setup) {
+  setup.add_param_type_strings("color", ["red|blue|green"])
+  setup.given("I pick a {color} cucumber", fn(_args) {  })
+}
+
+///|
+async test "run emits ParameterType envelopes for custom types" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://pt", "Feature: PT\n\n  Scenario: S\n    Given I pick a red cucumber\n",
+    ),
+  ]
+  let _ = run(ParamWorld::default, features, sinks=[collector])
+  let mut pt_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::ParameterType(_) {
+      pt_count += 1
+    }
+  }
+  assert_eq(pt_count, 1)
+}
+
+///|
+async test "run emits ParameterType after StepDefinition before TestCase" {
+  let collector = CollectorSink::new()
+  let features = [
+    FeatureSource::Text(
+      "test://pt-order", "Feature: PTO\n\n  Scenario: S\n    Given I pick a blue cucumber\n",
+    ),
+  ]
+  let _ = run(ParamWorld::default, features, sinks=[collector])
+  let mut sd_idx = -1
+  let mut pt_idx = -1
+  let mut tc_idx = -1
+  for i, env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::StepDefinition(_) =>
+        if sd_idx < 0 {
+          sd_idx = i
+        }
+      @cucumber_messages.Envelope::ParameterType(_) =>
+        if pt_idx < 0 {
+          pt_idx = i
+        }
+      @cucumber_messages.Envelope::TestCase(_) => if tc_idx < 0 { tc_idx = i }
+      _ => ()
+    }
+  }
+  assert_true(pt_idx > sd_idx)
+  assert_true(pt_idx < tc_idx)
 }
 
 ///|

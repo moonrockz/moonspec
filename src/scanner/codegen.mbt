@@ -1,6 +1,6 @@
 ///|
-/// Generate a `register_steps` impl block for the given world type and step functions.
-pub fn generate_register_steps(
+/// Generate a `configure` impl block for the given world type and step functions.
+pub fn generate_configure(
   world_type : String,
   steps : Array[StepFnInfo],
   source_hash~ : String,
@@ -12,7 +12,7 @@ pub fn generate_register_steps(
   buf.write_string(
     "impl @moonspec.World for " +
     world_type +
-    " with register_steps(self, s) {\n",
+    " with configure(self, setup) {\n",
   )
   for step in steps {
     generate_step_registration(buf, step)
@@ -24,7 +24,7 @@ pub fn generate_register_steps(
 ///|
 fn generate_step_registration(buf : StringBuilder, step : StepFnInfo) -> Unit {
   buf.write_string(
-    "  s." +
+    "  setup." +
     step.keyword +
     "(\"" +
     escape_pattern(step.pattern) +

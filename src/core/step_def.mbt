@@ -2,10 +2,12 @@
 /// A unique identifier for a step definition, assigned by the StepRegistry.
 pub(all) struct StepDefId {
   priv value : String
+
+  fn new(value : String) -> StepDefId
 } derive(Show, Eq, Hash)
 
 ///|
-pub fn StepDefId::from_string(value : String) -> StepDefId {
+fn StepDefId::new(value : String) -> StepDefId {
   { value, }
 }
 

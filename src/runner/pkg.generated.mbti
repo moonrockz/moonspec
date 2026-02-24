@@ -66,6 +66,7 @@ pub(all) struct IdGenerator {
 }
 pub fn IdGenerator::new() -> Self
 pub fn IdGenerator::next(Self, String) -> String
+pub fn IdGenerator::next_param_type_id(Self) -> String
 
 pub(all) struct ParseErrorInfo {
   uri : String

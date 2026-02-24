@@ -36,15 +36,15 @@ struct CalcWorld {
   mut result : Int
 } derive(Default)
 
-impl @moonspec.World for CalcWorld with register_steps(self, s) {
-  s.given("a calculator", fn(_args) { self.result = 0 })
-  s.when("I add {int} and {int}", fn(args) {
+impl @moonspec.World for CalcWorld with configure(self, setup) {
+  setup.given("a calculator", fn(_args) { self.result = 0 })
+  setup.when("I add {int} and {int}", fn(args) {
     match (args[0], args[1]) {
       (@moonspec.StepArg::IntArg(a), @moonspec.StepArg::IntArg(b)) => self.result = a + b
       _ => ()
     }
   })
-  s.then("the result should be {int}", fn(args) raise {
+  setup.then("the result should be {int}", fn(args) raise {
     match args[0] {
       @moonspec.StepArg::IntArg(expected) => assert_eq(self.result, expected)
       _ => ()
@@ -133,28 +133,28 @@ struct MyWorld {
 `derive(Default)` zero-initializes all fields. For custom initialization, implement
 `Default` manually.
 
-### Registering Steps
+### Configuring Steps
 
-Implement the `World` trait to register step definitions. The `self` parameter is
+Implement the `World` trait to configure step definitions. The `self` parameter is
 your world instance -- closures capture it to share state between steps:
 
 ```moonbit
-impl @moonspec.World for MyWorld with register_steps(self, s) {
-  s.given("I have {int} cucumbers", fn(args) {
+impl @moonspec.World for MyWorld with configure(self, setup) {
+  setup.given("I have {int} cucumbers", fn(args) {
     match args[0] {
       @moonspec.StepArg::IntArg(n) => self.cucumbers = n
       _ => ()
     }
   })
 
-  s.when("I eat {int} cucumbers", fn(args) {
+  setup.when("I eat {int} cucumbers", fn(args) {
     match args[0] {
       @moonspec.StepArg::IntArg(n) => self.cucumbers = self.cucumbers - n
       _ => ()
     }
   })
 
-  s.then("I should have {int} cucumbers", fn(args) raise {
+  setup.then("I should have {int} cucumbers", fn(args) raise {
     match args[0] {
       @moonspec.StepArg::IntArg(expected) => assert_eq(self.cucumbers, expected)
       _ => ()
@@ -171,14 +171,14 @@ impl @moonspec.World for MyWorld with register_steps(self, s) {
 | `{float}` | `FloatArg(Double)` | `"priced at {float}"` |
 | `{string}` | `StringArg(String)` | `"named {string}"` |
 | `{word}` | `WordArg(String)` | `"as {word}"` |
-| custom | `CustomArg(String)` | user-defined types |
+| custom | `CustomArg(String)` | user-defined types (see [Custom Parameter Types](#custom-parameter-types)) |
 
 ### StepArg Destructuring
 
 Arguments are passed as `Array[StepArg]`. Use pattern matching to extract values:
 
 ```moonbit
-s.when("I transfer {float} from {string} to {string}", fn(args) {
+setup.when("I transfer {float} from {string} to {string}", fn(args) {
   match (args[0], args[1], args[2]) {
     (@moonspec.StepArg::FloatArg(amount), @moonspec.StepArg::StringArg(from), @moonspec.StepArg::StringArg(to)) =>
       transfer(amount, from, to)
@@ -189,10 +189,10 @@ s.when("I transfer {float} from {string} to {string}", fn(args) {
 
 ### Generic Steps
 
-Use `s.step()` to register a step that matches any keyword (Given/When/Then):
+Use `setup.step()` to register a step that matches any keyword (Given/When/Then):
 
 ```moonbit
-s.step("I wait {int} seconds", fn(args) {
+setup.step("I wait {int} seconds", fn(args) {
   // matches "Given I wait 5 seconds", "When I wait 5 seconds", etc.
   ignore(args)
 })
@@ -227,13 +227,33 @@ impl @moonspec.StepLibrary for AccountSteps with steps(self) {
 Compose multiple libraries into a single World:
 
 ```moonbit
-impl @moonspec.World for BankWorld with register_steps(self, s) {
-  s.use_library(AccountSteps::new(self))
-  s.use_library(TransactionSteps::new(self))
+impl @moonspec.World for BankWorld with configure(self, setup) {
+  setup.use_library(AccountSteps::new(self))
+  setup.use_library(TransactionSteps::new(self))
 }
 ```
 
 See [`examples/bank-account/`](examples/bank-account/) for a complete example.
+
+### Custom Parameter Types
+
+Register custom parameter types to extend Cucumber Expressions beyond the
+built-in `{int}`, `{float}`, `{string}`, and `{word}` types:
+
+```moonbit
+impl @moonspec.World for MyWorld with configure(self, setup) {
+  setup.add_param_type("color", [@cucumber_expressions.RegexPattern("red|green|blue")])
+
+  setup.then("the light should be {color}", fn(args) raise {
+    match args[0] {
+      @moonspec.StepArg::CustomArg(color) => assert_eq(self.light_color, color)
+      _ => ()
+    }
+  })
+}
+```
+
+Custom parameter types match as `CustomArg(String)` in the `StepArg` enum.
 
 ### Error Handling
 
@@ -756,7 +776,8 @@ See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) -- standalone CLI runne
                           |   runner    |  (tags/names)
                           +-----+-------+
                                 |
-                           World + StepRegistry
+                           World + Setup
+                           (StepRegistry + ParamTypeRegistry)
                            cucumber-expressions
                                 |
                                 v
@@ -778,7 +799,7 @@ See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) -- standalone CLI runne
 | Package | Description |
 |---------|-------------|
 | `moonrockz/moonspec` | Top-level facade -- re-exports `World`, `Hooks`, `StepLibrary`, `StepDef`, `StepArg`, `MoonspecError`, `run`, `run_or_fail` |
-| `moonrockz/moonspec/core` | World, Hooks, StepLibrary traits, StepRegistry, StepDef, StepArg, MoonspecError |
+| `moonrockz/moonspec/core` | World, Hooks, StepLibrary traits, Setup, StepRegistry, ParamTypeRegistry, StepDef, StepArg, MoonspecError |
 | `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
 | `moonrockz/moonspec/codegen` | Generate `_test.mbt` runner tests from Gherkin features |

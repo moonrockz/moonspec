@@ -4,20 +4,20 @@ struct CucumberWorld {
 } derive(Default)
 
 ///|
-impl @core.World for CucumberWorld with register_steps(self, s) {
-  s.given("I have {int} cucumbers", fn(args) {
+impl @core.World for CucumberWorld with configure(self, setup) {
+  setup.given("I have {int} cucumbers", fn(args) {
     match args[0] {
       @core.StepArg::IntArg(n) => self.total = n
       _ => ()
     }
   })
-  s.when("I eat {int} cucumbers", fn(args) {
+  setup.when("I eat {int} cucumbers", fn(args) {
     match args[0] {
       @core.StepArg::IntArg(n) => self.total = self.total - n
       _ => ()
     }
   })
-  s.then("I should have {int} cucumbers", fn(args) raise {
+  setup.then("I should have {int} cucumbers", fn(args) raise {
     match args[0] {
       @core.StepArg::IntArg(n) => assert_eq(self.total, n)
       _ => ()
@@ -40,7 +40,7 @@ async test "feature parses and runs all scenarios" {
 struct EmptyWorld {} derive(Default)
 
 ///|
-impl @core.World for EmptyWorld with register_steps(_self, _s) {
+impl @core.World for EmptyWorld with configure(_self, _setup) {
   ()
 }
 

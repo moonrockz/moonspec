@@ -7,14 +7,14 @@ struct IsolationWorld {
 } derive(Default)
 
 ///|
-impl @core.World for IsolationWorld with register_steps(self, s) {
-  s.given("I set counter to {int}", fn(args) {
+impl @core.World for IsolationWorld with configure(self, setup) {
+  setup.given("I set counter to {int}", fn(args) {
     match args[0] {
       @core.StepArg::IntArg(n) => self.counter = n
       _ => ()
     }
   })
-  s.then("counter should be {int}", fn(args) raise {
+  setup.then("counter should be {int}", fn(args) raise {
     match args[0] {
       @core.StepArg::IntArg(expected) => assert_eq(self.counter, expected)
       _ => ()
@@ -57,9 +57,9 @@ struct HookWorld {
 } derive(Default)
 
 ///|
-impl @core.World for HookWorld with register_steps(_self, s) {
-  s.given("a step", fn(_args) { () })
-  s.then("it passes", fn(_args) { () })
+impl @core.World for HookWorld with configure(_self, setup) {
+  setup.given("a step", fn(_args) { () })
+  setup.then("it passes", fn(_args) { () })
 }
 
 ///|
@@ -93,8 +93,9 @@ impl @core.Hooks for HookWorld with after_step(self, info, result) {
 ///|
 test "hooks: correct ordering of lifecycle calls" {
   let world = HookWorld::default()
-  let registry = @core.StepRegistry::new()
-  @core.World::register_steps(world, registry)
+  let setup = @core.Setup::new()
+  @core.World::configure(world, setup)
+  let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
       id: "s1",
@@ -133,8 +134,8 @@ struct FailHookWorld {
 } derive(Default)
 
 ///|
-impl @core.World for FailHookWorld with register_steps(_self, s) {
-  s.given("a step", fn(_args) { () })
+impl @core.World for FailHookWorld with configure(_self, setup) {
+  setup.given("a step", fn(_args) { () })
 }
 
 ///|
@@ -151,8 +152,9 @@ impl @core.Hooks for FailHookWorld with after_scenario(self, _info, _result) {
 ///|
 test "hooks: before_scenario failure skips all steps" {
   let world = FailHookWorld::default()
-  let registry = @core.StepRegistry::new()
-  @core.World::register_steps(world, registry)
+  let setup = @core.Setup::new()
+  @core.World::configure(world, setup)
+  let registry = setup.step_registry()
   let steps : Array[@cucumber_messages.PickleStep] = [
     {
       id: "s1",

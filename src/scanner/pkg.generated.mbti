@@ -2,7 +2,7 @@
 package "moonrockz/moonspec/scanner"
 
 // Values
-pub fn generate_register_steps(String, Array[StepFnInfo], source_hash~ : String) -> String
+pub fn generate_configure(String, Array[StepFnInfo], source_hash~ : String) -> String
 
 pub fn has_manual_registration(String, String) -> Bool
 
