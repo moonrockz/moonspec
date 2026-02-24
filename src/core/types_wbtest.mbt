@@ -214,16 +214,55 @@ test "Ctx with DataTableVal" {
 ///|
 test "Ctx attach text" {
   let ctx : Ctx = { value: IntVal(42), raw: "42", attachments: [] }
-  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"IDENTITY\"") catch { _ => panic() },
-  ) catch { _ => panic() }
-  ctx.attachments.push(
-    PendingAttachment::Embedded(
-      body="hello world",
-      encoding~,
-      media_type="text/plain",
-      file_name=None,
-    ),
-  )
+  ctx.attach("hello", "text/plain")
   assert_eq(ctx.attachments.length(), 1)
+  match ctx.attachments[0] {
+    Embedded(body~, encoding~, media_type~, file_name~) => {
+      assert_eq(body, "hello")
+      assert_eq(encoding.to_json().stringify(), "\"IDENTITY\"")
+      assert_eq(media_type, "text/plain")
+      assert_eq(file_name, None)
+    }
+    _ => fail("expected Embedded attachment")
+  }
+}
+
+///|
+test "Ctx attach_bytes base64 encodes" {
+  let ctx : Ctx = { value: IntVal(1), raw: "1", attachments: [] }
+  ctx.attach_bytes(b"hello", "application/octet-stream")
+  assert_eq(ctx.attachments.length(), 1)
+  match ctx.attachments[0] {
+    Embedded(body~, encoding~, media_type~, ..) => {
+      assert_eq(body, "aGVsbG8=")
+      assert_eq(encoding.to_json().stringify(), "\"BASE64\"")
+      assert_eq(media_type, "application/octet-stream")
+    }
+    _ => fail("expected Embedded attachment")
+  }
+}
+
+///|
+test "Ctx attach_url" {
+  let ctx : Ctx = { value: IntVal(1), raw: "1", attachments: [] }
+  ctx.attach_url("https://example.com/img.png", "image/png")
+  assert_eq(ctx.attachments.length(), 1)
+  match ctx.attachments[0] {
+    External(url~, media_type~) => {
+      assert_eq(url, "https://example.com/img.png")
+      assert_eq(media_type, "image/png")
+    }
+    _ => fail("expected External attachment")
+  }
+}
+
+///|
+test "Ctx attach with file_name" {
+  let ctx : Ctx = { value: IntVal(1), raw: "1", attachments: [] }
+  ctx.attach("some notes", "text/plain", file_name=Some("notes.txt"))
+  assert_eq(ctx.attachments.length(), 1)
+  match ctx.attachments[0] {
+    Embedded(file_name~, ..) => assert_eq(file_name, Some("notes.txt"))
+    _ => fail("expected Embedded attachment")
+  }
 }

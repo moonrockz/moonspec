@@ -3,6 +3,7 @@ import {
   "moonrockz/cucumber-messages" as @cucumber_messages,
   "moonbitlang/core/json",
   "moonbitlang/core/strconv",
+  "moonbitlang/x/codec/base64" as @base64,
   "moonbitlang/x/decimal" as @decimal,
   "tonyfettes/any" as @any,
 }
