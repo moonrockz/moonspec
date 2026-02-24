@@ -13,6 +13,8 @@ pub(all) enum StepValue {
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(BigInt)
   CustomVal(@any.Any)
+  DocStringVal(DocString)
+  DataTableVal(DataTable)
 }
 
 ///|
@@ -30,6 +32,14 @@ impl Show for StepValue with output(self, logger) {
     BigDecimalVal(v) => logger.write_string("BigDecimalVal(\{v})")
     BigIntegerVal(v) => logger.write_string("BigIntegerVal(\{v})")
     CustomVal(any) => logger.write_string("CustomVal(<\{any.type_name()}>)")
+    DocStringVal(d) => {
+      let mt = match d.media_type {
+        Some(t) => t
+        None => ""
+      }
+      logger.write_string("DocStringVal(media_type=\{mt})")
+    }
+    DataTableVal(t) => logger.write_string("DataTableVal(\{t.row_count()}x\{t.col_count()})")
   }
 }
 
@@ -48,6 +58,8 @@ impl Eq for StepValue with equal(self, other) -> Bool {
     (BigDecimalVal(a), BigDecimalVal(b)) => a == b
     (BigIntegerVal(a), BigIntegerVal(b)) => a == b
     (CustomVal(_), CustomVal(_)) => true
+    (DocStringVal(a), DocStringVal(b)) => a == b
+    (DataTableVal(a), DataTableVal(b)) => a == b
     _ => false
   }
 }

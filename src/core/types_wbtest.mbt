@@ -184,3 +184,29 @@ test "DocString constructor without media type" {
   assert_eq(doc.content, "plain text")
   assert_eq(doc.media_type, None)
 }
+
+///|
+test "StepArg with DocStringVal" {
+  let doc = DocString(content="hello", media_type="json")
+  let arg : StepArg = { value: DocStringVal(doc), raw: "" }
+  match arg {
+    { value: DocStringVal(d), .. } => {
+      assert_eq(d.content, "hello")
+      assert_eq(d.media_type, Some("json"))
+    }
+    _ => fail("expected DocStringVal")
+  }
+}
+
+///|
+test "StepArg with DataTableVal" {
+  let table = DataTable([["name"], ["Alice"]])
+  let arg : StepArg = { value: DataTableVal(table), raw: "" }
+  match arg {
+    { value: DataTableVal(t), .. } => {
+      assert_eq(t.row_count(), 2)
+      assert_eq(t.rows.get(1).cells.get(0), "Alice")
+    }
+    _ => fail("expected DataTableVal")
+  }
+}
