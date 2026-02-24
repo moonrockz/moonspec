@@ -928,6 +928,7 @@ fn compute_summary(features : Array[FeatureResult]) -> RunSummary {
     undefined,
     pending,
     skipped,
+    retried: 0,
     duration_ms: 0L,
   }
 }

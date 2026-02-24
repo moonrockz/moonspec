@@ -103,6 +103,7 @@ pub(all) struct RunSummary {
   undefined : Int
   pending : Int
   skipped : Int
+  retried : Int
   duration_ms : Int64
 } derive(Show, Eq)
 

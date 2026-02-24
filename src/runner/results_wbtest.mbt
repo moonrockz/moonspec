@@ -63,3 +63,18 @@ test "ScenarioStatus with Undefined is Undefined" {
   let result = ScenarioStatus::from_steps([StepStatus::Undefined])
   assert_eq(result, ScenarioStatus::Undefined)
 }
+
+///|
+test "RunSummary includes retried field" {
+  let summary : RunSummary = {
+    total_scenarios: 5,
+    passed: 4,
+    failed: 1,
+    undefined: 0,
+    pending: 0,
+    skipped: 0,
+    retried: 2,
+    duration_ms: 0L,
+  }
+  assert_eq(summary.retried, 2)
+}
