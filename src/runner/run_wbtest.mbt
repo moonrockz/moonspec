@@ -549,3 +549,65 @@ async test "run emits TestRunHookStarted and TestRunHookFinished" {
   assert_eq(trhs_count, 1)
   assert_eq(trhf_count, 1)
 }
+
+///|
+async test "TestCase envelope includes hook steps" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text(
+      "test://tc-hooks",
+      "Feature: TC\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])
+    ..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestCase(tc) => {
+        // Should have: before_test_case step + 1 regular step + after_test_case step = 3
+        assert_eq(tc.testSteps.length(), 3)
+        // First step should have hookId (before_test_case)
+        assert_true(tc.testSteps[0].hookId is Some(_))
+        assert_true(tc.testSteps[0].pickleStepId is None)
+        // Middle step should have pickleStepId (regular step)
+        assert_true(tc.testSteps[1].pickleStepId is Some(_))
+        assert_true(tc.testSteps[1].hookId is None)
+        // Last step should have hookId (after_test_case)
+        assert_true(tc.testSteps[2].hookId is Some(_))
+        assert_true(tc.testSteps[2].pickleStepId is None)
+      }
+      _ => ()
+    }
+  }
+}
+
+///|
+async test "hook steps emit TestStepStarted and TestStepFinished" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text(
+      "test://hook-steps",
+      "Feature: HS\n\n  Scenario: S\n    Given a step\n",
+    ),
+  ])
+    ..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  let types : Array[String] = []
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestStepStarted(_) =>
+        types.push("TestStepStarted")
+      @cucumber_messages.Envelope::TestStepFinished(_) =>
+        types.push("TestStepFinished")
+      _ => ()
+    }
+  }
+  // 3 steps: before_test_case hook + regular step + after_test_case hook
+  // Each gets Started + Finished = 6 envelopes
+  assert_eq(types.length(), 6)
+  let expected : Array[String] = [
+    "TestStepStarted", "TestStepFinished", "TestStepStarted", "TestStepFinished",
+    "TestStepStarted", "TestStepFinished",
+  ]
+  assert_eq(types, expected)
+}

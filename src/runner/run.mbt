@@ -388,7 +388,7 @@ pub async fn[W : @core.World] run(
   }
   // Test planning phase
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
-    let tc_envelopes = build_test_cases(registry, filtered, id_gen)
+    let tc_envelopes = build_test_cases(registry, setup.hook_registry(), filtered, id_gen)
     for env in tc_envelopes {
       emit(sinks, env)
     }

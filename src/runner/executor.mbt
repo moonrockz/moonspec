@@ -22,42 +22,72 @@ pub fn execute_scenario(
   let after_case_hooks = hook_registry.by_type(@core.HookType::AfterTestCase)
   let before_step_hooks = hook_registry.by_type(@core.HookType::BeforeTestStep)
   let after_step_hooks = hook_registry.by_type(@core.HookType::AfterTestStep)
-  let has_hooks = before_case_hooks.length() > 0 ||
-    after_case_hooks.length() > 0 ||
-    before_step_hooks.length() > 0 ||
-    after_step_hooks.length() > 0
-  // before_test_case hooks
-  let hook_err : String? = if has_hooks {
-    let mut err : String? = None
-    for hook in before_case_hooks {
-      if err is Some(_) {
-        break
-      }
+  // Track overall test step index across hook steps and regular steps
+  let mut step_idx = 0
+  // before_test_case hooks — emit TestStepStarted/Finished for each
+  let mut hook_err : String? = None
+  for hook in before_case_hooks {
+    let ts_id = if step_idx < test_step_ids.length() {
+      test_step_ids[step_idx]
+    } else {
+      ""
+    }
+    step_idx += 1
+    if has_sinks {
+      emit(
+        sinks,
+        make_test_step_started_envelope(test_case_started_id, ts_id),
+      )
+    }
+    let status_str = if hook_err is Some(_) {
+      "SKIPPED"
+    } else {
       match hook.handler {
         @core.CaseHandler(h) =>
           try {
             h(info, None)
+            "PASSED"
           } catch {
-            e => err = Some(e.to_string())
+            e => {
+              hook_err = Some(e.to_string())
+              "FAILED"
+            }
           }
-        _ => ()
+        _ => "PASSED"
       }
     }
-    err
-  } else {
-    None
+    let err_msg : String? = match status_str {
+      "FAILED" => hook_err
+      _ => None
+    }
+    if has_sinks {
+      emit(
+        sinks,
+        make_test_step_finished_envelope(
+          test_case_started_id,
+          ts_id,
+          status_str,
+          err_msg,
+        ),
+      )
+    }
   }
-  // If before_test_case hook failed, skip all steps
+  // If before_test_case hook failed, skip all regular steps
   if hook_err is Some(msg) {
     let step_results : Array[StepResult] = []
-    for i, step in steps {
+    for _i, step in steps {
       let keyword = match step.type_ {
         Some(@cucumber_messages.PickleStepType::Context) => "Given "
         Some(@cucumber_messages.PickleStepType::Action) => "When "
         Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
         _ => "* "
       }
-      let ts_id = if i < test_step_ids.length() { test_step_ids[i] } else { "" }
+      let ts_id = if step_idx < test_step_ids.length() {
+        test_step_ids[step_idx]
+      } else {
+        ""
+      }
+      step_idx += 1
       if has_sinks {
         emit(
           sinks,
@@ -83,11 +113,38 @@ pub fn execute_scenario(
     }
     // after_test_case hooks still run even on before failure
     for hook in after_case_hooks {
-      match hook.handler {
-        @core.CaseHandler(h) => {
-          let _ = h(info, Some(msg)) catch { _ => () }
-        }
-        _ => ()
+      let ts_id = if step_idx < test_step_ids.length() {
+        test_step_ids[step_idx]
+      } else {
+        ""
+      }
+      step_idx += 1
+      if has_sinks {
+        emit(
+          sinks,
+          make_test_step_started_envelope(test_case_started_id, ts_id),
+        )
+      }
+      let after_status = match hook.handler {
+        @core.CaseHandler(h) =>
+          try {
+            h(info, Some(msg))
+            "PASSED"
+          } catch {
+            _ => "FAILED"
+          }
+        _ => "PASSED"
+      }
+      if has_sinks {
+        emit(
+          sinks,
+          make_test_step_finished_envelope(
+            test_case_started_id,
+            ts_id,
+            after_status,
+            None,
+          ),
+        )
       }
     }
     return {
@@ -104,14 +161,19 @@ pub fn execute_scenario(
   let step_results : Array[StepResult] = []
   let mut failed = false
   let mut scenario_error : String? = None
-  for i, step in steps {
+  for _i, step in steps {
     let keyword = match step.type_ {
       Some(@cucumber_messages.PickleStepType::Context) => "Given "
       Some(@cucumber_messages.PickleStepType::Action) => "When "
       Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
       _ => "* "
     }
-    let ts_id = if i < test_step_ids.length() { test_step_ids[i] } else { "" }
+    let ts_id = if step_idx < test_step_ids.length() {
+      test_step_ids[step_idx]
+    } else {
+      ""
+    }
+    step_idx += 1
     if has_sinks {
       emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
     }
@@ -246,15 +308,40 @@ pub fn execute_scenario(
       diagnostic,
     })
   }
-  // after_test_case hooks
-  if after_case_hooks.length() > 0 {
-    for hook in after_case_hooks {
-      match hook.handler {
-        @core.CaseHandler(h) => {
-          let _ = h(info, scenario_error) catch { _ => () }
+  // after_test_case hooks — emit TestStepStarted/Finished for each
+  for hook in after_case_hooks {
+    let ts_id = if step_idx < test_step_ids.length() {
+      test_step_ids[step_idx]
+    } else {
+      ""
+    }
+    step_idx += 1
+    if has_sinks {
+      emit(
+        sinks,
+        make_test_step_started_envelope(test_case_started_id, ts_id),
+      )
+    }
+    let after_status = match hook.handler {
+      @core.CaseHandler(h) =>
+        try {
+          h(info, scenario_error)
+          "PASSED"
+        } catch {
+          _ => "FAILED"
         }
-        _ => ()
-      }
+      _ => "PASSED"
+    }
+    if has_sinks {
+      emit(
+        sinks,
+        make_test_step_finished_envelope(
+          test_case_started_id,
+          ts_id,
+          after_status,
+          None,
+        ),
+      )
     }
   }
   let statuses = step_results.map(fn(r) { r.status })
