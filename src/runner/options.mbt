@@ -7,6 +7,7 @@ pub(all) struct RunOptions {
   priv sinks_ : Array[&@core.MessageSink]
   priv mut tag_expr_ : String
   priv mut scenario_name_ : String
+  priv mut retries_ : Int
 
   fn new(features : Array[FeatureSource]) -> RunOptions
 }
@@ -20,6 +21,7 @@ pub fn RunOptions::new(features : Array[FeatureSource]) -> RunOptions {
     sinks_: [],
     tag_expr_: "",
     scenario_name_: "",
+    retries_: 0,
   }
 }
 
@@ -90,4 +92,16 @@ pub fn RunOptions::get_tag_expr(self : RunOptions) -> String {
 /// Get the scenario name filter.
 pub fn RunOptions::get_scenario_name(self : RunOptions) -> String {
   self.scenario_name_
+}
+
+///|
+/// Set the number of retries for failed scenarios.
+pub fn RunOptions::retries(self : RunOptions, value : Int) -> Unit {
+  self.retries_ = value
+}
+
+///|
+/// Get the number of retries for failed scenarios.
+pub fn RunOptions::get_retries(self : RunOptions) -> Int {
+  self.retries_
 }
