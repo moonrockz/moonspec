@@ -58,7 +58,7 @@ Each scenario gets a fresh World instance via `derive(Default)` for state isolat
 - **StepDef type** -- first-class step definitions you can inspect, test, and pass around
 - **Structured errors** -- `MoonspecError` hierarchy with `run_or_fail` throwing variant
 - **Undefined step diagnostics** -- copy-paste snippets and "did you mean?" suggestions
-- **Lifecycle hooks** -- `before_scenario`, `after_scenario`, `before_step`, `after_step`
+- **Lifecycle hooks** -- `before_test_case`, `after_test_case`, `before_test_step`, `after_test_step`, `before_test_run`, `after_test_run`
 - **Gherkin parsing** -- Feature, Scenario, Scenario Outline, Background, Rules, Data Tables, Doc Strings
 - **Cucumber Expressions** -- type-safe step matching with `{int}`, `{float}`, `{string}`, `{word}`, plus custom parameter types
 - **Tag filtering** -- boolean tag expressions (`@smoke and not @slow`)
@@ -72,8 +72,8 @@ Each scenario gets a fresh World instance via `derive(Default)` for state isolat
 
 | Package | Description |
 |---------|-------------|
-| `moonrockz/moonspec` | Top-level facade -- `World`, `Hooks`, `StepArg`, `run`, `run_with_hooks` |
-| `moonrockz/moonspec/core` | World and Hooks traits, StepRegistry, StepArg types |
+| `moonrockz/moonspec` | Top-level facade -- `World`, `Setup`, `StepArg`, `RunOptions`, `run`, `run_or_fail` |
+| `moonrockz/moonspec/core` | World trait, Setup facade, HookRegistry, StepRegistry, StepArg types |
 | `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
 | `moonrockz/moonspec/codegen` | Generate test files from Gherkin features |

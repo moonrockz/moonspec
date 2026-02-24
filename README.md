@@ -269,57 +269,51 @@ Use `run_or_fail` to raise on any failure instead of inspecting results manually
 
 ```moonbit
 async test "my feature" {
-  @moonspec.run_or_fail(MyWorld::default, features) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, RunOptions(features)) |> ignore
 }
 ```
 
 ## Lifecycle Hooks
 
-Implement the `Hooks` trait for setup/teardown logic around scenarios and steps:
+Register hooks in your World's `configure` method for setup/teardown logic:
 
 ```moonbit
-impl @moonspec.Hooks for MyWorld with before_scenario(self, info) {
-  // Called before each scenario
-  println("Starting: " + info.scenario_name)
-}
-
-impl @moonspec.Hooks for MyWorld with after_scenario(self, info, result) {
-  // Called after each scenario (result is None on success, Some(msg) on failure)
-  ignore(self)
-  ignore(info)
-  ignore(result)
-}
-
-impl @moonspec.Hooks for MyWorld with before_step(self, info) {
-  ignore(self)
-  ignore(info)
-}
-
-impl @moonspec.Hooks for MyWorld with after_step(self, info, result) {
-  ignore(self)
-  ignore(info)
-  ignore(result)
+impl @moonspec.World for MyWorld with configure(self, setup) {
+  setup.before_test_case(fn(info) {
+    // Called before each scenario
+    println("Starting: " + info.scenario_name)
+  })
+  setup.after_test_case(fn(info, result) {
+    // Called after each scenario (result is None on success, Some(msg) on failure)
+    ignore(info)
+    ignore(result)
+  })
+  setup.before_test_step(fn(info) {
+    ignore(info)
+  })
+  setup.after_test_step(fn(info, result) {
+    ignore(info)
+    ignore(result)
+  })
+  // Register steps as usual
+  setup.given("a step", fn(_args) {  })
 }
 ```
 
-All hook methods default to no-ops -- implement only the ones you need.
+Register only the hooks you need -- unregistered hooks are simply not called.
 
-Use `run_with_hooks` instead of `run` to enable lifecycle hooks:
+Additional hook types for test run boundaries:
 
 ```moonbit
-async test "with hooks" {
-  let result = @moonspec.run_with_hooks(
-    MyWorld::default,
-    [@moonspec.FeatureSource::File("features/my.feature")],
-  )
-  assert_eq(result.summary.failed, 0)
-}
+setup.before_test_run(fn() { /* runs once before all scenarios */ })
+setup.after_test_run(fn() { /* runs once after all scenarios */ })
 ```
 
 Hook behavior:
-- If `before_scenario` raises, all steps are **Skipped** and the scenario is **Failed**
-- `after_scenario` is always called, even when `before_scenario` fails
-- `after_step` is always called after each step, regardless of pass/fail
+- If `before_test_case` raises, all steps are **Skipped** and the scenario is **Failed**
+- `after_test_case` is always called, even when `before_test_case` fails
+- `after_test_step` is always called after each step, regardless of pass/fail
+- Multiple hooks per type are supported and execute in registration order
 
 ## Running Tests
 
@@ -330,13 +324,13 @@ Use the Runner API directly in your test files for full programmatic control:
 ```moonbit
 async test "calculator features" {
   // run_or_fail raises MoonspecError on any failure
-  @moonspec.run_or_fail(
-    CalcWorld::default,
-    [@moonspec.FeatureSource::File("features/calculator.feature")],
-    tag_expr="@smoke and not @slow",
-    parallel=4,
-  )
-  |> ignore
+  let opts = @moonspec.RunOptions([
+    @moonspec.FeatureSource::File("features/calculator.feature"),
+  ])
+    ..tag_expr("@smoke and not @slow")
+    ..parallel(true)
+    ..max_concurrent(4)
+  @moonspec.run_or_fail(CalcWorld::default, opts) |> ignore
 }
 ```
 
@@ -344,20 +338,23 @@ For cases where you need to inspect results programmatically, use `run` directly
 
 ```moonbit
 async test "inspect results" {
-  let result = @moonspec.run(CalcWorld::default, features)
+  let result = @moonspec.run(CalcWorld::default, RunOptions(features))
   assert_eq(result.summary.failed, 0)
 }
 ```
 
-Parameters:
-- `factory` -- function returning a fresh World instance (e.g., `MyWorld::default`)
-- `features` -- array of `FeatureSource` values:
-  - `FeatureSource::File(path)` -- load a `.feature` file from disk
-  - `FeatureSource::Text(path, content)` -- parse inline Gherkin text
-  - `FeatureSource::Parsed(path, feature)` -- use a pre-parsed feature
-- `tag_expr` -- boolean tag expression for filtering (default: `""`)
-- `scenario_name` -- run only the scenario matching this name (default: `""`)
-- `parallel` -- max concurrent features (default: `0` = sequential)
+`RunOptions` accepts an array of `FeatureSource` values and supports builder-style configuration:
+
+- `FeatureSource::File(path)` -- load a `.feature` file from disk
+- `FeatureSource::Text(path, content)` -- parse inline Gherkin text
+- `FeatureSource::Parsed(path, feature)` -- use a pre-parsed feature
+
+Builder methods (use `..` cascade syntax):
+- `parallel(bool)` -- enable parallel execution (default: `false`)
+- `max_concurrent(int)` -- max concurrent scenarios (default: `4`)
+- `tag_expr(string)` -- boolean tag expression for filtering
+- `scenario_name(string)` -- run only the scenario matching this name
+- `add_sink(sink)` -- add a message sink for envelope output
 
 ### Mode 2: Pre-build Codegen
 
