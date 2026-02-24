@@ -91,7 +91,7 @@ fn make_test_run_finished_envelope(
 fn make_test_case_started_envelope(
   id : String,
   test_case_id : String,
-  attempt~ : Int = 0,
+  attempt? : Int = 0,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseStarted": {
@@ -112,7 +112,7 @@ fn make_test_case_started_envelope(
 ///|
 fn make_test_case_finished_envelope(
   test_case_started_id : String,
-  will_be_retried~ : Bool = false,
+  will_be_retried? : Bool = false,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseFinished": {
@@ -350,7 +350,8 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
   let prefix_len = prefix.length()
   for tag in tags {
     let tag_len = tag.length()
-    if tag_len > prefix_len && tag.substring(start=0, end=prefix_len) == prefix &&
+    if tag_len > prefix_len &&
+      tag.substring(start=0, end=prefix_len) == prefix &&
       tag[tag_len - 1] == ')' {
       let inner = tag.substring(start=prefix_len, end=tag_len - 1)
       let inner_len = inner.length()
@@ -631,12 +632,19 @@ pub async fn[W : @core.World] run(
       retries~,
     )
   } else {
-    run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~, retries~)
+    run_pickles_sequential(
+      factory,
+      filtered,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+      retries~,
+    )
   }
   let results : Array[ScenarioResult] = paired_results.map(fn(pr) { pr.result })
-  let retried_count = paired_results.iter().fold(init=0, fn(acc, pr) {
-    if pr.was_retried { acc + 1 } else { acc }
-  })
+  let retried_count = paired_results
+    .iter()
+    .fold(init=0, fn(acc, pr) { if pr.was_retried { acc + 1 } else { acc } })
   // Execute after_test_run hooks
   let run_errors : Array[@core.HookError] = []
   for r in results {
@@ -824,7 +832,14 @@ async fn[W : @core.World] run_pickles_sequential(
 ) -> Array[PickleResult] {
   let results : Array[PickleResult] = []
   for pickle in pickles {
-    let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~, retries~)
+    let result = execute_pickle(
+      factory,
+      pickle,
+      sinks~,
+      tc_mappings~,
+      id_gen~,
+      retries~,
+    )
     results.push(result)
   }
   results
@@ -905,7 +920,7 @@ async fn[W : @core.World] execute_pickle(
             sinks,
             make_test_case_finished_envelope(
               id,
-              will_be_retried=(is_failed && has_retries_left),
+              will_be_retried=is_failed && has_retries_left,
             ),
           )
         }
@@ -918,19 +933,17 @@ async fn[W : @core.World] execute_pickle(
     result
   }
   let result = if max_retries > 0 {
-    try {
-      @async.retry(
-        @async.Immediate,
-        max_retry=max_retries,
-        fatal_error=fn(e) {
-          match e {
-            RetryableFailure(_) => false
-            _ => true
-          }
-        },
-        execute_attempt,
-      )
-    } catch {
+    @async.retry(
+      @async.Immediate,
+      max_retry=max_retries,
+      fatal_error=fn(e) {
+        match e {
+          RetryableFailure(_) => false
+          _ => true
+        }
+      },
+      execute_attempt,
+    ) catch {
       RetryableFailure(r) => r
       _ => panic()
     }
@@ -975,7 +988,10 @@ fn group_by_feature(
 }
 
 ///|
-fn compute_summary(features : Array[FeatureResult], retried~ : Int = 0) -> RunSummary {
+fn compute_summary(
+  features : Array[FeatureResult],
+  retried? : Int = 0,
+) -> RunSummary {
   let mut total = 0
   let mut passed = 0
   let mut failed = 0
