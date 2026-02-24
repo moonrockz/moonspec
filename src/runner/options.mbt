@@ -95,13 +95,25 @@ pub fn RunOptions::get_scenario_name(self : RunOptions) -> String {
 }
 
 ///|
-/// Set the number of retries for failed scenarios.
+/// Set the global retry count for failed scenarios.
+///
+/// When a scenario fails, it will be re-executed up to `value` additional times.
+/// A fresh World instance is created for each attempt. Only the final attempt's
+/// result counts toward the run summary.
+///
+/// Per-scenario `@retry(N)` tags override this global setting. Negative values
+/// are clamped to 0.
+///
+/// ```moonbit
+/// let opts = RunOptions::new(features)
+/// opts.retries(2) // retry failed scenarios up to 2 times
+/// ```
 pub fn RunOptions::retries(self : RunOptions, value : Int) -> Unit {
   self.retries_ = if value < 0 { 0 } else { value }
 }
 
 ///|
-/// Get the number of retries for failed scenarios.
+/// Get the global retry count for failed scenarios.
 pub fn RunOptions::get_retries(self : RunOptions) -> Int {
   self.retries_
 }

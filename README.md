@@ -113,7 +113,7 @@ Supported constructs:
 - **Rule** -- grouping scenarios under a business rule
 - **Data Tables** -- tabular data attached to a step
 - **Doc Strings** -- multiline text attached to a step
-- **Tags** -- `@tag` annotations for filtering and metadata
+- **Tags** -- `@tag` annotations for filtering, metadata, and `@retry(N)` retry control
 - **Comments** -- lines starting with `#`
 
 ## World and Step Definitions
@@ -415,6 +415,7 @@ async test "inspect results" {
 Builder methods (use `..` cascade syntax):
 - `parallel(bool)` -- enable parallel execution (default: `false`)
 - `max_concurrent(int)` -- max concurrent scenarios (default: `4`)
+- `retries(int)` -- retry failed scenarios up to N times (default: `0`); see [Retrying Flaky Tests](#retrying-flaky-tests)
 - `tag_expr(string)` -- boolean tag expression for filtering
 - `scenario_name(string)` -- run only the scenario matching this name
 - `add_sink(sink)` -- add a message sink for envelope output
@@ -724,6 +725,58 @@ async test "parallel features" {
 - Each scenario gets a fresh World instance, making parallel execution safe
 - Tests must use `async test` blocks
 - Requires JS target: `moon test --target js`
+
+## Retrying Flaky Tests
+
+moonspec supports automatic retries for failed scenarios, useful for handling
+transient failures in integration or end-to-end tests.
+
+### Global Retry Count
+
+Set a global retry count via `RunOptions`. All failed scenarios will be retried
+up to this many additional times:
+
+```moonbit
+let opts = @moonspec.RunOptions::new(features)
+opts.retries(2) // retry failures up to 2 times
+@moonspec.run_or_fail(MyWorld::default, opts) |> ignore
+```
+
+### Per-Scenario Retry via Tags
+
+Use the `@retry(N)` tag on individual scenarios to set a per-scenario retry
+count. This overrides the global setting:
+
+```gherkin
+Feature: External API
+
+  @retry(3)
+  Scenario: Fetch data from flaky endpoint
+    Given a connection to the API
+    When I request the data
+    Then I should receive a response
+```
+
+A scenario tagged `@retry(0)` will never be retried, even if a global retry
+count is set -- useful for opting specific scenarios out of retries.
+
+### How Retries Work
+
+- Each retry creates a **fresh World instance**, so state never leaks between attempts
+- Retries happen **immediately** after a failure (before moving to the next scenario)
+- Only the **final attempt's result** counts in the run summary
+- The `retried` field in `RunSummary` counts scenarios that needed more than one attempt
+- Retries use `@async.retry(Immediate)` from the `moonbitlang/async` library
+
+### Cucumber Messages Protocol
+
+Each attempt emits its own `TestCaseStarted`/`TestCaseFinished` envelope pair:
+
+- `TestCaseStarted.attempt` -- 0 for the first attempt, 1 for the first retry, etc.
+- `TestCaseFinished.willBeRetried` -- `true` if the attempt failed and more retries remain
+
+This means reporting tools that consume the Cucumber Messages stream will see
+the full history of all attempts.
 
 ## Formatters
 

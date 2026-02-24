@@ -344,7 +344,16 @@ fn extract_test_case_mappings(
 }
 
 ///|
-/// Parse a retry count from pickle tags. Returns Some(n) if @retry(n) is found.
+/// Parse a retry count from pickle tags.
+///
+/// Scans for a tag matching `@retry(N)` where N is a non-negative integer.
+/// Returns `Some(n)` for the first match, or `None` if no retry tag is found.
+/// Invalid formats like `@retry()`, `@retry(abc)`, or `@retry(-1)` are ignored.
+///
+/// ```
+/// parse_retry_tag(["@smoke", "@retry(3)"]) // => Some(3)
+/// parse_retry_tag(["@smoke", "@slow"])      // => None
+/// ```
 fn parse_retry_tag(tags : Array[String]) -> Int? {
   let prefix = "@retry("
   let prefix_len = prefix.length()
@@ -850,6 +859,16 @@ async fn[W : @core.World] run_pickles_sequential(
 
 ///|
 /// Execute a single pickle with a fresh world, with optional retry.
+///
+/// When `retries > 0` or the pickle has a `@retry(N)` tag, failed scenarios are
+/// re-executed using `@async.retry(Immediate)`. Each attempt creates a fresh
+/// World instance via `factory()` and emits its own `TestCaseStarted`/
+/// `TestCaseFinished` envelope pair with the correct `attempt` number and
+/// `willBeRetried` flag.
+///
+/// The `@retry(N)` tag takes priority over the global `retries` parameter.
+/// Returns a `PickleResult` containing the final attempt's `ScenarioResult` and
+/// a flag indicating whether the scenario was retried.
 async fn[W : @core.World] execute_pickle(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
