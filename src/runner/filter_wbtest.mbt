@@ -3,7 +3,7 @@ struct FilterWorld {} derive(Default)
 
 ///|
 impl @core.World for FilterWorld with configure(_self, setup) {
-  setup.given("a step", fn(_args) {  })
+  setup.given("a step", fn(_ctx) {  })
 }
 
 ///|

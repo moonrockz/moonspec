@@ -3,7 +3,7 @@ struct RunWorld {} derive(Default)
 
 ///|
 impl @core.World for RunWorld with configure(_self, setup) {
-  setup.given("a step", fn(_args) {  })
+  setup.given("a step", fn(_ctx) {  })
 }
 
 ///|
@@ -24,8 +24,8 @@ struct RunWorld2 {} derive(Default)
 
 ///|
 impl @core.World for RunWorld2 with configure(_self, setup) {
-  setup.given("pass", fn(_args) {  })
-  setup.given("fail", fn(_args) raise { raise Failure::Failure("fail") })
+  setup.given("pass", fn(_ctx) {  })
+  setup.given("fail", fn(_ctx) raise { raise Failure::Failure("fail") })
 }
 
 ///|
@@ -50,7 +50,7 @@ struct PassWorld {} derive(Default)
 
 ///|
 impl @core.World for PassWorld with configure(_self, setup) {
-  setup.given("a calculator", fn(_args) {  })
+  setup.given("a calculator", fn(_ctx) {  })
 }
 
 ///|
@@ -365,7 +365,7 @@ struct ParamWorld {} derive(Default)
 ///|
 impl @core.World for ParamWorld with configure(_self, setup) {
   setup.add_param_type_strings("color", ["red|blue|green"])
-  setup.given("I pick a {color} cucumber", fn(_args) {  })
+  setup.given("I pick a {color} cucumber", fn(_ctx) {  })
 }
 
 ///|
@@ -472,7 +472,7 @@ struct HookEnvWorld {
 impl @core.World for HookEnvWorld with configure(self, setup) {
   setup.before_test_case(fn(_info) { self.log.push("before") })
   setup.after_test_case(fn(_info, _result) { self.log.push("after") })
-  setup.given("a step", fn(_args) {  })
+  setup.given("a step", fn(_ctx) {  })
 }
 
 ///|
@@ -527,7 +527,7 @@ struct RunHookWorld {} derive(Default)
 ///|
 impl @core.World for RunHookWorld with configure(_self, setup) {
   setup.before_test_run(fn() {  })
-  setup.given("a step", fn(_args) {  })
+  setup.given("a step", fn(_ctx) {  })
 }
 
 ///|

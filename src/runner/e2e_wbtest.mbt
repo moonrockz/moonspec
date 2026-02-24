@@ -5,9 +5,9 @@ struct CalcWorld {
 
 ///|
 impl @core.World for CalcWorld with configure(self, setup) {
-  setup.given("a calculator", fn(_args) { self.result_val = 0 })
-  setup.when("I add {int} and {int}", fn(args) {
-    match (args[0], args[1]) {
+  setup.given("a calculator", fn(_ctx) { self.result_val = 0 })
+  setup.when("I add {int} and {int}", fn(ctx) {
+    match (ctx[0], ctx[1]) {
       (
         { value: @core.StepValue::IntVal(a), .. },
         { value: @core.StepValue::IntVal(b), .. },
@@ -15,8 +15,8 @@ impl @core.World for CalcWorld with configure(self, setup) {
       _ => ()
     }
   })
-  setup.when("I subtract {int} from {int}", fn(args) {
-    match (args[0], args[1]) {
+  setup.when("I subtract {int} from {int}", fn(ctx) {
+    match (ctx[0], ctx[1]) {
       (
         { value: @core.StepValue::IntVal(a), .. },
         { value: @core.StepValue::IntVal(b), .. },
@@ -24,8 +24,8 @@ impl @core.World for CalcWorld with configure(self, setup) {
       _ => ()
     }
   })
-  setup.when("I multiply {int} and {int}", fn(args) {
-    match (args[0], args[1]) {
+  setup.when("I multiply {int} and {int}", fn(ctx) {
+    match (ctx[0], ctx[1]) {
       (
         { value: @core.StepValue::IntVal(a), .. },
         { value: @core.StepValue::IntVal(b), .. },
@@ -33,8 +33,8 @@ impl @core.World for CalcWorld with configure(self, setup) {
       _ => ()
     }
   })
-  setup.then("the result should be {int}", fn(args) raise {
-    match args[0] {
+  setup.then("the result should be {int}", fn(ctx) raise {
+    match ctx[0] {
       { value: @core.StepValue::IntVal(expected), .. } =>
         assert_eq(self.result_val, expected)
       _ => ()
@@ -59,9 +59,9 @@ struct TagWorld {} derive(Default)
 
 ///|
 impl @core.World for TagWorld with configure(_self, setup) {
-  setup.given("a calculator", fn(_args) {  })
-  setup.when("I add {int} and {int}", fn(_args) {  })
-  setup.then("the result should be {int}", fn(_args) {  })
+  setup.given("a calculator", fn(_ctx) {  })
+  setup.when("I add {int} and {int}", fn(_ctx) {  })
+  setup.then("the result should be {int}", fn(_ctx) {  })
 }
 
 ///|
@@ -82,8 +82,8 @@ struct DocWorld {
 
 ///|
 impl @core.World for DocWorld with configure(self, setup) {
-  setup.given("a JSON payload", fn(args) {
-    match args[0] {
+  setup.given("a JSON payload", fn(ctx) {
+    match ctx[0] {
       { value: @core.StepValue::DocStringVal(doc), .. } => {
         self.payload = doc.content
         self.media = doc.media_type
@@ -91,36 +91,36 @@ impl @core.World for DocWorld with configure(self, setup) {
       _ => ()
     }
   })
-  setup.given("the following users", fn(args) {
-    match args[0] {
+  setup.given("the following users", fn(ctx) {
+    match ctx[0] {
       { value: @core.StepValue::DataTableVal(table), .. } =>
         self.users = table.as_maps()
       _ => ()
     }
   })
-  setup.then("the payload should contain {string}", fn(args) raise {
-    match args[0] {
+  setup.then("the payload should contain {string}", fn(ctx) raise {
+    match ctx[0] {
       { value: @core.StepValue::StringVal(expected), .. } =>
         assert_true(self.payload.contains(expected))
       _ => ()
     }
   })
-  setup.then("the media type should be {string}", fn(args) raise {
-    match args[0] {
+  setup.then("the media type should be {string}", fn(ctx) raise {
+    match ctx[0] {
       { value: @core.StepValue::StringVal(expected), .. } =>
         assert_eq(self.media, Some(expected))
       _ => ()
     }
   })
-  setup.then("there should be {int} users", fn(args) raise {
-    match args[0] {
+  setup.then("there should be {int} users", fn(ctx) raise {
+    match ctx[0] {
       { value: @core.StepValue::IntVal(n), .. } =>
         assert_eq(self.users.length(), n)
       _ => ()
     }
   })
-  setup.then("user {int} should have name {string}", fn(args) raise {
-    match (args[0], args[1]) {
+  setup.then("user {int} should have name {string}", fn(ctx) raise {
+    match (ctx[0], ctx[1]) {
       (
         { value: @core.StepValue::IntVal(idx), .. },
         { value: @core.StepValue::StringVal(name), .. },

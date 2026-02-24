@@ -3,9 +3,9 @@ struct ParWorld {} derive(Default)
 
 ///|
 impl @core.World for ParWorld with configure(_self, setup) {
-  setup.given("a step", fn(_args) {  })
-  setup.given("step a", fn(_args) {  })
-  setup.given("step b", fn(_args) {  })
+  setup.given("a step", fn(_ctx) {  })
+  setup.given("step a", fn(_ctx) {  })
+  setup.given("step b", fn(_ctx) {  })
 }
 
 ///|

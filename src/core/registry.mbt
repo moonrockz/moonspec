@@ -1,6 +1,6 @@
 ///|
 /// A step handler function that receives extracted arguments.
-pub struct StepHandler((Array[StepArg]) -> Unit raise Error)
+pub struct StepHandler((Ctx) -> Unit raise Error)
 
 ///|
 /// Internal: a compiled step entry pairing a StepDef with its parsed expression.

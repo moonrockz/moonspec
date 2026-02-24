@@ -61,7 +61,7 @@ fn generate_snippet(step_text : String, keyword : String) -> String {
   buf.write_string(method)
   buf.write_string("(\"")
   buf.write_string(pattern)
-  buf.write_string("\", fn(args) raise {\n")
+  buf.write_string("\", fn(ctx) raise {\n")
   buf.write_string("  raise PendingStep(step=\"")
   buf.write_string(pattern)
   buf.write_string("\", keyword=\"")

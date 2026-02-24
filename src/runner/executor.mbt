@@ -259,6 +259,7 @@ pub fn execute_scenario(
     } else {
       None
     }
+    let mut ctx_for_drain : @core.Ctx? = None
     let (status, diagnostic) : (StepStatus, Error?) = if before_err is Some(msg) {
       (
         StepStatus::Failed(msg),
@@ -308,7 +309,9 @@ pub fn execute_scenario(
                 }
               None => ()
             }
-            (step_def.handler.0)(args)
+            let ctx = @core.Ctx::new(args, info, step_info)
+            (step_def.handler.0)(ctx)
+            ctx_for_drain = Some(ctx)
             (StepStatus::Passed, None)
           } catch {
             @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
@@ -340,6 +343,22 @@ pub fn execute_scenario(
           step_status_message(status),
         ),
       )
+    }
+    // Drain attachments from ctx
+    if has_sinks {
+      match ctx_for_drain {
+        Some(c) =>
+          if c.attachments.length() > 0 {
+            emit_attachments(
+              sinks,
+              c.attachments,
+              test_case_started_id,
+              Some(ts_id),
+            )
+            c.attachments.clear()
+          }
+        None => ()
+      }
     }
     // after_test_step hooks
     if after_step_hooks.length() > 0 {
