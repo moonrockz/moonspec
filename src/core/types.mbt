@@ -66,15 +66,15 @@ impl Eq for StepValue with equal(self, other) -> Bool {
 }
 
 ///|
-/// A step argument carrying both the typed value and the original matched text.
-pub(all) struct StepArg {
+/// A step execution context carrying both the typed value and the original matched text.
+pub(all) struct Ctx {
   value : StepValue
   raw : String
 } derive(Show, Eq)
 
 ///|
-/// Convert a cucumber-expressions Param to a StepArg.
-pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
+/// Convert a cucumber-expressions Param to a Ctx.
+pub fn Ctx::from_param(param : @cucumber_expressions.Param) -> Ctx {
   let value : StepValue = match param.value {
     @cucumber_expressions.ParamValue::IntVal(n) => IntVal(n)
     @cucumber_expressions.ParamValue::FloatVal(f) => FloatVal(f)
@@ -95,7 +95,7 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
 ///|
 /// Result of matching step text against the registry.
 pub(all) enum StepMatchResult {
-  Matched(StepDef, Array[StepArg])
+  Matched(StepDef, Array[Ctx])
   Undefined(
     step_text~ : String,
     keyword~ : String,

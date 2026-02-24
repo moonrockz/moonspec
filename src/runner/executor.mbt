@@ -233,7 +233,7 @@ pub fn execute_scenario(
           )
         Matched(step_def, args) =>
           try {
-            // Append block argument (DocString/DataTable) as last StepArg
+            // Append block argument (DocString/DataTable) as last Ctx
             match step.argument {
               Some(arg) =>
                 match (arg.docString, arg.dataTable) {
@@ -242,7 +242,7 @@ pub fn execute_scenario(
                       content: ds.content,
                       media_type: ds.mediaType,
                     }
-                    args.push(@core.StepArg::{
+                    args.push(@core.Ctx::{
                       value: DocStringVal(doc),
                       raw: ds.content,
                     })
@@ -252,7 +252,7 @@ pub fn execute_scenario(
                       row.cells.map(fn(cell) { cell.value })
                     })
                     let table = @core.DataTable::from_rows(raw_rows)
-                    args.push(@core.StepArg::{
+                    args.push(@core.Ctx::{
                       value: DataTableVal(table),
                       raw: "",
                     })
