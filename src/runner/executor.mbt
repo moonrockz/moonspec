@@ -1,5 +1,5 @@
 ///|
-/// Drain pending attachments from Ctx args and emit as envelopes.
+/// Drain pending attachments from args and emit as envelopes.
 fn emit_attachments(
   sinks : Array[&@core.MessageSink],
   attachments : Array[@core.PendingAttachment],
@@ -259,7 +259,6 @@ pub fn execute_scenario(
     } else {
       None
     }
-    let args_for_drain : Array[@core.Ctx] = []
     let (status, diagnostic) : (StepStatus, Error?) = if before_err is Some(msg) {
       (
         StepStatus::Failed(msg),
@@ -281,7 +280,7 @@ pub fn execute_scenario(
           )
         Matched(step_def, args) =>
           try {
-            // Append block argument (DocString/DataTable) as last Ctx
+            // Append block argument (DocString/DataTable) as last StepArg
             match step.argument {
               Some(arg) =>
                 match (arg.docString, arg.dataTable) {
@@ -290,10 +289,9 @@ pub fn execute_scenario(
                       content: ds.content,
                       media_type: ds.mediaType,
                     }
-                    args.push(@core.Ctx::{
+                    args.push(@core.StepArg::{
                       value: DocStringVal(doc),
                       raw: ds.content,
-                      attachments: [],
                     })
                   }
                   (_, Some(dt)) => {
@@ -301,10 +299,9 @@ pub fn execute_scenario(
                       row.cells.map(fn(cell) { cell.value })
                     })
                     let table = @core.DataTable::from_rows(raw_rows)
-                    args.push(@core.Ctx::{
+                    args.push(@core.StepArg::{
                       value: DataTableVal(table),
                       raw: "",
-                      attachments: [],
                     })
                   }
                   _ => ()
@@ -312,7 +309,6 @@ pub fn execute_scenario(
               None => ()
             }
             (step_def.handler.0)(args)
-            args_for_drain.append(args)
             (StepStatus::Passed, None)
           } catch {
             @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
@@ -344,20 +340,6 @@ pub fn execute_scenario(
           step_status_message(status),
         ),
       )
-    }
-    // Drain attachments from step args
-    if has_sinks {
-      for arg in args_for_drain {
-        if arg.attachments.length() > 0 {
-          emit_attachments(
-            sinks,
-            arg.attachments,
-            test_case_started_id,
-            Some(ts_id),
-          )
-          arg.attachments.clear()
-        }
-      }
     }
     // after_test_step hooks
     if after_step_hooks.length() > 0 {

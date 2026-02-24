@@ -109,16 +109,15 @@ impl Eq for PendingAttachment with equal(self, other) -> Bool {
 }
 
 ///|
-/// A step execution context carrying both the typed value and the original matched text.
-pub(all) struct Ctx {
+/// A step argument carrying both the typed value and the original matched text.
+pub(all) struct StepArg {
   value : StepValue
   raw : String
-  attachments : Array[PendingAttachment]
 } derive(Show, Eq)
 
 ///|
-/// Convert a cucumber-expressions Param to a Ctx.
-pub fn Ctx::from_param(param : @cucumber_expressions.Param) -> Ctx {
+/// Convert a cucumber-expressions Param to a StepArg.
+pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
   let value : StepValue = match param.value {
     @cucumber_expressions.ParamValue::IntVal(n) => IntVal(n)
     @cucumber_expressions.ParamValue::FloatVal(f) => FloatVal(f)
@@ -133,59 +132,13 @@ pub fn Ctx::from_param(param : @cucumber_expressions.Param) -> Ctx {
     @cucumber_expressions.ParamValue::BigIntegerVal(bi) => BigIntegerVal(bi)
     @cucumber_expressions.ParamValue::CustomVal(any) => CustomVal(any)
   }
-  { value, raw: param.raw, attachments: [] }
-}
-
-///|
-/// Attach text content to the current step/hook.
-pub fn Ctx::attach(
-  self : Ctx,
-  body : String,
-  media_type : String,
-  file_name? : String,
-) -> Unit {
-  // JSON round-trip: AttachmentContentEncoding constructors are not directly
-  // accessible from outside the cucumber-messages package in MoonBit.
-  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"IDENTITY\"") catch { _ => panic() },
-  ) catch {
-    _ => panic()
-  }
-  self.attachments.push(
-    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
-  )
-}
-
-///|
-/// Attach binary content (Base64 encoded) to the current step/hook.
-pub fn Ctx::attach_bytes(
-  self : Ctx,
-  data : Bytes,
-  media_type : String,
-  file_name? : String,
-) -> Unit {
-  let body = @base64.encode(data[:])
-  // JSON round-trip: see comment in Ctx::attach above.
-  let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"BASE64\"") catch { _ => panic() },
-  ) catch {
-    _ => panic()
-  }
-  self.attachments.push(
-    PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
-  )
-}
-
-///|
-/// Attach an external URL reference to the current step/hook.
-pub fn Ctx::attach_url(self : Ctx, url : String, media_type : String) -> Unit {
-  self.attachments.push(PendingAttachment::External(url~, media_type~))
+  { value, raw: param.raw }
 }
 
 ///|
 /// Result of matching step text against the registry.
 pub(all) enum StepMatchResult {
-  Matched(StepDef, Array[Ctx])
+  Matched(StepDef, Array[StepArg])
   Undefined(
     step_text~ : String,
     keyword~ : String,

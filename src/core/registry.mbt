@@ -1,6 +1,6 @@
 ///|
 /// A step handler function that receives extracted arguments.
-pub struct StepHandler((Array[Ctx]) -> Unit raise Error)
+pub struct StepHandler((Array[StepArg]) -> Unit raise Error)
 
 ///|
 /// Internal: a compiled step entry pairing a StepDef with its parsed expression.
@@ -91,7 +91,7 @@ pub fn StepRegistry::find_match(
   for entry in self.entries {
     match entry.expression.match_(text) {
       Some(m) => {
-        let args = m.params.map(Ctx::from_param)
+        let args = m.params.map(StepArg::from_param)
         return Matched(entry.def, args)
       }
       None => continue

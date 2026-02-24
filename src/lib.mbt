@@ -8,7 +8,7 @@ pub using @core {
   trait StepLibrary,
   type StepRegistry,
   type StepDef,
-  type Ctx,
+  type StepArg,
   type StepValue,
   type StepKeyword,
   type StepSource,

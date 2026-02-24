@@ -76,7 +76,7 @@ pub fn Setup::add_param_type_strings(
 pub fn Setup::given(
   self : Setup,
   pattern : String,
-  handler : (Array[Ctx]) -> Unit raise Error,
+  handler : (Array[StepArg]) -> Unit raise Error,
 ) -> Unit {
   self.step_reg.register_def(
     {
@@ -95,7 +95,7 @@ pub fn Setup::given(
 pub fn Setup::when(
   self : Setup,
   pattern : String,
-  handler : (Array[Ctx]) -> Unit raise Error,
+  handler : (Array[StepArg]) -> Unit raise Error,
 ) -> Unit {
   self.step_reg.register_def(
     {
@@ -114,7 +114,7 @@ pub fn Setup::when(
 pub fn Setup::then(
   self : Setup,
   pattern : String,
-  handler : (Array[Ctx]) -> Unit raise Error,
+  handler : (Array[StepArg]) -> Unit raise Error,
 ) -> Unit {
   self.step_reg.register_def(
     {
@@ -133,7 +133,7 @@ pub fn Setup::then(
 pub fn Setup::step(
   self : Setup,
   pattern : String,
-  handler : (Array[Ctx]) -> Unit raise Error,
+  handler : (Array[StepArg]) -> Unit raise Error,
 ) -> Unit {
   self.step_reg.register_def(
     {

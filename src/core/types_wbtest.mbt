@@ -1,6 +1,6 @@
 ///|
-test "Ctx struct destructuring" {
-  let arg = Ctx::{ value: IntVal(42), raw: "42", attachments: [] }
+test "StepArg struct destructuring" {
+  let arg = StepArg::{ value: IntVal(42), raw: "42" }
   match arg {
     { value: IntVal(n), raw, .. } => {
       assert_eq(n, 42)
@@ -11,8 +11,8 @@ test "Ctx struct destructuring" {
 }
 
 ///|
-test "Ctx struct wildcard" {
-  let arg = Ctx::{ value: IntVal(42), raw: "42", attachments: [] }
+test "StepArg struct wildcard" {
+  let arg = StepArg::{ value: IntVal(42), raw: "42" }
   match arg {
     { value: IntVal(n), .. } => assert_eq(n, 42)
     _ => fail("expected IntVal")
@@ -20,13 +20,13 @@ test "Ctx struct wildcard" {
 }
 
 ///|
-test "Ctx from_param Int" {
+test "StepArg from_param Int" {
   let param = @cucumber_expressions.Param::{
     value: @cucumber_expressions.ParamValue::IntVal(42),
     type_: @cucumber_expressions.ParamType::Int,
     raw: "42",
   }
-  let arg = Ctx::from_param(param)
+  let arg = StepArg::from_param(param)
   assert_eq(arg.raw, "42")
   match arg {
     { value: IntVal(n), .. } => assert_eq(n, 42)
@@ -35,13 +35,13 @@ test "Ctx from_param Int" {
 }
 
 ///|
-test "Ctx from_param Float" {
+test "StepArg from_param Float" {
   let param = @cucumber_expressions.Param::{
     value: @cucumber_expressions.ParamValue::FloatVal(3.14),
     type_: @cucumber_expressions.ParamType::Float,
     raw: "3.14",
   }
-  let arg = Ctx::from_param(param)
+  let arg = StepArg::from_param(param)
   match arg {
     { value: FloatVal(f), .. } => assert_eq(f, 3.14)
     _ => fail("")
@@ -49,13 +49,13 @@ test "Ctx from_param Float" {
 }
 
 ///|
-test "Ctx from_param String_" {
+test "StepArg from_param String_" {
   let param = @cucumber_expressions.Param::{
     value: @cucumber_expressions.ParamValue::StringVal("hello"),
     type_: @cucumber_expressions.ParamType::String_,
     raw: "hello",
   }
-  let arg = Ctx::from_param(param)
+  let arg = StepArg::from_param(param)
   match arg {
     { value: StringVal(s), .. } => assert_eq(s, "hello")
     _ => fail("")
@@ -63,13 +63,13 @@ test "Ctx from_param String_" {
 }
 
 ///|
-test "Ctx from_param Word" {
+test "StepArg from_param Word" {
   let param = @cucumber_expressions.Param::{
     value: @cucumber_expressions.ParamValue::WordVal("banana"),
     type_: @cucumber_expressions.ParamType::Word,
     raw: "banana",
   }
-  let arg = Ctx::from_param(param)
+  let arg = StepArg::from_param(param)
   match arg {
     { value: WordVal(s), .. } => assert_eq(s, "banana")
     _ => fail("")
@@ -77,13 +77,13 @@ test "Ctx from_param Word" {
 }
 
 ///|
-test "Ctx from_param Custom" {
+test "StepArg from_param Custom" {
   let param = @cucumber_expressions.Param::{
     value: @cucumber_expressions.ParamValue::CustomVal(@any.of("red")),
     type_: @cucumber_expressions.ParamType::Custom("color"),
     raw: "red",
   }
-  let arg = Ctx::from_param(param)
+  let arg = StepArg::from_param(param)
   assert_eq(arg.raw, "red")
 }
 
@@ -186,9 +186,9 @@ test "DocString constructor without media type" {
 }
 
 ///|
-test "Ctx with DocStringVal" {
+test "StepArg with DocStringVal" {
   let doc = DocString(content="hello", media_type="json")
-  let arg : Ctx = { value: DocStringVal(doc), raw: "", attachments: [] }
+  let arg : StepArg = { value: DocStringVal(doc), raw: "" }
   match arg {
     { value: DocStringVal(d), .. } => {
       assert_eq(d.content, "hello")
@@ -199,70 +199,14 @@ test "Ctx with DocStringVal" {
 }
 
 ///|
-test "Ctx with DataTableVal" {
+test "StepArg with DataTableVal" {
   let table = DataTable([["name"], ["Alice"]])
-  let arg : Ctx = { value: DataTableVal(table), raw: "", attachments: [] }
+  let arg : StepArg = { value: DataTableVal(table), raw: "" }
   match arg {
     { value: DataTableVal(t), .. } => {
       assert_eq(t.row_count(), 2)
       assert_eq(t.rows.get(1).cells.get(0), "Alice")
     }
     _ => fail("expected DataTableVal")
-  }
-}
-
-///|
-test "Ctx attach text" {
-  let ctx : Ctx = { value: IntVal(42), raw: "42", attachments: [] }
-  ctx.attach("hello", "text/plain")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
-    Embedded(body~, encoding~, media_type~, file_name~) => {
-      assert_eq(body, "hello")
-      assert_eq(encoding.to_json().stringify(), "\"IDENTITY\"")
-      assert_eq(media_type, "text/plain")
-      assert_eq(file_name, None)
-    }
-    _ => fail("expected Embedded attachment")
-  }
-}
-
-///|
-test "Ctx attach_bytes base64 encodes" {
-  let ctx : Ctx = { value: IntVal(1), raw: "1", attachments: [] }
-  ctx.attach_bytes(b"hello", "application/octet-stream")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
-    Embedded(body~, encoding~, media_type~, ..) => {
-      assert_eq(body, "aGVsbG8=")
-      assert_eq(encoding.to_json().stringify(), "\"BASE64\"")
-      assert_eq(media_type, "application/octet-stream")
-    }
-    _ => fail("expected Embedded attachment")
-  }
-}
-
-///|
-test "Ctx attach_url" {
-  let ctx : Ctx = { value: IntVal(1), raw: "1", attachments: [] }
-  ctx.attach_url("https://example.com/img.png", "image/png")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
-    External(url~, media_type~) => {
-      assert_eq(url, "https://example.com/img.png")
-      assert_eq(media_type, "image/png")
-    }
-    _ => fail("expected External attachment")
-  }
-}
-
-///|
-test "Ctx attach with file_name" {
-  let ctx : Ctx = { value: IntVal(1), raw: "1", attachments: [] }
-  ctx.attach("some notes", "text/plain", file_name="notes.txt")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
-    Embedded(file_name~, ..) => assert_eq(file_name, Some("notes.txt"))
-    _ => fail("expected Embedded attachment")
   }
 }
