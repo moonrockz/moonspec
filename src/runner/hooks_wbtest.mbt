@@ -61,23 +61,37 @@ struct HookWorld {
 impl @core.World for HookWorld with configure(self, setup) {
   setup.given("a step", fn(_ctx) { () })
   setup.then("it passes", fn(_ctx) { () })
-  setup.before_test_case(fn(info) {
-    self.log.push("before_scenario:" + info.scenario_name)
+  setup.before_test_case(fn(ctx) {
+    self.log.push("before_scenario:" + ctx.scenario().scenario_name)
   })
-  setup.after_test_case(fn(info, result) {
+  setup.after_test_case(fn(ctx, result) {
     let status = match result {
-      None => "ok"
-      Some(msg) => msg
+      @core.HookResult::Passed => "ok"
+      @core.HookResult::Failed(errors) => {
+        match errors[0] {
+          @core.HookError::StepFailed(message~, ..) => message
+          @core.HookError::ScenarioFailed(message~, ..) => message
+        }
+      }
     }
-    self.log.push("after_scenario:" + info.scenario_name + ":" + status)
+    self.log.push(
+      "after_scenario:" + ctx.scenario().scenario_name + ":" + status,
+    )
   })
-  setup.before_test_step(fn(info) { self.log.push("before_step:" + info.text) })
-  setup.after_test_step(fn(info, result) {
+  setup.before_test_step(fn(ctx) {
+    self.log.push("before_step:" + ctx.step().text)
+  })
+  setup.after_test_step(fn(ctx, result) {
     let status = match result {
-      None => "ok"
-      Some(msg) => msg
+      @core.HookResult::Passed => "ok"
+      @core.HookResult::Failed(errors) => {
+        match errors[0] {
+          @core.HookError::StepFailed(message~, ..) => message
+          @core.HookError::ScenarioFailed(message~, ..) => message
+        }
+      }
     }
-    self.log.push("after_step:" + info.text + ":" + status)
+    self.log.push("after_step:" + ctx.step().text + ":" + status)
   })
 }
 
@@ -128,11 +142,11 @@ struct FailHookWorld {
 ///|
 impl @core.World for FailHookWorld with configure(self, setup) {
   setup.given("a step", fn(_ctx) { () })
-  setup.before_test_case(fn(_info) raise {
+  setup.before_test_case(fn(_ctx) raise {
     self.log.push("before_scenario")
     raise Failure::Failure("setup failed")
   })
-  setup.after_test_case(fn(_info, _result) { self.log.push("after_scenario") })
+  setup.after_test_case(fn(_ctx, _result) { self.log.push("after_scenario") })
 }
 
 ///|
