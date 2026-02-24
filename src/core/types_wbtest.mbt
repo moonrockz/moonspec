@@ -278,8 +278,8 @@ test "Ctx attach text" {
     text: "step",
   })
   ctx.attach("hello", "text/plain")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
+  assert_eq(ctx.pending_attachments().length(), 1)
+  match ctx.pending_attachments()[0] {
     Embedded(body~, encoding~, media_type~, file_name~) => {
       assert_eq(body, "hello")
       assert_eq(encoding.to_json().stringify(), "\"IDENTITY\"")
@@ -297,8 +297,8 @@ test "Ctx attach_bytes base64 encodes" {
     text: "step",
   })
   ctx.attach_bytes(b"hello", "application/octet-stream")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
+  assert_eq(ctx.pending_attachments().length(), 1)
+  match ctx.pending_attachments()[0] {
     Embedded(body~, encoding~, media_type~, ..) => {
       assert_eq(body, "aGVsbG8=")
       assert_eq(encoding.to_json().stringify(), "\"BASE64\"")
@@ -315,8 +315,8 @@ test "Ctx attach_url" {
     text: "step",
   })
   ctx.attach_url("https://example.com/img.png", "image/png")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
+  assert_eq(ctx.pending_attachments().length(), 1)
+  match ctx.pending_attachments()[0] {
     External(url~, media_type~) => {
       assert_eq(url, "https://example.com/img.png")
       assert_eq(media_type, "image/png")
@@ -332,11 +332,23 @@ test "Ctx attach with file_name" {
     text: "step",
   })
   ctx.attach("some notes", "text/plain", file_name="notes.txt")
-  assert_eq(ctx.attachments.length(), 1)
-  match ctx.attachments[0] {
+  assert_eq(ctx.pending_attachments().length(), 1)
+  match ctx.pending_attachments()[0] {
     Embedded(file_name~, ..) => assert_eq(file_name, Some("notes.txt"))
     _ => fail("expected Embedded attachment")
   }
+}
+
+///|
+test "Ctx implements Attachable via pending_attachments" {
+  let ctx = Ctx::new(
+    [],
+    { feature_name: "F", scenario_name: "S", tags: [] },
+    { keyword: "Given ", text: "step" },
+  )
+  ctx.attach("hello", "text/plain")
+  let pending = ctx.pending_attachments()
+  assert_eq(pending.length(), 1)
 }
 
 ///|

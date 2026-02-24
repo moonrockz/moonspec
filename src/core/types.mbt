@@ -142,7 +142,7 @@ pub(all) struct Ctx {
   priv step_args : Array[StepArg]
   priv scenario_info : ScenarioInfo
   priv step_info : StepInfo
-  attachments : Array[PendingAttachment]
+  priv attachments : Array[PendingAttachment]
 }
 
 ///|
@@ -192,6 +192,15 @@ pub fn Ctx::step(self : Ctx) -> StepInfo {
 }
 
 ///|
+/// Trait for any context that can buffer attachments.
+pub trait Attachable {
+  attach(Self, String, String, file_name? : String) -> Unit
+  attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+  attach_url(Self, String, String) -> Unit
+  pending_attachments(Self) -> Array[PendingAttachment]
+}
+
+///|
 /// Parse an AttachmentContentEncoding from a JSON string literal.
 /// Workaround: enum constructors from external packages are not directly
 /// accessible in MoonBit, so we round-trip through JSON.
@@ -234,6 +243,12 @@ pub fn Ctx::attach_bytes(
 /// Attach an external URL reference to the current step/hook.
 pub fn Ctx::attach_url(self : Ctx, url : String, media_type : String) -> Unit {
   self.attachments.push(PendingAttachment::External(url~, media_type~))
+}
+
+///|
+/// Access buffered attachments (for executor draining).
+pub fn Ctx::pending_attachments(self : Ctx) -> Array[PendingAttachment] {
+  self.attachments
 }
 
 ///|

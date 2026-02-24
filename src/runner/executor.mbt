@@ -348,14 +348,14 @@ pub fn execute_scenario(
     if has_sinks {
       match ctx_for_drain {
         Some(c) =>
-          if c.attachments.length() > 0 {
+          if c.pending_attachments().length() > 0 {
             emit_attachments(
               sinks,
-              c.attachments,
+              c.pending_attachments(),
               test_case_started_id,
               Some(ts_id),
             )
-            c.attachments.clear()
+            c.pending_attachments().clear()
           }
         None => ()
       }
