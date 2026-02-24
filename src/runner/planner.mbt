@@ -21,6 +21,11 @@ pub fn IdGenerator::next_param_type_id(self : IdGenerator) -> String {
 }
 
 ///|
+pub fn IdGenerator::next_hook_id(self : IdGenerator) -> String {
+  self.next("hook")
+}
+
+///|
 /// Build TestCase envelopes by matching pickle steps against a shared registry.
 pub fn build_test_cases(
   registry : @core.StepRegistry,

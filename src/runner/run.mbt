@@ -347,6 +347,45 @@ pub async fn[W : @core.World] run(
       emit(sinks, envelope)
     }
   }
+  // Emit Hook envelopes
+  if sinks.length() > 0 {
+    let hook_reg = setup.hook_registry()
+    for hook in hook_reg.hooks() {
+      let source_ref : Map[String, Json] = {}
+      match hook.source {
+        Some(src) => {
+          match src.uri {
+            Some(uri) => source_ref["uri"] = uri.to_json()
+            None => ()
+          }
+          match src.line {
+            Some(line) => source_ref["location"] = { "line": line.to_json() }
+            None => ()
+          }
+        }
+        None => ()
+      }
+      let hook_type_str = match hook.type_ {
+        @core.HookType::BeforeTestRun => "BEFORE_TEST_RUN"
+        @core.HookType::AfterTestRun => "AFTER_TEST_RUN"
+        @core.HookType::BeforeTestCase => "BEFORE_TEST_CASE"
+        @core.HookType::AfterTestCase => "AFTER_TEST_CASE"
+        @core.HookType::BeforeTestStep => "BEFORE_TEST_STEP"
+        @core.HookType::AfterTestStep => "AFTER_TEST_STEP"
+      }
+      let json : Json = {
+        "hook": {
+          "id": hook.id.to_json(),
+          "sourceReference": source_ref.to_json(),
+          "type": hook_type_str.to_json(),
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
+        _ => continue
+      }
+      emit(sinks, envelope)
+    }
+  }
   // Test planning phase
   let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
     let tc_envelopes = build_test_cases(registry, filtered, id_gen)
@@ -362,6 +401,46 @@ pub async fn[W : @core.World] run(
   if sinks.length() > 0 {
     emit(sinks, make_test_run_started_envelope(run_id))
   }
+  // Execute before_test_run hooks
+  let before_run_hooks = setup.hook_registry().by_type(@core.HookType::BeforeTestRun)
+  for hook in before_run_hooks {
+    let trhs_id = id_gen.next("trhs")
+    if sinks.length() > 0 {
+      let json : Json = {
+        "testRunHookStarted": {
+          "id": trhs_id.to_json(),
+          "testRunStartedId": run_id.to_json(),
+          "hookId": hook.id.to_json(),
+          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      emit(sinks, envelope)
+    }
+    let result_status = try {
+      match hook.handler {
+        @core.HookHandler::RunHandler(h) => h()
+        _ => ()
+      }
+      "PASSED"
+    } catch {
+      _ => "FAILED"
+    }
+    if sinks.length() > 0 {
+      let json : Json = {
+        "testRunHookFinished": {
+          "testRunHookStartedId": trhs_id.to_json(),
+          "result": {
+            "duration": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+            "status": result_status.to_json(),
+          },
+          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      emit(sinks, envelope)
+    }
+  }
   let results = if options.is_parallel() {
     run_pickles_parallel(
       factory,
@@ -373,6 +452,46 @@ pub async fn[W : @core.World] run(
     )
   } else {
     run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~)
+  }
+  // Execute after_test_run hooks
+  let after_run_hooks = setup.hook_registry().by_type(@core.HookType::AfterTestRun)
+  for hook in after_run_hooks {
+    let trhs_id = id_gen.next("trhs")
+    if sinks.length() > 0 {
+      let json : Json = {
+        "testRunHookStarted": {
+          "id": trhs_id.to_json(),
+          "testRunStartedId": run_id.to_json(),
+          "hookId": hook.id.to_json(),
+          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      emit(sinks, envelope)
+    }
+    let result_status = try {
+      match hook.handler {
+        @core.HookHandler::RunHandler(h) => h()
+        _ => ()
+      }
+      "PASSED"
+    } catch {
+      _ => "FAILED"
+    }
+    if sinks.length() > 0 {
+      let json : Json = {
+        "testRunHookFinished": {
+          "testRunHookStartedId": trhs_id.to_json(),
+          "result": {
+            "duration": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+            "status": result_status.to_json(),
+          },
+          "timestamp": { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() },
+        },
+      }
+      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch { _ => continue }
+      emit(sinks, envelope)
+    }
   }
   // Emit TestRunFinished
   if sinks.length() > 0 {

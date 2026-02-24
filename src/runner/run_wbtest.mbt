@@ -459,3 +459,93 @@ async test "run_or_fail raises on parse errors" {
   }
   assert_true(caught)
 }
+
+///|
+struct HookEnvWorld {
+  log : Array[String]
+} derive(Default)
+
+///|
+impl @core.World for HookEnvWorld with configure(self, setup) {
+  setup.before_test_case(fn(_info) {
+    self.log.push("before")
+  })
+  setup.after_test_case(fn(_info, _result) {
+    self.log.push("after")
+  })
+  setup.given("a step", fn(_args) {  })
+}
+
+///|
+async test "run emits Hook envelopes for registered hooks" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text("test://hooks", "Feature: H\n\n  Scenario: S\n    Given a step\n"),
+  ])
+    ..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  let mut hook_count = 0
+  for env in collector.envelopes {
+    if env is @cucumber_messages.Envelope::Hook(_) {
+      hook_count += 1
+    }
+  }
+  // 2 hooks: before_test_case + after_test_case
+  assert_eq(hook_count, 2)
+}
+
+///|
+async test "run emits Hook envelopes in correct position" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text("test://hook-order", "Feature: HO\n\n  Scenario: S\n    Given a step\n"),
+  ])
+    ..add_sink(collector)
+  let _ = run(HookEnvWorld::default, opts)
+  let mut sd_idx = -1
+  let mut hook_idx = -1
+  let mut tc_idx = -1
+  for i, env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::StepDefinition(_) =>
+        if sd_idx < 0 { sd_idx = i }
+      @cucumber_messages.Envelope::Hook(_) =>
+        if hook_idx < 0 { hook_idx = i }
+      @cucumber_messages.Envelope::TestCase(_) =>
+        if tc_idx < 0 { tc_idx = i }
+      _ => ()
+    }
+  }
+  assert_true(hook_idx > sd_idx)
+  assert_true(hook_idx < tc_idx)
+}
+
+///|
+struct RunHookWorld {} derive(Default)
+
+///|
+impl @core.World for RunHookWorld with configure(_self, setup) {
+  setup.before_test_run(fn() {  })
+  setup.given("a step", fn(_args) {  })
+}
+
+///|
+async test "run emits TestRunHookStarted and TestRunHookFinished" {
+  let collector = CollectorSink::new()
+  let opts = RunOptions([
+    FeatureSource::Text("test://run-hooks", "Feature: RH\n\n  Scenario: S\n    Given a step\n"),
+  ])
+    ..add_sink(collector)
+  let _ = run(RunHookWorld::default, opts)
+  let mut trhs_count = 0
+  let mut trhf_count = 0
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestRunHookStarted(_) => trhs_count += 1
+      @cucumber_messages.Envelope::TestRunHookFinished(_) => trhf_count += 1
+      _ => ()
+    }
+  }
+  assert_eq(trhs_count, 1)
+  assert_eq(trhf_count, 1)
+}
