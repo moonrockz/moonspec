@@ -62,7 +62,7 @@ test "per-scenario mode generates runner call with world" {
   assert_true(output.contains("@moonspec.run_or_fail"))
   assert_true(output.contains("MyWorld::default"))
   assert_true(output.contains("@moonspec.FeatureSource::File"))
-  assert_true(output.contains("scenario_name="))
+  assert_true(output.contains("options.scenario_name("))
   assert_true(output.contains("features/login.feature"))
   assert_true(output.contains("|> ignore"))
   assert_true(not(output.contains("assert_eq!(result.summary.failed, 0)")))
@@ -88,7 +88,7 @@ test "per-scenario mode uses file source with scenario_name" {
   let config = CodegenConfig::{ mode: PerScenario, world: "AuthWorld" }
   let output = generate_test_file(content, "features/auth.feature", config~)
   assert_true(output.contains("@moonspec.FeatureSource::File"))
-  assert_true(output.contains("scenario_name="))
+  assert_true(output.contains("options.scenario_name("))
   assert_true(output.contains("View profile"))
 }
 
@@ -101,7 +101,7 @@ test "per-scenario mode expands scenario outline" {
   assert_true(output.contains("a=4, b=5, sum=9"))
   assert_true(output.contains("MathWorld::default"))
   assert_true(output.contains("@moonspec.FeatureSource::File"))
-  assert_true(output.contains("scenario_name="))
+  assert_true(output.contains("options.scenario_name("))
 }
 
 ///|

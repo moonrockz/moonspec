@@ -3,33 +3,29 @@
 // moonspec:hash:00000000
 
 async test "Feature: Todo List / Scenario: Add a todo item" {
-  @moonspec.run_or_fail(
-    TodoWorld::default, [@moonspec.FeatureSource::File("features/todolist.feature")],
-    scenario_name="Add a todo item",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/todolist.feature")])
+  options.scenario_name("Add a todo item")
+  @moonspec.run_or_fail(TodoWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Todo List / Scenario: Complete a todo item" {
-  @moonspec.run_or_fail(
-    TodoWorld::default, [@moonspec.FeatureSource::File("features/todolist.feature")],
-    scenario_name="Complete a todo item",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/todolist.feature")])
+  options.scenario_name("Complete a todo item")
+  @moonspec.run_or_fail(TodoWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Todo List / Scenario: Remove a todo item" {
-  @moonspec.run_or_fail(
-    TodoWorld::default, [@moonspec.FeatureSource::File("features/todolist.feature")],
-    scenario_name="Remove a todo item",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/todolist.feature")])
+  options.scenario_name("Remove a todo item")
+  @moonspec.run_or_fail(TodoWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Todo List / Scenario: Count pending todos" {
-  @moonspec.run_or_fail(
-    TodoWorld::default, [@moonspec.FeatureSource::File("features/todolist.feature")],
-    scenario_name="Count pending todos",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/todolist.feature")])
+  options.scenario_name("Count pending todos")
+  @moonspec.run_or_fail(TodoWorld::default, options)
   |> ignore
 }

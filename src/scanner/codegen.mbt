@@ -49,14 +49,14 @@ fn generate_step_registration(buf : StringBuilder, step : StepFnInfo) -> Unit {
 ///|
 fn generate_arg_match(idx : String, type_name : String) -> String {
   if type_name == "Int" {
-    "match args[" + idx + "] { IntArg(v) => v; _ => 0 }"
+    "match args[" + idx + "] { { value: IntVal(v), .. } => v; _ => 0 }"
   } else if type_name == "Double" {
-    "match args[" + idx + "] { FloatArg(v) => v; _ => 0.0 }"
+    "match args[" + idx + "] { { value: FloatVal(v), .. } => v; _ => 0.0 }"
   } else {
     // String and any other type
     "match args[" +
     idx +
-    "] { StringArg(v) => v; WordArg(v) => v; CustomArg(v) => v; _ => \"\" }"
+    "] { { value: StringVal(v), .. } => v; { value: WordVal(v), .. } => v; _ => \"\" }"
   }
 }
 

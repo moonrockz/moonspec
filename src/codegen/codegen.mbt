@@ -155,9 +155,9 @@ fn generate_per_feature(
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
       config.world +
-      "::default, [@moonspec.FeatureSource::File(\"" +
+      "::default, @moonspec.RunOptions::new([@moonspec.FeatureSource::File(\"" +
       escape_string(source_path) +
-      "\")],\n  )\n  |> ignore\n",
+      "\")]),\n  )\n  |> ignore\n",
     )
   } else {
     buf.write_string("  ignore(\"\")\n")
@@ -227,13 +227,13 @@ fn generate_scenario_runner_test(
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
-      "  @moonspec.run_or_fail(\n    " +
-      config.world +
-      "::default, [@moonspec.FeatureSource::File(\"" +
+      "  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File(\"" +
       escape_string(source_path) +
-      "\")],\n    scenario_name=\"" +
+      "\")])\n  options.scenario_name(\"" +
       escape_string(scenario_name) +
-      "\",\n  )\n  |> ignore\n",
+      "\")\n  @moonspec.run_or_fail(\n    " +
+      config.world +
+      "::default, options,\n  )\n  |> ignore\n",
     )
   } else {
     buf.write_string("  // Source: " + source_path + "\n")

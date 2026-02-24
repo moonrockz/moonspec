@@ -21,9 +21,9 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
       fn(args) {
         match (args[0], args[1], args[2]) {
           (
-            @moonspec.StepArg::StringArg(name),
-            @moonspec.StepArg::IntArg(qty),
-            @moonspec.StepArg::IntArg(price),
+            { value: @moonspec.StepValue::StringVal(name), .. },
+            { value: @moonspec.StepValue::IntVal(qty), .. },
+            { value: @moonspec.StepValue::IntVal(price), .. },
           ) => {
             // Check if item already in cart; if so, increase quantity
             let mut found = false
@@ -46,7 +46,7 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
       "I remove {string} from the cart",
       fn(args) {
         match args[0] {
-          @moonspec.StepArg::StringArg(name) => {
+          { value: @moonspec.StepValue::StringVal(name), .. } => {
             let mut idx = -1
             for i, item in self.world.cart {
               if item.name == name {
@@ -66,7 +66,7 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
       "the cart should contain {int} item",
       fn(args) raise {
         match args[0] {
-          @moonspec.StepArg::IntArg(expected) =>
+          { value: @moonspec.StepValue::IntVal(expected), .. } =>
             assert_eq(self.world.cart.length(), expected)
           _ => ()
         }
@@ -76,7 +76,7 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
       "the cart should contain {int} items",
       fn(args) raise {
         match args[0] {
-          @moonspec.StepArg::IntArg(expected) =>
+          { value: @moonspec.StepValue::IntVal(expected), .. } =>
             assert_eq(self.world.cart.length(), expected)
           _ => ()
         }
@@ -86,7 +86,7 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
       "the cart total should be {int}",
       fn(args) raise {
         match args[0] {
-          @moonspec.StepArg::IntArg(expected) => {
+          { value: @moonspec.StepValue::IntVal(expected), .. } => {
             let mut total = 0
             for item in self.world.cart {
               total = total + item.quantity * item.price

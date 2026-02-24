@@ -25,7 +25,7 @@ async test "calculator: runner API with run_or_fail" {
     #|      | a  | b  | result |
     #|      | 2  | 3  | 6      |
     #|      | 10 | 5  | 50     |
-  @moonspec.run_or_fail(CalcWorld::default, [@moonspec.FeatureSource::Text("test://calculator", feature)])
+  @moonspec.run_or_fail(CalcWorld::default, @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]))
   |> ignore
 }
 
@@ -46,7 +46,9 @@ async test "calculator: tag filtering" {
     #|  Scenario: Slow addition
     #|    When I add 1 and 2
     #|    Then the result should be 3
-  let result = @moonspec.run(CalcWorld::default, [@moonspec.FeatureSource::Text("test://tag-filter", feature)], tag_expr="@slow")
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://tag-filter", feature)])
+  options.tag_expr("@slow")
+  let result = @moonspec.run(CalcWorld::default, options)
   assert_eq(result.summary.total_scenarios, 1)
   assert_eq(result.summary.passed, 1)
 }

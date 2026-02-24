@@ -3,33 +3,29 @@
 // moonspec:hash:6a7ef305
 
 async test "Feature: Calculator / Scenario: Addition" {
-  @moonspec.run_or_fail(
-    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Addition",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Addition")
+  @moonspec.run_or_fail(CalcWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Calculator / Scenario: Subtraction" {
-  @moonspec.run_or_fail(
-    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Subtraction",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Subtraction")
+  @moonspec.run_or_fail(CalcWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
-  @moonspec.run_or_fail(
-    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Multiplication (a=2, b=3, result=6)",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Multiplication (a=2, b=3, result=6)")
+  @moonspec.run_or_fail(CalcWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Calculator / Scenario: Multiplication (a=10, b=5, result=50)" {
-  @moonspec.run_or_fail(
-    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Multiplication (a=10, b=5, result=50)",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Multiplication (a=10, b=5, result=50)")
+  @moonspec.run_or_fail(CalcWorld::default, options)
   |> ignore
 }

@@ -3,25 +3,22 @@
 // moonspec:hash:00000000
 
 async test "Feature: Shopping Cart / Scenario: Add a single item to the cart" {
-  @moonspec.run_or_fail(
-    EcomWorld::default, [@moonspec.FeatureSource::File("features/cart.feature")],
-    scenario_name="Add a single item to the cart",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/cart.feature")])
+  options.scenario_name("Add a single item to the cart")
+  @moonspec.run_or_fail(EcomWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Shopping Cart / Scenario: Add multiple items to the cart" {
-  @moonspec.run_or_fail(
-    EcomWorld::default, [@moonspec.FeatureSource::File("features/cart.feature")],
-    scenario_name="Add multiple items to the cart",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/cart.feature")])
+  options.scenario_name("Add multiple items to the cart")
+  @moonspec.run_or_fail(EcomWorld::default, options)
   |> ignore
 }
 
 async test "Feature: Shopping Cart / Scenario: Remove an item from the cart" {
-  @moonspec.run_or_fail(
-    EcomWorld::default, [@moonspec.FeatureSource::File("features/cart.feature")],
-    scenario_name="Remove an item from the cart",
-  )
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/cart.feature")])
+  options.scenario_name("Remove an item from the cart")
+  @moonspec.run_or_fail(EcomWorld::default, options)
   |> ignore
 }

@@ -28,7 +28,7 @@ test "generate_configure produces valid impl block" {
   // Check function call
   assert_true(str_contains(output, "set_cucumbers(self"))
   // Check arg extraction
-  assert_true(str_contains(output, "IntArg(v)"))
+  assert_true(str_contains(output, "IntVal(v)"))
 }
 
 ///|
@@ -52,7 +52,7 @@ test "generate_configure handles multiple params" {
   let output = generate_configure("W", steps, source_hash="00000000")
   assert_true(str_contains(output, "args[0]"))
   assert_true(str_contains(output, "args[1]"))
-  assert_true(str_contains(output, "StringArg(v)"))
+  assert_true(str_contains(output, "StringVal(v)"))
 }
 
 ///|

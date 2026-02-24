@@ -17,8 +17,8 @@ impl @moonspec.StepLibrary for InventorySteps with steps(self) {
       fn(args) {
         match (args[0], args[1]) {
           (
-            @moonspec.StepArg::StringArg(name),
-            @moonspec.StepArg::IntArg(stock),
+            { value: @moonspec.StepValue::StringVal(name), .. },
+            { value: @moonspec.StepValue::IntVal(stock), .. },
           ) => self.world.inventory[name] = stock
           _ => ()
         }
@@ -28,7 +28,7 @@ impl @moonspec.StepLibrary for InventorySteps with steps(self) {
       "I check stock for {string}",
       fn(args) {
         match args[0] {
-          @moonspec.StepArg::StringArg(name) =>
+          { value: @moonspec.StepValue::StringVal(name), .. } =>
             self.world.last_checked_item = name
           _ => ()
         }
@@ -47,7 +47,7 @@ impl @moonspec.StepLibrary for InventorySteps with steps(self) {
       "the stock level should be {int}",
       fn(args) raise {
         match args[0] {
-          @moonspec.StepArg::IntArg(expected) =>
+          { value: @moonspec.StepValue::IntVal(expected), .. } =>
             match self.world.inventory.get(self.world.last_checked_item) {
               Some(stock) => assert_eq(stock, expected)
               None => fail("Item not found in inventory")
@@ -61,8 +61,8 @@ impl @moonspec.StepLibrary for InventorySteps with steps(self) {
       fn(args) raise {
         match (args[0], args[1]) {
           (
-            @moonspec.StepArg::StringArg(name),
-            @moonspec.StepArg::IntArg(expected),
+            { value: @moonspec.StepValue::StringVal(name), .. },
+            { value: @moonspec.StepValue::IntVal(expected), .. },
           ) =>
             match self.world.inventory.get(name) {
               Some(stock) => assert_eq(stock, expected)

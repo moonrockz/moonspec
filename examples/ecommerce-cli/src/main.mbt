@@ -37,7 +37,7 @@ async fn main {
     features.push(@moonspec.FeatureSource::File(path))
   }
   // Run all features
-  let result = @moonspec.run(EcomWorld::default, features)
+  let result = @moonspec.run(EcomWorld::default, @moonspec.RunOptions::new(features))
   // Format and print output
   println(format_result(result))
   // Exit with non-zero code on failures or undefined steps

@@ -23,7 +23,7 @@ impl @moonspec.StepLibrary for AccountSteps with steps(self) {
       "a bank account with balance {int}",
       fn(args) {
         match args[0] {
-          @moonspec.StepArg::IntArg(amount) => {
+          { value: @moonspec.StepValue::IntVal(amount), .. } => {
             self.world.balance = amount
             self.world.last_declined = false
           }
@@ -35,7 +35,7 @@ impl @moonspec.StepLibrary for AccountSteps with steps(self) {
       "the balance should be {int}",
       fn(args) raise {
         match args[0] {
-          @moonspec.StepArg::IntArg(expected) => assert_eq(self.world.balance, expected)
+          { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.world.balance, expected)
           _ => ()
         }
       },
@@ -62,7 +62,7 @@ impl @moonspec.StepLibrary for TransactionSteps with steps(self) {
       "I deposit {int}",
       fn(args) {
         match args[0] {
-          @moonspec.StepArg::IntArg(amount) => self.world.balance = self.world.balance + amount
+          { value: @moonspec.StepValue::IntVal(amount), .. } => self.world.balance = self.world.balance + amount
           _ => ()
         }
       },
@@ -71,7 +71,7 @@ impl @moonspec.StepLibrary for TransactionSteps with steps(self) {
       "I withdraw {int}",
       fn(args) {
         match args[0] {
-          @moonspec.StepArg::IntArg(amount) =>
+          { value: @moonspec.StepValue::IntVal(amount), .. } =>
             if amount > self.world.balance {
               self.world.last_declined = true
             } else {

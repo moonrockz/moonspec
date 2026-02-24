@@ -39,7 +39,7 @@ impl @moonspec.StepLibrary for CheckoutSteps with steps(self) {
       "the order total should be {int}",
       fn(args) raise {
         match args[0] {
-          @moonspec.StepArg::IntArg(expected) =>
+          { value: @moonspec.StepValue::IntVal(expected), .. } =>
             assert_eq(self.world.order_total, expected)
           _ => ()
         }

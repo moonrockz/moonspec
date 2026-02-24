@@ -12,7 +12,7 @@ pub(all) struct RunOptions {
 }
 
 ///|
-fn RunOptions::new(features : Array[FeatureSource]) -> RunOptions {
+pub fn RunOptions::new(features : Array[FeatureSource]) -> RunOptions {
   {
     features_: features,
     parallel_: false,

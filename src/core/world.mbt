@@ -13,7 +13,7 @@
 ///
 /// impl @moonspec.World for MyWorld with configure(self, s) {
 ///   s.given("a count of {int}", fn(args) {
-///     match args[0] { @moonspec.IntArg(n) => self.count = n | _ => () }
+///     match args[0] { { value: IntVal(n), .. } => self.count = n; _ => () }
 ///   })
 /// }
 /// ```
