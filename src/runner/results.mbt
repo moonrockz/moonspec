@@ -116,6 +116,13 @@ pub(all) struct ParseErrorInfo {
 } derive(Show, Eq)
 
 ///|
+/// Result of executing a pickle, including whether it was retried.
+priv struct PickleResult {
+  result : ScenarioResult
+  was_retried : Bool
+}
+
+///|
 /// Complete result of a test run.
 pub(all) struct RunResult {
   features : Array[FeatureResult]

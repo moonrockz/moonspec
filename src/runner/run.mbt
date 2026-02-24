@@ -620,7 +620,7 @@ pub async fn[W : @core.World] run(
     }
   }
   let retries = options.get_retries()
-  let results = if options.is_parallel() {
+  let paired_results = if options.is_parallel() {
     run_pickles_parallel(
       factory,
       filtered,
@@ -633,6 +633,10 @@ pub async fn[W : @core.World] run(
   } else {
     run_pickles_sequential(factory, filtered, sinks~, tc_mappings~, id_gen~, retries~)
   }
+  let results : Array[ScenarioResult] = paired_results.map(fn(pr) { pr.result })
+  let retried_count = paired_results.iter().fold(init=0, fn(acc, pr) {
+    if pr.was_retried { acc + 1 } else { acc }
+  })
   // Execute after_test_run hooks
   let run_errors : Array[@core.HookError] = []
   for r in results {
@@ -734,7 +738,7 @@ pub async fn[W : @core.World] run(
     emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
   }
   let feature_results = group_by_feature(results, cache)
-  let summary = compute_summary(feature_results)
+  let summary = compute_summary(feature_results, retried=retried_count)
   { features: feature_results, summary, parse_errors: all_parse_errors }
 }
 
@@ -817,8 +821,8 @@ async fn[W : @core.World] run_pickles_sequential(
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
   retries? : Int = 0,
-) -> Array[ScenarioResult] {
-  let results : Array[ScenarioResult] = []
+) -> Array[PickleResult] {
+  let results : Array[PickleResult] = []
   for pickle in pickles {
     let result = execute_pickle(factory, pickle, sinks~, tc_mappings~, id_gen~, retries~)
     results.push(result)
@@ -835,7 +839,7 @@ async fn[W : @core.World] execute_pickle(
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
   retries? : Int = 0,
-) -> ScenarioResult {
+) -> PickleResult {
   let tags = pickle.tags.map(fn(t) { t.name })
   let tag_retries = parse_retry_tag(tags)
   let max_retries = match tag_retries {
@@ -913,21 +917,28 @@ async fn[W : @core.World] execute_pickle(
     }
     result
   }
-  if max_retries > 0 {
-    @async.retry(
-      @async.Immediate,
-      max_retry=max_retries,
-      fatal_error=fn(e) {
-        match e {
-          RetryableFailure(_) => false
-          _ => true
-        }
-      },
-      execute_attempt,
-    )
+  let result = if max_retries > 0 {
+    try {
+      @async.retry(
+        @async.Immediate,
+        max_retry=max_retries,
+        fatal_error=fn(e) {
+          match e {
+            RetryableFailure(_) => false
+            _ => true
+          }
+        },
+        execute_attempt,
+      )
+    } catch {
+      RetryableFailure(r) => r
+      _ => panic()
+    }
   } else {
     execute_attempt()
   }
+  let was_retried = attempt.val > 1
+  { result, was_retried }
 }
 
 ///|
@@ -964,7 +975,7 @@ fn group_by_feature(
 }
 
 ///|
-fn compute_summary(features : Array[FeatureResult]) -> RunSummary {
+fn compute_summary(features : Array[FeatureResult], retried~ : Int = 0) -> RunSummary {
   let mut total = 0
   let mut passed = 0
   let mut failed = 0
@@ -990,7 +1001,7 @@ fn compute_summary(features : Array[FeatureResult]) -> RunSummary {
     undefined,
     pending,
     skipped,
-    retried: 0,
+    retried,
     duration_ms: 0L,
   }
 }
