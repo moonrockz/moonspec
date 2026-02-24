@@ -1,59 +1,76 @@
 ///|
-test "StepArg::IntArg derives Show" {
-  inspect(StepArg::IntArg(42), content="IntArg(42)")
+test "StepArg struct destructuring" {
+  let arg = StepArg::{ value: IntVal(42), raw: "42" }
+  match arg {
+    { value: IntVal(n), raw } => {
+      assert_eq(n, 42)
+      assert_eq(raw, "42")
+    }
+    _ => fail("expected IntVal")
+  }
 }
 
 ///|
-test "StepArg::StringArg derives Show" {
-  inspect(StepArg::StringArg("hello"), content="StringArg(\"hello\")")
+test "StepArg struct wildcard" {
+  let arg = StepArg::{ value: IntVal(42), raw: "42" }
+  match arg {
+    { value: IntVal(n), .. } => assert_eq(n, 42)
+    _ => fail("expected IntVal")
+  }
 }
 
 ///|
-test "StepArg from_param converts Int param" {
+test "StepArg from_param Int" {
   let param = @cucumber_expressions.Param::{
-    value: "42",
+    value: @cucumber_expressions.ParamValue::IntVal(42),
     type_: @cucumber_expressions.ParamType::Int,
+    raw: "42",
   }
   let arg = StepArg::from_param(param)
-  assert_eq(arg, StepArg::IntArg(42))
+  assert_eq(arg.raw, "42")
+  match arg { { value: IntVal(n), .. } => assert_eq(n, 42); _ => fail("") }
 }
 
 ///|
-test "StepArg from_param converts Float param" {
+test "StepArg from_param Float" {
   let param = @cucumber_expressions.Param::{
-    value: "3.14",
+    value: @cucumber_expressions.ParamValue::FloatVal(3.14),
     type_: @cucumber_expressions.ParamType::Float,
+    raw: "3.14",
   }
   let arg = StepArg::from_param(param)
-  assert_eq(arg, StepArg::FloatArg(3.14))
+  match arg { { value: FloatVal(f), .. } => assert_eq(f, 3.14); _ => fail("") }
 }
 
 ///|
-test "StepArg from_param converts String_ param" {
+test "StepArg from_param String_" {
   let param = @cucumber_expressions.Param::{
-    value: "hello",
+    value: @cucumber_expressions.ParamValue::StringVal("hello"),
     type_: @cucumber_expressions.ParamType::String_,
+    raw: "hello",
   }
   let arg = StepArg::from_param(param)
-  assert_eq(arg, StepArg::StringArg("hello"))
+  match arg { { value: StringVal(s), .. } => assert_eq(s, "hello"); _ => fail("") }
 }
 
 ///|
-test "StepArg from_param converts Word param" {
+test "StepArg from_param Word" {
   let param = @cucumber_expressions.Param::{
-    value: "banana",
+    value: @cucumber_expressions.ParamValue::WordVal("banana"),
     type_: @cucumber_expressions.ParamType::Word,
+    raw: "banana",
   }
   let arg = StepArg::from_param(param)
-  assert_eq(arg, StepArg::WordArg("banana"))
+  match arg { { value: WordVal(s), .. } => assert_eq(s, "banana"); _ => fail("") }
 }
 
 ///|
-test "StepArg from_param converts Custom param" {
+test "StepArg from_param Custom" {
   let param = @cucumber_expressions.Param::{
-    value: "red",
+    value: @cucumber_expressions.ParamValue::CustomVal(@any.of("red")),
     type_: @cucumber_expressions.ParamType::Custom("color"),
+    raw: "red",
   }
   let arg = StepArg::from_param(param)
-  assert_eq(arg, StepArg::CustomArg("red"))
+  assert_eq(arg.raw, "red")
 }

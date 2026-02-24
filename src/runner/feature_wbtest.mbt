@@ -7,19 +7,19 @@ struct CucumberWorld {
 impl @core.World for CucumberWorld with configure(self, setup) {
   setup.given("I have {int} cucumbers", fn(args) {
     match args[0] {
-      @core.StepArg::IntArg(n) => self.total = n
+      { value: @core.StepValue::IntVal(n), .. } => self.total = n
       _ => ()
     }
   })
   setup.when("I eat {int} cucumbers", fn(args) {
     match args[0] {
-      @core.StepArg::IntArg(n) => self.total = self.total - n
+      { value: @core.StepValue::IntVal(n), .. } => self.total = self.total - n
       _ => ()
     }
   })
   setup.then("I should have {int} cucumbers", fn(args) raise {
     match args[0] {
-      @core.StepArg::IntArg(n) => assert_eq(self.total, n)
+      { value: @core.StepValue::IntVal(n), .. } => assert_eq(self.total, n)
       _ => ()
     }
   })

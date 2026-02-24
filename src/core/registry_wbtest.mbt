@@ -32,7 +32,11 @@ test "StepRegistry extracts parameters" {
   let setup = Setup::new()
   setup.given("I have {int} cucumbers", fn(_args) {  })
   match setup.step_registry().find_match("I have 42 cucumbers") {
-    Matched(_, args) => assert_eq(args[0], StepArg::IntArg(42))
+    Matched(_, args) =>
+      match args[0] {
+        { value: IntVal(n), .. } => assert_eq(n, 42)
+        _ => fail("expected IntVal")
+      }
     _ => fail("expected Matched")
   }
 }
@@ -62,7 +66,10 @@ test "StepRegistry find_match returns Matched with StepDef" {
   match setup.step_registry().find_match("I have 42 cucumbers") {
     Matched(step_def, args) => {
       assert_eq(step_def.keyword, StepKeyword::Given)
-      assert_eq(args[0], StepArg::IntArg(42))
+      match args[0] {
+        { value: IntVal(n), .. } => assert_eq(n, 42)
+        _ => fail("expected IntVal")
+      }
     }
     _ => fail("expected Matched")
   }

@@ -10,13 +10,13 @@ struct IsolationWorld {
 impl @core.World for IsolationWorld with configure(self, setup) {
   setup.given("I set counter to {int}", fn(args) {
     match args[0] {
-      @core.StepArg::IntArg(n) => self.counter = n
+      { value: @core.StepValue::IntVal(n), .. } => self.counter = n
       _ => ()
     }
   })
   setup.then("counter should be {int}", fn(args) raise {
     match args[0] {
-      @core.StepArg::IntArg(expected) => assert_eq(self.counter, expected)
+      { value: @core.StepValue::IntVal(expected), .. } => assert_eq(self.counter, expected)
       _ => ()
     }
   })

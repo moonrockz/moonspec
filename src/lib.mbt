@@ -9,6 +9,7 @@ pub using @core {
   type StepRegistry,
   type StepDef,
   type StepArg,
+  type StepValue,
   type StepKeyword,
   type StepSource,
   type StepMatchResult,

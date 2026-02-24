@@ -8,28 +8,28 @@ impl @core.World for CalcWorld with configure(self, setup) {
   setup.given("a calculator", fn(_args) { self.result_val = 0 })
   setup.when("I add {int} and {int}", fn(args) {
     match (args[0], args[1]) {
-      (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) =>
+      ({ value: @core.StepValue::IntVal(a), .. }, { value: @core.StepValue::IntVal(b), .. }) =>
         self.result_val = a + b
       _ => ()
     }
   })
   setup.when("I subtract {int} from {int}", fn(args) {
     match (args[0], args[1]) {
-      (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) =>
+      ({ value: @core.StepValue::IntVal(a), .. }, { value: @core.StepValue::IntVal(b), .. }) =>
         self.result_val = b - a
       _ => ()
     }
   })
   setup.when("I multiply {int} and {int}", fn(args) {
     match (args[0], args[1]) {
-      (@core.StepArg::IntArg(a), @core.StepArg::IntArg(b)) =>
+      ({ value: @core.StepValue::IntVal(a), .. }, { value: @core.StepValue::IntVal(b), .. }) =>
         self.result_val = a * b
       _ => ()
     }
   })
   setup.then("the result should be {int}", fn(args) raise {
     match args[0] {
-      @core.StepArg::IntArg(expected) => assert_eq(self.result_val, expected)
+      { value: @core.StepValue::IntVal(expected), .. } => assert_eq(self.result_val, expected)
       _ => ()
     }
   })
