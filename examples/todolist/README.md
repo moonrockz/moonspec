@@ -6,9 +6,9 @@ annotations and `moonspec gen steps` code generation.
 ## What This Example Shows
 
 - **Attribute-based steps**: Step functions annotated with `#moonspec.given`,
-  `#moonspec.when`, and `#moonspec.then` instead of manual `register_steps`
+  `#moonspec.when`, and `#moonspec.then` instead of manual `configure`
 - **World attribute**: `#moonspec.world` marks the struct as a World type
-- **Step codegen**: `moonspec gen steps` generates the `register_steps`
+- **Step codegen**: `moonspec gen steps` generates the `configure`
   implementation from annotated functions
 - **Test codegen**: `moonspec gen tests` generates one `async test` per scenario
 - **Pre-build integration**: Both codegen steps configured in `moon.pkg` so
@@ -34,7 +34,7 @@ todolist/
 
 ## Attribute-Based Steps
 
-Instead of writing a manual `register_steps` implementation, annotate your
+Instead of writing a manual `configure` implementation, annotate your
 step functions directly:
 
 ```moonbit
@@ -64,7 +64,7 @@ struct TodoWorld {
 ```
 
 Running `moonspec gen steps -d src/` scans these annotations and generates
-`todoworld_steps_gen.mbt` with the full `register_steps` implementation.
+`todoworld_steps_gen.mbt` with the full `configure` implementation.
 
 ## Pre-Build Configuration
 

@@ -156,16 +156,16 @@ struct CalcWorld {
   mut result : Int
 } derive(Default)
 
-impl @moonspec.World for CalcWorld with register_steps(self, s) {
-  s.given("a calculator", fn(_args) { self.result = 0 })
-  s.when("I add {int} and {int}", fn(args) {
+impl @moonspec.World for CalcWorld with configure(self, setup) {
+  setup.given("a calculator", fn(_args) { self.result = 0 })
+  setup.when("I add {int} and {int}", fn(args) {
     match (args[0], args[1]) {
       (@moonspec.StepArg::IntArg(a), @moonspec.StepArg::IntArg(b)) =>
         self.result = a + b
       _ => ()
     }
   })
-  s.then("the result should be {int}", fn(args) raise {
+  setup.then("the result should be {int}", fn(args) raise {
     match args[0] {
       @moonspec.StepArg::IntArg(expected) => assert_eq(self.result, expected)
       _ => ()

@@ -29,6 +29,7 @@ moonrockz/moonspec
 │   ├── core/            # Foundation types, step registry, and step definitions
 │   │   ├── types.mbt        # StepArg (ADT), ScenarioInfo, StepInfo, StepHandler
 │   │   ├── registry.mbt     # StepRegistry — given/when/then/step + find_match + use_library
+│   │   ├── setup.mbt        # Setup facade — wraps StepRegistry + ParamTypeRegistry
 │   │   ├── step_def.mbt     # StepDef — first-class step definitions (given/when/then/step constructors)
 │   │   ├── step_library.mbt # StepLibrary trait — composable step definition groups
 │   │   ├── world.mbt        # World and Hooks traits
@@ -67,7 +68,7 @@ moonrockz/moonspec
 .feature file → @gherkin.parse() → GherkinDocument
              → extract scenarios + expand outlines
              → filter by tag expression
-             → World::register_steps() → StepRegistry (with StepLibrary composition)
+             → World::configure() → Setup (StepRegistry + ParamTypeRegistry, with StepLibrary composition)
              → for each step:
                  → StepRegistry::find_match(text) → (handler, args)
                  → execute handler → StepResult
