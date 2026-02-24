@@ -26,3 +26,43 @@ test "Setup registers custom param type" {
   // 5 built-in + 1 custom = 6
   assert_eq(entries.length(), 6)
 }
+
+///|
+test "Setup registers before_test_case hook" {
+  let setup = Setup::new()
+  setup.before_test_case(fn(_info) {  })
+  assert_eq(setup.hook_registry().hooks().length(), 1)
+  assert_eq(setup.hook_registry().hooks()[0].type_, BeforeTestCase)
+}
+
+///|
+test "Setup registers all 6 hook types" {
+  let setup = Setup::new()
+  setup.before_test_run(fn() {  })
+  setup.after_test_run(fn() {  })
+  setup.before_test_case(fn(_info) {  })
+  setup.after_test_case(fn(_info, _result) {  })
+  setup.before_test_step(fn(_info) {  })
+  setup.after_test_step(fn(_info, _result) {  })
+  assert_eq(setup.hook_registry().hooks().length(), 6)
+}
+
+///|
+test "Setup hook registration captures source location" {
+  let setup = Setup::new()
+  setup.before_test_run(fn() {  })
+  let hook = setup.hook_registry().hooks()[0]
+  // Source should be populated via #callsite
+  assert_true(hook.source is Some(_), msg="expected source to be populated")
+}
+
+///|
+test "Setup hook by_type filters correctly" {
+  let setup = Setup::new()
+  setup.before_test_case(fn(_info) {  })
+  setup.before_test_case(fn(_info) {  })
+  setup.after_test_case(fn(_info, _result) {  })
+  assert_eq(setup.hook_registry().by_type(BeforeTestCase).length(), 2)
+  assert_eq(setup.hook_registry().by_type(AfterTestCase).length(), 1)
+  assert_eq(setup.hook_registry().by_type(BeforeTestRun).length(), 0)
+}

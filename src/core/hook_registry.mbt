@@ -10,11 +10,19 @@ pub(all) enum HookType {
 } derive(Show, Eq)
 
 ///|
+/// Typed handler for different hook scopes.
+pub(all) enum HookHandler {
+  RunHandler(() -> Unit raise Error)
+  CaseHandler((ScenarioInfo, String?) -> Unit raise Error)
+  StepHandler((StepInfo, String?) -> Unit raise Error)
+}
+
+///|
 /// A registered hook entry with id, type, handler, and source location.
 pub(all) struct RegisteredHook {
   id : String
   type_ : HookType
-  handler : () -> Unit raise Error
+  handler : HookHandler
   source : StepSource?
 }
 
@@ -36,7 +44,7 @@ pub fn HookRegistry::new() -> HookRegistry {
 pub fn HookRegistry::add(
   self : HookRegistry,
   type_ : HookType,
-  handler : () -> Unit raise Error,
+  handler : HookHandler,
   source~ : StepSource? = None,
 ) -> Unit {
   self.counter += 1
