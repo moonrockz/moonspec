@@ -28,7 +28,10 @@ test "StepArg from_param Int" {
   }
   let arg = StepArg::from_param(param)
   assert_eq(arg.raw, "42")
-  match arg { { value: IntVal(n), .. } => assert_eq(n, 42); _ => fail("") }
+  match arg {
+    { value: IntVal(n), .. } => assert_eq(n, 42)
+    _ => fail("")
+  }
 }
 
 ///|
@@ -39,7 +42,10 @@ test "StepArg from_param Float" {
     raw: "3.14",
   }
   let arg = StepArg::from_param(param)
-  match arg { { value: FloatVal(f), .. } => assert_eq(f, 3.14); _ => fail("") }
+  match arg {
+    { value: FloatVal(f), .. } => assert_eq(f, 3.14)
+    _ => fail("")
+  }
 }
 
 ///|
@@ -50,7 +56,10 @@ test "StepArg from_param String_" {
     raw: "hello",
   }
   let arg = StepArg::from_param(param)
-  match arg { { value: StringVal(s), .. } => assert_eq(s, "hello"); _ => fail("") }
+  match arg {
+    { value: StringVal(s), .. } => assert_eq(s, "hello")
+    _ => fail("")
+  }
 }
 
 ///|
@@ -61,7 +70,10 @@ test "StepArg from_param Word" {
     raw: "banana",
   }
   let arg = StepArg::from_param(param)
-  match arg { { value: WordVal(s), .. } => assert_eq(s, "banana"); _ => fail("") }
+  match arg {
+    { value: WordVal(s), .. } => assert_eq(s, "banana")
+    _ => fail("")
+  }
 }
 
 ///|

@@ -159,8 +159,8 @@ pub(all) struct CustomParamTypeInfo {
 /// Built-in types (int, float, string, word, anonymous "") are excluded.
 pub fn Setup::custom_param_types(self : Setup) -> Array[CustomParamTypeInfo] {
   let builtin = [
-    "int", "float", "string", "word", "",
-    "double", "long", "byte", "short", "bigdecimal", "biginteger",
+    "int", "float", "string", "word", "", "double", "long", "byte", "short", "bigdecimal",
+    "biginteger",
   ]
   let result : Array[CustomParamTypeInfo] = []
   for entry in self.param_reg.entries_view() {
