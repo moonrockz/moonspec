@@ -38,30 +38,36 @@ pub fn Setup::hook_registry(self : Setup) -> HookRegistry {
 
 ///|
 /// Register a custom parameter type with name and regex patterns.
+/// An optional transformer converts matched text into a typed ParamValue.
 pub fn Setup::add_param_type(
   self : Setup,
   name : String,
   patterns : Array[@cucumber_expressions.RegexPattern],
+  transformer? : @cucumber_expressions.Transformer,
 ) -> Unit {
   self.param_reg.register(
     name,
     @cucumber_expressions.ParamType::Custom(name),
     patterns,
+    transformer?,
   )
 }
 
 ///|
 /// Register a custom parameter type with name and string regex patterns.
 /// Convenience method that avoids requiring callers to import cucumber-expressions.
+/// An optional transformer converts matched text into a typed ParamValue.
 pub fn Setup::add_param_type_strings(
   self : Setup,
   name : String,
   patterns : Array[String],
+  transformer? : @cucumber_expressions.Transformer,
 ) -> Unit {
   self.param_reg.register(
     name,
     @cucumber_expressions.ParamType::Custom(name),
     patterns.map(fn(p) { @cucumber_expressions.RegexPattern(p) }),
+    transformer?,
   )
 }
 

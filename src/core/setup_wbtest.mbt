@@ -36,6 +36,34 @@ test "Setup registers before_test_case hook" {
 }
 
 ///|
+test "Setup.add_param_type_strings with transformer" {
+  let setup = Setup::new()
+  setup.add_param_type_strings(
+    "upper",
+    ["\\w+"],
+    transformer=@cucumber_expressions.Transformer::new(fn(groups) {
+      @cucumber_expressions.ParamValue::CustomVal(
+        @any.of(groups[0][:].to_upper().to_string()),
+      )
+    }),
+  )
+  setup.given("I say {upper}", fn(args) {
+    match args[0] {
+      { value: CustomVal(any), raw } => {
+        let v : String = any.to()
+        assert_eq(v, "HELLO")
+        assert_eq(raw, "hello")
+      }
+      _ => fail("expected CustomVal")
+    }
+  })
+  // Verify registration succeeded
+  let custom = setup.custom_param_types()
+  assert_eq(custom.length(), 1)
+  assert_eq(custom[0].name, "upper")
+}
+
+///|
 test "Setup registers all 6 hook types" {
   let setup = Setup::new()
   setup.before_test_run(fn() {  })
