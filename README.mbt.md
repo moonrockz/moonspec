@@ -73,8 +73,8 @@ Each scenario gets a fresh World instance via `derive(Default)` for state isolat
 
 | Package | Description |
 |---------|-------------|
-| `moonrockz/moonspec` | Top-level facade -- `World`, `Setup`, `StepArg`, `RunOptions`, `run`, `run_or_fail` |
-| `moonrockz/moonspec/core` | World trait, Setup facade, HookRegistry, StepRegistry, StepArg types |
+| `moonrockz/moonspec` | Top-level facade -- `World`, `Setup`, `Ctx`, `RunOptions`, `run`, `run_or_fail` |
+| `moonrockz/moonspec/core` | World trait, Setup facade, HookRegistry, StepRegistry, Ctx types |
 | `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
 | `moonrockz/moonspec/codegen` | Generate test files from Gherkin features |

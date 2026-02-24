@@ -180,9 +180,9 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 | `{word}` | `WordVal(String)` | `"as {word}"` |
 | custom | `CustomVal(@any.Any)` | user-defined types (see [Custom Parameter Types](#custom-parameter-types)) |
 
-### StepArg Destructuring
+### Ctx Destructuring
 
-Arguments are passed as `Array[StepArg]` where each `StepArg` is a struct with `value` (typed `StepValue`) and `raw` (the original matched string). Use struct destructuring to extract values:
+Arguments are passed as `Array[Ctx]` where each `Ctx` is a struct with `value` (typed `StepValue`) and `raw` (the original matched string). Use struct destructuring to extract values:
 
 ```moonbit
 setup.when("I transfer {float} from {string} to {string}", fn(args) {
@@ -195,6 +195,25 @@ setup.when("I transfer {float} from {string} to {string}", fn(args) {
   }
 })
 ```
+
+### Attachments
+
+Steps can attach content to test results for reporting:
+
+```moonbit
+setup.given("I take a screenshot", fn(args) {
+  // Attach text
+  args[0].attach("log output here", "text/plain")
+
+  // Attach binary (auto base64-encoded)
+  args[0].attach_bytes(screenshot_bytes, "image/png", file_name=Some("screenshot.png"))
+
+  // Attach external URL
+  args[0].attach_url("https://ci.example.com/artifacts/log.txt", "text/plain")
+})
+```
+
+Attachments are emitted as `Attachment` and `ExternalAttachment` envelopes in the Cucumber Messages protocol, visible in the Messages formatter output.
 
 ### Generic Steps
 
@@ -810,8 +829,8 @@ See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) -- standalone CLI runne
 
 | Package | Description |
 |---------|-------------|
-| `moonrockz/moonspec` | Top-level facade -- re-exports `World`, `Hooks`, `StepLibrary`, `StepDef`, `StepArg`, `MoonspecError`, `run`, `run_or_fail` |
-| `moonrockz/moonspec/core` | World, Hooks, StepLibrary traits, Setup, StepRegistry, ParamTypeRegistry, StepDef, StepArg, MoonspecError |
+| `moonrockz/moonspec` | Top-level facade -- re-exports `World`, `Hooks`, `StepLibrary`, `StepDef`, `Ctx`, `MoonspecError`, `run`, `run_or_fail` |
+| `moonrockz/moonspec/core` | World, Hooks, StepLibrary traits, Setup, StepRegistry, ParamTypeRegistry, StepDef, Ctx, MoonspecError |
 | `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
 | `moonrockz/moonspec/codegen` | Generate `_test.mbt` runner tests from Gherkin features |

@@ -27,7 +27,7 @@ The framework supports three integration modes:
 moonrockz/moonspec
 ├── src/
 │   ├── core/            # Foundation types, step registry, and step definitions
-│   │   ├── types.mbt        # StepArg (ADT), ScenarioInfo, StepInfo, StepHandler
+│   │   ├── types.mbt        # Ctx (step execution context), ScenarioInfo, StepInfo, StepHandler
 │   │   ├── registry.mbt     # StepRegistry — given/when/then/step + find_match + use_library
 │   │   ├── setup.mbt        # Setup facade — wraps StepRegistry + ParamTypeRegistry + HookRegistry
 │   │   ├── hook_registry.mbt # HookRegistry — registration-based lifecycle hooks (6 types)
@@ -117,7 +117,7 @@ This project follows **functional design principles**. These are non-negotiable:
 
 - **Algebraic data types (ADTs)**: Model domain concepts using enums (sum types)
   and structs (product types). Use ADTs to make the type system express the
-  domain precisely. Examples: `StepArg`, `StepStatus`, `ScenarioStatus`.
+  domain precisely. Examples: `Ctx`, `StepStatus`, `ScenarioStatus`.
 
 - **Make invalid states unrepresentable**: Design types so that illegal
   combinations cannot be constructed. If a state shouldn't exist, the type
@@ -163,7 +163,7 @@ before implementing them:
 pub fn StepRegistry::find_match(
   self : StepRegistry,
   text : String,
-) -> (StepHandler, Array[StepArg], String)? {
+) -> (StepHandler, Array[Ctx], String)? {
   ...
 }
 ```
