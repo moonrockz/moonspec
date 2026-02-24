@@ -72,12 +72,9 @@ pub(all) enum PendingAttachment {
     body~ : String,
     encoding~ : @cucumber_messages.AttachmentContentEncoding,
     media_type~ : String,
-    file_name~ : String?,
+    file_name~ : String?
   )
-  External(
-    url~ : String,
-    media_type~ : String,
-  )
+  External(url~ : String, media_type~ : String)
 }
 
 ///|
@@ -90,9 +87,7 @@ impl Show for PendingAttachment with output(self, logger) {
       )
     }
     External(url~, media_type~) =>
-      logger.write_string(
-        "External(url=\{url}, media_type=\{media_type})",
-      )
+      logger.write_string("External(url=\{url}, media_type=\{media_type})")
   }
 }
 
@@ -147,11 +142,15 @@ pub fn Ctx::attach(
   self : Ctx,
   body : String,
   media_type : String,
-  file_name~ : String? = None,
+  file_name? : String? = None,
 ) -> Unit {
   let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"IDENTITY\"") catch { _ => panic() },
-  ) catch { _ => panic() }
+    @json.parse("\"IDENTITY\"") catch {
+      _ => panic()
+    },
+  ) catch {
+    _ => panic()
+  }
   self.attachments.push(
     PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
   )
@@ -163,12 +162,16 @@ pub fn Ctx::attach_bytes(
   self : Ctx,
   data : Bytes,
   media_type : String,
-  file_name~ : String? = None,
+  file_name? : String? = None,
 ) -> Unit {
   let body = @base64.encode(data[:])
   let encoding : @cucumber_messages.AttachmentContentEncoding = @json.from_json(
-    @json.parse("\"BASE64\"") catch { _ => panic() },
-  ) catch { _ => panic() }
+    @json.parse("\"BASE64\"") catch {
+      _ => panic()
+    },
+  ) catch {
+    _ => panic()
+  }
   self.attachments.push(
     PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~),
   )
@@ -176,11 +179,7 @@ pub fn Ctx::attach_bytes(
 
 ///|
 /// Attach an external URL reference to the current step/hook.
-pub fn Ctx::attach_url(
-  self : Ctx,
-  url : String,
-  media_type : String,
-) -> Unit {
+pub fn Ctx::attach_url(self : Ctx, url : String, media_type : String) -> Unit {
   self.attachments.push(PendingAttachment::External(url~, media_type~))
 }
 

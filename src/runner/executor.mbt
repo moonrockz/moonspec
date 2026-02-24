@@ -8,15 +8,24 @@ fn emit_attachments(
 ) -> Unit {
   for att in attachments {
     match att {
-      @core.PendingAttachment::Embedded(body~, encoding~, media_type~, file_name~) => {
+      @core.PendingAttachment::Embedded(
+        body~,
+        encoding~,
+        media_type~,
+        file_name~
+      ) => {
         let enc_str = encoding.to_json().stringify()
         // Strip quotes from JSON string: "\"IDENTITY\"" -> "IDENTITY"
         let enc_clean = enc_str.substring(start=1, end=enc_str.length() - 1)
         emit(
           sinks,
           make_attachment_envelope(
-            body, enc_clean, media_type, file_name,
-            Some(test_case_started_id), test_step_id,
+            body,
+            enc_clean,
+            media_type,
+            file_name,
+            Some(test_case_started_id),
+            test_step_id,
           ),
         )
       }
@@ -24,8 +33,10 @@ fn emit_attachments(
         emit(
           sinks,
           make_external_attachment_envelope(
-            url, media_type,
-            Some(test_case_started_id), test_step_id,
+            url,
+            media_type,
+            Some(test_case_started_id),
+            test_step_id,
           ),
         )
     }
@@ -336,7 +347,12 @@ pub fn execute_scenario(
     if has_sinks {
       for arg in args_for_drain {
         if arg.attachments.length() > 0 {
-          emit_attachments(sinks, arg.attachments, test_case_started_id, Some(ts_id))
+          emit_attachments(
+            sinks,
+            arg.attachments,
+            test_case_started_id,
+            Some(ts_id),
+          )
           arg.attachments.clear()
         }
       }

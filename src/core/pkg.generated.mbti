@@ -2,8 +2,11 @@
 package "moonrockz/moonspec/core"
 
 import {
+  "moonbitlang/core/bigint",
+  "moonbitlang/x/decimal",
   "moonrockz/cucumber-expressions",
   "moonrockz/cucumber-messages",
+  "tonyfettes/any",
 }
 
 // Values
@@ -27,12 +30,78 @@ pub suberror MoonspecError {
 }
 
 // Types and methods
+pub struct Cells {
+  // private fields
+
+  fn new(Array[String]) -> Cells
+}
+pub fn Cells::get(Self, Int) -> String
+pub fn Cells::length(Self) -> Int
+pub fn Cells::values(Self) -> ArrayView[String]
+pub impl Eq for Cells
+pub impl Show for Cells
+
+pub(all) struct Column {
+  name : String
+  index : Int
+
+  fn new(name~ : String, index~ : Int) -> Column
+}
+pub impl Eq for Column
+pub impl Show for Column
+
+pub struct Columns {
+  // private fields
+
+  fn new(Array[Column]) -> Columns
+}
+pub fn Columns::find(Self, String) -> Column?
+pub fn Columns::get(Self, Int) -> Column
+pub fn Columns::length(Self) -> Int
+pub fn Columns::values(Self) -> ArrayView[Column]
+pub impl Eq for Columns
+pub impl Show for Columns
+
 type CompiledStep
+
+pub(all) struct Ctx {
+  value : StepValue
+  raw : String
+  attachments : Array[PendingAttachment]
+}
+pub fn Ctx::attach(Self, String, String, file_name? : String?) -> Unit
+pub fn Ctx::attach_bytes(Self, Bytes, String, file_name? : String?) -> Unit
+pub fn Ctx::attach_url(Self, String, String) -> Unit
+pub fn Ctx::from_param(@cucumber-expressions.Param) -> Self
+pub impl Eq for Ctx
+pub impl Show for Ctx
 
 pub(all) struct CustomParamTypeInfo {
   name : String
   patterns : Array[String]
 }
+
+pub(all) struct DataTable {
+  rows : Rows
+  columns : Columns
+
+  fn new(Array[Array[String]]) -> DataTable
+}
+pub fn DataTable::as_maps(Self) -> Array[Map[String, String]]
+pub fn DataTable::col_count(Self) -> Int
+pub fn DataTable::from_rows(Array[Array[String]]) -> Self
+pub fn DataTable::row_count(Self) -> Int
+pub impl Eq for DataTable
+pub impl Show for DataTable
+
+pub(all) struct DocString {
+  content : String
+  media_type : String?
+
+  fn new(content~ : String, media_type? : String) -> DocString
+}
+pub impl Eq for DocString
+pub impl Show for DocString
 
 pub(all) enum HookHandler {
   RunHandler(() -> Unit raise)
@@ -59,12 +128,36 @@ pub(all) enum HookType {
 pub impl Eq for HookType
 pub impl Show for HookType
 
+pub(all) enum PendingAttachment {
+  Embedded(body~ : String, encoding~ : @cucumber-messages.AttachmentContentEncoding, media_type~ : String, file_name~ : String?)
+  External(url~ : String, media_type~ : String)
+}
+
 pub(all) struct RegisteredHook {
   id : String
   type_ : HookType
   handler : HookHandler
   source : StepSource?
 }
+
+pub(all) struct Row {
+  cells : Cells
+
+  fn new(Array[String]) -> Row
+}
+pub impl Eq for Row
+pub impl Show for Row
+
+pub struct Rows {
+  // private fields
+
+  fn new(Array[Row]) -> Rows
+}
+pub fn Rows::get(Self, Int) -> Row
+pub fn Rows::length(Self) -> Int
+pub fn Rows::values(Self) -> ArrayView[Row]
+pub impl Eq for Rows
+pub impl Show for Rows
 
 pub(all) struct ScenarioInfo {
   feature_name : String
@@ -77,8 +170,8 @@ pub impl Show for ScenarioInfo
 pub(all) struct Setup {
   // private fields
 }
-pub fn Setup::add_param_type(Self, String, Array[@cucumber-expressions.RegexPattern]) -> Unit
-pub fn Setup::add_param_type_strings(Self, String, Array[String]) -> Unit
+pub fn Setup::add_param_type(Self, String, Array[@cucumber-expressions.RegexPattern], transformer? : @cucumber-expressions.Transformer) -> Unit
+pub fn Setup::add_param_type_strings(Self, String, Array[String], transformer? : @cucumber-expressions.Transformer) -> Unit
 #callsite(autofill(loc))
 pub fn Setup::after_test_case(Self, (ScenarioInfo, String?) -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
@@ -92,26 +185,15 @@ pub fn Setup::before_test_run(Self, () -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
 pub fn Setup::before_test_step(Self, (StepInfo) -> Unit raise, loc~ : SourceLoc) -> Unit
 pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
-pub fn Setup::given(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn Setup::given(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
 pub fn Setup::hook_registry(Self) -> HookRegistry
 pub fn Setup::new() -> Self
 pub fn Setup::param_registry(Self) -> @cucumber-expressions.ParamTypeRegistry
-pub fn Setup::step(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn Setup::step(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
 pub fn Setup::step_registry(Self) -> StepRegistry
-pub fn Setup::then(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
+pub fn Setup::then(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
 pub fn[L : StepLibrary] Setup::use_library(Self, L) -> Unit
-pub fn Setup::when(Self, String, (Array[StepArg]) -> Unit raise) -> Unit
-
-pub(all) enum StepArg {
-  IntArg(Int)
-  FloatArg(Double)
-  StringArg(String)
-  WordArg(String)
-  CustomArg(String)
-}
-pub fn StepArg::from_param(@cucumber-expressions.Param) -> Self
-pub impl Eq for StepArg
-pub impl Show for StepArg
+pub fn Setup::when(Self, String, (Array[Ctx]) -> Unit raise) -> Unit
 
 pub(all) struct StepDef {
   keyword : StepKeyword
@@ -120,10 +202,10 @@ pub(all) struct StepDef {
   source : StepSource?
   mut id : StepDefId?
 }
-pub fn StepDef::given(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
-pub fn StepDef::step(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
-pub fn StepDef::then(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
-pub fn StepDef::when(String, (Array[StepArg]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::given(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::step(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::then(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::when(String, (Array[Ctx]) -> Unit raise, source? : StepSource) -> Self
 
 pub(all) struct StepDefId {
   // private fields
@@ -135,9 +217,9 @@ pub impl Eq for StepDefId
 pub impl Hash for StepDefId
 pub impl Show for StepDefId
 
-pub struct StepHandler((Array[StepArg]) -> Unit raise)
+pub struct StepHandler((Array[Ctx]) -> Unit raise)
 #deprecated
-pub fn StepHandler::inner(Self) -> (Array[StepArg]) -> Unit raise
+pub fn StepHandler::inner(Self) -> (Array[Ctx]) -> Unit raise
 
 pub(all) struct StepInfo {
   keyword : String
@@ -156,7 +238,7 @@ pub impl Eq for StepKeyword
 pub impl Show for StepKeyword
 
 pub(all) enum StepMatchResult {
-  Matched(StepDef, Array[StepArg])
+  Matched(StepDef, Array[Ctx])
   Undefined(step_text~ : String, keyword~ : String, snippet~ : String, suggestions~ : Array[String])
 }
 
@@ -177,6 +259,23 @@ pub(all) struct StepSource {
 pub fn StepSource::new(uri? : String, line? : Int) -> Self
 pub impl Eq for StepSource
 pub impl Show for StepSource
+
+pub(all) enum StepValue {
+  IntVal(Int)
+  FloatVal(Double)
+  DoubleVal(Double)
+  LongVal(Int64)
+  ByteVal(Byte)
+  ShortVal(Int)
+  StringVal(String)
+  WordVal(String)
+  AnonymousVal(String)
+  BigDecimalVal(@decimal.Decimal)
+  BigIntegerVal(@bigint.BigInt)
+  CustomVal(@any.Any)
+  DocStringVal(DocString)
+  DataTableVal(DataTable)
+}
 
 // Type aliases
 

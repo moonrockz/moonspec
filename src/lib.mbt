@@ -27,6 +27,7 @@ pub using @core {
   type HookRegistry,
   type HookType,
   type HookHandler,
+  type PendingAttachment,
   type RegisteredHook,
 }
 

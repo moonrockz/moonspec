@@ -199,12 +199,12 @@ fn make_attachment_envelope(
     Some(id) => json_map["testStepId"] = id.to_json()
     None => ()
   }
-  json_map["timestamp"] = ({
-    "seconds": (0 : Int).to_json(),
-    "nanos": (0 : Int).to_json(),
-  } : Json)
+  json_map["timestamp"] = (
+    { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
   let json : Json = { "attachment": json_map.to_json() }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|
@@ -225,12 +225,12 @@ fn make_external_attachment_envelope(
     Some(id) => json_map["testStepId"] = id.to_json()
     None => ()
   }
-  json_map["timestamp"] = ({
-    "seconds": (0 : Int).to_json(),
-    "nanos": (0 : Int).to_json(),
-  } : Json)
+  json_map["timestamp"] = (
+    { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
   let json : Json = { "externalAttachment": json_map.to_json() }
-  @json.from_json(json) catch { _ => panic() }
+  @json.from_json(json) catch {
+    _ => panic()
+  }
 }
 
 ///|

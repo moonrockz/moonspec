@@ -330,14 +330,13 @@ pub impl @core.MessageSink for PrettyFormatter with on_message(self, envelope) {
       }
       self.buffer = self.buffer + "    [attached: " + name + "]\n"
     }
-    ExternalAttachment(ext) => {
+    ExternalAttachment(ext) =>
       self.buffer = self.buffer +
         "    [attached: " +
         ext.url +
         " (" +
         ext.mediaType +
         ")]\n"
-    }
     _ => () // Ignore other envelope types
   }
 }
