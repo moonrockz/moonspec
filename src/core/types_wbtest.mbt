@@ -338,3 +338,62 @@ test "Ctx attach with file_name" {
     _ => fail("expected Embedded attachment")
   }
 }
+
+///|
+test "HookResult Passed" {
+  let result : HookResult = Passed
+  match result {
+    Passed => ()
+    _ => fail("expected Passed")
+  }
+}
+
+///|
+test "HookResult Failed with StepFailed" {
+  let result : HookResult = Failed([
+    HookError::StepFailed(
+      step="I add 1 and 2",
+      keyword=StepKeyword::When,
+      message="assertion failed",
+    ),
+  ])
+  match result {
+    Failed(errors) => {
+      assert_eq(errors.length(), 1)
+      match errors[0] {
+        StepFailed(step~, keyword~, message~) => {
+          assert_eq(step, "I add 1 and 2")
+          assert_eq(keyword, StepKeyword::When)
+          assert_eq(message, "assertion failed")
+        }
+        _ => fail("expected StepFailed")
+      }
+    }
+    _ => fail("expected Failed")
+  }
+}
+
+///|
+test "HookResult Failed with ScenarioFailed" {
+  let result : HookResult = Failed([
+    HookError::ScenarioFailed(
+      feature_name="Calculator",
+      scenario_name="Addition",
+      message="step failed",
+    ),
+  ])
+  match result {
+    Failed(errors) => {
+      assert_eq(errors.length(), 1)
+      match errors[0] {
+        ScenarioFailed(feature_name~, scenario_name~, message~) => {
+          assert_eq(feature_name, "Calculator")
+          assert_eq(scenario_name, "Addition")
+          assert_eq(message, "step failed")
+        }
+        _ => fail("expected ScenarioFailed")
+      }
+    }
+    _ => fail("expected Failed")
+  }
+}

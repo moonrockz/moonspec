@@ -48,7 +48,7 @@ pub fn step_failed_error(
   keyword~ : String,
   message~ : String,
 ) -> Error {
-  StepFailed(step~, keyword~, message~)
+  MoonspecError::StepFailed(step~, keyword~, message~)
 }
 
 ///|
@@ -58,7 +58,7 @@ pub fn scenario_failed_error(
   feature~ : String,
   errors~ : Array[MoonspecError],
 ) -> MoonspecError {
-  ScenarioFailed(scenario~, feature~, errors~)
+  MoonspecError::ScenarioFailed(scenario~, feature~, errors~)
 }
 
 ///|

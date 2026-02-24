@@ -264,6 +264,24 @@ pub(all) struct StepInfo {
 } derive(Show, Eq)
 
 ///|
+/// Structured error reported to after-hooks.
+pub(all) enum HookError {
+  StepFailed(step~ : String, keyword~ : StepKeyword, message~ : String)
+  ScenarioFailed(
+    feature_name~ : String,
+    scenario_name~ : String,
+    message~ : String,
+  )
+} derive(Show, Eq)
+
+///|
+/// Result passed to after-hooks indicating pass/fail with structured errors.
+pub(all) enum HookResult {
+  Passed
+  Failed(Array[HookError])
+} derive(Show, Eq)
+
+///|
 /// Immutable wrapper around an array of cell values in a DataTable row.
 pub struct Cells {
   priv data : Array[String]

@@ -634,7 +634,7 @@ fn collect_scenario_errors(result : RunResult) -> Array[@core.MoonspecError] {
             match step.diagnostic {
               Some(@core.UndefinedStep(..) as e) => step_errors.push(e)
               Some(@core.PendingStep(..) as e) => step_errors.push(e)
-              Some(@core.StepFailed(..) as e) => step_errors.push(e)
+              Some(@core.MoonspecError::StepFailed(..) as e) => step_errors.push(e)
               _ => ()
             }
           }
