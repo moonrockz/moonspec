@@ -21,13 +21,14 @@ impl @moonspec.World for CalcWorld with configure(self, setup) {
   setup.given("a calculator", fn(_args) { self.result = 0 })
   setup.when("I add {int} and {int}", fn(args) {
     match (args[0], args[1]) {
-      (@moonspec.StepArg::IntArg(a), @moonspec.StepArg::IntArg(b)) => self.result = a + b
+      ({ value: @moonspec.StepValue::IntVal(a), .. }, { value: @moonspec.StepValue::IntVal(b), .. }) =>
+        self.result = a + b
       _ => ()
     }
   })
   setup.then("the result should be {int}", fn(args) raise {
     match args[0] {
-      @moonspec.StepArg::IntArg(expected) => assert_eq(self.result, expected)
+      { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.result, expected)
       _ => ()
     }
   })
@@ -43,7 +44,7 @@ async test "calculator" {
     #|    Then the result should be 5
   @moonspec.run_or_fail(
     CalcWorld::default,
-    [@moonspec.FeatureSource::Text("test://calculator", feature)],
+    @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]),
   )
   |> ignore
 }
@@ -60,7 +61,7 @@ Each scenario gets a fresh World instance via `derive(Default)` for state isolat
 - **Undefined step diagnostics** -- copy-paste snippets and "did you mean?" suggestions
 - **Lifecycle hooks** -- `before_test_case`, `after_test_case`, `before_test_step`, `after_test_step`, `before_test_run`, `after_test_run`
 - **Gherkin parsing** -- Feature, Scenario, Scenario Outline, Background, Rules, Data Tables, Doc Strings
-- **Cucumber Expressions** -- type-safe step matching with `{int}`, `{float}`, `{string}`, `{word}`, plus custom parameter types
+- **Cucumber Expressions** -- type-safe step matching with 11 built-in types (`{int}`, `{float}`, `{double}`, `{long}`, `{byte}`, `{short}`, `{bigdecimal}`, `{biginteger}`, `{string}`, `{word}`) plus custom parameter types with transformers
 - **Tag filtering** -- boolean tag expressions (`@smoke and not @slow`)
 - **Scenario Outline expansion** -- parameterized scenarios from Examples tables
 - **Background steps** -- shared Given setup across scenarios

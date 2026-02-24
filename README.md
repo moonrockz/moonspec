@@ -40,13 +40,14 @@ impl @moonspec.World for CalcWorld with configure(self, setup) {
   setup.given("a calculator", fn(_args) { self.result = 0 })
   setup.when("I add {int} and {int}", fn(args) {
     match (args[0], args[1]) {
-      (@moonspec.StepArg::IntArg(a), @moonspec.StepArg::IntArg(b)) => self.result = a + b
+      ({ value: @moonspec.StepValue::IntVal(a), .. }, { value: @moonspec.StepValue::IntVal(b), .. }) =>
+        self.result = a + b
       _ => ()
     }
   })
   setup.then("the result should be {int}", fn(args) raise {
     match args[0] {
-      @moonspec.StepArg::IntArg(expected) => assert_eq(self.result, expected)
+      { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.result, expected)
       _ => ()
     }
   })
@@ -66,7 +67,7 @@ async test "calculator" {
     #|    Then the result should be 5
   @moonspec.run_or_fail(
     CalcWorld::default,
-    [@moonspec.FeatureSource::Text("test://calculator", feature)],
+    @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]),
   )
   |> ignore
 }
@@ -142,21 +143,21 @@ your world instance -- closures capture it to share state between steps:
 impl @moonspec.World for MyWorld with configure(self, setup) {
   setup.given("I have {int} cucumbers", fn(args) {
     match args[0] {
-      @moonspec.StepArg::IntArg(n) => self.cucumbers = n
+      { value: @moonspec.StepValue::IntVal(n), .. } => self.cucumbers = n
       _ => ()
     }
   })
 
   setup.when("I eat {int} cucumbers", fn(args) {
     match args[0] {
-      @moonspec.StepArg::IntArg(n) => self.cucumbers = self.cucumbers - n
+      { value: @moonspec.StepValue::IntVal(n), .. } => self.cucumbers = self.cucumbers - n
       _ => ()
     }
   })
 
   setup.then("I should have {int} cucumbers", fn(args) raise {
     match args[0] {
-      @moonspec.StepArg::IntArg(expected) => assert_eq(self.cucumbers, expected)
+      { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.cucumbers, expected)
       _ => ()
     }
   })
@@ -165,22 +166,30 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 
 ### Cucumber Expression Parameters
 
-| Parameter | StepArg Variant | Example Pattern |
-|-----------|-----------------|-----------------|
-| `{int}` | `IntArg(Int)` | `"I have {int} items"` |
-| `{float}` | `FloatArg(Double)` | `"priced at {float}"` |
-| `{string}` | `StringArg(String)` | `"named {string}"` |
-| `{word}` | `WordArg(String)` | `"as {word}"` |
-| custom | `CustomArg(String)` | user-defined types (see [Custom Parameter Types](#custom-parameter-types)) |
+| Parameter | StepValue Variant | Example Pattern |
+|-----------|-------------------|-----------------|
+| `{int}` | `IntVal(Int)` | `"I have {int} items"` |
+| `{float}` | `FloatVal(Double)` | `"priced at {float}"` |
+| `{double}` | `DoubleVal(Double)` | `"ratio is {double}"` |
+| `{long}` | `LongVal(Int64)` | `"id is {long}"` |
+| `{byte}` | `ByteVal(Byte)` | `"byte {byte}"` |
+| `{short}` | `ShortVal(Int)` | `"port {short}"` |
+| `{bigdecimal}` | `BigDecimalVal(@decimal.Decimal)` | `"amount {bigdecimal}"` |
+| `{biginteger}` | `BigIntegerVal(BigInt)` | `"value {biginteger}"` |
+| `{string}` | `StringVal(String)` | `"named {string}"` |
+| `{word}` | `WordVal(String)` | `"as {word}"` |
+| custom | `CustomVal(@any.Any)` | user-defined types (see [Custom Parameter Types](#custom-parameter-types)) |
 
 ### StepArg Destructuring
 
-Arguments are passed as `Array[StepArg]`. Use pattern matching to extract values:
+Arguments are passed as `Array[StepArg]` where each `StepArg` is a struct with `value` (typed `StepValue`) and `raw` (the original matched string). Use struct destructuring to extract values:
 
 ```moonbit
 setup.when("I transfer {float} from {string} to {string}", fn(args) {
   match (args[0], args[1], args[2]) {
-    (@moonspec.StepArg::FloatArg(amount), @moonspec.StepArg::StringArg(from), @moonspec.StepArg::StringArg(to)) =>
+    ({ value: @moonspec.StepValue::FloatVal(amount), .. },
+     { value: @moonspec.StepValue::StringVal(from), .. },
+     { value: @moonspec.StepValue::StringVal(to), .. }) =>
       transfer(amount, from, to)
     _ => ()
   }
@@ -210,13 +219,13 @@ impl @moonspec.StepLibrary for AccountSteps with steps(self) {
   [
     @moonspec.StepDef::given("a bank account with balance {int}", fn(args) {
       match args[0] {
-        @moonspec.StepArg::IntArg(n) => self.world.balance = n
+        { value: @moonspec.StepValue::IntVal(n), .. } => self.world.balance = n
         _ => ()
       }
     }),
     @moonspec.StepDef::then("the balance should be {int}", fn(args) raise {
       match args[0] {
-        @moonspec.StepArg::IntArg(n) => assert_eq(self.world.balance, n)
+        { value: @moonspec.StepValue::IntVal(n), .. } => assert_eq(self.world.balance, n)
         _ => ()
       }
     }),
@@ -246,14 +255,17 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 
   setup.then("the light should be {color}", fn(args) raise {
     match args[0] {
-      @moonspec.StepArg::CustomArg(color) => assert_eq(self.light_color, color)
+      { value: @moonspec.StepValue::CustomVal(any), .. } => {
+        let color : String = any.to()
+        assert_eq(self.light_color, color)
+      }
       _ => ()
     }
   })
 }
 ```
 
-Custom parameter types match as `CustomArg(String)` in the `StepArg` enum.
+Custom parameter types match as `CustomVal(@any.Any)` in the `StepValue` enum. Use `any.to()` to unbox the value.
 
 ### Error Handling
 
@@ -269,7 +281,7 @@ Use `run_or_fail` to raise on any failure instead of inspecting results manually
 
 ```moonbit
 async test "my feature" {
-  @moonspec.run_or_fail(MyWorld::default, RunOptions(features)) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, @moonspec.RunOptions::new(features)) |> ignore
 }
 ```
 
@@ -324,12 +336,12 @@ Use the Runner API directly in your test files for full programmatic control:
 ```moonbit
 async test "calculator features" {
   // run_or_fail raises MoonspecError on any failure
-  let opts = @moonspec.RunOptions([
+  let opts = @moonspec.RunOptions::new([
     @moonspec.FeatureSource::File("features/calculator.feature"),
   ])
-    ..tag_expr("@smoke and not @slow")
-    ..parallel(true)
-    ..max_concurrent(4)
+  opts.tag_expr("@smoke and not @slow")
+  opts.parallel(true)
+  opts.max_concurrent(4)
   @moonspec.run_or_fail(CalcWorld::default, opts) |> ignore
 }
 ```
@@ -338,7 +350,7 @@ For cases where you need to inspect results programmatically, use `run` directly
 
 ```moonbit
 async test "inspect results" {
-  let result = @moonspec.run(CalcWorld::default, RunOptions(features))
+  let result = @moonspec.run(CalcWorld::default, @moonspec.RunOptions::new(features))
   assert_eq(result.summary.failed, 0)
 }
 ```
@@ -390,16 +402,13 @@ Pass multiple `FeatureSource::File` entries to run all features in a single call
 
 ```moonbit
 async test "all features" {
-  @moonspec.run_or_fail(
-    MyWorld::default,
-    [
-      @moonspec.FeatureSource::File("features/cart.feature"),
-      @moonspec.FeatureSource::File("features/checkout.feature"),
-      @moonspec.FeatureSource::File("features/inventory.feature"),
-    ],
-    tag_expr="@smoke and not @slow",
-  )
-  |> ignore
+  let opts = @moonspec.RunOptions::new([
+    @moonspec.FeatureSource::File("features/cart.feature"),
+    @moonspec.FeatureSource::File("features/checkout.feature"),
+    @moonspec.FeatureSource::File("features/inventory.feature"),
+  ])
+  opts.tag_expr("@smoke and not @slow")
+  @moonspec.run_or_fail(MyWorld::default, opts) |> ignore
 }
 ```
 
@@ -416,7 +425,7 @@ async fn main {
     @moonspec.FeatureSource::File("features/cart.feature"),
     @moonspec.FeatureSource::File("features/checkout.feature"),
   ]
-  let result = @moonspec.run(MyWorld::default, features)
+  let result = @moonspec.run(MyWorld::default, @moonspec.RunOptions::new(features))
   let fmt = @format.PrettyFormatter::new()
   for feature in result.features {
     @format.Formatter::on_feature_start(fmt, feature.name)
@@ -508,11 +517,9 @@ moon test --target js
 // moonspec:hash:a1b2c3d4
 
 async test "Feature: Calculator / Scenario: Addition" {
-  @moonspec.run_or_fail(
-    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Addition",
-  )
-  |> ignore
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Addition")
+  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
 }
 ```
 
@@ -527,11 +534,9 @@ only when the feature file changes.
 
 ```moonbit
 async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
-  @moonspec.run_or_fail(
-    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Multiplication (a=2, b=3, result=6)",
-  )
-  |> ignore
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Multiplication (a=2, b=3, result=6)")
+  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
 }
 ```
 
@@ -540,7 +545,8 @@ async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)"
 ```moonbit
 async test "Feature: Calculator" {
   @moonspec.run_or_fail(
-    CalcWorld::default, [@moonspec.FeatureSource::File("features/calculator.feature")],
+    CalcWorld::default,
+    @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")]),
   )
   |> ignore
 }
@@ -579,13 +585,19 @@ Filter scenarios by tags using boolean expressions:
 let features = [@moonspec.FeatureSource::File("features/my.feature")]
 
 // Run only @smoke scenarios
-let result = @moonspec.run(MyWorld::default, features, tag_expr="@smoke")
+let opts = @moonspec.RunOptions::new(features)
+opts.tag_expr("@smoke")
+let result = @moonspec.run(MyWorld::default, opts)
 
 // Run @smoke but not @slow
-let result = @moonspec.run(MyWorld::default, features, tag_expr="@smoke and not @slow")
+let opts = @moonspec.RunOptions::new(features)
+opts.tag_expr("@smoke and not @slow")
+let result = @moonspec.run(MyWorld::default, opts)
 
 // Run @smoke or @regression
-let result = @moonspec.run(MyWorld::default, features, tag_expr="@smoke or @regression")
+let opts = @moonspec.RunOptions::new(features)
+opts.tag_expr("@smoke or @regression")
+let result = @moonspec.run(MyWorld::default, opts)
 ```
 
 Tag expression syntax:
@@ -650,7 +662,10 @@ async test "parallel features" {
     @moonspec.FeatureSource::File("features/checkout.feature"),
   ]
   // Run up to 4 features concurrently
-  @moonspec.run_or_fail(MyWorld::default, features, parallel=4) |> ignore
+  let opts = @moonspec.RunOptions::new(features)
+  opts.parallel(true)
+  opts.max_concurrent(4)
+  @moonspec.run_or_fail(MyWorld::default, opts) |> ignore
 }
 ```
 

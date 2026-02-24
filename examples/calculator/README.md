@@ -101,21 +101,15 @@ scenario that calls `@moonspec.run_or_fail` with `FeatureSource::File`:
 // moonspec:hash:6a7ef305
 
 async test "Feature: Calculator / Scenario: Addition" {
-  @moonspec.run_or_fail(
-    CalcWorld::default,
-    [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Addition",
-  )
-  |> ignore
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Addition")
+  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
 }
 
 async test "Feature: Calculator / Scenario: Subtraction" {
-  @moonspec.run_or_fail(
-    CalcWorld::default,
-    [@moonspec.FeatureSource::File("features/calculator.feature")],
-    scenario_name="Subtraction",
-  )
-  |> ignore
+  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
+  options.scenario_name("Subtraction")
+  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
 }
 // ...one test per scenario/outline row
 ```
@@ -160,14 +154,14 @@ impl @moonspec.World for CalcWorld with configure(self, setup) {
   setup.given("a calculator", fn(_args) { self.result = 0 })
   setup.when("I add {int} and {int}", fn(args) {
     match (args[0], args[1]) {
-      (@moonspec.StepArg::IntArg(a), @moonspec.StepArg::IntArg(b)) =>
+      ({ value: @moonspec.StepValue::IntVal(a), .. }, { value: @moonspec.StepValue::IntVal(b), .. }) =>
         self.result = a + b
       _ => ()
     }
   })
   setup.then("the result should be {int}", fn(args) raise {
     match args[0] {
-      @moonspec.StepArg::IntArg(expected) => assert_eq(self.result, expected)
+      { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.result, expected)
       _ => ()
     }
   })
@@ -194,7 +188,7 @@ async test "calculator: runner API" {
     #|    Then the result should be 8
   @moonspec.run_or_fail(
     CalcWorld::default,
-    [@moonspec.FeatureSource::Text("test://calculator", feature)],
+    @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]),
   )
   |> ignore
 }
@@ -205,11 +199,11 @@ counts), use `@moonspec.run` instead:
 
 ```moonbit
 async test "calculator: tag filtering" {
-  let result = @moonspec.run(
-    CalcWorld::default,
+  let options = @moonspec.RunOptions::new(
     [@moonspec.FeatureSource::File("features/calculator.feature")],
-    tags="not @slow",
   )
+  options.tag_expr("not @slow")
+  let result = @moonspec.run(CalcWorld::default, options)
   assert_eq(result.summary.failed, 0)
 }
 ```
