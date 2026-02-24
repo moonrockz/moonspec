@@ -85,10 +85,11 @@ fn make_test_run_finished_envelope(
 fn make_test_case_started_envelope(
   id : String,
   test_case_id : String,
+  attempt~ : Int = 0,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseStarted": {
-      "attempt": (0 : Int).to_json(),
+      "attempt": attempt.to_json(),
       "id": id.to_json(),
       "testCaseId": test_case_id.to_json(),
       "timestamp": {
@@ -105,6 +106,7 @@ fn make_test_case_started_envelope(
 ///|
 fn make_test_case_finished_envelope(
   test_case_started_id : String,
+  will_be_retried~ : Bool = false,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseFinished": {
@@ -113,7 +115,7 @@ fn make_test_case_finished_envelope(
         "seconds": (0 : Int).to_json(),
         "nanos": (0 : Int).to_json(),
       },
-      "willBeRetried": false.to_json(),
+      "willBeRetried": will_be_retried.to_json(),
     },
   }
   @json.from_json(json) catch {
