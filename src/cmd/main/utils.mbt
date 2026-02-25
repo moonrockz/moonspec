@@ -134,17 +134,24 @@ fn resolve_output_path(
 
 ///|
 fn load_config(config_path : String?) -> @config.MoonspecConfig {
-  let path = match config_path {
-    Some(p) => p
+  match config_path {
+    Some(p) => load_config_file(p)
     None => {
-      let content = @fs.read_file_to_string("moonspec.json5") catch { _ => "" }
-      if content.length() > 0 {
-        "moonspec.json5"
-      } else {
-        return @config.MoonspecConfig::empty()
+      // Auto-discover: moonspec.json as base, moonspec.json5 as override
+      let base = load_config_file_optional("moonspec.json")
+      let override_ = load_config_file_optional("moonspec.json5")
+      match (base, override_) {
+        (Some(b), Some(o)) => b.merge(o)
+        (None, Some(o)) => o
+        (Some(b), None) => b
+        (None, None) => @config.MoonspecConfig::empty()
       }
     }
   }
+}
+
+///|
+fn load_config_file(path : String) -> @config.MoonspecConfig {
   let content = @fs.read_file_to_string(path) catch {
     @fs.IOError(msg) => {
       die("Error reading config \{path}: \{msg}")
@@ -152,4 +159,13 @@ fn load_config(config_path : String?) -> @config.MoonspecConfig {
     }
   }
   @config.MoonspecConfig::from_json5(content)
+}
+
+///|
+fn load_config_file_optional(path : String) -> @config.MoonspecConfig? {
+  let content = @fs.read_file_to_string(path) catch { _ => return None }
+  if content.length() == 0 {
+    return None
+  }
+  Some(@config.MoonspecConfig::from_json5(content))
 }

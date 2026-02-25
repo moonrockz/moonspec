@@ -10,12 +10,13 @@ pub(all) enum CodegenMode {
 pub(all) struct CodegenConfig {
   mode : CodegenMode
   world : String
+  skip_tags : Array[String]?
 } derive(Show, Eq)
 
 ///|
 /// Create a default config (per-scenario mode, empty world name).
 pub fn CodegenConfig::default() -> CodegenConfig {
-  { mode: PerScenario, world: "" }
+  { mode: PerScenario, world: "", skip_tags: None }
 }
 
 ///|
@@ -45,5 +46,5 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
     }
     _ => ()
   }
-  { mode, world }
+  { mode, world, skip_tags: None }
 }

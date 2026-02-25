@@ -57,7 +57,11 @@ test "simple_hash produces consistent output" {
 ///|
 test "per-scenario mode generates runner call with world" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n    When they log in\n    Then they see the dashboard\n"
-  let config = CodegenConfig::{ mode: PerScenario, world: "MyWorld" }
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: None,
+  }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("@moonspec.run_or_fail"))
   assert_true(output.contains("MyWorld::default"))
@@ -71,7 +75,11 @@ test "per-scenario mode generates runner call with world" {
 ///|
 test "per-feature mode generates file-based runner call" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
-  let config = CodegenConfig::{ mode: PerFeature, world: "MyWorld" }
+  let config = CodegenConfig::{
+    mode: PerFeature,
+    world: "MyWorld",
+    skip_tags: None,
+  }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("@moonspec.run_or_fail"))
   assert_true(output.contains("MyWorld::default"))
@@ -85,7 +93,11 @@ test "per-feature mode generates file-based runner call" {
 ///|
 test "per-scenario mode uses file source with scenario_name" {
   let content = "Feature: Auth\n\n  Background:\n    Given a logged in user\n\n  Scenario: View profile\n    When I visit my profile\n    Then I see my name\n"
-  let config = CodegenConfig::{ mode: PerScenario, world: "AuthWorld" }
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "AuthWorld",
+    skip_tags: None,
+  }
   let output = generate_test_file(content, "features/auth.feature", config~)
   assert_true(output.contains("@moonspec.FeatureSource::File"))
   assert_true(output.contains("options.scenario_name("))
@@ -95,7 +107,11 @@ test "per-scenario mode uses file source with scenario_name" {
 ///|
 test "per-scenario mode expands scenario outline" {
   let content = "Feature: Math\n\n  Scenario Outline: Add numbers\n    Given <a> and <b>\n    Then result is <sum>\n\n    Examples:\n      | a | b | sum |\n      | 1 | 2 | 3   |\n      | 4 | 5 | 9   |\n"
-  let config = CodegenConfig::{ mode: PerScenario, world: "MathWorld" }
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MathWorld",
+    skip_tags: None,
+  }
   let output = generate_test_file(content, "features/math.feature", config~)
   assert_true(output.contains("a=1, b=2, sum=3"))
   assert_true(output.contains("a=4, b=5, sum=9"))
@@ -135,4 +151,66 @@ test "config from_json5 defaults to per-scenario" {
     }
   }
   assert_eq(config.mode, PerScenario)
+}
+
+///|
+test "per-scenario mode omits skip_tags when None" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: None,
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(output.contains("options.scenario_name("))
+  assert_true(not(output.contains("options.skip_tags(")))
+}
+
+///|
+test "per-scenario mode emits skip_tags when configured" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: Some(["@skip", "@wip"]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(output.contains("options.skip_tags([\"@skip\", \"@wip\"])"))
+}
+
+///|
+test "per-feature mode emits skip_tags when configured" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerFeature,
+    world: "MyWorld",
+    skip_tags: Some(["@ignore"]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(output.contains("options.skip_tags([\"@ignore\"])"))
+}
+
+///|
+test "skip_tags not emitted for stub tests" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "",
+    skip_tags: Some(["@skip"]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(output.contains("ignore(\"\")"))
+  assert_true(not(output.contains("options.skip_tags(")))
+}
+
+///|
+test "empty skip_tags array emits empty array call" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: Some([]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(output.contains("options.skip_tags([])"))
 }
