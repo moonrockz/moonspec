@@ -43,3 +43,29 @@ test "retries can be set" {
   opts.retries(3)
   assert_eq(opts.get_retries(), 3)
 }
+
+///|
+test "dry_run defaults to false" {
+  let opts = RunOptions::new([])
+  assert_false(opts.is_dry_run())
+}
+
+///|
+test "dry_run can be enabled" {
+  let opts = RunOptions::new([])
+  opts.dry_run(true)
+  assert_true(opts.is_dry_run())
+}
+
+///|
+test "skip_tags defaults to @skip and @ignore" {
+  let opts = RunOptions::new([])
+  assert_eq(opts.get_skip_tags(), ["@skip", "@ignore"])
+}
+
+///|
+test "skip_tags can be customized" {
+  let opts = RunOptions::new([])
+  opts.skip_tags(["@skip", "@wip"])
+  assert_eq(opts.get_skip_tags(), ["@skip", "@wip"])
+}
