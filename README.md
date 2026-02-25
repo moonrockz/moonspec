@@ -284,6 +284,71 @@ async test "my feature" {
 }
 ```
 
+## Assertions
+
+### `moonrockz/expect` -- Standalone Matchers
+
+The `moonrockz/expect` package provides fluent `expect(value)` assertions usable in any
+MoonBit project, including step handlers:
+
+```bash
+moon add moonrockz/expect
+```
+
+```moonbit
+setup.then1("the result should be {int}", fn(expected : Int) {
+  @expect.expect(self.result).to_equal(expected)
+})
+
+setup.then1("the cart should have {int} items", fn(count : Int) {
+  @expect.expect(self.cart).to_have_length(count)
+  @expect.expect(self.cart).to_contain_element("Widget")
+})
+```
+
+Available matchers:
+
+| Matcher | Constraint | Description |
+|---------|-----------|-------------|
+| `to_equal(expected)` | `T : Eq + Show` | Equality check |
+| `to_not_equal(other)` | `T : Eq + Show` | Inequality check |
+| `to_be_true()` | `Bool` | Assert true |
+| `to_be_false()` | `Bool` | Assert false |
+| `to_be_some()` | `T?` | Assert Some |
+| `to_be_none()` | `T? : Show` | Assert None |
+| `to_contain(substring)` | `String` | Substring check |
+| `to_contain_element(item)` | `Array[T] : Eq + Show` | Element check |
+| `to_be_empty()` | `Array[T]` | Empty array |
+| `to_have_length(n)` | `Array[T]` | Array length |
+
+All matchers raise with descriptive messages on failure, e.g.:
+`"Expected [Apple, Banana] to contain Widget"`.
+
+Standard MoonBit assertions (`assert_eq!`, `assert_true!`, `fail!`) continue to work
+in step handlers. Step failure messages are automatically enriched with step context:
+
+```
+Step 'the result should be 5' (Then): assertion failed: 3 != 5
+```
+
+### `moonspec/expect` -- RunResult Assertions
+
+For inspecting test run outcomes, import `moonrockz/moonspec/expect`:
+
+```moonbit
+let result = @moonspec.run(MyWorld::default, opts)
+@expect.assert_passed(result)
+@expect.assert_no_parse_errors(result)
+@expect.assert_summary(result.summary, passed=3, failed=0)
+```
+
+| Function | Description |
+|----------|-------------|
+| `assert_passed(result)` | No failures, undefined, or pending steps |
+| `assert_failed(result)` | At least one failure |
+| `assert_no_parse_errors(result)` | No Gherkin parse errors |
+| `assert_summary(summary, passed?, failed?, ...)` | Check specific counts |
+
 ## Lifecycle Hooks
 
 Register hooks in your World's `configure` method for setup/teardown logic.
