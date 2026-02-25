@@ -356,37 +356,20 @@ fn extract_test_case_mappings(
 /// parse_retry_tag(["@smoke", "@slow"])      // => None
 /// ```
 fn parse_retry_tag(tags : Array[String]) -> Int? {
-  let prefix = "@retry("
-  let prefix_len = prefix.length()
+  let max_retries = 100
   for tag in tags {
-    let tag_len = tag.length()
-    if tag_len > prefix_len &&
-      tag.substring(start=0, end=prefix_len) == prefix &&
-      tag[tag_len - 1] == ')' {
-      let inner = tag.substring(start=prefix_len, end=tag_len - 1)
-      let inner_len = inner.length()
-      if inner_len == 0 {
-        continue
-      }
-      let mut n = 0
-      let mut valid = true
-      let max_retries = 100
-      for i = 0; i < inner_len; i = i + 1 {
-        let ch = inner[i]
-        if ch >= '0' && ch <= '9' {
-          n = n * 10 + (ch.to_int() - '0'.to_int())
-          if n > max_retries {
-            n = max_retries
-          }
-        } else {
-          valid = false
-          break
+    let n : Int = lexmatch tag with longest {
+      ("@retry" "[(]" ("[0-9]+" as digits) "[)]") => {
+        let parsed = try {
+          @strconv.parse_int!(digits.to_string())
+        } catch {
+          _ => 0
         }
+        if parsed > max_retries { max_retries } else { parsed }
       }
-      if valid {
-        return Some(n)
-      }
+      _ => continue
     }
+    return Some(n)
   }
   None
 }
@@ -407,39 +390,18 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
 /// ```
 fn parse_skip_tag(tags : Array[String], skip_tags : Array[String]) -> String? {
   for tag in tags {
+    let (name, reason) : (String, String?) = lexmatch tag with longest {
+      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n) "[(]\"" ("[^\"]+" as r) "\"[)]") =>
+        (n.to_string(), Some(r.to_string()))
+      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n) "[(]" "[^)]*" "[)]") =>
+        (n.to_string(), None)
+      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n)) => (n.to_string(), None)
+      _ => continue
+    }
+    let full_tag = "@" + name
     for skip in skip_tags {
-      let skip_len = skip.length()
-      let tag_len = tag.length()
-      // Exact match: bare tag like @skip
-      if tag == skip {
-        let reason = if skip_len > 1 && skip[0] == '@' {
-          skip.substring(start=1, end=skip_len)
-        } else {
-          skip
-        }
-        return Some(reason)
-      }
-      // Parameterized match: @skip("reason") or @skip(...)
-      if tag_len > skip_len &&
-        tag.substring(start=0, end=skip_len) == skip &&
-        tag[skip_len] == '(' &&
-        tag[tag_len - 1] == ')' {
-        let inner = tag.substring(start=skip_len + 1, end=tag_len - 1)
-        let inner_len = inner.length()
-        // Extract quoted reason: "reason"
-        if inner_len >= 2 && inner[0] == '"' && inner[inner_len - 1] == '"' {
-          let reason = inner.substring(start=1, end=inner_len - 1)
-          if reason.length() > 0 {
-            return Some(reason)
-          }
-        }
-        // Fall back to tag name for invalid formats
-        let reason = if skip_len > 1 && skip[0] == '@' {
-          skip.substring(start=1, end=skip_len)
-        } else {
-          skip
-        }
-        return Some(reason)
+      if full_tag == skip {
+        return Some(reason.unwrap_or(name))
       }
     }
   }
@@ -928,6 +890,79 @@ async fn[W : @core.World] run_pickles_sequential(
 }
 
 ///|
+/// Build a PickleResult for a scenario that should be skipped.
+///
+/// Emits `TestCaseStarted`, per-step `TestStepStarted`/`TestStepFinished`,
+/// and `TestCaseFinished` envelopes when sinks are present. All steps are
+/// marked `SKIPPED` with the given reason.
+fn make_skipped_pickle_result(
+  pickle : @cucumber_messages.Pickle,
+  tags : Array[String],
+  reason : String,
+  mapping : TestCaseMapping?,
+  test_case_id : String,
+  test_step_ids : Array[String],
+  sinks : Array[&@core.MessageSink],
+  id_gen : IdGenerator,
+) -> PickleResult {
+  let step_results : Array[StepResult] = pickle.steps.map(fn(step) {
+    let keyword = match step.type_ {
+      Some(@cucumber_messages.PickleStepType::Context) => "Given "
+      Some(@cucumber_messages.PickleStepType::Action) => "When "
+      Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
+      _ => "* "
+    }
+    {
+      text: step.text,
+      keyword,
+      status: StepStatus::Skipped(Some(reason)),
+      duration_ms: 0L,
+      diagnostic: None,
+    }
+  })
+  // Emit TestCaseStarted/Finished if sinks present
+  match mapping {
+    Some(_) => {
+      let tcs_id = id_gen.next("tcs")
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_started_envelope(tcs_id, test_case_id))
+        let mut si = 0
+        for _step in pickle.steps {
+          let ts_id = if si < test_step_ids.length() {
+            test_step_ids[si]
+          } else {
+            ""
+          }
+          si += 1
+          emit(sinks, make_test_step_started_envelope(tcs_id, ts_id))
+          emit(
+            sinks,
+            make_test_step_finished_envelope(
+              tcs_id,
+              ts_id,
+              "SKIPPED",
+              Some(reason),
+            ),
+          )
+        }
+        emit(sinks, make_test_case_finished_envelope(tcs_id))
+      }
+    }
+    None => ()
+  }
+  let result : ScenarioResult = {
+    feature_name: pickle.uri,
+    scenario_name: pickle.name,
+    pickle_id: pickle.id,
+    tags,
+    steps: step_results,
+    status: ScenarioStatus::Skipped(Some(reason)),
+    duration_ms: 0L,
+  }
+  { result, was_retried: false }
+}
+
+///|
 /// Execute a single pickle with a fresh world, with optional retry.
 ///
 /// When `retries > 0` or the pickle has a `@retry(N)` tag, failed scenarios are
@@ -967,61 +1002,16 @@ async fn[W : @core.World] execute_pickle(
   // Check if scenario should be skipped via tags
   let skip_reason = parse_skip_tag(tags, skip_tags)
   if skip_reason is Some(reason) {
-    let step_results : Array[StepResult] = pickle.steps.map(fn(step) {
-      let keyword = match step.type_ {
-        Some(@cucumber_messages.PickleStepType::Context) => "Given "
-        Some(@cucumber_messages.PickleStepType::Action) => "When "
-        Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
-        _ => "* "
-      }
-      {
-        text: step.text,
-        keyword,
-        status: StepStatus::Skipped(Some(reason)),
-        duration_ms: 0L,
-        diagnostic: None,
-      }
-    })
-    // Emit TestCaseStarted/Finished if sinks present
-    match mapping {
-      Some(_) => {
-        let tcs_id = id_gen.next("tcs")
-        if sinks.length() > 0 {
-          emit(sinks, make_test_case_started_envelope(tcs_id, test_case_id))
-          let mut si = 0
-          for _step in pickle.steps {
-            let ts_id = if si < test_step_ids.length() {
-              test_step_ids[si]
-            } else {
-              ""
-            }
-            si += 1
-            emit(sinks, make_test_step_started_envelope(tcs_id, ts_id))
-            emit(
-              sinks,
-              make_test_step_finished_envelope(
-                tcs_id,
-                ts_id,
-                "SKIPPED",
-                Some(reason),
-              ),
-            )
-          }
-          emit(sinks, make_test_case_finished_envelope(tcs_id))
-        }
-      }
-      None => ()
-    }
-    let result : ScenarioResult = {
-      feature_name: pickle.uri,
-      scenario_name: pickle.name,
-      pickle_id: pickle.id,
+    return make_skipped_pickle_result(
+      pickle,
       tags,
-      steps: step_results,
-      status: ScenarioStatus::Skipped(Some(reason)),
-      duration_ms: 0L,
-    }
-    return { result, was_retried: false }
+      reason,
+      mapping,
+      test_case_id,
+      test_step_ids,
+      sinks,
+      id_gen,
+    )
   }
   let attempt : Ref[Int] = { val: 0 }
   let execute_attempt : async () -> ScenarioResult = () => {
