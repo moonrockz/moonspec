@@ -31,3 +31,41 @@ pub fn[T : Eq + Show] Expectation::to_not_equal(
     raise Failure::Failure("Expected \{self.actual} to not equal \{other}")
   }
 }
+
+///|
+/// Assert the actual boolean value is true.
+pub fn Expectation::to_be_true(self : Expectation[Bool]) -> Unit raise Error {
+  if not(self.actual) {
+    raise Failure::Failure("Expected false to be true")
+  }
+}
+
+///|
+/// Assert the actual boolean value is false.
+pub fn Expectation::to_be_false(self : Expectation[Bool]) -> Unit raise Error {
+  if self.actual {
+    raise Failure::Failure("Expected true to be false")
+  }
+}
+
+///|
+/// Assert the actual Option value is Some.
+pub fn[T] Expectation::to_be_some(
+  self : Expectation[T?],
+) -> Unit raise Error {
+  match self.actual {
+    Some(_) => ()
+    None => raise Failure::Failure("Expected None to be Some")
+  }
+}
+
+///|
+/// Assert the actual Option value is None.
+pub fn[T : Show] Expectation::to_be_none(
+  self : Expectation[T?],
+) -> Unit raise Error {
+  match self.actual {
+    None => ()
+    Some(_) => raise Failure::Failure("Expected \{self.actual} to be None")
+  }
+}
