@@ -13,7 +13,9 @@ pub fn assert_passed(result : @runner.RunResult) -> Unit raise Error {
     if s.pending > 0 {
       parts.push(s.pending.to_string() + " pending")
     }
-    raise Failure::Failure("Expected run to have passed, but: " + parts.join(", "))
+    raise Failure::Failure(
+      "Expected run to have passed, but: " + parts.join(", "),
+    )
   }
 }
 
@@ -64,7 +66,9 @@ pub fn assert_summary(
   match undefined {
     Some(expected) =>
       if summary.undefined != expected {
-        mismatches.push("undefined: expected \{expected}, got \{summary.undefined}")
+        mismatches.push(
+          "undefined: expected \{expected}, got \{summary.undefined}",
+        )
       }
     None => ()
   }

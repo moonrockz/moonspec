@@ -74,12 +74,10 @@ impl @core.World for NoStepsWorld with configure(_self, _setup) {
 async test "run_or_fail raises RunFailed on undefined steps" {
   let content = "Feature: Fail\n\n  Scenario: Undefined\n    Given an undefined step\n"
   let mut caught = false
-  try
-    run_or_fail(
-      NoStepsWorld::default,
-      RunOptions([FeatureSource::Text("test://fail", content)]),
-    )
-  catch {
+  run_or_fail(
+    NoStepsWorld::default,
+    RunOptions([FeatureSource::Text("test://fail", content)]),
+  ) catch {
     @core.RunFailed(..) => caught = true
     _ => ()
   }
@@ -448,12 +446,10 @@ async test "run emits ParseError envelope for invalid feature" {
 ///|
 async test "run_or_fail raises on parse errors" {
   let mut caught = false
-  try
-    run_or_fail(
-      RunWorld::default,
-      RunOptions([FeatureSource::Text("test://bad", "Not valid Gherkin")]),
-    )
-  catch {
+  run_or_fail(
+    RunWorld::default,
+    RunOptions([FeatureSource::Text("test://bad", "Not valid Gherkin")]),
+  ) catch {
     @core.RunFailed(..) => caught = true
     _ => ()
   }
@@ -620,19 +616,20 @@ impl @core.World for ContextWorld with configure(_self, setup) {
 
 ///|
 async test "step failure messages include step context" {
-  let content =
-    "Feature: Context\n\n  Scenario: Fail\n    Given a passing step\n    Then it should fail\n"
+  let content = "Feature: Context\n\n  Scenario: Fail\n    Given a passing step\n    Then it should fail\n"
   let result = run(
     ContextWorld::default,
     RunOptions([FeatureSource::Text("test://context", content)]),
   )
   let scenario = result.features[0].scenarios[0]
-  let failed_step = scenario.steps.iter().find_first(fn(s) {
-    match s.status {
-      StepStatus::Failed(_) => true
-      _ => false
-    }
-  })
+  let failed_step = scenario.steps
+    .iter()
+    .find_first(fn(s) {
+      match s.status {
+        StepStatus::Failed(_) => true
+        _ => false
+      }
+    })
   match failed_step {
     Some(step) =>
       match step.status {
