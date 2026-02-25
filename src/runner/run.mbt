@@ -360,12 +360,12 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
   for tag in tags {
     let n : Int = lexmatch tag with longest {
       ("@retry" "[(]" ("[0-9]+" as digits) "[)]") => {
-        let parsed = try {
-          @strconv.parse_int!(digits.to_string())
-        } catch {
-          _ => 0
+        let parsed = @strconv.parse_int(digits.to_string()) catch { _ => 0 }
+        if parsed > max_retries {
+          max_retries
+        } else {
+          parsed
         }
-        if parsed > max_retries { max_retries } else { parsed }
       }
       _ => continue
     }
@@ -1003,14 +1003,7 @@ async fn[W : @core.World] execute_pickle(
   let skip_reason = parse_skip_tag(tags, skip_tags)
   if skip_reason is Some(reason) {
     return make_skipped_pickle_result(
-      pickle,
-      tags,
-      reason,
-      mapping,
-      test_case_id,
-      test_step_ids,
-      sinks,
-      id_gen,
+      pickle, tags, reason, mapping, test_case_id, test_step_ids, sinks, id_gen,
     )
   }
   let attempt : Ref[Int] = { val: 0 }
