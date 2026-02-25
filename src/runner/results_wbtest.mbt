@@ -16,7 +16,10 @@ test "StepStatus::Skipped shows correctly" {
 
 ///|
 test "StepStatus::Skipped with reason shows correctly" {
-  inspect(StepStatus::Skipped(Some("dry run")), content="Skipped(Some(\"dry run\"))")
+  inspect(
+    StepStatus::Skipped(Some("dry run")),
+    content="Skipped(Some(\"dry run\"))",
+  )
 }
 
 ///|

@@ -113,7 +113,7 @@ Supported constructs:
 - **Rule** -- grouping scenarios under a business rule
 - **Data Tables** -- tabular data attached to a step
 - **Doc Strings** -- multiline text attached to a step
-- **Tags** -- `@tag` annotations for filtering, metadata, and `@retry(N)` retry control
+- **Tags** -- `@tag` annotations for filtering, metadata, `@retry(N)` retry control, and `@skip("reason")`/`@ignore("reason")` for skipping
 - **Comments** -- lines starting with `#`
 
 ## World and Step Definitions
@@ -418,6 +418,8 @@ Builder methods (use `..` cascade syntax):
 - `retries(int)` -- retry failed scenarios up to N times (default: `0`); see [Retrying Flaky Tests](#retrying-flaky-tests)
 - `tag_expr(string)` -- boolean tag expression for filtering
 - `scenario_name(string)` -- run only the scenario matching this name
+- `dry_run(bool)` -- enable dry-run mode (default: `false`); see [Dry-Run Mode](#dry-run-mode)
+- `skip_tags(array)` -- set skip tags (default: `["@skip", "@ignore"]`); see [Skipping Scenarios](#skipping-scenarios)
 - `add_sink(sink)` -- add a message sink for envelope output
 
 ### Mode 2: Pre-build Codegen
@@ -777,6 +779,51 @@ Each attempt emits its own `TestCaseStarted`/`TestCaseFinished` envelope pair:
 
 This means reporting tools that consume the Cucumber Messages stream will see
 the full history of all attempts.
+
+## Dry-Run Mode
+
+Validate step definitions without executing handlers or hooks:
+
+```moonbit nocheck
+let opts = RunOptions::new(features)
+opts.dry_run(true)
+let result = run(MyWorld::default, opts)
+// result.summary.undefined shows unmatched steps
+// result.summary.skipped shows matched-but-not-executed steps
+```
+
+Matched steps report as `Skipped("dry run")`. Undefined steps remain `Undefined` with snippet suggestions. No hooks are called and no retries are attempted.
+
+## Skipping Scenarios
+
+Tag scenarios with `@skip` or `@ignore` to skip them without execution:
+
+```gherkin
+@skip
+Scenario: Not ready yet
+  Given a step
+
+@skip("flaky")
+Scenario: Intermittent failure
+  Given a step
+
+@ignore("blocked")
+Scenario: Blocked
+  Given a step
+```
+
+Skipped scenarios appear in the summary as skipped with their reason.
+
+### Custom Skip Tags
+
+Configure which tags trigger skipping:
+
+```moonbit nocheck
+let opts = RunOptions::new(features)
+opts.skip_tags(["@skip", "@ignore", "@wip"])
+```
+
+The default skip tags are `@skip` and `@ignore`.
 
 ## Formatters
 

@@ -491,7 +491,8 @@ async test "dry-run: envelopes emitted with SKIPPED status" {
   for env in collector.envelopes {
     match env {
       @cucumber_messages.Envelope::TestStepFinished(tsf) =>
-        if tsf.testStepResult.status is @cucumber_messages.TestStepResultStatus::Skipped {
+        if tsf.testStepResult.status
+          is @cucumber_messages.TestStepResultStatus::Skipped {
           found_skipped = true
         }
       _ => ()

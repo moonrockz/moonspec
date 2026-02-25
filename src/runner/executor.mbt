@@ -98,12 +98,13 @@ pub fn execute_scenario(
       }
       step_idx += 1
       if has_sinks {
-        emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
+        emit(
+          sinks,
+          make_test_step_started_envelope(test_case_started_id, ts_id),
+        )
       }
-      let (status, diagnostic) : (StepStatus, Error?) = match registry.find_match(
-        step.text,
-        keyword~,
-      ) {
+      let (status, diagnostic) : (StepStatus, Error?) = match
+        registry.find_match(step.text, keyword~) {
         Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
           (
             StepStatus::Undefined,

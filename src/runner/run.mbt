@@ -987,10 +987,7 @@ async fn[W : @core.World] execute_pickle(
       Some(_) => {
         let tcs_id = id_gen.next("tcs")
         if sinks.length() > 0 {
-          emit(
-            sinks,
-            make_test_case_started_envelope(tcs_id, test_case_id),
-          )
+          emit(sinks, make_test_case_started_envelope(tcs_id, test_case_id))
           let mut si = 0
           for _step in pickle.steps {
             let ts_id = if si < test_step_ids.length() {
@@ -999,10 +996,7 @@ async fn[W : @core.World] execute_pickle(
               ""
             }
             si += 1
-            emit(
-              sinks,
-              make_test_step_started_envelope(tcs_id, ts_id),
-            )
+            emit(sinks, make_test_step_started_envelope(tcs_id, ts_id))
             emit(
               sinks,
               make_test_step_finished_envelope(

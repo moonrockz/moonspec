@@ -672,7 +672,9 @@ test "parse_skip_tag extracts reason from @skip with quoted reason" {
 
 ///|
 test "parse_skip_tag extracts reason from @ignore with quoted reason" {
-  let result = parse_skip_tag(["@ignore(\"not implemented\")"], ["@skip", "@ignore"])
+  let result = parse_skip_tag(["@ignore(\"not implemented\")"], [
+    "@skip", "@ignore",
+  ])
   assert_eq(result, Some("not implemented"))
 }
 
@@ -696,6 +698,8 @@ test "parse_skip_tag works with custom skip tags" {
 
 ///|
 test "parse_skip_tag returns first match" {
-  let result = parse_skip_tag(["@ignore(\"a\")", "@skip(\"b\")"], ["@skip", "@ignore"])
+  let result = parse_skip_tag(["@ignore(\"a\")", "@skip(\"b\")"], [
+    "@skip", "@ignore",
+  ])
   assert_eq(result, Some("a"))
 }
