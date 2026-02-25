@@ -82,3 +82,31 @@ test "generate_configure handles no-param steps" {
   // Check function call
   assert_true(str_contains(output, "login(self)"))
 }
+
+///|
+test "generate_configure falls back to ctx-based for arity > 22" {
+  let params : Array[ParamInfo] = []
+  for i = 0; i < 23; i = i + 1 {
+    params.push({ name: "p" + i.to_string(), type_name: "Int" })
+  }
+  let steps : Array[StepFnInfo] = [
+    {
+      keyword: "given",
+      pattern: "many params",
+      fn_name: "many_params",
+      world_type: "W",
+      params,
+      is_method: true,
+      raises: false,
+      source_file: "src/steps.mbt",
+      line: 1,
+    },
+  ]
+  let output = generate_configure("W", steps, source_hash="00000000")
+  // Should use ctx-based fallback, not typed arity method
+  assert_true(str_contains(output, "setup.given(\"many params\""))
+  assert_true(str_contains(output, "fn(ctx) raise"))
+  assert_true(str_contains(output, "IntVal(v)"))
+  // Should NOT use arity-suffixed method
+  assert_true(not(str_contains(output, "setup.given23(")))
+}
