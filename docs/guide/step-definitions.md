@@ -4,9 +4,10 @@ Step definitions connect Gherkin steps to MoonBit code. Each step in a `.feature
 file is matched against registered patterns, and the corresponding handler
 function is executed.
 
-This guide covers the World struct, step registration, Cucumber Expressions,
-context and arguments, custom parameter types, step libraries, data tables,
-doc strings, error handling, and the experimental attribute-based approach.
+This guide covers the World struct, step registration (both typed and
+context-based), Cucumber Expressions, context and arguments, custom parameter
+types, step libraries, data tables, doc strings, error handling, and the
+experimental attribute-based approach.
 
 ---
 
@@ -51,18 +52,12 @@ step are immediately visible in subsequent steps within the same scenario:
 ```moonbit
 impl @moonspec.World for CalcWorld with configure(self, setup) {
   // Given step mutates self.result
-  setup.given("a starting value of {int}", fn(ctx) {
-    match ctx[0] {
-      { value: IntVal(n), .. } => self.result = n
-      _ => ()
-    }
+  setup.given1("a starting value of {int}", fn(n : Int) {
+    self.result = n
   })
   // Then step reads the mutation from the Given step
-  setup.then("the value should be {int}", fn(ctx) raise {
-    match ctx[0] {
-      { value: IntVal(expected), .. } => assert_eq(self.result, expected)
-      _ => ()
-    }
+  setup.then1("the value should be {int}", fn(expected : Int) {
+    assert_eq!(self.result, expected)
   })
 }
 ```
@@ -75,84 +70,134 @@ for a single scenario operate on the same struct instance.
 ## Step Registration
 
 Steps are registered inside the `World::configure` method, which receives a
-`Setup` instance. There are four registration methods:
+`Setup` instance. moonspec offers two approaches: **typed step registration**
+(recommended) and **context-based registration** (for advanced use cases).
 
-### `setup.given(pattern, handler)`
+### Typed Step Registration (Recommended)
 
-Registers a step that matches **Given** keywords (including **And** / **But**
-following a Given):
+Typed methods use an arity suffix to indicate how many parameters the handler
+takes. Parameters are extracted and converted automatically via the
+`FromStepArg` trait -- no manual pattern matching needed.
+
+The naming convention is `keyword` + `arity`, e.g. `given0`, `when2`, `then1`.
+Arities 0--22 are supported for all four keywords.
+
+#### Zero-Argument Steps
 
 ```moonbit
-setup.given("an empty shopping cart", fn(_ctx) {
+setup.given0("an empty shopping cart", fn() {
   self.cart.clear()
 })
 ```
 
-### `setup.when(pattern, handler)`
-
-Registers a step that matches **When** keywords:
+#### Single-Argument Steps
 
 ```moonbit
-setup.when("I add {int} and {int}", fn(ctx) {
-  match (ctx[0], ctx[1]) {
-    ({ value: IntVal(a), .. }, { value: IntVal(b), .. }) =>
-      self.result = a + b
-    _ => ()
-  }
+setup.given1("a balance of {int}", fn(n : Int) {
+  self.balance = n
 })
 ```
 
-### `setup.then(pattern, handler)`
-
-Registers a step that matches **Then** keywords. Then-handlers typically raise
-errors for assertions:
+#### Multi-Argument Steps
 
 ```moonbit
+setup.when2("I add {int} and {int}", fn(a : Int, b : Int) {
+  self.result = a + b
+})
+
+setup.when3("I add {string} with quantity {int} at price {int}", fn(
+  name : String, qty : Int, price : Int,
+) {
+  self.cart.push({ name, quantity: qty, price })
+})
+```
+
+#### Assertions in Then Steps
+
+Handlers can raise errors for assertions. The `raise Error` is part of the
+handler signature:
+
+```moonbit
+setup.then1("the result should be {int}", fn(expected : Int) {
+  assert_eq!(self.result, expected)
+})
+
+setup.then0("the cart should be empty", fn() {
+  assert_eq!(self.cart.length(), 0)
+})
+```
+
+#### Accessing Ctx with `_ctx` Variants
+
+When you need the full `Ctx` (for scenario metadata, step info, or
+attachments), use the `_ctx` variant. `Ctx` is always the **last** parameter:
+
+```moonbit
+setup.given1_ctx("a user named {string}", fn(name : String, ctx : Ctx) {
+  self.user = name
+  self.feature = ctx.scenario().feature_name
+})
+
+setup.given0_ctx("an empty cart", fn(ctx : Ctx) {
+  self.cart.clear()
+  println("Starting: " + ctx.scenario().scenario_name)
+})
+```
+
+#### Supported Types
+
+The `FromStepArg` trait maps `StepValue` variants to MoonBit types:
+
+| Handler Type       | StepValue Variants                            | Expression Types               |
+|--------------------|-----------------------------------------------|--------------------------------|
+| `Int`              | `IntVal`                                      | `{int}`                        |
+| `Double`           | `FloatVal`, `DoubleVal`                       | `{float}`, `{double}`         |
+| `Int64`            | `LongVal`                                     | `{long}`                       |
+| `Byte`             | `ByteVal`                                     | `{byte}`                       |
+| `String`           | `StringVal`, `WordVal`, `AnonymousVal`        | `{string}`, `{word}`, `{}`    |
+| `BigInt`           | `BigIntegerVal`                               | `{biginteger}`                 |
+| `@decimal.Decimal` | `BigDecimalVal`                               | `{bigdecimal}`                 |
+| `@any.Any`         | `CustomVal`                                   | custom types                   |
+| `DataTable`        | `DataTableVal`                                | data tables                    |
+| `DocString`        | `DocStringVal`                                | doc strings                    |
+
+Type mismatches raise a descriptive error at runtime.
+
+#### Keyword Summary
+
+All four keywords follow the same pattern:
+
+```moonbit
+setup.given0("...", fn() { ... })        // Given
+setup.when1("...", fn(a : Int) { ... })  // When
+setup.then2("...", fn(a : String, b : Int) { ... })  // Then
+setup.step0("...", fn() { ... })         // Step (matches any keyword)
+```
+
+### Context-Based Registration (Advanced)
+
+The original `setup.given(pattern, fn(ctx) { ... })` form gives full access
+to the `Ctx` object. Use this when you need manual control over argument
+extraction or when the typed API doesn't fit your use case:
+
+```moonbit
+setup.given("a balance of {int}", fn(ctx) {
+  match ctx[0] {
+    { value: IntVal(n), .. } => self.balance = n
+    _ => ()
+  }
+})
+setup.when("they log in", fn(_ctx) { self.logged_in = true })
 setup.then("the result should be {int}", fn(ctx) raise {
   match ctx[0] {
     { value: IntVal(expected), .. } => assert_eq(self.result, expected)
     _ => ()
   }
 })
+setup.step("the system is ready", fn(_ctx) { () }) // matches any keyword
 ```
 
-### `setup.step(pattern, handler)`
-
-Registers a step that matches **any** keyword (Given, When, Then, And, But).
-Useful for steps that are truly keyword-agnostic:
-
-```moonbit
-setup.step("I wait {int} seconds", fn(ctx) {
-  match ctx[0] {
-    { value: IntVal(_n), .. } => () // simulate waiting
-    _ => ()
-  }
-})
-```
-
-### Handler Signature
-
-All handlers have the signature:
-
-```moonbit
-fn(ctx: Ctx) -> Unit raise Error
-```
-
-The `raise Error` part is optional. Handlers that do not need to assert or
-fail can omit it:
-
-```moonbit
-// No raise -- arranging state
-setup.given("a calculator", fn(_ctx) { self.result = 0 })
-
-// With raise -- asserting results
-setup.then("the result should be {int}", fn(ctx) raise {
-  match ctx[0] {
-    { value: IntVal(expected), .. } => assert_eq(self.result, expected)
-    _ => ()
-  }
-})
-```
+Context-based handlers have the signature `(Ctx) -> Unit raise Error`.
 
 ---
 
@@ -357,28 +402,18 @@ fn CartSteps::new(world : EcomWorld) -> CartSteps {
 
 impl @moonspec.StepLibrary for CartSteps with steps(self) {
   let defs : Array[@moonspec.StepDef] = [
-    @moonspec.StepDef::given(
-      "an empty shopping cart",
-      fn(_ctx) { self.world.cart.clear() },
-    ),
-    @moonspec.StepDef::when(
+    @moonspec.StepDef::given0("an empty shopping cart", fn() {
+      self.world.cart.clear()
+    }),
+    @moonspec.StepDef::when3(
       "I add {string} with quantity {int} at price {int}",
-      fn(ctx) {
-        match (ctx[0], ctx[1], ctx[2]) {
-          (
-            { value: @moonspec.StepValue::StringVal(name), .. },
-            { value: @moonspec.StepValue::IntVal(qty), .. },
-            { value: @moonspec.StepValue::IntVal(price), .. },
-          ) =>
-            self.world.cart.push({ name, quantity: qty, price })
-          _ => ()
-        }
+      fn(name : String, qty : Int, price : Int) {
+        self.world.cart.push({ name, quantity: qty, price })
       },
     ),
-    @moonspec.StepDef::then(
-      "the cart should be empty",
-      fn(_ctx) raise { assert_eq(self.world.cart.length(), 0) },
-    ),
+    @moonspec.StepDef::then0("the cart should be empty", fn() {
+      assert_eq!(self.world.cart.length(), 0)
+    }),
   ]
   defs[:]
 }
@@ -386,13 +421,24 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
 
 ### StepDef Constructors
 
-The `StepDef` struct provides four named constructors that mirror the `Setup`
-registration methods:
+`StepDef` provides typed arity-suffixed constructors that mirror the `Setup`
+methods, plus the original context-based constructors:
+
+**Typed (recommended):**
+
+- `StepDef::given0(pattern, handler)` through `StepDef::given22(pattern, handler)`
+- Same for `when`, `then`, `step`
+- `_ctx` variants: `StepDef::given0_ctx(pattern, handler)` etc.
+
+**Context-based (advanced):**
 
 - `StepDef::given(pattern, handler)` -- Given keyword
 - `StepDef::when(pattern, handler)` -- When keyword
 - `StepDef::then(pattern, handler)` -- Then keyword
 - `StepDef::step(pattern, handler)` -- Any keyword
+
+All constructors accept an optional `source? : StepSource` parameter for
+source location tracking.
 
 Each returns a `StepDef` value. The `steps` method must return an
 `ArrayView[StepDef]`, so end with `defs[:]` to create a view from the array.
@@ -435,6 +481,16 @@ Scenario: Users
 ```
 
 ### Step Handler
+
+Using the typed API, declare the parameter as `DataTable`:
+
+```moonbit
+setup.given1("the following users", fn(table : DataTable) {
+  self.users = table.as_maps()
+})
+```
+
+Or with the context-based API:
 
 ```moonbit
 setup.given("the following users", fn(ctx) {
@@ -511,12 +567,23 @@ Scenario: JSON payload
 
 ### Step Handler
 
+Using the typed API, declare the parameter as `DocString`:
+
+```moonbit
+setup.given1("a JSON payload", fn(doc : DocString) {
+  self.payload = doc.content        // The text content
+  self.media = doc.media_type       // Optional media type (String?)
+})
+```
+
+Or with the context-based API:
+
 ```moonbit
 setup.given("a JSON payload", fn(ctx) {
   match ctx[0] {
     { value: DocStringVal(doc), .. } => {
-      self.payload = doc.content        // The text content
-      self.media = doc.media_type       // Optional media type (String?)
+      self.payload = doc.content
+      self.media = doc.media_type
     }
     _ => ()
   }
@@ -536,23 +603,19 @@ setup.given("a JSON payload", fn(ctx) {
 
 ### Assertions in Then Steps
 
-Then-step handlers typically use `raise` to signal assertion failures:
+Then-step handlers typically use assertions that can raise errors:
 
 ```moonbit
-setup.then("the balance should be {int}", fn(ctx) raise {
-  match ctx[0] {
-    { value: IntVal(expected), .. } =>
-      assert_eq(self.balance, expected)
-    _ => ()
-  }
+setup.then1("the balance should be {int}", fn(expected : Int) {
+  assert_eq!(self.balance, expected)
 })
 ```
 
 MoonBit provides several built-in assertion functions:
 
-- `assert_eq(actual, expected)` -- asserts equality
-- `assert_true(condition)` -- asserts a boolean is true
-- `fail(message)` -- unconditionally fails with a message
+- `assert_eq!(actual, expected)` -- asserts equality
+- `assert_true!(condition)` -- asserts a boolean is true
+- `fail!("message")` -- unconditionally fails with a message
 
 ### What Happens When a Step Fails
 
@@ -566,13 +629,13 @@ When a step handler raises an error:
 
 ### Failing Explicitly
 
-Use `fail()` to signal a failure with a descriptive message:
+Use `fail!()` to signal a failure with a descriptive message:
 
 ```moonbit
-setup.then("the item should be in stock", fn(_ctx) raise {
+setup.then0("the item should be in stock", fn() {
   match self.inventory.get(self.last_checked_item) {
-    Some(stock) => assert_true(stock > 0)
-    None => fail("Item not found in inventory")
+    Some(stock) => assert_true!(stock > 0)
+    None => fail!("Item not found in inventory")
   }
 })
 ```
@@ -661,21 +724,19 @@ and argument extraction logic.
 The generated file includes a hash comment so that `moonspec gen steps` can
 detect when regeneration is needed.
 
-### When to Use Attributes vs. Closures
+### When to Use Each Approach
 
-The attribute-based approach works well when:
+**Typed step registration** (`setup.given1`, `StepDef::when2`, etc.) is the
+recommended default. It handles argument extraction automatically and produces
+clean, readable handlers.
 
-- Steps are simple functions with typed parameters.
-- You prefer a flatter file structure over nested closures.
-- You want the framework to handle `StepArg` extraction automatically.
+**Context-based registration** (`setup.given("...", fn(ctx) { ... })`) is
+useful when you need manual control over argument extraction or want to
+access `Ctx` without using the `_ctx` variants.
 
-The closure-based approach (`configure` with `setup.given/when/then`) is
-preferable when:
-
-- You need to access `Ctx` directly (for `DataTable`, `DocString`, raw text,
-  scenario info, or attachments).
-- You are composing step libraries with `StepLibrary` trait.
-- You want full control over argument matching logic.
+**Attribute-based registration** (`#moonspec.given`, etc.) works well when
+you prefer standalone functions over closures and a flatter file structure.
+The code generator handles all the wiring.
 
 For a complete working example, see the
 [todolist example](https://github.com/moonrockz/moonspec/tree/main/examples/todolist).
