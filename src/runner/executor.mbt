@@ -72,6 +72,7 @@ pub fn execute_scenario(
   sinks? : Array[&@core.MessageSink] = [],
   test_case_started_id? : String = "",
   test_step_ids? : Array[String] = [],
+  dry_run? : Bool = false,
 ) -> ScenarioResult {
   let info : @core.ScenarioInfo = { feature_name, scenario_name, tags }
   let has_sinks = sinks.length() > 0 && test_step_ids.length() > 0
@@ -79,6 +80,74 @@ pub fn execute_scenario(
   let after_case_hooks = hook_registry.by_type(@core.HookType::AfterTestCase)
   let before_step_hooks = hook_registry.by_type(@core.HookType::BeforeTestStep)
   let after_step_hooks = hook_registry.by_type(@core.HookType::AfterTestStep)
+  // Dry-run: match steps but skip hooks and handler execution
+  if dry_run {
+    let step_results : Array[StepResult] = []
+    let mut step_idx = 0
+    for _i, step in steps {
+      let keyword = match step.type_ {
+        Some(@cucumber_messages.PickleStepType::Context) => "Given "
+        Some(@cucumber_messages.PickleStepType::Action) => "When "
+        Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
+        _ => "* "
+      }
+      let ts_id = if step_idx < test_step_ids.length() {
+        test_step_ids[step_idx]
+      } else {
+        ""
+      }
+      step_idx += 1
+      if has_sinks {
+        emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
+      }
+      let (status, diagnostic) : (StepStatus, Error?) = match registry.find_match(
+        step.text,
+        keyword~,
+      ) {
+        Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
+          (
+            StepStatus::Undefined,
+            Some(
+              @core.undefined_step_error(
+                step=step_text,
+                keyword=kw,
+                snippet~,
+                suggestions~,
+              ),
+            ),
+          )
+        Matched(_, _) => (StepStatus::Skipped(Some("dry run")), None)
+      }
+      if has_sinks {
+        emit(
+          sinks,
+          make_test_step_finished_envelope(
+            test_case_started_id,
+            ts_id,
+            step_status_to_string(status),
+            step_status_message(status),
+          ),
+        )
+      }
+      step_results.push({
+        text: step.text,
+        keyword,
+        status,
+        duration_ms: 0L,
+        diagnostic,
+      })
+    }
+    let statuses = step_results.map(fn(r) { r.status })
+    return {
+      feature_name,
+      scenario_name,
+      pickle_id,
+      tags,
+      steps: step_results,
+      status: ScenarioStatus::from_steps(statuses),
+      duration_ms: 0L,
+    }
+  }
   // Track overall test step index across hook steps and regular steps
   let mut step_idx = 0
   // before_test_case hooks — emit TestStepStarted/Finished for each
