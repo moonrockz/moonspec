@@ -457,6 +457,49 @@ Register custom sinks with `opts.add_sink(sink)`.
 
 ---
 
+## Report Output
+
+Formatters can be configured with output destinations so results are automatically written when the run completes.
+
+### Local Development
+
+For local development, the default pretty formatter provides colored console output:
+
+```json5
+{
+  "formatters": [
+    { "type": "pretty", "output": "stdout" }
+  ]
+}
+```
+
+### CI/CD Integration
+
+For CI pipelines, output JUnit XML alongside console output:
+
+```json5
+{
+  "formatters": [
+    { "type": "pretty", "output": "stderr" },
+    { "type": "junit", "output": "reports/results.xml" }
+  ]
+}
+```
+
+### Cucumber Messages
+
+For integration with Cucumber ecosystem tools, use the messages formatter:
+
+```json5
+{
+  "formatters": [
+    { "type": "messages", "output": "reports/messages.ndjson" }
+  ]
+}
+```
+
+---
+
 ## Running Tests
 
 ### Basic Invocation
