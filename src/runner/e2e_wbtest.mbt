@@ -431,3 +431,159 @@ async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
   assert_eq(tcs_count, 2)
   assert_eq(tcf_will_retry_count, 1)
 }
+
+///|
+struct DryRunWorld {} derive(Default)
+
+///|
+impl @core.World for DryRunWorld with configure(_self, setup) {
+  setup.given("a defined step", fn(_ctx) {  })
+  setup.when("another defined step", fn(_ctx) {  })
+}
+
+///|
+async test "dry-run: steps matched but not executed" {
+  let content =
+    #|Feature: DryRun
+    #|
+    #|  Scenario: Defined steps
+    #|    Given a defined step
+    #|    When another defined step
+  let opts = RunOptions([FeatureSource::Text("test://dryrun", content)])
+  opts.dry_run(true)
+  let result = run(DryRunWorld::default, opts)
+  assert_eq(result.summary.total_scenarios, 1)
+  assert_eq(result.summary.skipped, 1)
+  assert_eq(result.summary.passed, 0)
+  assert_eq(
+    result.features[0].scenarios[0].status,
+    ScenarioStatus::Skipped(Some("dry run")),
+  )
+}
+
+///|
+async test "dry-run: undefined steps still reported" {
+  let content =
+    #|Feature: DryRunUndef
+    #|
+    #|  Scenario: Missing step
+    #|    Given an undefined step
+  let opts = RunOptions([FeatureSource::Text("test://dryrun-undef", content)])
+  opts.dry_run(true)
+  let result = run(DryRunWorld::default, opts)
+  assert_eq(result.summary.undefined, 1)
+  assert_eq(result.summary.skipped, 0)
+}
+
+///|
+async test "dry-run: envelopes emitted with SKIPPED status" {
+  let content =
+    #|Feature: DryRunEnv
+    #|
+    #|  Scenario: Defined
+    #|    Given a defined step
+  let collector = CollectorSink::new()
+  let opts = RunOptions([FeatureSource::Text("test://dryrun-env", content)])
+  opts.dry_run(true)
+  opts.add_sink(collector)
+  let _ = run(DryRunWorld::default, opts)
+  let mut found_skipped = false
+  for env in collector.envelopes {
+    match env {
+      @cucumber_messages.Envelope::TestStepFinished(tsf) =>
+        if tsf.testStepResult.status is @cucumber_messages.TestStepResultStatus::Skipped {
+          found_skipped = true
+        }
+      _ => ()
+    }
+  }
+  assert_true(found_skipped)
+}
+
+///|
+struct SkipTagWorld {} derive(Default)
+
+///|
+impl @core.World for SkipTagWorld with configure(_self, setup) {
+  setup.given("a step", fn(_ctx) {  })
+}
+
+///|
+async test "skip tag: @skip scenario is skipped" {
+  let content =
+    #|Feature: SkipTag
+    #|
+    #|  @skip
+    #|  Scenario: Skipped
+    #|    Given a step
+    #|
+    #|  Scenario: Normal
+    #|    Given a step
+  let result = run(
+    SkipTagWorld::default,
+    RunOptions([FeatureSource::Text("test://skip-tag", content)]),
+  )
+  assert_eq(result.summary.total_scenarios, 2)
+  assert_eq(result.summary.passed, 1)
+  assert_eq(result.summary.skipped, 1)
+}
+
+///|
+async test "skip tag: @skip with reason carries reason" {
+  let content = "Feature: SkipReason\n\n  @skip(\"flaky\")\n  Scenario: Flaky\n    Given a step\n"
+  let result = run(
+    SkipTagWorld::default,
+    RunOptions([FeatureSource::Text("test://skip-reason", content)]),
+  )
+  assert_eq(result.summary.skipped, 1)
+  assert_eq(
+    result.features[0].scenarios[0].status,
+    ScenarioStatus::Skipped(Some("flaky")),
+  )
+}
+
+///|
+async test "skip tag: @ignore scenario is skipped" {
+  let content =
+    #|Feature: IgnoreTag
+    #|
+    #|  @ignore
+    #|  Scenario: Ignored
+    #|    Given a step
+  let result = run(
+    SkipTagWorld::default,
+    RunOptions([FeatureSource::Text("test://ignore-tag", content)]),
+  )
+  assert_eq(result.summary.skipped, 1)
+}
+
+///|
+async test "skip tag: custom skip tags" {
+  let content =
+    #|Feature: CustomSkip
+    #|
+    #|  @wip
+    #|  Scenario: WIP
+    #|    Given a step
+    #|
+    #|  Scenario: Normal
+    #|    Given a step
+  let opts = RunOptions([FeatureSource::Text("test://custom-skip", content)])
+  opts.skip_tags(["@wip"])
+  let result = run(SkipTagWorld::default, opts)
+  assert_eq(result.summary.skipped, 1)
+  assert_eq(result.summary.passed, 1)
+}
+
+///|
+async test "skip tag: takes precedence over dry-run" {
+  let content = "Feature: SkipPrecedence\n\n  @skip(\"explicit\")\n  Scenario: Skipped\n    Given a step\n"
+  let opts = RunOptions([FeatureSource::Text("test://skip-precedence", content)])
+  opts.dry_run(true)
+  let result = run(SkipTagWorld::default, opts)
+  assert_eq(result.summary.skipped, 1)
+  assert_eq(
+    result.features[0].scenarios[0].status,
+    ScenarioStatus::Skipped(Some("explicit")),
+  )
+}
