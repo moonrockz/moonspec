@@ -158,6 +158,7 @@ fn generate_per_feature(
       "\")])\n",
     )
     generate_skip_tags_line(buf, config)
+    generate_formatter_lines(buf, config)
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
       config.world +
@@ -238,6 +239,7 @@ fn generate_scenario_runner_test(
       "\")\n",
     )
     generate_skip_tags_line(buf, config)
+    generate_formatter_lines(buf, config)
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
       config.world +
@@ -265,6 +267,44 @@ fn generate_skip_tags_line(buf : StringBuilder, config : CodegenConfig) -> Unit 
       buf.write_string("])\n")
     }
     None => ()
+  }
+}
+
+///|
+/// Generate `options.add_formatter(...)` lines for configured formatters.
+/// When no formatters are configured, generates a default PrettyFormatter on stdout.
+fn generate_formatter_lines(
+  buf : StringBuilder,
+  config : CodegenConfig,
+) -> Unit {
+  match config.formatters {
+    Some(fmts) =>
+      for fmt in fmts {
+        let ctor = match fmt.type_ {
+          "pretty" =>
+            if fmt.no_color {
+              "@format.PrettyFormatter::new(no_color=true)"
+            } else {
+              "@format.PrettyFormatter::new()"
+            }
+          "junit" => "@format.JUnitFormatter::new()"
+          "messages" => "@format.MessagesFormatter::new()"
+          _ => continue
+        }
+        let dest = match fmt.output {
+          "stdout" => "@moonspec.Stdout"
+          "stderr" => "@moonspec.Stderr"
+          _ => "@moonspec.File(\"" + escape_string(fmt.output) + "\")"
+        }
+        buf.write_string(
+          "  options.add_formatter(&" + ctor + ", " + dest + ")\n",
+        )
+      }
+    None =>
+      // Default: PrettyFormatter on stdout
+      buf.write_string(
+        "  options.add_formatter(&@format.PrettyFormatter::new(), @moonspec.Stdout)\n",
+      )
   }
 }
 

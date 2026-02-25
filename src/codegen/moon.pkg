@@ -1,4 +1,5 @@
 import {
   "moonrockz/gherkin",
   "moonbitlang/x/json5",
+  "moonrockz/moonspec/config",
 }

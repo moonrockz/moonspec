@@ -11,12 +11,13 @@ pub(all) struct CodegenConfig {
   mode : CodegenMode
   world : String
   skip_tags : Array[String]?
+  formatters : Array[@config.FormatterConfig]?
 } derive(Show, Eq)
 
 ///|
 /// Create a default config (per-scenario mode, empty world name).
 pub fn CodegenConfig::default() -> CodegenConfig {
-  { mode: PerScenario, world: "", skip_tags: None }
+  { mode: PerScenario, world: "", skip_tags: None, formatters: None }
 }
 
 ///|
@@ -46,5 +47,5 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
     }
     _ => ()
   }
-  { mode, world, skip_tags: None }
+  { mode, world, skip_tags: None, formatters: None }
 }
