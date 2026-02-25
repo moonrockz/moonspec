@@ -19,7 +19,8 @@ impl FromStepArg for Double with from_step_arg(arg) {
   match arg.value {
     FloatVal(v) => v
     DoubleVal(v) => v
-    other => raise Failure::Failure("expected FloatVal or DoubleVal, got \{other}")
+    other =>
+      raise Failure::Failure("expected FloatVal or DoubleVal, got \{other}")
   }
 }
 
@@ -45,7 +46,10 @@ impl FromStepArg for String with from_step_arg(arg) {
     StringVal(v) => v
     WordVal(v) => v
     AnonymousVal(v) => v
-    other => raise Failure::Failure("expected StringVal, WordVal, or AnonymousVal, got \{other}")
+    other =>
+      raise Failure::Failure(
+        "expected StringVal, WordVal, or AnonymousVal, got \{other}",
+      )
   }
 }
 

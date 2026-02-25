@@ -34,7 +34,6 @@ pub fn StepDef::step0_ctx(
   }
 }
 
-
 ///|
 pub fn[A : FromStepArg] StepDef::step1(
   pattern : String,
@@ -72,7 +71,6 @@ pub fn[A : FromStepArg] StepDef::step1_ctx(
     id: None,
   }
 }
-
 
 ///|
 pub fn[A : FromStepArg, B : FromStepArg] StepDef::step2(
@@ -113,7 +111,6 @@ pub fn[A : FromStepArg, B : FromStepArg] StepDef::step2_ctx(
     id: None,
   }
 }
-
 
 ///|
 pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::step3(
@@ -156,7 +153,6 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::step3_ctx(
     id: None,
   }
 }
-
 
 ///|
 pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::step4(
@@ -202,9 +198,14 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepD
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::step5(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+] StepDef::step5(
   pattern : String,
   handler : (A, B, C, D, E) -> Unit raise Error,
   source? : StepSource,
@@ -227,7 +228,13 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::step5_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+] StepDef::step5_ctx(
   pattern : String,
   handler : (A, B, C, D, E, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -249,9 +256,15 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::step6(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+] StepDef::step6(
   pattern : String,
   handler : (A, B, C, D, E, F) -> Unit raise Error,
   source? : StepSource,
@@ -275,7 +288,14 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::step6_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+] StepDef::step6_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -298,9 +318,16 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::step7(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+] StepDef::step7(
   pattern : String,
   handler : (A, B, C, D, E, F, G) -> Unit raise Error,
   source? : StepSource,
@@ -325,7 +352,15 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::step7_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+] StepDef::step7_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -349,9 +384,17 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::step8(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+] StepDef::step8(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H) -> Unit raise Error,
   source? : StepSource,
@@ -377,7 +420,16 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::step8_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+] StepDef::step8_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -402,9 +454,18 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::step9(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+] StepDef::step9(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I) -> Unit raise Error,
   source? : StepSource,
@@ -431,7 +492,17 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::step9_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+] StepDef::step9_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -457,9 +528,19 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::step10(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+] StepDef::step10(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J) -> Unit raise Error,
   source? : StepSource,
@@ -487,7 +568,18 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::step10_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+] StepDef::step10_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -514,9 +606,20 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::step11(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+] StepDef::step11(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise Error,
   source? : StepSource,
@@ -545,7 +648,19 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::step11_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+] StepDef::step11_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -573,9 +688,21 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::step12(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+] StepDef::step12(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise Error,
   source? : StepSource,
@@ -605,7 +732,20 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::step12_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+] StepDef::step12_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -634,9 +774,22 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::step13(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+] StepDef::step13(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise Error,
   source? : StepSource,
@@ -667,7 +820,21 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::step13_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+] StepDef::step13_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -697,9 +864,23 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::step14(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+] StepDef::step14(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise Error,
   source? : StepSource,
@@ -731,7 +912,22 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::step14_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+] StepDef::step14_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -762,9 +958,24 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::step15(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+] StepDef::step15(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise Error,
   source? : StepSource,
@@ -797,7 +1008,23 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::step15_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+] StepDef::step15_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -829,9 +1056,25 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::step16(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+] StepDef::step16(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise Error,
   source? : StepSource,
@@ -865,7 +1108,24 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::step16_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+] StepDef::step16_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -898,9 +1158,26 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::step17(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+] StepDef::step17(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise Error,
   source? : StepSource,
@@ -935,7 +1212,25 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::step17_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+] StepDef::step17_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -969,9 +1264,27 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::step18(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+] StepDef::step18(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise Error,
   source? : StepSource,
@@ -1007,7 +1320,26 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::step18_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+] StepDef::step18_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -1042,9 +1374,28 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::step19(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+] StepDef::step19(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise Error,
   source? : StepSource,
@@ -1081,7 +1432,27 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::step19_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+] StepDef::step19_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -1117,9 +1488,29 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::step20(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+] StepDef::step20(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise Error,
   source? : StepSource,
@@ -1157,7 +1548,28 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::step20_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+] StepDef::step20_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -1194,9 +1606,30 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::step21(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+] StepDef::step21(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise Error,
   source? : StepSource,
@@ -1235,7 +1668,29 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::step21_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+] StepDef::step21_ctx(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise Error,
   source? : StepSource,
@@ -1266,16 +1721,40 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
       let s : S = FromStepArg::from_step_arg(ctx[18])
       let t : T = FromStepArg::from_step_arg(ctx[19])
       let u : U = FromStepArg::from_step_arg(ctx[20])
-      handler(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, ctx)
+      handler(
+        a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, ctx,
+      )
     }),
     source,
     id: None,
   }
 }
 
-
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::step22(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+  V : FromStepArg,
+] StepDef::step22(
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise Error,
   source? : StepSource,
@@ -1315,9 +1794,56 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::step22_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+  V : FromStepArg,
+] StepDef::step22_ctx(
   pattern : String,
-  handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise Error,
+  handler : (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    Ctx,
+  ) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
   {
@@ -1347,7 +1873,9 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
       let t : T = FromStepArg::from_step_arg(ctx[19])
       let u : U = FromStepArg::from_step_arg(ctx[20])
       let v : V = FromStepArg::from_step_arg(ctx[21])
-      handler(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, ctx)
+      handler(
+        a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, ctx,
+      )
     }),
     source,
     id: None,

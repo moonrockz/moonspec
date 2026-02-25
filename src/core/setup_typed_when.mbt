@@ -139,7 +139,13 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::when5(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+] Setup::when5(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E) -> Unit raise Error,
@@ -156,7 +162,13 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::when5_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+] Setup::when5_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, Ctx) -> Unit raise Error,
@@ -173,7 +185,14 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::when6(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+] Setup::when6(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F) -> Unit raise Error,
@@ -191,7 +210,14 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::when6_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+] Setup::when6_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, Ctx) -> Unit raise Error,
@@ -209,7 +235,15 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::when7(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+] Setup::when7(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G) -> Unit raise Error,
@@ -228,7 +262,15 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::when7_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+] Setup::when7_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, Ctx) -> Unit raise Error,
@@ -247,7 +289,16 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::when8(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+] Setup::when8(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H) -> Unit raise Error,
@@ -267,7 +318,16 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::when8_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+] Setup::when8_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, Ctx) -> Unit raise Error,
@@ -287,7 +347,17 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::when9(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+] Setup::when9(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I) -> Unit raise Error,
@@ -308,7 +378,17 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::when9_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+] Setup::when9_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise Error,
@@ -329,7 +409,18 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::when10(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+] Setup::when10(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J) -> Unit raise Error,
@@ -351,7 +442,18 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::when10_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+] Setup::when10_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise Error,
@@ -373,7 +475,19 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::when11(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+] Setup::when11(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise Error,
@@ -396,7 +510,19 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::when11_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+] Setup::when11_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise Error,
@@ -419,7 +545,20 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::when12(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+] Setup::when12(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise Error,
@@ -443,7 +582,20 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::when12_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+] Setup::when12_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise Error,
@@ -467,7 +619,21 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::when13(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+] Setup::when13(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise Error,
@@ -492,7 +658,21 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::when13_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+] Setup::when13_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise Error,
@@ -517,7 +697,22 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::when14(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+] Setup::when14(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise Error,
@@ -543,7 +738,22 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::when14_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+] Setup::when14_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise Error,
@@ -569,7 +779,23 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::when15(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+] Setup::when15(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise Error,
@@ -596,7 +822,23 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::when15_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+] Setup::when15_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise Error,
@@ -623,7 +865,24 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::when16(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+] Setup::when16(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise Error,
@@ -651,7 +910,24 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::when16_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+] Setup::when16_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise Error,
@@ -679,7 +955,25 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::when17(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+] Setup::when17(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise Error,
@@ -708,7 +1002,25 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::when17_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+] Setup::when17_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise Error,
@@ -737,7 +1049,26 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::when18(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+] Setup::when18(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise Error,
@@ -767,7 +1098,26 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::when18_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+] Setup::when18_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise Error,
@@ -797,7 +1147,27 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::when19(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+] Setup::when19(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise Error,
@@ -828,7 +1198,27 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::when19_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+] Setup::when19_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise Error,
@@ -859,7 +1249,28 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::when20(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+] Setup::when20(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise Error,
@@ -891,7 +1302,28 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::when20_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+] Setup::when20_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise Error,
@@ -923,7 +1355,29 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::when21(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+] Setup::when21(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise Error,
@@ -956,7 +1410,29 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::when21_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+] Setup::when21_ctx(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise Error,
@@ -989,7 +1465,30 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::when22(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+  V : FromStepArg,
+] Setup::when22(
   self : Setup,
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise Error,
@@ -1023,10 +1522,57 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 ///|
-pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::when22_ctx(
+pub fn[
+  A : FromStepArg,
+  B : FromStepArg,
+  C : FromStepArg,
+  D : FromStepArg,
+  E : FromStepArg,
+  F : FromStepArg,
+  G : FromStepArg,
+  H : FromStepArg,
+  I : FromStepArg,
+  J : FromStepArg,
+  K : FromStepArg,
+  L : FromStepArg,
+  M : FromStepArg,
+  N : FromStepArg,
+  O : FromStepArg,
+  P : FromStepArg,
+  Q : FromStepArg,
+  R : FromStepArg,
+  S : FromStepArg,
+  T : FromStepArg,
+  U : FromStepArg,
+  V : FromStepArg,
+] Setup::when22_ctx(
   self : Setup,
   pattern : String,
-  handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise Error,
+  handler : (
+    A,
+    B,
+    C,
+    D,
+    E,
+    F,
+    G,
+    H,
+    I,
+    J,
+    K,
+    L,
+    M,
+    N,
+    O,
+    P,
+    Q,
+    R,
+    S,
+    T,
+    U,
+    V,
+    Ctx,
+  ) -> Unit raise Error,
 ) -> Unit {
   self.when(pattern, fn(ctx) {
     validate_arity(ctx, 22)
@@ -1052,6 +1598,8 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
     let t : T = FromStepArg::from_step_arg(ctx[19])
     let u : U = FromStepArg::from_step_arg(ctx[20])
     let v : V = FromStepArg::from_step_arg(ctx[21])
-    handler(a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, ctx)
+    handler(
+      a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, ctx,
+    )
   })
 }
