@@ -48,7 +48,11 @@ fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
         return
       }
     }
-    let config = @codegen.CodegenConfig::{ mode, world }
+    let config = @codegen.CodegenConfig::{
+      mode,
+      world,
+      skip_tags: moonspec_config.skip_tags,
+    }
     let content = @fs.read_file_to_string(file) catch {
       @fs.IOError(msg) => {
         die("Error reading \{file}: \{msg}")

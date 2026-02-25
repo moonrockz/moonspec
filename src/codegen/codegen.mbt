@@ -153,11 +153,15 @@ fn generate_per_feature(
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
+      "  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File(\"" +
+      escape_string(source_path) +
+      "\")])\n",
+    )
+    generate_skip_tags_line(buf, config)
+    buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
       config.world +
-      "::default, @moonspec.RunOptions::new([@moonspec.FeatureSource::File(\"" +
-      escape_string(source_path) +
-      "\")]),\n  )\n  |> ignore\n",
+      "::default, options,\n  )\n  |> ignore\n",
     )
   } else {
     buf.write_string("  ignore(\"\")\n")
@@ -231,7 +235,11 @@ fn generate_scenario_runner_test(
       escape_string(source_path) +
       "\")])\n  options.scenario_name(\"" +
       escape_string(scenario_name) +
-      "\")\n  @moonspec.run_or_fail(\n    " +
+      "\")\n",
+    )
+    generate_skip_tags_line(buf, config)
+    buf.write_string(
+      "  @moonspec.run_or_fail(\n    " +
       config.world +
       "::default, options,\n  )\n  |> ignore\n",
     )
@@ -240,6 +248,24 @@ fn generate_scenario_runner_test(
     buf.write_string("  ignore(\"\")\n")
   }
   buf.write_string("}\n")
+}
+
+///|
+/// Generate `options.skip_tags([...])` line if custom skip tags are configured.
+fn generate_skip_tags_line(buf : StringBuilder, config : CodegenConfig) -> Unit {
+  match config.skip_tags {
+    Some(tags) => {
+      buf.write_string("  options.skip_tags([")
+      for i, tag in tags {
+        if i > 0 {
+          buf.write_string(", ")
+        }
+        buf.write_string("\"" + escape_string(tag) + "\"")
+      }
+      buf.write_string("])\n")
+    }
+    None => ()
+  }
 }
 
 ///|
