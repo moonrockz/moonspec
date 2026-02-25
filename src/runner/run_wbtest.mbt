@@ -608,6 +608,45 @@ async test "hook steps emit TestStepStarted and TestStepFinished" {
 }
 
 ///|
+struct ContextWorld {} derive(Default)
+
+///|
+impl @core.World for ContextWorld with configure(_self, setup) {
+  setup.given("a passing step", fn(_ctx) {  })
+  setup.then("it should fail", fn(_ctx) raise {
+    raise Failure::Failure("assertion failed")
+  })
+}
+
+///|
+async test "step failure messages include step context" {
+  let content =
+    "Feature: Context\n\n  Scenario: Fail\n    Given a passing step\n    Then it should fail\n"
+  let result = run(
+    ContextWorld::default,
+    RunOptions([FeatureSource::Text("test://context", content)]),
+  )
+  let scenario = result.features[0].scenarios[0]
+  let failed_step = scenario.steps.iter().find_first(fn(s) {
+    match s.status {
+      StepStatus::Failed(_) => true
+      _ => false
+    }
+  })
+  match failed_step {
+    Some(step) =>
+      match step.status {
+        StepStatus::Failed(msg) => {
+          assert_true(msg.contains("Then"))
+          assert_true(msg.contains("it should fail"))
+        }
+        _ => fail("expected Failed status")
+      }
+    None => fail("expected a failed step")
+  }
+}
+
+///|
 test "parse_retry_tag returns None when no retry tag" {
   let result = parse_retry_tag(["@smoke", "@slow"])
   assert_eq(result, None)
