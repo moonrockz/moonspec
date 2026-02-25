@@ -37,19 +37,12 @@ struct CalcWorld {
 } derive(Default)
 
 impl @moonspec.World for CalcWorld with configure(self, setup) {
-  setup.given("a calculator", fn(_ctx) { self.result = 0 })
-  setup.when("I add {int} and {int}", fn(ctx) {
-    match (ctx[0], ctx[1]) {
-      ({ value: @moonspec.StepValue::IntVal(a), .. }, { value: @moonspec.StepValue::IntVal(b), .. }) =>
-        self.result = a + b
-      _ => ()
-    }
+  setup.given0("a calculator", fn() { self.result = 0 })
+  setup.when2("I add {int} and {int}", fn(a : Int, b : Int) {
+    self.result = a + b
   })
-  setup.then("the result should be {int}", fn(ctx) raise {
-    match ctx[0] {
-      { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.result, expected)
-      _ => ()
-    }
+  setup.then1("the result should be {int}", fn(expected : Int) {
+    assert_eq!(self.result, expected)
   })
 }
 ```
@@ -137,31 +130,24 @@ struct MyWorld {
 ### Configuring Steps
 
 Implement the `World` trait to configure step definitions. The `self` parameter is
-your world instance -- closures capture it to share state between steps. Step
-handlers receive a `Ctx` wrapper that provides indexed access to arguments,
-scenario/step metadata, and attachment methods:
+your world instance -- closures capture it to share state between steps.
+
+Use typed, arity-suffixed methods (`given0`, `when1`, `then2`, etc.) where the
+numeric suffix matches the number of Cucumber Expression parameters. The handler
+receives extracted, typed arguments directly:
 
 ```moonbit
 impl @moonspec.World for MyWorld with configure(self, setup) {
-  setup.given("I have {int} cucumbers", fn(ctx) {
-    match ctx[0] {
-      { value: @moonspec.StepValue::IntVal(n), .. } => self.cucumbers = n
-      _ => ()
-    }
+  setup.given1("I have {int} cucumbers", fn(n : Int) {
+    self.cucumbers = n
   })
 
-  setup.when("I eat {int} cucumbers", fn(ctx) {
-    match ctx[0] {
-      { value: @moonspec.StepValue::IntVal(n), .. } => self.cucumbers = self.cucumbers - n
-      _ => ()
-    }
+  setup.when1("I eat {int} cucumbers", fn(n : Int) {
+    self.cucumbers = self.cucumbers - n
   })
 
-  setup.then("I should have {int} cucumbers", fn(ctx) raise {
-    match ctx[0] {
-      { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.cucumbers, expected)
-      _ => ()
-    }
+  setup.then1("I should have {int} cucumbers", fn(expected : Int) {
+    assert_eq!(self.cucumbers, expected)
   })
 }
 ```
@@ -182,31 +168,30 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 | `{word}` | `WordVal(String)` | `"as {word}"` |
 | custom | `CustomVal(@any.Any)` | user-defined types (see [Custom Parameter Types](#custom-parameter-types)) |
 
-### Ctx and StepArg Destructuring
+### Ctx and StepArg Access
 
-Step handlers receive a `Ctx` object. Use `ctx[i]` or `ctx.arg(i)` to access
-individual `StepArg` values (each has `value : StepValue` and `raw : String`).
-Use struct destructuring on `StepArg` to extract typed values:
+For steps that need access to scenario metadata or attachments, use the `_ctx`
+variants. The `Ctx` is passed as the last parameter:
 
 ```moonbit
-setup.when("I transfer {float} from {string} to {string}", fn(ctx) {
-  match (ctx[0], ctx[1], ctx[2]) {
-    ({ value: @moonspec.StepValue::FloatVal(amount), .. },
-     { value: @moonspec.StepValue::StringVal(from), .. },
-     { value: @moonspec.StepValue::StringVal(to), .. }) =>
-      transfer(amount, from, to)
-    _ => ()
-  }
-})
+setup.when3_ctx("I transfer {float} from {string} to {string}",
+  fn(amount : Double, from : String, to : String, ctx : @moonspec.Ctx) {
+    ctx.attach("transferring " + amount.to_string(), "text/plain")
+    transfer(amount, from, to)
+  },
+)
 ```
+
+The original `setup.given("pattern", fn(ctx) { ... })` form is still available
+for advanced use cases requiring manual `StepArg` destructuring via `ctx[i]`.
 
 ### Attachments
 
-Steps can attach content to test results for reporting. Attachment methods are
-called directly on the `Ctx` object:
+Steps can attach content to test results for reporting. Use the `_ctx` variant
+to access the `Ctx` object for attachments:
 
 ```moonbit
-setup.given("I take a screenshot", fn(ctx) {
+setup.given0_ctx("I take a screenshot", fn(ctx : @moonspec.Ctx) {
   // Attach text
   ctx.attach("log output here", "text/plain")
 
@@ -222,12 +207,12 @@ Attachments are emitted as `Attachment` and `ExternalAttachment` envelopes in th
 
 ### Generic Steps
 
-Use `setup.step()` to register a step that matches any keyword (Given/When/Then):
+Use `setup.step0()`, `setup.step1()`, etc. to register a step that matches any keyword (Given/When/Then):
 
 ```moonbit
-setup.step("I wait {int} seconds", fn(ctx) {
+setup.step1("I wait {int} seconds", fn(seconds : Int) {
   // matches "Given I wait 5 seconds", "When I wait 5 seconds", etc.
-  ignore(ctx)
+  ignore(seconds)
 })
 ```
 
@@ -240,20 +225,15 @@ For larger projects, organize step definitions into reusable libraries using the
 struct AccountSteps { world : BankWorld }
 
 impl @moonspec.StepLibrary for AccountSteps with steps(self) {
-  [
-    @moonspec.StepDef::given("a bank account with balance {int}", fn(ctx) {
-      match ctx[0] {
-        { value: @moonspec.StepValue::IntVal(n), .. } => self.world.balance = n
-        _ => ()
-      }
+  let defs : Array[@moonspec.StepDef] = [
+    @moonspec.StepDef::given1("a bank account with balance {int}", fn(n : Int) {
+      self.world.balance = n
     }),
-    @moonspec.StepDef::then("the balance should be {int}", fn(ctx) raise {
-      match ctx[0] {
-        { value: @moonspec.StepValue::IntVal(n), .. } => assert_eq(self.world.balance, n)
-        _ => ()
-      }
+    @moonspec.StepDef::then1("the balance should be {int}", fn(n : Int) {
+      assert_eq!(self.world.balance, n)
     }),
-  ][:]
+  ]
+  defs[:]
 }
 ```
 
@@ -277,19 +257,15 @@ built-in `{int}`, `{float}`, `{string}`, and `{word}` types:
 impl @moonspec.World for MyWorld with configure(self, setup) {
   setup.add_param_type("color", [@cucumber_expressions.RegexPattern("red|green|blue")])
 
-  setup.then("the light should be {color}", fn(ctx) raise {
-    match ctx[0] {
-      { value: @moonspec.StepValue::CustomVal(any), .. } => {
-        let color : String = any.to()
-        assert_eq(self.light_color, color)
-      }
-      _ => ()
-    }
+  setup.then1("the light should be {color}", fn(color : String) {
+    assert_eq!(self.light_color, color)
   })
 }
 ```
 
-Custom parameter types match as `CustomVal(@any.Any)` in the `StepValue` enum. Use `any.to()` to unbox the value.
+Custom parameter types are automatically extracted by the `FromStepArg` trait.
+For types that need manual extraction, use the context-based `setup.then("pattern", fn(ctx) { ... })` form
+and match on `CustomVal(@any.Any)` in the `StepValue` enum.
 
 ### Error Handling
 
@@ -344,7 +320,7 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
     ignore(result)
   })
   // Register steps as usual
-  setup.given("a step", fn(_ctx) {  })
+  setup.given0("a step", fn() {  })
 }
 ```
 
