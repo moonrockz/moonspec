@@ -13,17 +13,26 @@ pub(all) struct StepsConfig {
 } derive(Show, Eq)
 
 ///|
+/// Configuration for a single output formatter.
+pub(all) struct FormatterConfig {
+  type_ : String
+  output : String
+  no_color : Bool
+} derive(Show, Eq)
+
+///|
 /// Moonspec configuration with optional fields for hierarchical merging.
 pub(all) struct MoonspecConfig {
   world : String?
   mode : ModeConfig?
   steps : StepsConfig?
   skip_tags : Array[String]?
+  formatters : Array[FormatterConfig]?
 } derive(Show, Eq)
 
 ///|
 pub fn MoonspecConfig::empty() -> MoonspecConfig {
-  { world: None, mode: None, steps: None, skip_tags: None }
+  { world: None, mode: None, steps: None, skip_tags: None, formatters: None }
 }
 
 ///|
@@ -34,6 +43,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
   let mut mode : ModeConfig? = None
   let mut steps : StepsConfig? = None
   let mut skip_tags : Array[String]? = None
+  let mut formatters : Array[FormatterConfig]? = None
   match json {
     Object(obj) => {
       match obj.get("world") {
@@ -92,10 +102,40 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
         }
         _ => ()
       }
+      match obj.get("formatters") {
+        Some(Array(arr)) => {
+          let items : Array[FormatterConfig] = []
+          for item in arr {
+            match item {
+              Object(fmt_obj) => {
+                let mut type_ = ""
+                let mut output = ""
+                let mut no_color = false
+                match fmt_obj.get("type") {
+                  Some(String(s)) => type_ = s
+                  _ => ()
+                }
+                match fmt_obj.get("output") {
+                  Some(String(s)) => output = s
+                  _ => ()
+                }
+                match fmt_obj.get("no_color") {
+                  Some(True) => no_color = true
+                  _ => ()
+                }
+                items.push(FormatterConfig::{ type_, output, no_color })
+              }
+              _ => ()
+            }
+          }
+          formatters = Some(items)
+        }
+        _ => ()
+      }
     }
     _ => ()
   }
-  { world, mode, steps, skip_tags }
+  { world, mode, steps, skip_tags, formatters }
 }
 
 ///|
@@ -119,6 +159,11 @@ pub fn MoonspecConfig::merge(
       (None, None) => None
     },
     skip_tags: match (self.skip_tags, override_.skip_tags) {
+      (_, Some(s)) => Some(s)
+      (Some(s), None) => Some(s)
+      (None, None) => None
+    },
+    formatters: match (self.formatters, override_.formatters) {
       (_, Some(s)) => Some(s)
       (Some(s), None) => Some(s)
       (None, None) => None
