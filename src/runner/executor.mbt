@@ -167,7 +167,7 @@ pub fn execute_scenario(
       step_results.push({
         text: step.text,
         keyword,
-        status: StepStatus::Skipped,
+        status: StepStatus::Skipped(None),
         duration_ms: 0L,
         diagnostic: None,
       })
@@ -269,7 +269,7 @@ pub fn execute_scenario(
       step_results.push({
         text: step.text,
         keyword,
-        status: StepStatus::Skipped,
+        status: StepStatus::Skipped(None),
         duration_ms: 0L,
         diagnostic: None,
       })

@@ -300,7 +300,7 @@ fn step_status_to_string(status : StepStatus) -> String {
   match status {
     StepStatus::Passed => "PASSED"
     StepStatus::Failed(_) => "FAILED"
-    StepStatus::Skipped => "SKIPPED"
+    StepStatus::Skipped(_) => "SKIPPED"
     StepStatus::Undefined => "UNDEFINED"
     StepStatus::Pending => "PENDING"
   }
@@ -311,6 +311,7 @@ fn step_status_to_string(status : StepStatus) -> String {
 fn step_status_message(status : StepStatus) -> String? {
   match status {
     StepStatus::Failed(msg) => Some(msg)
+    StepStatus::Skipped(reason) => reason
     _ => None
   }
 }
@@ -1032,7 +1033,7 @@ fn compute_summary(
         ScenarioStatus::Failed => failed = failed + 1
         ScenarioStatus::Undefined => undefined = undefined + 1
         ScenarioStatus::Pending => pending = pending + 1
-        ScenarioStatus::Skipped => skipped = skipped + 1
+        ScenarioStatus::Skipped(_) => skipped = skipped + 1
       }
     }
   }

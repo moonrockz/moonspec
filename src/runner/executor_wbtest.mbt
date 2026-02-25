@@ -82,7 +82,7 @@ test "execute_scenario skips remaining steps after failure" {
   )
   assert_eq(result.status, ScenarioStatus::Failed)
   assert_true(result.steps[0].status.is_passed())
-  assert_eq(result.steps[2].status, StepStatus::Skipped)
+  assert_eq(result.steps[2].status, StepStatus::Skipped(None))
 }
 
 ///|

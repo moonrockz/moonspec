@@ -11,7 +11,12 @@ test "StepStatus::Failed shows with error" {
 
 ///|
 test "StepStatus::Skipped shows correctly" {
-  inspect(StepStatus::Skipped, content="Skipped")
+  inspect(StepStatus::Skipped(None), content="Skipped(None)")
+}
+
+///|
+test "StepStatus::Skipped with reason shows correctly" {
+  inspect(StepStatus::Skipped(Some("dry run")), content="Skipped(Some(\"dry run\"))")
 }
 
 ///|
@@ -77,4 +82,19 @@ test "RunSummary includes retried field" {
     duration_ms: 0L,
   }
   assert_eq(summary.retried, 2)
+}
+
+///|
+test "ScenarioStatus from all skipped propagates reason" {
+  let result = ScenarioStatus::from_steps([
+    StepStatus::Skipped(Some("dry run")),
+    StepStatus::Skipped(Some("dry run")),
+  ])
+  assert_eq(result, ScenarioStatus::Skipped(Some("dry run")))
+}
+
+///|
+test "ScenarioStatus from skipped without reason" {
+  let result = ScenarioStatus::from_steps([StepStatus::Skipped(None)])
+  assert_eq(result, ScenarioStatus::Skipped(None))
 }
