@@ -68,11 +68,15 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Create GitHub Release
+      - name: Create or update GitHub Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
-          gh release create "$TAG" \
-            --title "$TAG" \
-            --generate-notes
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists, skipping creation"
+          else
+            gh release create "$TAG" \
+              --title "$TAG" \
+              --generate-notes
+          fi
