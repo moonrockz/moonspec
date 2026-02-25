@@ -11,7 +11,8 @@
     "TheWaWaR/clap": "0.2.6",
     "moonbitlang/parser": "0.1.16",
     "Milky2018/xml": "0.2.0",
-    "tonyfettes/any": "0.1.5"
+    "tonyfettes/any": "0.1.5",
+    "moonrockz/expect": "0.1.0"
   },
   "readme": "README.mbt.md",
   "repository": "https://github.com/moonrockz/moonspec",
