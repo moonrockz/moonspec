@@ -54,11 +54,13 @@ test "merge: package config overrides module config" {
     world: Some("ModuleWorld"),
     mode: Some(Simple("per-scenario")),
     steps: None,
+    skip_tags: None,
   }
   let package_config = MoonspecConfig::{
     world: None,
     mode: Some(Simple("per-feature")),
     steps: Some(StepsConfig::{ output: Some("alongside"), exclude: None }),
+    skip_tags: None,
   }
   let merged = module_config.merge(package_config)
   assert_eq(merged.world, Some("ModuleWorld"))
@@ -78,6 +80,7 @@ test "resolve_mode with simple mode" {
     world: None,
     mode: Some(Simple("per-feature")),
     steps: None,
+    skip_tags: None,
   }
   assert_eq(config.resolve_mode("any/file.feature"), "per-feature")
 }
@@ -91,6 +94,7 @@ test "resolve_mode with per-file map" {
     world: None,
     mode: Some(PerFile(map)),
     steps: None,
+    skip_tags: None,
   }
   assert_eq(config.resolve_mode("features/checkout.feature"), "per-feature")
   assert_eq(config.resolve_mode("features/other.feature"), "per-scenario")
@@ -108,4 +112,56 @@ test "from_json5 handles empty/invalid input" {
   assert_eq(config.world, None)
   assert_eq(config.mode, None)
   assert_eq(config.steps, None)
+  assert_eq(config.skip_tags, None)
+}
+
+///|
+test "MoonspecConfig::from_json5 parses skip_tags" {
+  let json5 =
+    #|{
+    #|  "skip_tags": ["@skip", "@ignore", "@wip"]
+    #|}
+  let config = MoonspecConfig::from_json5(json5)
+  assert_eq(config.skip_tags, Some(["@skip", "@ignore", "@wip"]))
+}
+
+///|
+test "MoonspecConfig::from_json5 parses empty skip_tags" {
+  let json5 =
+    #|{
+    #|  "skip_tags": []
+    #|}
+  let config = MoonspecConfig::from_json5(json5)
+  assert_eq(config.skip_tags, Some([]))
+}
+
+///|
+test "merge: skip_tags override takes precedence" {
+  let module_config = MoonspecConfig::{
+    world: None,
+    mode: None,
+    steps: None,
+    skip_tags: Some(["@skip", "@ignore"]),
+  }
+  let package_config = MoonspecConfig::{
+    world: None,
+    mode: None,
+    steps: None,
+    skip_tags: Some(["@wip"]),
+  }
+  let merged = module_config.merge(package_config)
+  assert_eq(merged.skip_tags, Some(["@wip"]))
+}
+
+///|
+test "merge: skip_tags falls back to base when override absent" {
+  let module_config = MoonspecConfig::{
+    world: None,
+    mode: None,
+    steps: None,
+    skip_tags: Some(["@skip", "@ignore"]),
+  }
+  let package_config = MoonspecConfig::empty()
+  let merged = module_config.merge(package_config)
+  assert_eq(merged.skip_tags, Some(["@skip", "@ignore"]))
 }

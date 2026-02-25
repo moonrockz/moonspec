@@ -18,11 +18,12 @@ pub(all) struct MoonspecConfig {
   world : String?
   mode : ModeConfig?
   steps : StepsConfig?
+  skip_tags : Array[String]?
 } derive(Show, Eq)
 
 ///|
 pub fn MoonspecConfig::empty() -> MoonspecConfig {
-  { world: None, mode: None, steps: None }
+  { world: None, mode: None, steps: None, skip_tags: None }
 }
 
 ///|
@@ -32,6 +33,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
   let mut world : String? = None
   let mut mode : ModeConfig? = None
   let mut steps : StepsConfig? = None
+  let mut skip_tags : Array[String]? = None
   match json {
     Object(obj) => {
       match obj.get("world") {
@@ -49,6 +51,19 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
             }
           }
           mode = Some(PerFile(result))
+        }
+        _ => ()
+      }
+      match obj.get("skip_tags") {
+        Some(Array(arr)) => {
+          let items : Array[String] = []
+          for item in arr {
+            match item {
+              String(s) => items.push(s)
+              _ => ()
+            }
+          }
+          skip_tags = Some(items)
         }
         _ => ()
       }
@@ -80,7 +95,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
     }
     _ => ()
   }
-  { world, mode, steps }
+  { world, mode, steps, skip_tags }
 }
 
 ///|
@@ -99,6 +114,11 @@ pub fn MoonspecConfig::merge(
       None => self.mode
     },
     steps: match (self.steps, override_.steps) {
+      (_, Some(s)) => Some(s)
+      (Some(s), None) => Some(s)
+      (None, None) => None
+    },
+    skip_tags: match (self.skip_tags, override_.skip_tags) {
       (_, Some(s)) => Some(s)
       (Some(s), None) => Some(s)
       (None, None) => None

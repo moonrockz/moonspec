@@ -30,6 +30,19 @@ properties:
         examples:
           - {"features/checkout.feature": "per-feature", "*": "per-scenario"}
 
+  skip_tags:
+    type: array
+    description: >
+      Gherkin tags that cause scenarios to be skipped before execution.
+      Each entry should include the @ prefix (e.g. "@skip", "@ignore").
+      Scenarios tagged with any of these are reported as Skipped with
+      the tag name or an optional reason extracted from the tag.
+    default: ["@skip", "@ignore"]
+    items:
+      type: string
+      pattern: "^@"
+    examples: [["@skip", "@ignore", "@wip"]]
+
   steps:
     type: object
     description: Configuration for `moonspec gen steps` attribute scanning.
