@@ -69,7 +69,7 @@ test "per-scenario mode generates runner call with world" {
   assert_true(output.contains("@moonspec.FeatureSource::File"))
   assert_true(output.contains("options.scenario_name("))
   assert_true(output.contains("features/login.feature"))
-  assert_true(output.contains("|> ignore"))
+  assert_true(not(output.contains("|> ignore")))
   assert_true(not(output.contains("assert_eq!(result.summary.failed, 0)")))
 }
 

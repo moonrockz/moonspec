@@ -56,11 +56,10 @@ impl @core.World for PassWorld with configure(_self, setup) {
 ///|
 async test "run_or_fail succeeds when all pass" {
   let content = "Feature: Simple\n\n  Scenario: Pass\n    Given a calculator\n"
-  let result = run_or_fail(
+  run_or_fail(
     PassWorld::default,
     RunOptions([FeatureSource::Text("test://pass", content)]),
   )
-  assert_eq(result.summary.passed, 1)
 }
 
 ///|
@@ -75,13 +74,10 @@ impl @core.World for NoStepsWorld with configure(_self, _setup) {
 async test "run_or_fail raises RunFailed on undefined steps" {
   let content = "Feature: Fail\n\n  Scenario: Undefined\n    Given an undefined step\n"
   let mut caught = false
-  try
-    run_or_fail(
-      NoStepsWorld::default,
-      RunOptions([FeatureSource::Text("test://fail", content)]),
-    )
-    |> ignore
-  catch {
+  run_or_fail(
+    NoStepsWorld::default,
+    RunOptions([FeatureSource::Text("test://fail", content)]),
+  ) catch {
     @core.RunFailed(..) => caught = true
     _ => ()
   }
@@ -450,13 +446,10 @@ async test "run emits ParseError envelope for invalid feature" {
 ///|
 async test "run_or_fail raises on parse errors" {
   let mut caught = false
-  try
-    run_or_fail(
-      RunWorld::default,
-      RunOptions([FeatureSource::Text("test://bad", "Not valid Gherkin")]),
-    )
-    |> ignore
-  catch {
+  run_or_fail(
+    RunWorld::default,
+    RunOptions([FeatureSource::Text("test://bad", "Not valid Gherkin")]),
+  ) catch {
     @core.RunFailed(..) => caught = true
     _ => ()
   }
@@ -608,6 +601,46 @@ async test "hook steps emit TestStepStarted and TestStepFinished" {
     "TestStepStarted", "TestStepFinished",
   ]
   assert_eq(types, expected)
+}
+
+///|
+struct ContextWorld {} derive(Default)
+
+///|
+impl @core.World for ContextWorld with configure(_self, setup) {
+  setup.given("a passing step", fn(_ctx) {  })
+  setup.then("it should fail", fn(_ctx) raise {
+    raise Failure::Failure("assertion failed")
+  })
+}
+
+///|
+async test "step failure messages include step context" {
+  let content = "Feature: Context\n\n  Scenario: Fail\n    Given a passing step\n    Then it should fail\n"
+  let result = run(
+    ContextWorld::default,
+    RunOptions([FeatureSource::Text("test://context", content)]),
+  )
+  let scenario = result.features[0].scenarios[0]
+  let failed_step = scenario.steps
+    .iter()
+    .find_first(fn(s) {
+      match s.status {
+        StepStatus::Failed(_) => true
+        _ => false
+      }
+    })
+  match failed_step {
+    Some(step) =>
+      match step.status {
+        StepStatus::Failed(msg) => {
+          assert_true(msg.contains("Then"))
+          assert_true(msg.contains("it should fail"))
+        }
+        _ => fail("expected Failed status")
+      }
+    None => fail("expected a failed step")
+  }
 }
 
 ///|

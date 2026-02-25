@@ -816,7 +816,7 @@ pub async fn[W : @core.World] run(
 pub async fn[W : @core.World] run_or_fail(
   factory : () -> W,
   options : RunOptions,
-) -> RunResult {
+) -> Unit {
   let result = run(factory, options)
   if result.parse_errors.length() > 0 ||
     result.summary.failed > 0 ||
@@ -826,7 +826,6 @@ pub async fn[W : @core.World] run_or_fail(
     let summary = format_run_summary(result.summary)
     raise @core.run_failed_error(summary~, errors~)
   }
-  result
 }
 
 ///|

@@ -436,17 +436,24 @@ pub fn execute_scenario(
                 StepStatus::Pending,
                 Some(@core.pending_step_error(step~, keyword=kw, message~)),
               )
-            e =>
+            e => {
+              let enriched = "Step '" +
+                step.text +
+                "' (" +
+                keyword.trim(chars=" ").to_string() +
+                "): " +
+                e.to_string()
               (
-                StepStatus::Failed(e.to_string()),
+                StepStatus::Failed(enriched),
                 Some(
                   @core.step_failed_error(
                     step=step.text,
                     keyword~,
-                    message=e.to_string(),
+                    message=enriched,
                   ),
                 ),
               )
+            }
           }
       }
     }

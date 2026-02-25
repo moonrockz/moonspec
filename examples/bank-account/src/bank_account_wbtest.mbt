@@ -21,7 +21,6 @@ async test "bank account: all scenarios via run_or_fail" {
     #|    Then the withdrawal should be declined
     #|    And the balance should be 50
   @moonspec.run_or_fail(BankWorld::default, @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://bank-account", feature)]))
-  |> ignore
 }
 
 ///|
@@ -39,5 +38,4 @@ async test "bank account: per-scenario isolation" {
     #|    Given a bank account with balance 0
     #|    Then the balance should be 0
   @moonspec.run_or_fail(BankWorld::default, @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://isolation", feature)]))
-  |> ignore
 }

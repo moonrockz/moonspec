@@ -62,7 +62,6 @@ async test "calculator" {
     CalcWorld::default,
     @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]),
   )
-  |> ignore
 }
 ```
 
@@ -281,9 +280,74 @@ Use `run_or_fail` to raise on any failure instead of inspecting results manually
 
 ```moonbit
 async test "my feature" {
-  @moonspec.run_or_fail(MyWorld::default, @moonspec.RunOptions::new(features)) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, @moonspec.RunOptions::new(features))
 }
 ```
+
+## Assertions
+
+### `moonrockz/expect` -- Standalone Matchers
+
+The `moonrockz/expect` package provides fluent `expect(value)` assertions usable in any
+MoonBit project, including step handlers:
+
+```bash
+moon add moonrockz/expect
+```
+
+```moonbit
+setup.then1("the result should be {int}", fn(expected : Int) {
+  @expect.expect(self.result).to_equal(expected)
+})
+
+setup.then1("the cart should have {int} items", fn(count : Int) {
+  @expect.expect(self.cart).to_have_length(count)
+  @expect.expect(self.cart).to_contain_element("Widget")
+})
+```
+
+Available matchers:
+
+| Matcher | Constraint | Description |
+|---------|-----------|-------------|
+| `to_equal(expected)` | `T : Eq + Show` | Equality check |
+| `to_not_equal(other)` | `T : Eq + Show` | Inequality check |
+| `to_be_true()` | `Bool` | Assert true |
+| `to_be_false()` | `Bool` | Assert false |
+| `to_be_some()` | `T?` | Assert Some |
+| `to_be_none()` | `T? : Show` | Assert None |
+| `to_contain(substring)` | `String` | Substring check |
+| `to_contain_element(item)` | `Array[T] : Eq + Show` | Element check |
+| `to_be_empty()` | `Array[T]` | Empty array |
+| `to_have_length(n)` | `Array[T]` | Array length |
+
+All matchers raise with descriptive messages on failure, e.g.:
+`"Expected [Apple, Banana] to contain Widget"`.
+
+Standard MoonBit assertions (`assert_eq!`, `assert_true!`, `fail!`) continue to work
+in step handlers. Step failure messages are automatically enriched with step context:
+
+```
+Step 'the result should be 5' (Then): assertion failed: 3 != 5
+```
+
+### `moonspec/expect` -- RunResult Assertions
+
+For inspecting test run outcomes, import `moonrockz/moonspec/expect`:
+
+```moonbit
+let result = @moonspec.run(MyWorld::default, opts)
+@expect.assert_passed(result)
+@expect.assert_no_parse_errors(result)
+@expect.assert_summary(result.summary, passed=3, failed=0)
+```
+
+| Function | Description |
+|----------|-------------|
+| `assert_passed(result)` | No failures, undefined, or pending steps |
+| `assert_failed(result)` | At least one failure |
+| `assert_no_parse_errors(result)` | No Gherkin parse errors |
+| `assert_summary(summary, passed?, failed?, ...)` | Check specific counts |
 
 ## Lifecycle Hooks
 
@@ -369,7 +433,7 @@ async test "calculator features" {
   opts.tag_expr("@smoke and not @slow")
   opts.parallel(true)
   opts.max_concurrent(4)
-  @moonspec.run_or_fail(CalcWorld::default, opts) |> ignore
+  @moonspec.run_or_fail(CalcWorld::default, opts)
 }
 ```
 
@@ -438,7 +502,7 @@ async test "all features" {
     @moonspec.FeatureSource::File("features/inventory.feature"),
   ])
   opts.tag_expr("@smoke and not @slow")
-  @moonspec.run_or_fail(MyWorld::default, opts) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, opts)
 }
 ```
 
@@ -549,7 +613,7 @@ moon test --target js
 async test "Feature: Calculator / Scenario: Addition" {
   let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
   options.scenario_name("Addition")
-  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
+  @moonspec.run_or_fail(CalcWorld::default, options)
 }
 ```
 
@@ -566,7 +630,7 @@ only when the feature file changes.
 async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
   let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
   options.scenario_name("Multiplication (a=2, b=3, result=6)")
-  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
+  @moonspec.run_or_fail(CalcWorld::default, options)
 }
 ```
 
@@ -578,7 +642,6 @@ async test "Feature: Calculator" {
     CalcWorld::default,
     @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")]),
   )
-  |> ignore
 }
 ```
 
@@ -695,7 +758,7 @@ async test "parallel features" {
   let opts = @moonspec.RunOptions::new(features)
   opts.parallel(true)
   opts.max_concurrent(4)
-  @moonspec.run_or_fail(MyWorld::default, opts) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, opts)
 }
 ```
 
@@ -717,7 +780,7 @@ up to this many additional times:
 ```moonbit
 let opts = @moonspec.RunOptions::new(features)
 opts.retries(2) // retry failures up to 2 times
-@moonspec.run_or_fail(MyWorld::default, opts) |> ignore
+@moonspec.run_or_fail(MyWorld::default, opts)
 ```
 
 ### Per-Scenario Retry via Tags
