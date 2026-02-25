@@ -4,7 +4,7 @@ set -euo pipefail
 
 echo "==> Pre-publish checks"
 moon check
-moon test
+moon test --target js
 
 echo "==> Publishing to mooncakes.io"
 moon publish
