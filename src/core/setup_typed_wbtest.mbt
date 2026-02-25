@@ -159,3 +159,34 @@ test "Setup::given3 extracts three args" {
   (setup.step_registry().step_defs()[0].handler.0)(ctx)
   assert_eq!(result[0], ("apple", 3, "fresh"))
 }
+
+///|
+test "Setup::given9 extracts nine args" {
+  let setup = Setup::new()
+  let result : Array[Int] = []
+  setup.given9(
+    "{int} {int} {int} {int} {int} {int} {int} {int} {int}",
+    fn(
+      a : Int,
+      b : Int,
+      c : Int,
+      d : Int,
+      e : Int,
+      f : Int,
+      g : Int,
+      h : Int,
+      i : Int,
+    ) { result.push(a + b + c + d + e + f + g + h + i) },
+  )
+  let args : Array[StepArg] = []
+  for n = 1; n <= 9; n = n + 1 {
+    args.push({ value: IntVal(n), raw: n.to_string() })
+  }
+  let ctx = Ctx::new(
+    args,
+    { feature_name: "f", scenario_name: "s", tags: [] },
+    { keyword: "Given ", text: "1 2 3 4 5 6 7 8 9" },
+  )
+  (setup.step_registry().step_defs()[0].handler.0)(ctx)
+  assert_eq!(result[0], 45)
+}

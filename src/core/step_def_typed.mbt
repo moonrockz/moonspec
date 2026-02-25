@@ -269,6 +269,226 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 // ---------------------------------------------------------------------------
+// StepDef::given6 / given6_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::given6(
+  pattern : String,
+  handler : (A, B, C, D, E, F) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::given6_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::given7 / given7_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::given7(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::given7_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::given8 / given8_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::given8(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::given8_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::given9 / given9_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::given9(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::given9_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Given,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
 // StepDef::when0 / when0_ctx
 // ---------------------------------------------------------------------------
 
@@ -532,6 +752,226 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
       let d : D = FromStepArg::from_step_arg(ctx[3])
       let e : E = FromStepArg::from_step_arg(ctx[4])
       handler(a, b, c, d, e, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::when6 / when6_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::when6(
+  pattern : String,
+  handler : (A, B, C, D, E, F) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::when6_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::when7 / when7_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::when7(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::when7_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::when8 / when8_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::when8(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::when8_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::when9 / when9_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::when9(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::when9_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: When,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i, ctx)
     }),
     source,
     id: None,
@@ -809,6 +1249,226 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
 }
 
 // ---------------------------------------------------------------------------
+// StepDef::then6 / then6_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::then6(
+  pattern : String,
+  handler : (A, B, C, D, E, F) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::then6_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::then7 / then7_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::then7(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::then7_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::then8 / then8_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::then8(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::then8_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::then9 / then9_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::then9(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::then9_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Then,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
 // StepDef::step0 / step0_ctx
 // ---------------------------------------------------------------------------
 
@@ -1072,6 +1732,226 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : F
       let d : D = FromStepArg::from_step_arg(ctx[3])
       let e : E = FromStepArg::from_step_arg(ctx[4])
       handler(a, b, c, d, e, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::step6 / step6_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::step6(
+  pattern : String,
+  handler : (A, B, C, D, E, F) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::step6_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 6)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      handler(a, b, c, d, e, f, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::step7 / step7_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::step7(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::step7_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 7)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      handler(a, b, c, d, e, f, g, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::step8 / step8_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::step8(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::step8_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 8)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      handler(a, b, c, d, e, f, g, h, ctx)
+    }),
+    source,
+    id: None,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// StepDef::step9 / step9_ctx
+// ---------------------------------------------------------------------------
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::step9(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i)
+    }),
+    source,
+    id: None,
+  }
+}
+
+///|
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::step9_ctx(
+  pattern : String,
+  handler : (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise Error,
+  source? : StepSource,
+) -> StepDef {
+  {
+    keyword: Step,
+    pattern,
+    handler: StepHandler(fn(ctx) {
+      validate_arity(ctx, 9)
+      let a : A = FromStepArg::from_step_arg(ctx[0])
+      let b : B = FromStepArg::from_step_arg(ctx[1])
+      let c : C = FromStepArg::from_step_arg(ctx[2])
+      let d : D = FromStepArg::from_step_arg(ctx[3])
+      let e : E = FromStepArg::from_step_arg(ctx[4])
+      let f : F = FromStepArg::from_step_arg(ctx[5])
+      let g : G = FromStepArg::from_step_arg(ctx[6])
+      let h : H = FromStepArg::from_step_arg(ctx[7])
+      let i : I = FromStepArg::from_step_arg(ctx[8])
+      handler(a, b, c, d, e, f, g, h, i, ctx)
     }),
     source,
     id: None,

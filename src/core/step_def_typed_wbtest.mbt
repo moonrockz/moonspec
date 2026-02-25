@@ -87,3 +87,33 @@ test "StepDef::given1 with source" {
   )
   assert_true!(sd.source is Some(_))
 }
+
+///|
+test "StepDef::given9 creates nine-arg step def" {
+  let result : Array[Int] = []
+  let sd = StepDef::given9(
+    "{int} {int} {int} {int} {int} {int} {int} {int} {int}",
+    fn(
+      a : Int,
+      b : Int,
+      c : Int,
+      d : Int,
+      e : Int,
+      f : Int,
+      g : Int,
+      h : Int,
+      i : Int,
+    ) { result.push(a + b + c + d + e + f + g + h + i) },
+  )
+  let args : Array[StepArg] = []
+  for n = 1; n <= 9; n = n + 1 {
+    args.push({ value: IntVal(n), raw: n.to_string() })
+  }
+  let ctx = Ctx::new(
+    args,
+    { feature_name: "f", scenario_name: "s", tags: [] },
+    { keyword: "Given ", text: "1 2 3 4 5 6 7 8 9" },
+  )
+  (sd.handler.0)(ctx)
+  assert_eq!(result[0], 45)
+}
