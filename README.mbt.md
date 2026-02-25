@@ -180,18 +180,30 @@ Configure a test run with `RunOptions::new(features)`:
 | `dry_run(Bool)` | `false` | Validate wiring without execution |
 | `skip_tags(Array[String])` | `["@skip", "@ignore"]` | Tags that skip scenarios |
 | `add_sink(&MessageSink)` | -- | Add a formatter for envelope output |
+| `add_formatter(sink, dest)` | -- | Register formatter with output destination |
+| `clear_sinks()` | -- | Remove all sinks and formatters |
 
 Feature sources: `FeatureSource::Text(uri, content)` for inline Gherkin,
 `FeatureSource::File(path)` to load from disk.
 
 ## Formatters
 
-Three built-in formatters (all implement `MessageSink`). Add via
-`opts.add_sink(formatter)`, then call `.output()` after the run:
+Three built-in formatters (all implement `MessageSink`):
 
-- **Pretty** -- `@moonspec_format.PrettyFormatter::new()` -- colored console
-- **Messages** -- `@moonspec_format.MessagesFormatter::new()` -- Cucumber Messages NDJSON
-- **JUnit** -- `@moonspec_format.JUnitFormatter::new()` -- XML for CI
+- **Pretty** -- `@format.PrettyFormatter::new()` -- colored console output
+- **JUnit** -- `@format.JUnitFormatter::new()` -- XML for CI
+- **Messages** -- `@format.MessagesFormatter::new()` -- Cucumber Messages NDJSON
+
+Register with a destination:
+
+```moonbit
+options.add_formatter(&@format.PrettyFormatter::new(), @moonspec.Stdout)
+options.add_formatter(&@format.JUnitFormatter::new(), @moonspec.File("report.xml"))
+```
+
+Output destinations: `@moonspec.Stdout`, `@moonspec.Stderr`, `@moonspec.File(path)`.
+
+When no formatters are configured, defaults to pretty output on stdout.
 
 ## Tag Filtering
 
@@ -233,7 +245,11 @@ opts.skip_tags(["@skip", "@ignore", "@wip"])
   world: "MyWorld",
   mode: "per-scenario",  // or "per-feature", or per-file map
   steps: { output: "steps.mbt", exclude: ["features/wip/**"] },
-  skip_tags: ["@skip", "@ignore"]
+  skip_tags: ["@skip", "@ignore"],
+  formatters: [
+    { type: "pretty", output: "stdout" },
+    { type: "junit", output: "reports/results.xml" }
+  ]
 }
 ```
 

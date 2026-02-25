@@ -16,6 +16,23 @@ fn emit(
 }
 
 ///|
+/// Write formatter output to the configured destination.
+fn write_formatter_output(entry : FormatterEntry) -> Unit {
+  let content = entry.sink.output()
+  if content.length() == 0 {
+    return
+  }
+  match entry.dest {
+    Stdout => println(content)
+    Stderr =>
+      @fs.write_string_to_file("/dev/stderr", content + "\n") catch {
+        _ => ()
+      }
+    File(path) => @fs.write_string_to_file(path, content) catch { _ => () }
+  }
+}
+
+///|
 fn make_meta_envelope() -> @cucumber_messages.Envelope {
   let json : Json = {
     "meta": {
@@ -784,6 +801,10 @@ pub async fn[W : @core.World] run(
   }
   let feature_results = group_by_feature(results, cache)
   let summary = compute_summary(feature_results, retried=retried_count)
+  // Write formatter output to configured destinations
+  for entry in options.get_formatters() {
+    write_formatter_output(entry)
+  }
   { features: feature_results, summary, parse_errors: all_parse_errors }
 }
 

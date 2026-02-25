@@ -1,10 +1,26 @@
 ///|
+/// Destination for formatter output.
+pub(all) enum OutputDest {
+  Stdout
+  Stderr
+  File(String)
+} derive(Show, Eq)
+
+///|
+/// A formatter paired with its output destination.
+pub(all) struct FormatterEntry {
+  sink : &@core.MessageSink
+  dest : OutputDest
+}
+
+///|
 /// Options for configuring a test run.
 pub(all) struct RunOptions {
   priv features_ : Array[FeatureSource]
   priv mut parallel_ : Bool
   priv mut max_concurrent_ : Int
   priv sinks_ : Array[&@core.MessageSink]
+  priv formatters_ : Array[FormatterEntry]
   priv mut tag_expr_ : String
   priv mut scenario_name_ : String
   priv mut retries_ : Int
@@ -21,6 +37,7 @@ pub fn RunOptions::new(features : Array[FeatureSource]) -> RunOptions {
     parallel_: false,
     max_concurrent_: 4,
     sinks_: [],
+    formatters_: [],
     tag_expr_: "",
     scenario_name_: "",
     retries_: 0,
@@ -84,6 +101,30 @@ pub fn RunOptions::get_max_concurrent(self : RunOptions) -> Int {
 /// Get the configured sinks.
 pub fn RunOptions::get_sinks(self : RunOptions) -> Array[&@core.MessageSink] {
   self.sinks_
+}
+
+///|
+/// Add a formatter with its output destination.
+pub fn RunOptions::add_formatter(
+  self : RunOptions,
+  sink : &@core.MessageSink,
+  dest : OutputDest,
+) -> Unit {
+  self.formatters_.push({ sink, dest })
+  self.sinks_.push(sink)
+}
+
+///|
+/// Remove all sinks and formatters.
+pub fn RunOptions::clear_sinks(self : RunOptions) -> Unit {
+  self.sinks_.clear()
+  self.formatters_.clear()
+}
+
+///|
+/// Get the configured formatters.
+pub fn RunOptions::get_formatters(self : RunOptions) -> Array[FormatterEntry] {
+  self.formatters_
 }
 
 ///|

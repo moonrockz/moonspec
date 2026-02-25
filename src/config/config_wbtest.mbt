@@ -55,12 +55,14 @@ test "merge: package config overrides module config" {
     mode: Some(Simple("per-scenario")),
     steps: None,
     skip_tags: None,
+    formatters: None,
   }
   let package_config = MoonspecConfig::{
     world: None,
     mode: Some(Simple("per-feature")),
     steps: Some(StepsConfig::{ output: Some("alongside"), exclude: None }),
     skip_tags: None,
+    formatters: None,
   }
   let merged = module_config.merge(package_config)
   assert_eq(merged.world, Some("ModuleWorld"))
@@ -81,6 +83,7 @@ test "resolve_mode with simple mode" {
     mode: Some(Simple("per-feature")),
     steps: None,
     skip_tags: None,
+    formatters: None,
   }
   assert_eq(config.resolve_mode("any/file.feature"), "per-feature")
 }
@@ -95,6 +98,7 @@ test "resolve_mode with per-file map" {
     mode: Some(PerFile(map)),
     steps: None,
     skip_tags: None,
+    formatters: None,
   }
   assert_eq(config.resolve_mode("features/checkout.feature"), "per-feature")
   assert_eq(config.resolve_mode("features/other.feature"), "per-scenario")
@@ -142,12 +146,14 @@ test "merge: skip_tags override takes precedence" {
     mode: None,
     steps: None,
     skip_tags: Some(["@skip", "@ignore"]),
+    formatters: None,
   }
   let package_config = MoonspecConfig::{
     world: None,
     mode: None,
     steps: None,
     skip_tags: Some(["@wip"]),
+    formatters: None,
   }
   let merged = module_config.merge(package_config)
   assert_eq(merged.skip_tags, Some(["@wip"]))
@@ -160,8 +166,106 @@ test "merge: skip_tags falls back to base when override absent" {
     mode: None,
     steps: None,
     skip_tags: Some(["@skip", "@ignore"]),
+    formatters: None,
   }
   let package_config = MoonspecConfig::empty()
   let merged = module_config.merge(package_config)
   assert_eq(merged.skip_tags, Some(["@skip", "@ignore"]))
+}
+
+///|
+test "MoonspecConfig::from_json5 parses formatters" {
+  let json5 =
+    #|{
+    #|  "formatters": [
+    #|    { "type": "pretty", "output": "stdout" },
+    #|    { "type": "junit", "output": "reports/results.xml" }
+    #|  ]
+    #|}
+  let config = MoonspecConfig::from_json5(json5)
+  match config.formatters {
+    Some(fmts) => {
+      assert_eq(fmts.length(), 2)
+      assert_eq(fmts[0].type_, "pretty")
+      assert_eq(fmts[0].output, "stdout")
+      assert_eq(fmts[0].no_color, false)
+      assert_eq(fmts[1].type_, "junit")
+      assert_eq(fmts[1].output, "reports/results.xml")
+    }
+    None => assert_true(false)
+  }
+}
+
+///|
+test "MoonspecConfig::from_json5 parses formatter with no_color" {
+  let json5 =
+    #|{
+    #|  "formatters": [
+    #|    { "type": "pretty", "output": "stderr", "no_color": true }
+    #|  ]
+    #|}
+  let config = MoonspecConfig::from_json5(json5)
+  match config.formatters {
+    Some(fmts) => assert_eq(fmts[0].no_color, true)
+    None => assert_true(false)
+  }
+}
+
+///|
+test "MoonspecConfig::from_json5 empty formatters array" {
+  let json5 =
+    #|{
+    #|  "formatters": []
+    #|}
+  let config = MoonspecConfig::from_json5(json5)
+  assert_eq(config.formatters, Some([]))
+}
+
+///|
+test "merge: formatters override takes precedence" {
+  let base = MoonspecConfig::{
+    world: None,
+    mode: None,
+    steps: None,
+    skip_tags: None,
+    formatters: Some([
+      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false },
+    ]),
+  }
+  let override_ = MoonspecConfig::{
+    world: None,
+    mode: None,
+    steps: None,
+    skip_tags: None,
+    formatters: Some([
+      FormatterConfig::{ type_: "junit", output: "report.xml", no_color: false },
+    ]),
+  }
+  let merged = base.merge(override_)
+  match merged.formatters {
+    Some(fmts) => {
+      assert_eq(fmts.length(), 1)
+      assert_eq(fmts[0].type_, "junit")
+    }
+    None => assert_true(false)
+  }
+}
+
+///|
+test "merge: formatters falls back to base when override absent" {
+  let base = MoonspecConfig::{
+    world: None,
+    mode: None,
+    steps: None,
+    skip_tags: None,
+    formatters: Some([
+      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false },
+    ]),
+  }
+  let override_ = MoonspecConfig::empty()
+  let merged = base.merge(override_)
+  match merged.formatters {
+    Some(fmts) => assert_eq(fmts.length(), 1)
+    None => assert_true(false)
+  }
 }

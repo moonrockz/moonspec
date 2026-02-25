@@ -46,7 +46,7 @@ pub fn JUnitFormatter::new() -> JUnitFormatter {
 }
 
 ///|
-pub fn JUnitFormatter::output(self : JUnitFormatter) -> String {
+pub impl @core.MessageSink for JUnitFormatter with output(self) {
   self.buffer
 }
 

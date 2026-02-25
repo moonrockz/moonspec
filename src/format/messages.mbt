@@ -14,7 +14,7 @@ pub fn MessagesFormatter::new() -> MessagesFormatter {
 
 ///|
 /// Return accumulated NDJSON output.
-pub fn MessagesFormatter::output(self : MessagesFormatter) -> String {
+pub impl @core.MessageSink for MessagesFormatter with output(self) {
   self.buffer
 }
 

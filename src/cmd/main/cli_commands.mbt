@@ -52,6 +52,7 @@ fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
       mode,
       world,
       skip_tags: moonspec_config.skip_tags,
+      formatters: moonspec_config.formatters,
     }
     let content = @fs.read_file_to_string(file) catch {
       @fs.IOError(msg) => {

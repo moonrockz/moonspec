@@ -43,6 +43,32 @@ properties:
       pattern: "^@"
     examples: [["@skip", "@ignore", "@wip"]]
 
+  formatters:
+    type: array
+    description: >
+      Output formatters for test results. Each entry specifies a formatter
+      type and output destination. If omitted, defaults to pretty on stdout.
+    items:
+      type: object
+      required: ["type", "output"]
+      additionalProperties: false
+      properties:
+        type:
+          type: string
+          enum: ["pretty", "junit", "messages"]
+          description: Formatter type.
+        output:
+          type: string
+          description: >
+            Output destination: "stdout", "stderr", or a file path.
+          examples: ["stdout", "stderr", "reports/results.xml"]
+        no_color:
+          type: boolean
+          description: Disable ANSI colors (pretty formatter only).
+          default: false
+    examples:
+      - [{"type": "pretty", "output": "stdout"}, {"type": "junit", "output": "reports/results.xml"}]
+
   steps:
     type: object
     description: Configuration for `moonspec gen steps` attribute scanning.

@@ -72,7 +72,7 @@ pub fn PrettyFormatter::new(no_color? : Bool = false) -> PrettyFormatter {
 
 ///|
 /// Return accumulated output.
-pub fn PrettyFormatter::output(self : PrettyFormatter) -> String {
+pub impl @core.MessageSink for PrettyFormatter with output(self) {
   self.buffer
 }
 

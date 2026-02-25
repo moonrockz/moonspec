@@ -13,3 +13,8 @@ pub fn CollectorSink::new() -> CollectorSink {
 pub impl @core.MessageSink for CollectorSink with on_message(self, envelope) {
   self.envelopes.push(envelope)
 }
+
+///|
+pub impl @core.MessageSink for CollectorSink with output(_self) {
+  ""
+}

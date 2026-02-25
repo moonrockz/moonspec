@@ -96,6 +96,42 @@ The `output` field accepts:
 - **`"per-package"`** -- writes one file per MoonBit package.
 - **Custom path** -- any other string is treated as a directory path.
 
+#### `formatters` (array of objects)
+
+Configure output formatters for test results. Each entry specifies a formatter type and its output destination.
+
+```json5
+{
+  "formatters": [
+    { "type": "pretty", "output": "stdout" },
+    { "type": "junit", "output": "reports/results.xml" },
+    { "type": "messages", "output": "stderr" }
+  ]
+}
+```
+
+Each formatter entry has:
+- `type` -- `"pretty"`, `"junit"`, or `"messages"`
+- `output` -- `"stdout"`, `"stderr"`, or a file path
+- `no_color` -- (optional, pretty only) disable ANSI colors
+
+**Default behavior:** When no formatters are configured, moonspec outputs pretty-formatted results to stdout.
+
+**Multiple formatters:** You can configure multiple formatters simultaneously -- for example, pretty output to the console for local development and JUnit XML to a file for CI.
+
+**Programmatic API:**
+
+```moonbit
+let fmt = @format.PrettyFormatter::new()
+options.add_formatter(&fmt, @moonspec.Stdout)
+
+let junit = @format.JUnitFormatter::new()
+options.add_formatter(&junit, @moonspec.File("reports/results.xml"))
+
+// Remove all formatters
+options.clear_sinks()
+```
+
 ### Example: Minimal Config
 
 ```json5
@@ -192,6 +228,16 @@ Replaces the entire skip tag list. Scenarios with any of these tags are skipped 
 #### `add_sink(sink : &MessageSink)`
 
 Add a message sink for envelope output. Sinks receive structured messages as the run progresses. Multiple sinks can be added.
+
+#### `add_formatter(sink : &MessageSink, dest : OutputDest)`
+
+Register a formatter with an output destination. The formatter receives messages during the run, and its output is automatically written to the destination when the run completes.
+
+Destinations: `@moonspec.Stdout`, `@moonspec.Stderr`, `@moonspec.File(path)`.
+
+#### `clear_sinks()`
+
+Remove all registered sinks and formatters.
 
 ---
 

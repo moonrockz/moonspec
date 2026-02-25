@@ -61,6 +61,7 @@ test "per-scenario mode generates runner call with world" {
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
+    formatters: None,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("@moonspec.run_or_fail"))
@@ -79,6 +80,7 @@ test "per-feature mode generates file-based runner call" {
     mode: PerFeature,
     world: "MyWorld",
     skip_tags: None,
+    formatters: None,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("@moonspec.run_or_fail"))
@@ -97,6 +99,7 @@ test "per-scenario mode uses file source with scenario_name" {
     mode: PerScenario,
     world: "AuthWorld",
     skip_tags: None,
+    formatters: None,
   }
   let output = generate_test_file(content, "features/auth.feature", config~)
   assert_true(output.contains("@moonspec.FeatureSource::File"))
@@ -111,6 +114,7 @@ test "per-scenario mode expands scenario outline" {
     mode: PerScenario,
     world: "MathWorld",
     skip_tags: None,
+    formatters: None,
   }
   let output = generate_test_file(content, "features/math.feature", config~)
   assert_true(output.contains("a=1, b=2, sum=3"))
@@ -160,6 +164,7 @@ test "per-scenario mode omits skip_tags when None" {
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
+    formatters: None,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.scenario_name("))
@@ -173,6 +178,7 @@ test "per-scenario mode emits skip_tags when configured" {
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: Some(["@skip", "@wip"]),
+    formatters: None,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.skip_tags([\"@skip\", \"@wip\"])"))
@@ -185,6 +191,7 @@ test "per-feature mode emits skip_tags when configured" {
     mode: PerFeature,
     world: "MyWorld",
     skip_tags: Some(["@ignore"]),
+    formatters: None,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.skip_tags([\"@ignore\"])"))
@@ -197,6 +204,7 @@ test "skip_tags not emitted for stub tests" {
     mode: PerScenario,
     world: "",
     skip_tags: Some(["@skip"]),
+    formatters: None,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("ignore(\"\")"))
@@ -210,7 +218,107 @@ test "empty skip_tags array emits empty array call" {
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: Some([]),
+    formatters: None,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.skip_tags([])"))
+}
+
+///|
+test "codegen emits default pretty formatter when formatters is None" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: None,
+    formatters: None,
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(
+    output.contains(
+      "options.add_formatter(&@format.PrettyFormatter::new(), @moonspec.Stdout)",
+    ),
+  )
+}
+
+///|
+test "codegen emits add_formatter for pretty on stdout" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: None,
+    formatters: Some([
+      @config.FormatterConfig::{
+        type_: "pretty",
+        output: "stdout",
+        no_color: false,
+      },
+    ]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(
+    output.contains(
+      "options.add_formatter(&@format.PrettyFormatter::new(), @moonspec.Stdout)",
+    ),
+  )
+}
+
+///|
+test "codegen emits add_formatter for junit to file" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: None,
+    formatters: Some([
+      @config.FormatterConfig::{
+        type_: "junit",
+        output: "reports/results.xml",
+        no_color: false,
+      },
+    ]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(
+    output.contains(
+      "options.add_formatter(&@format.JUnitFormatter::new(), @moonspec.File(\"reports/results.xml\"))",
+    ),
+  )
+}
+
+///|
+test "codegen emits add_formatter with no_color for pretty" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: None,
+    formatters: Some([
+      @config.FormatterConfig::{
+        type_: "pretty",
+        output: "stderr",
+        no_color: true,
+      },
+    ]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(
+    output.contains(
+      "options.add_formatter(&@format.PrettyFormatter::new(no_color=true), @moonspec.Stderr)",
+    ),
+  )
+}
+
+///|
+test "codegen emits no formatter lines for empty formatters array" {
+  let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "MyWorld",
+    skip_tags: None,
+    formatters: Some([]),
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(not(output.contains("add_formatter")))
 }
