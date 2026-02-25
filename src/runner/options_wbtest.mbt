@@ -69,3 +69,35 @@ test "skip_tags can be customized" {
   opts.skip_tags(["@skip", "@wip"])
   assert_eq(opts.get_skip_tags(), ["@skip", "@wip"])
 }
+
+///|
+test "add_formatter stores formatter with destination" {
+  let options = RunOptions::new(
+    [FeatureSource::Text("test.feature", "Feature: x")],
+  )
+  let fmt = @format.PrettyFormatter::new()
+  options.add_formatter(fmt, Stdout)
+  assert_eq(options.get_formatters().length(), 1)
+}
+
+///|
+test "clear_sinks removes both sinks and formatters" {
+  let options = RunOptions::new(
+    [FeatureSource::Text("test.feature", "Feature: x")],
+  )
+  let fmt = @format.PrettyFormatter::new()
+  options.add_sink(fmt)
+  options.add_formatter(fmt, Stderr)
+  options.clear_sinks()
+  assert_eq(options.get_sinks().length(), 0)
+  assert_eq(options.get_formatters().length(), 0)
+}
+
+///|
+test "OutputDest::File stores path" {
+  let dest : OutputDest = File("reports/results.xml")
+  match dest {
+    File(path) => assert_eq(path, "reports/results.xml")
+    _ => assert_true(false)
+  }
+}
