@@ -14,7 +14,7 @@ pub fn build_test_cases(@core.StepRegistry, @core.HookRegistry, Array[@cucumber-
 
 pub fn compile_pickles(FeatureCache) -> Array[@cucumber-messages.Pickle]
 
-pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep], hook_registry? : @core.HookRegistry, sinks? : Array[&@core.MessageSink], test_case_started_id? : String, test_step_ids? : Array[String]) -> ScenarioResult
+pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep], hook_registry? : @core.HookRegistry, sinks? : Array[&@core.MessageSink], test_case_started_id? : String, test_step_ids? : Array[String], dry_run? : Bool) -> ScenarioResult
 
 pub async fn[W : @core.World] run(() -> W, RunOptions) -> RunResult
 
@@ -88,18 +88,22 @@ pub(all) struct RunOptions {
   fn new(Array[FeatureSource]) -> RunOptions
 }
 pub fn RunOptions::add_sink(Self, &@core.MessageSink) -> Unit
+pub fn RunOptions::dry_run(Self, Bool) -> Unit
 pub fn RunOptions::features(Self) -> Array[FeatureSource]
 pub fn RunOptions::get_max_concurrent(Self) -> Int
 pub fn RunOptions::get_retries(Self) -> Int
 pub fn RunOptions::get_scenario_name(Self) -> String
 pub fn RunOptions::get_sinks(Self) -> Array[&@core.MessageSink]
+pub fn RunOptions::get_skip_tags(Self) -> Array[String]
 pub fn RunOptions::get_tag_expr(Self) -> String
+pub fn RunOptions::is_dry_run(Self) -> Bool
 pub fn RunOptions::is_parallel(Self) -> Bool
 pub fn RunOptions::max_concurrent(Self, Int) -> Unit
 pub fn RunOptions::new(Array[FeatureSource]) -> Self
 pub fn RunOptions::parallel(Self, Bool) -> Unit
 pub fn RunOptions::retries(Self, Int) -> Unit
 pub fn RunOptions::scenario_name(Self, String) -> Unit
+pub fn RunOptions::skip_tags(Self, Array[String]) -> Unit
 pub fn RunOptions::tag_expr(Self, String) -> Unit
 
 pub(all) struct RunResult {
@@ -136,7 +140,7 @@ pub impl Show for ScenarioResult
 pub(all) enum ScenarioStatus {
   Passed
   Failed
-  Skipped
+  Skipped(String?)
   Undefined
   Pending
 }
@@ -156,7 +160,7 @@ pub impl Show for StepResult
 pub(all) enum StepStatus {
   Passed
   Failed(String)
-  Skipped
+  Skipped(String?)
   Undefined
   Pending
 }

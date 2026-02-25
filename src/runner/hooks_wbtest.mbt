@@ -173,7 +173,7 @@ test "hooks: before_scenario failure skips all steps" {
     hook_registry~,
   )
   assert_eq(result.status, ScenarioStatus::Failed)
-  assert_eq(result.steps[0].status, StepStatus::Skipped)
+  assert_eq(result.steps[0].status, StepStatus::Skipped(None))
   // after_scenario should still be called even when before_scenario fails
   assert_eq(world.log, ["before_scenario", "after_scenario"])
 }

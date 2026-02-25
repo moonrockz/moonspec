@@ -8,6 +8,8 @@ pub(all) struct RunOptions {
   priv mut tag_expr_ : String
   priv mut scenario_name_ : String
   priv mut retries_ : Int
+  priv mut dry_run_ : Bool
+  priv skip_tags_ : Array[String]
 
   fn new(features : Array[FeatureSource]) -> RunOptions
 }
@@ -22,6 +24,8 @@ pub fn RunOptions::new(features : Array[FeatureSource]) -> RunOptions {
     tag_expr_: "",
     scenario_name_: "",
     retries_: 0,
+    dry_run_: false,
+    skip_tags_: ["@skip", "@ignore"],
   }
 }
 
@@ -116,4 +120,51 @@ pub fn RunOptions::retries(self : RunOptions, value : Int) -> Unit {
 /// Get the global retry count for failed scenarios.
 pub fn RunOptions::get_retries(self : RunOptions) -> Int {
   self.retries_
+}
+
+///|
+/// Enable or disable dry-run mode.
+///
+/// When enabled, steps are matched against definitions but handlers are not
+/// executed. All hooks are skipped. Matched steps report as
+/// `Skipped(Some("dry run"))` and undefined steps remain `Undefined`.
+///
+/// ```moonbit nocheck
+/// let opts = RunOptions::new(features)
+/// opts.dry_run(true) // validate step wiring without execution
+/// ```
+pub fn RunOptions::dry_run(self : RunOptions, value : Bool) -> Unit {
+  self.dry_run_ = value
+}
+
+///|
+/// Check if dry-run mode is enabled.
+pub fn RunOptions::is_dry_run(self : RunOptions) -> Bool {
+  self.dry_run_
+}
+
+///|
+/// Set the tags that cause scenarios to be skipped.
+///
+/// Scenarios with any of these tags are skipped without executing steps or
+/// hooks. Tags may include a reason: `@skip("reason")`. The reason is
+/// extracted and attached to the skip status.
+///
+/// Defaults to `["@skip", "@ignore"]`.
+///
+/// ```moonbit nocheck
+/// let opts = RunOptions::new(features)
+/// opts.skip_tags(["@skip", "@ignore", "@wip"])
+/// ```
+pub fn RunOptions::skip_tags(self : RunOptions, tags : Array[String]) -> Unit {
+  self.skip_tags_.clear()
+  for tag in tags {
+    self.skip_tags_.push(tag)
+  }
+}
+
+///|
+/// Get the configured skip tags.
+pub fn RunOptions::get_skip_tags(self : RunOptions) -> Array[String] {
+  self.skip_tags_
 }

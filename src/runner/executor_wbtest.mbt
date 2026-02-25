@@ -82,7 +82,7 @@ test "execute_scenario skips remaining steps after failure" {
   )
   assert_eq(result.status, ScenarioStatus::Failed)
   assert_true(result.steps[0].status.is_passed())
-  assert_eq(result.steps[2].status, StepStatus::Skipped)
+  assert_eq(result.steps[2].status, StepStatus::Skipped(None))
 }
 
 ///|
@@ -294,4 +294,125 @@ test "execute_scenario appends doc string after text params" {
   assert_eq(result.status, ScenarioStatus::Passed)
   assert_eq(url, "http://example.com")
   assert_eq(body, "{\"name\":\"Alice\"}")
+}
+
+///|
+test "execute_scenario dry-run matches steps without executing" {
+  let setup = @core.Setup::new()
+  let mut executed = false
+  setup.given("a defined step", fn(_ctx) { executed = true })
+  let registry = setup.step_registry()
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a defined step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test",
+    scenario_name="Dry",
+    pickle_id="p-dry-1",
+    tags=[],
+    steps~,
+    dry_run=true,
+  )
+  assert_false(executed)
+  assert_eq(result.steps[0].status, StepStatus::Skipped(Some("dry run")))
+  assert_eq(result.status, ScenarioStatus::Skipped(Some("dry run")))
+}
+
+///|
+test "execute_scenario dry-run still reports undefined steps" {
+  let setup = @core.Setup::new()
+  let registry = setup.step_registry()
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a step that does not exist",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test",
+    scenario_name="Dry Undef",
+    pickle_id="p-dry-2",
+    tags=[],
+    steps~,
+    dry_run=true,
+  )
+  assert_eq(result.steps[0].status, StepStatus::Undefined)
+  assert_eq(result.status, ScenarioStatus::Undefined)
+}
+
+///|
+test "execute_scenario dry-run skips hooks" {
+  let setup = @core.Setup::new()
+  let mut hook_called = false
+  setup.given("a defined step", fn(_ctx) {  })
+  setup.before_test_case(fn(_ctx) { hook_called = true })
+  let registry = setup.step_registry()
+  let hook_registry = setup.hook_registry()
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a defined step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test",
+    scenario_name="Dry Hooks",
+    pickle_id="p-dry-3",
+    tags=[],
+    steps~,
+    hook_registry~,
+    dry_run=true,
+  )
+  assert_false(hook_called)
+  assert_eq(result.status, ScenarioStatus::Skipped(Some("dry run")))
+}
+
+///|
+test "execute_scenario dry-run with mixed defined and undefined" {
+  let setup = @core.Setup::new()
+  setup.given("a defined step", fn(_ctx) {  })
+  let registry = setup.step_registry()
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a defined step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+    {
+      id: "s2",
+      text: "an undefined step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Action),
+      argument: None,
+    },
+  ]
+  let result = execute_scenario(
+    registry,
+    feature_name="Test",
+    scenario_name="Dry Mixed",
+    pickle_id="p-dry-4",
+    tags=[],
+    steps~,
+    dry_run=true,
+  )
+  assert_eq(result.steps[0].status, StepStatus::Skipped(Some("dry run")))
+  assert_eq(result.steps[1].status, StepStatus::Undefined)
+  assert_eq(result.status, ScenarioStatus::Undefined)
 }

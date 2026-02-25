@@ -645,3 +645,61 @@ test "parse_retry_tag allows value at cap boundary" {
   let result = parse_retry_tag(["@retry(100)"])
   assert_eq(result, Some(100))
 }
+
+///|
+test "parse_skip_tag returns None when no skip tag present" {
+  let result = parse_skip_tag(["@smoke", "@fast"], ["@skip", "@ignore"])
+  assert_eq(result, None)
+}
+
+///|
+test "parse_skip_tag matches bare @skip tag" {
+  let result = parse_skip_tag(["@smoke", "@skip"], ["@skip", "@ignore"])
+  assert_eq(result, Some("skip"))
+}
+
+///|
+test "parse_skip_tag matches bare @ignore tag" {
+  let result = parse_skip_tag(["@ignore", "@smoke"], ["@skip", "@ignore"])
+  assert_eq(result, Some("ignore"))
+}
+
+///|
+test "parse_skip_tag extracts reason from @skip with quoted reason" {
+  let result = parse_skip_tag(["@skip(\"flaky on CI\")"], ["@skip", "@ignore"])
+  assert_eq(result, Some("flaky on CI"))
+}
+
+///|
+test "parse_skip_tag extracts reason from @ignore with quoted reason" {
+  let result = parse_skip_tag(["@ignore(\"not implemented\")"], [
+    "@skip", "@ignore",
+  ])
+  assert_eq(result, Some("not implemented"))
+}
+
+///|
+test "parse_skip_tag uses tag name for empty parens" {
+  let result = parse_skip_tag(["@skip()"], ["@skip", "@ignore"])
+  assert_eq(result, Some("skip"))
+}
+
+///|
+test "parse_skip_tag uses tag name for unquoted content" {
+  let result = parse_skip_tag(["@skip(no quotes)"], ["@skip", "@ignore"])
+  assert_eq(result, Some("skip"))
+}
+
+///|
+test "parse_skip_tag works with custom skip tags" {
+  let result = parse_skip_tag(["@wip"], ["@wip"])
+  assert_eq(result, Some("wip"))
+}
+
+///|
+test "parse_skip_tag returns first match" {
+  let result = parse_skip_tag(["@ignore(\"a\")", "@skip(\"b\")"], [
+    "@skip", "@ignore",
+  ])
+  assert_eq(result, Some("a"))
+}

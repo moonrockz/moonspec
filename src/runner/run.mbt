@@ -22,7 +22,7 @@ fn make_meta_envelope() -> @cucumber_messages.Envelope {
       "protocolVersion": "25.0.1".to_json(),
       "implementation": {
         "name": "moonspec".to_json(),
-        "version": "0.2.0".to_json(),
+        "version": "0.3.0".to_json(),
       },
       "runtime": { "name": "moonbit".to_json() },
       "os": { "name": "unknown".to_json() },
@@ -300,7 +300,7 @@ fn step_status_to_string(status : StepStatus) -> String {
   match status {
     StepStatus::Passed => "PASSED"
     StepStatus::Failed(_) => "FAILED"
-    StepStatus::Skipped => "SKIPPED"
+    StepStatus::Skipped(_) => "SKIPPED"
     StepStatus::Undefined => "UNDEFINED"
     StepStatus::Pending => "PENDING"
   }
@@ -311,6 +311,7 @@ fn step_status_to_string(status : StepStatus) -> String {
 fn step_status_message(status : StepStatus) -> String? {
   match status {
     StepStatus::Failed(msg) => Some(msg)
+    StepStatus::Skipped(reason) => reason
     _ => None
   }
 }
@@ -355,35 +356,52 @@ fn extract_test_case_mappings(
 /// parse_retry_tag(["@smoke", "@slow"])      // => None
 /// ```
 fn parse_retry_tag(tags : Array[String]) -> Int? {
-  let prefix = "@retry("
-  let prefix_len = prefix.length()
+  let max_retries = 100
   for tag in tags {
-    let tag_len = tag.length()
-    if tag_len > prefix_len &&
-      tag.substring(start=0, end=prefix_len) == prefix &&
-      tag[tag_len - 1] == ')' {
-      let inner = tag.substring(start=prefix_len, end=tag_len - 1)
-      let inner_len = inner.length()
-      if inner_len == 0 {
-        continue
-      }
-      let mut n = 0
-      let mut valid = true
-      let max_retries = 100
-      for i = 0; i < inner_len; i = i + 1 {
-        let ch = inner[i]
-        if ch >= '0' && ch <= '9' {
-          n = n * 10 + (ch.to_int() - '0'.to_int())
-          if n > max_retries {
-            n = max_retries
-          }
+    let n : Int = lexmatch tag with longest {
+      ("@retry" "[(]" ("[0-9]+" as digits) "[)]") => {
+        let parsed = @strconv.parse_int(digits.to_string()) catch { _ => 0 }
+        if parsed > max_retries {
+          max_retries
         } else {
-          valid = false
-          break
+          parsed
         }
       }
-      if valid {
-        return Some(n)
+      _ => continue
+    }
+    return Some(n)
+  }
+  None
+}
+
+///|
+/// Check if a pickle's tags match any configured skip tag.
+///
+/// Scans tags for matches against the skip tag list. Supports two formats:
+/// - Bare tag: `@skip` → reason is the tag name without `@` (e.g., `"skip"`)
+/// - Tag with reason: `@skip("reason")` → extracts the quoted reason string
+///
+/// Returns `Some(reason)` for the first match, or `None` if no skip tag found.
+/// Invalid reason formats (empty parens, unquoted) fall back to the tag name.
+///
+/// ```
+/// parse_skip_tag(["@skip(\"flaky\")"], ["@skip"]) // => Some("flaky")
+/// parse_skip_tag(["@smoke"], ["@skip"])            // => None
+/// ```
+fn parse_skip_tag(tags : Array[String], skip_tags : Array[String]) -> String? {
+  for tag in tags {
+    let (name, reason) : (String, String?) = lexmatch tag with longest {
+      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n) "[(]\"" ("[^\"]+" as r) "\"[)]") =>
+        (n.to_string(), Some(r.to_string()))
+      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n) "[(]" "[^)]*" "[)]") =>
+        (n.to_string(), None)
+      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n)) => (n.to_string(), None)
+      _ => continue
+    }
+    let full_tag = "@" + name
+    for skip in skip_tags {
+      if full_tag == skip {
+        return Some(reason.unwrap_or(name))
       }
     }
   }
@@ -634,6 +652,8 @@ pub async fn[W : @core.World] run(
     }
   }
   let retries = options.get_retries()
+  let dry_run = options.is_dry_run()
+  let skip_tags = options.get_skip_tags()
   let paired_results = if options.is_parallel() {
     run_pickles_parallel(
       factory,
@@ -643,6 +663,8 @@ pub async fn[W : @core.World] run(
       tc_mappings~,
       id_gen~,
       retries~,
+      dry_run~,
+      skip_tags~,
     )
   } else {
     run_pickles_sequential(
@@ -652,6 +674,8 @@ pub async fn[W : @core.World] run(
       tc_mappings~,
       id_gen~,
       retries~,
+      dry_run~,
+      skip_tags~,
     )
   }
   let results : Array[ScenarioResult] = paired_results.map(fn(pr) { pr.result })
@@ -845,6 +869,8 @@ async fn[W : @core.World] run_pickles_sequential(
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
   retries? : Int = 0,
+  dry_run? : Bool = false,
+  skip_tags? : Array[String] = [],
 ) -> Array[PickleResult] {
   let results : Array[PickleResult] = []
   for pickle in pickles {
@@ -855,10 +881,85 @@ async fn[W : @core.World] run_pickles_sequential(
       tc_mappings~,
       id_gen~,
       retries~,
+      dry_run~,
+      skip_tags~,
     )
     results.push(result)
   }
   results
+}
+
+///|
+/// Build a PickleResult for a scenario that should be skipped.
+///
+/// Emits `TestCaseStarted`, per-step `TestStepStarted`/`TestStepFinished`,
+/// and `TestCaseFinished` envelopes when sinks are present. All steps are
+/// marked `SKIPPED` with the given reason.
+fn make_skipped_pickle_result(
+  pickle : @cucumber_messages.Pickle,
+  tags : Array[String],
+  reason : String,
+  mapping : TestCaseMapping?,
+  test_case_id : String,
+  test_step_ids : Array[String],
+  sinks : Array[&@core.MessageSink],
+  id_gen : IdGenerator,
+) -> PickleResult {
+  let step_results : Array[StepResult] = pickle.steps.map(fn(step) {
+    let keyword = match step.type_ {
+      Some(@cucumber_messages.PickleStepType::Context) => "Given "
+      Some(@cucumber_messages.PickleStepType::Action) => "When "
+      Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
+      _ => "* "
+    }
+    {
+      text: step.text,
+      keyword,
+      status: StepStatus::Skipped(Some(reason)),
+      duration_ms: 0L,
+      diagnostic: None,
+    }
+  })
+  // Emit TestCaseStarted/Finished if sinks present
+  match mapping {
+    Some(_) => {
+      let tcs_id = id_gen.next("tcs")
+      if sinks.length() > 0 {
+        emit(sinks, make_test_case_started_envelope(tcs_id, test_case_id))
+        let mut si = 0
+        for _step in pickle.steps {
+          let ts_id = if si < test_step_ids.length() {
+            test_step_ids[si]
+          } else {
+            ""
+          }
+          si += 1
+          emit(sinks, make_test_step_started_envelope(tcs_id, ts_id))
+          emit(
+            sinks,
+            make_test_step_finished_envelope(
+              tcs_id,
+              ts_id,
+              "SKIPPED",
+              Some(reason),
+            ),
+          )
+        }
+        emit(sinks, make_test_case_finished_envelope(tcs_id))
+      }
+    }
+    None => ()
+  }
+  let result : ScenarioResult = {
+    feature_name: pickle.uri,
+    scenario_name: pickle.name,
+    pickle_id: pickle.id,
+    tags,
+    steps: step_results,
+    status: ScenarioStatus::Skipped(Some(reason)),
+    duration_ms: 0L,
+  }
+  { result, was_retried: false }
 }
 
 ///|
@@ -880,6 +981,8 @@ async fn[W : @core.World] execute_pickle(
   tc_mappings? : Map[String, TestCaseMapping] = {},
   id_gen? : IdGenerator = IdGenerator::new(),
   retries? : Int = 0,
+  dry_run? : Bool = false,
+  skip_tags? : Array[String] = [],
 ) -> PickleResult {
   let tags = pickle.tags.map(fn(t) { t.name })
   let tag_retries = parse_retry_tag(tags)
@@ -895,6 +998,13 @@ async fn[W : @core.World] execute_pickle(
   let test_step_ids = match mapping {
     Some(m) => m.test_step_ids
     None => []
+  }
+  // Check if scenario should be skipped via tags
+  let skip_reason = parse_skip_tag(tags, skip_tags)
+  if skip_reason is Some(reason) {
+    return make_skipped_pickle_result(
+      pickle, tags, reason, mapping, test_case_id, test_step_ids, sinks, id_gen,
+    )
   }
   let attempt : Ref[Int] = { val: 0 }
   let execute_attempt : async () -> ScenarioResult = () => {
@@ -934,6 +1044,7 @@ async fn[W : @core.World] execute_pickle(
       sinks~,
       test_case_started_id=tcs_id.unwrap_or(""),
       test_step_ids~,
+      dry_run~,
     )
     // Only retry on actual failures — not Undefined, Pending, or Skipped
     let is_failed = result.status == ScenarioStatus::Failed
@@ -958,7 +1069,7 @@ async fn[W : @core.World] execute_pickle(
     }
     result
   }
-  let result = if max_retries > 0 {
+  let result = if max_retries > 0 && not(dry_run) {
     @async.retry(
       @async.Immediate,
       max_retry=max_retries,
@@ -1032,7 +1143,7 @@ fn compute_summary(
         ScenarioStatus::Failed => failed = failed + 1
         ScenarioStatus::Undefined => undefined = undefined + 1
         ScenarioStatus::Pending => pending = pending + 1
-        ScenarioStatus::Skipped => skipped = skipped + 1
+        ScenarioStatus::Skipped(_) => skipped = skipped + 1
       }
     }
   }

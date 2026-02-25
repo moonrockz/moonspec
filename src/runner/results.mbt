@@ -11,7 +11,7 @@ pub(all) enum FeatureSource {
 pub(all) enum StepStatus {
   Passed
   Failed(String)
-  Skipped
+  Skipped(String?)
   Undefined
   Pending
 } derive(Show, Eq)
@@ -30,7 +30,7 @@ pub fn StepStatus::is_passed(self : StepStatus) -> Bool {
 pub(all) enum ScenarioStatus {
   Passed
   Failed
-  Skipped
+  Skipped(String?)
   Undefined
   Pending
 } derive(Show, Eq)
@@ -41,13 +41,16 @@ pub fn ScenarioStatus::from_steps(steps : Array[StepStatus]) -> ScenarioStatus {
   let mut has_failed = false
   let mut has_undefined = false
   let mut has_pending = false
-  let mut has_skipped = false
+  let mut skip_reason : String?? = None
   for step in steps {
     match step {
       StepStatus::Failed(_) => has_failed = true
       StepStatus::Undefined => has_undefined = true
       StepStatus::Pending => has_pending = true
-      StepStatus::Skipped => has_skipped = true
+      StepStatus::Skipped(reason) =>
+        if skip_reason is None {
+          skip_reason = Some(reason)
+        }
       StepStatus::Passed => ()
     }
   }
@@ -57,8 +60,8 @@ pub fn ScenarioStatus::from_steps(steps : Array[StepStatus]) -> ScenarioStatus {
     ScenarioStatus::Undefined
   } else if has_pending {
     ScenarioStatus::Pending
-  } else if has_skipped {
-    ScenarioStatus::Skipped
+  } else if skip_reason is Some(reason) {
+    ScenarioStatus::Skipped(reason)
   } else {
     ScenarioStatus::Passed
   }
