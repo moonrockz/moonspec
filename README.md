@@ -814,6 +814,9 @@ Scenario: Blocked
 
 Skipped scenarios appear in the summary as skipped with their reason.
 
+> **Note:** Gherkin tags cannot contain spaces. Use single-word or
+> underscore-separated reasons: `@skip("flaky")`, `@skip("not_ready")`.
+
 ### Custom Skip Tags
 
 Configure which tags trigger skipping:
