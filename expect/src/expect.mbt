@@ -69,3 +69,79 @@ pub fn[T : Show] Expectation::to_be_none(
     Some(_) => raise Failure::Failure("Expected \{self.actual} to be None")
   }
 }
+
+///|
+/// Assert a String contains the given substring.
+pub fn Expectation::to_contain(
+  self : Expectation[String],
+  substring : String,
+) -> Unit raise Error {
+  if not(self.actual.contains(substring)) {
+    raise Failure::Failure(
+      "Expected \"\{self.actual}\" to contain \"\{substring}\"",
+    )
+  }
+}
+
+///|
+/// Assert a String is empty.
+pub fn Expectation::to_be_empty_string(
+  self : Expectation[String],
+) -> Unit raise Error {
+  if self.actual.length() != 0 {
+    raise Failure::Failure(
+      "Expected \"\{self.actual}\" to be empty, but has length \{self.actual.length()}",
+    )
+  }
+}
+
+///|
+/// Assert a String has the given length.
+pub fn Expectation::to_have_length_string(
+  self : Expectation[String],
+  expected : Int,
+) -> Unit raise Error {
+  let actual_len = self.actual.length()
+  if actual_len != expected {
+    raise Failure::Failure(
+      "Expected \"\{self.actual}\" to have length \{expected}, but has length \{actual_len}",
+    )
+  }
+}
+
+///|
+/// Assert an Array contains the given element.
+pub fn[T : Eq + Show] Expectation::to_contain_element(
+  self : Expectation[Array[T]],
+  element : T,
+) -> Unit raise Error {
+  if not(self.actual.contains(element)) {
+    raise Failure::Failure("Expected \{self.actual} to contain \{element}")
+  }
+}
+
+///|
+/// Assert an Array is empty.
+pub fn[T : Show] Expectation::to_be_empty(
+  self : Expectation[Array[T]],
+) -> Unit raise Error {
+  if self.actual.length() != 0 {
+    raise Failure::Failure(
+      "Expected \{self.actual} to be empty, but has \{self.actual.length()} elements",
+    )
+  }
+}
+
+///|
+/// Assert an Array has the given length.
+pub fn[T : Show] Expectation::to_have_length(
+  self : Expectation[Array[T]],
+  expected : Int,
+) -> Unit raise Error {
+  let actual_len = self.actual.length()
+  if actual_len != expected {
+    raise Failure::Failure(
+      "Expected \{self.actual} to have length \{expected}, but has length \{actual_len}",
+    )
+  }
+}
