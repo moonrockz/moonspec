@@ -23,12 +23,12 @@ test "generate_configure produces valid impl block" {
       output, "impl @moonspec.World for MyWorld with configure(self, setup)",
     ),
   )
-  // Check step registration
-  assert_true(str_contains(output, "setup.given(\"I have {int} cucumbers\""))
+  // Check typed step registration
+  assert_true(str_contains(output, "setup.given1(\"I have {int} cucumbers\""))
+  // Check typed lambda parameter
+  assert_true(str_contains(output, "_arg0 : Int"))
   // Check function call
-  assert_true(str_contains(output, "set_cucumbers(self"))
-  // Check arg extraction
-  assert_true(str_contains(output, "IntVal(v)"))
+  assert_true(str_contains(output, "set_cucumbers(self, _arg0)"))
 }
 
 ///|
@@ -50,9 +50,13 @@ test "generate_configure handles multiple params" {
     },
   ]
   let output = generate_configure("W", steps, source_hash="00000000")
-  assert_true(str_contains(output, "ctx[0]"))
-  assert_true(str_contains(output, "ctx[1]"))
-  assert_true(str_contains(output, "StringVal(v)"))
+  // Check arity-suffixed method
+  assert_true(str_contains(output, "setup.when2("))
+  // Check typed lambda parameters
+  assert_true(str_contains(output, "_arg0 : Int"))
+  assert_true(str_contains(output, "_arg1 : String"))
+  // Check function call with both args
+  assert_true(str_contains(output, "eat_food(self, _arg0, _arg1)"))
 }
 
 ///|
@@ -71,7 +75,10 @@ test "generate_configure handles no-param steps" {
     },
   ]
   let output = generate_configure("W", steps, source_hash="00000000")
+  // Check arity-0 method
+  assert_true(str_contains(output, "setup.when0("))
+  // Check empty lambda params
+  assert_true(str_contains(output, "fn() {"))
+  // Check function call
   assert_true(str_contains(output, "login(self)"))
-  // Should not have any arg extraction
-  assert_true(not(str_contains(output, "ctx[")))
 }

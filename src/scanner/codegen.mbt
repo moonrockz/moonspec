@@ -23,20 +23,23 @@ pub fn generate_configure(
 
 ///|
 fn generate_step_registration(buf : StringBuilder, step : StepFnInfo) -> Unit {
+  let arity = step.params.length().to_string()
   buf.write_string(
     "  setup." +
     step.keyword +
+    arity +
     "(\"" +
     escape_pattern(step.pattern) +
-    "\", fn(ctx) raise {\n",
+    "\", fn(",
   )
-  // Generate arg extraction for each param
+  // Generate typed lambda parameters
   for i, param in step.params {
-    let idx = i.to_string()
-    buf.write_string("    let _arg" + idx + " = ")
-    buf.write_string(generate_arg_match(idx, param.type_name))
-    buf.write_string("\n")
+    if i > 0 {
+      buf.write_string(", ")
+    }
+    buf.write_string("_arg" + i.to_string() + " : " + param.type_name)
   }
+  buf.write_string(") {\n")
   // Generate the function call
   buf.write_string("    " + step.fn_name + "(self")
   for i, _param in step.params {
@@ -44,20 +47,6 @@ fn generate_step_registration(buf : StringBuilder, step : StepFnInfo) -> Unit {
   }
   buf.write_string(")\n")
   buf.write_string("  })\n")
-}
-
-///|
-fn generate_arg_match(idx : String, type_name : String) -> String {
-  if type_name == "Int" {
-    "match ctx[" + idx + "] { { value: IntVal(v), .. } => v; _ => 0 }"
-  } else if type_name == "Double" {
-    "match ctx[" + idx + "] { { value: FloatVal(v), .. } => v; _ => 0.0 }"
-  } else {
-    // String and any other type
-    "match ctx[" +
-    idx +
-    "] { { value: StringVal(v), .. } => v; { value: WordVal(v), .. } => v; _ => \"\" }"
-  }
 }
 
 ///|
