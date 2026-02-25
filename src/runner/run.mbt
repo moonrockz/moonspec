@@ -392,6 +392,61 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
 }
 
 ///|
+/// Check if a pickle's tags match any configured skip tag.
+///
+/// Scans tags for matches against the skip tag list. Supports two formats:
+/// - Bare tag: `@skip` → reason is the tag name without `@` (e.g., `"skip"`)
+/// - Tag with reason: `@skip("reason")` → extracts the quoted reason string
+///
+/// Returns `Some(reason)` for the first match, or `None` if no skip tag found.
+/// Invalid reason formats (empty parens, unquoted) fall back to the tag name.
+///
+/// ```
+/// parse_skip_tag(["@skip(\"flaky\")"], ["@skip"]) // => Some("flaky")
+/// parse_skip_tag(["@smoke"], ["@skip"])            // => None
+/// ```
+fn parse_skip_tag(tags : Array[String], skip_tags : Array[String]) -> String? {
+  for tag in tags {
+    for skip in skip_tags {
+      let skip_len = skip.length()
+      let tag_len = tag.length()
+      // Exact match: bare tag like @skip
+      if tag == skip {
+        let reason = if skip_len > 1 && skip[0] == '@' {
+          skip.substring(start=1, end=skip_len)
+        } else {
+          skip
+        }
+        return Some(reason)
+      }
+      // Parameterized match: @skip("reason") or @skip(...)
+      if tag_len > skip_len &&
+        tag.substring(start=0, end=skip_len) == skip &&
+        tag[skip_len] == '(' &&
+        tag[tag_len - 1] == ')' {
+        let inner = tag.substring(start=skip_len + 1, end=tag_len - 1)
+        let inner_len = inner.length()
+        // Extract quoted reason: "reason"
+        if inner_len >= 2 && inner[0] == '"' && inner[inner_len - 1] == '"' {
+          let reason = inner.substring(start=1, end=inner_len - 1)
+          if reason.length() > 0 {
+            return Some(reason)
+          }
+        }
+        // Fall back to tag name for invalid formats
+        let reason = if skip_len > 1 && skip[0] == '@' {
+          skip.substring(start=1, end=skip_len)
+        } else {
+          skip
+        }
+        return Some(reason)
+      }
+    }
+  }
+  None
+}
+
+///|
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
