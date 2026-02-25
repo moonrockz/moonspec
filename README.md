@@ -792,7 +792,7 @@ let result = run(MyWorld::default, opts)
 // result.summary.skipped shows matched-but-not-executed steps
 ```
 
-Matched steps report as `Skipped("dry run")`. Undefined steps remain `Undefined` with snippet suggestions. No hooks are called and no retries are attempted.
+Matched steps report as `Skipped(Some("dry run"))`. Undefined steps remain `Undefined` with snippet suggestions. No hooks are called and no retries are attempted.
 
 ## Skipping Scenarios
 
