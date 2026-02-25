@@ -7,16 +7,8 @@ import {
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",
   "moonbitlang/core/env",
-  "moonbitlang/core/json",
 }
 
 options(
   "is-main": true,
-  "pre-build": [
-    {
-      "input": "../../../moon.mod.json",
-      "output": "moon_mod_resource.mbt",
-      "command": ":embed -i $input -o $output --text --name moon_mod_json",
-    },
-  ],
 )

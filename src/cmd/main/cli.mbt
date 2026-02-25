@@ -1,14 +1,6 @@
 ///|
 fn get_version() -> String {
-  let json = @json.parse(moon_mod_json) catch { _ => return "unknown" }
-  match json {
-    Object(obj) =>
-      match obj.get("version") {
-        Some(String(v)) => v
-        _ => "unknown"
-      }
-    _ => "unknown"
-  }
+  "0.3.2"
 }
 
 ///|

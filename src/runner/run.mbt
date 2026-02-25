@@ -22,7 +22,7 @@ fn make_meta_envelope() -> @cucumber_messages.Envelope {
       "protocolVersion": "25.0.1".to_json(),
       "implementation": {
         "name": "moonspec".to_json(),
-        "version": "0.3.1".to_json(),
+        "version": "0.3.2".to_json(),
       },
       "runtime": { "name": "moonbit".to_json() },
       "os": { "name": "unknown".to_json() },
