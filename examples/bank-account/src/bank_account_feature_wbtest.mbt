@@ -6,5 +6,4 @@ async test "Feature: Bank Account" {
   @moonspec.run_or_fail(
     BankWorld::default, @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/bank-account.feature")]),
   )
-  |> ignore
 }

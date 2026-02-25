@@ -62,7 +62,6 @@ async test "calculator" {
     CalcWorld::default,
     @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]),
   )
-  |> ignore
 }
 ```
 
@@ -281,7 +280,7 @@ Use `run_or_fail` to raise on any failure instead of inspecting results manually
 
 ```moonbit
 async test "my feature" {
-  @moonspec.run_or_fail(MyWorld::default, @moonspec.RunOptions::new(features)) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, @moonspec.RunOptions::new(features))
 }
 ```
 
@@ -369,7 +368,7 @@ async test "calculator features" {
   opts.tag_expr("@smoke and not @slow")
   opts.parallel(true)
   opts.max_concurrent(4)
-  @moonspec.run_or_fail(CalcWorld::default, opts) |> ignore
+  @moonspec.run_or_fail(CalcWorld::default, opts)
 }
 ```
 
@@ -438,7 +437,7 @@ async test "all features" {
     @moonspec.FeatureSource::File("features/inventory.feature"),
   ])
   opts.tag_expr("@smoke and not @slow")
-  @moonspec.run_or_fail(MyWorld::default, opts) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, opts)
 }
 ```
 
@@ -549,7 +548,7 @@ moon test --target js
 async test "Feature: Calculator / Scenario: Addition" {
   let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
   options.scenario_name("Addition")
-  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
+  @moonspec.run_or_fail(CalcWorld::default, options)
 }
 ```
 
@@ -566,7 +565,7 @@ only when the feature file changes.
 async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
   let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
   options.scenario_name("Multiplication (a=2, b=3, result=6)")
-  @moonspec.run_or_fail(CalcWorld::default, options) |> ignore
+  @moonspec.run_or_fail(CalcWorld::default, options)
 }
 ```
 
@@ -578,7 +577,6 @@ async test "Feature: Calculator" {
     CalcWorld::default,
     @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")]),
   )
-  |> ignore
 }
 ```
 
@@ -695,7 +693,7 @@ async test "parallel features" {
   let opts = @moonspec.RunOptions::new(features)
   opts.parallel(true)
   opts.max_concurrent(4)
-  @moonspec.run_or_fail(MyWorld::default, opts) |> ignore
+  @moonspec.run_or_fail(MyWorld::default, opts)
 }
 ```
 
@@ -717,7 +715,7 @@ up to this many additional times:
 ```moonbit
 let opts = @moonspec.RunOptions::new(features)
 opts.retries(2) // retry failures up to 2 times
-@moonspec.run_or_fail(MyWorld::default, opts) |> ignore
+@moonspec.run_or_fail(MyWorld::default, opts)
 ```
 
 ### Per-Scenario Retry via Tags

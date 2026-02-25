@@ -6,12 +6,10 @@ async test "Feature: Checkout / Scenario: Checkout with items in the cart" {
   let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/checkout.feature")])
   options.scenario_name("Checkout with items in the cart")
   @moonspec.run_or_fail(EcomWorld::default, options)
-  |> ignore
 }
 
 async test "Feature: Checkout / Scenario: Checkout with an empty cart" {
   let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/checkout.feature")])
   options.scenario_name("Checkout with an empty cart")
   @moonspec.run_or_fail(EcomWorld::default, options)
-  |> ignore
 }

@@ -162,7 +162,7 @@ fn generate_per_feature(
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
       config.world +
-      "::default, options,\n  )\n  |> ignore\n",
+      "::default, options,\n  )\n",
     )
   } else {
     buf.write_string("  ignore(\"\")\n")
@@ -243,7 +243,7 @@ fn generate_scenario_runner_test(
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
       config.world +
-      "::default, options,\n  )\n  |> ignore\n",
+      "::default, options,\n  )\n",
     )
   } else {
     buf.write_string("  // Source: " + source_path + "\n")

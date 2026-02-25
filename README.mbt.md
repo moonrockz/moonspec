@@ -36,7 +36,7 @@ async test "Feature: Calculator" {
     #|    Then the result should be 5
   @moonspec.run_or_fail(CalcWorld::default,
     @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("calc", feature)]),
-  ) |> ignore
+  )
 }
 ```
 

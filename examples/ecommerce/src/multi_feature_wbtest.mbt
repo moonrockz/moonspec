@@ -9,7 +9,6 @@ async test "ecommerce: all features via run_or_fail" {
       @moonspec.FeatureSource::File("features/inventory.feature"),
     ]),
   )
-  |> ignore
 }
 
 ///|

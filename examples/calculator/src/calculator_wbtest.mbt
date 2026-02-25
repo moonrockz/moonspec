@@ -26,7 +26,6 @@ async test "calculator: runner API with run_or_fail" {
     #|      | 2  | 3  | 6      |
     #|      | 10 | 5  | 50     |
   @moonspec.run_or_fail(CalcWorld::default, @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]))
-  |> ignore
 }
 
 ///|

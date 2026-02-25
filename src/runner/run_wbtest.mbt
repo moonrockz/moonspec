@@ -56,11 +56,10 @@ impl @core.World for PassWorld with configure(_self, setup) {
 ///|
 async test "run_or_fail succeeds when all pass" {
   let content = "Feature: Simple\n\n  Scenario: Pass\n    Given a calculator\n"
-  let result = run_or_fail(
+  run_or_fail(
     PassWorld::default,
     RunOptions([FeatureSource::Text("test://pass", content)]),
   )
-  assert_eq(result.summary.passed, 1)
 }
 
 ///|
@@ -80,7 +79,6 @@ async test "run_or_fail raises RunFailed on undefined steps" {
       NoStepsWorld::default,
       RunOptions([FeatureSource::Text("test://fail", content)]),
     )
-    |> ignore
   catch {
     @core.RunFailed(..) => caught = true
     _ => ()
@@ -455,7 +453,6 @@ async test "run_or_fail raises on parse errors" {
       RunWorld::default,
       RunOptions([FeatureSource::Text("test://bad", "Not valid Gherkin")]),
     )
-    |> ignore
   catch {
     @core.RunFailed(..) => caught = true
     _ => ()
