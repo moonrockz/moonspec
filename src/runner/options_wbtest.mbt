@@ -72,9 +72,9 @@ test "skip_tags can be customized" {
 
 ///|
 test "add_formatter stores formatter with destination" {
-  let options = RunOptions::new(
-    [FeatureSource::Text("test.feature", "Feature: x")],
-  )
+  let options = RunOptions::new([
+    FeatureSource::Text("test.feature", "Feature: x"),
+  ])
   let fmt = @format.PrettyFormatter::new()
   options.add_formatter(fmt, Stdout)
   assert_eq(options.get_formatters().length(), 1)
@@ -82,9 +82,9 @@ test "add_formatter stores formatter with destination" {
 
 ///|
 test "clear_sinks removes both sinks and formatters" {
-  let options = RunOptions::new(
-    [FeatureSource::Text("test.feature", "Feature: x")],
-  )
+  let options = RunOptions::new([
+    FeatureSource::Text("test.feature", "Feature: x"),
+  ])
   let fmt = @format.PrettyFormatter::new()
   options.add_sink(fmt)
   options.add_formatter(fmt, Stderr)

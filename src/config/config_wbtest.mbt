@@ -206,9 +206,7 @@ test "MoonspecConfig::from_json5 parses formatter with no_color" {
     #|}
   let config = MoonspecConfig::from_json5(json5)
   match config.formatters {
-    Some(fmts) => {
-      assert_eq(fmts[0].no_color, true)
-    }
+    Some(fmts) => assert_eq(fmts[0].no_color, true)
     None => assert_true(false)
   }
 }
@@ -230,14 +228,18 @@ test "merge: formatters override takes precedence" {
     mode: None,
     steps: None,
     skip_tags: None,
-    formatters: Some([FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false }]),
+    formatters: Some([
+      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false },
+    ]),
   }
   let override_ = MoonspecConfig::{
     world: None,
     mode: None,
     steps: None,
     skip_tags: None,
-    formatters: Some([FormatterConfig::{ type_: "junit", output: "report.xml", no_color: false }]),
+    formatters: Some([
+      FormatterConfig::{ type_: "junit", output: "report.xml", no_color: false },
+    ]),
   }
   let merged = base.merge(override_)
   match merged.formatters {
@@ -256,7 +258,9 @@ test "merge: formatters falls back to base when override absent" {
     mode: None,
     steps: None,
     skip_tags: None,
-    formatters: Some([FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false }]),
+    formatters: Some([
+      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false },
+    ]),
   }
   let override_ = MoonspecConfig::empty()
   let merged = base.merge(override_)
