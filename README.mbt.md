@@ -8,80 +8,250 @@ BDD test framework for MoonBit with Gherkin and Cucumber Expressions.
 moon add moonrockz/moonspec
 ```
 
+Add `moonrockz/moonspec` to the `import` array in your `moon.pkg.json`.
+
 ## Quick Start
 
-Define a World struct, implement step definitions, and run:
+Define a World, implement step definitions, and run against inline Gherkin:
 
 ```moonbit
-struct CalcWorld {
-  mut result : Int
-} derive(Default)
+struct CalcWorld { mut result : Int } derive(Default)
 
 impl @moonspec.World for CalcWorld with configure(self, setup) {
   setup.given("a calculator", fn(_ctx) { self.result = 0 })
   setup.when("I add {int} and {int}", fn(ctx) {
     match (ctx[0], ctx[1]) {
-      ({ value: @moonspec.StepValue::IntVal(a), .. }, { value: @moonspec.StepValue::IntVal(b), .. }) =>
-        self.result = a + b
+      ({ value: @moonspec.StepValue::IntVal(a), .. },
+       { value: @moonspec.StepValue::IntVal(b), .. }) => self.result = a + b
       _ => ()
     }
   })
   setup.then("the result should be {int}", fn(ctx) raise {
     match ctx[0] {
-      { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.result, expected)
+      { value: @moonspec.StepValue::IntVal(n), .. } => assert_eq(self.result, n)
       _ => ()
     }
   })
 }
 
-async test "calculator" {
+async test "Feature: Calculator" {
   let feature =
     #|Feature: Calculator
-    #|
     #|  Scenario: Addition
     #|    Given a calculator
     #|    When I add 2 and 3
     #|    Then the result should be 5
-  @moonspec.run_or_fail(
-    CalcWorld::default,
-    @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]),
-  )
-  |> ignore
+  @moonspec.run_or_fail(CalcWorld::default,
+    @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("calc", feature)]),
+  ) |> ignore
 }
 ```
 
-Each scenario gets a fresh World instance via `derive(Default)` for state isolation.
+Each scenario gets a fresh World via `derive(Default)`. MoonBit structs are
+reference types -- mutations in closures are visible across step handlers.
 
 ## Features
 
-- **World trait** -- per-scenario state isolation following cucumber-rs patterns
-- **StepLibrary trait** -- composable, reusable step definition groups
-- **StepDef type** -- first-class step definitions you can inspect, test, and pass around
-- **Structured errors** -- `MoonspecError` hierarchy with `run_or_fail` throwing variant
-- **Undefined step diagnostics** -- copy-paste snippets and "did you mean?" suggestions
-- **Lifecycle hooks** -- `before_test_case`, `after_test_case`, `before_test_step`, `after_test_step`, `before_test_run`, `after_test_run`
-- **Gherkin parsing** -- Feature, Scenario, Scenario Outline, Background, Rules, Data Tables, Doc Strings
-- **Cucumber Expressions** -- type-safe step matching with 11 built-in types (`{int}`, `{float}`, `{double}`, `{long}`, `{byte}`, `{short}`, `{bigdecimal}`, `{biginteger}`, `{string}`, `{word}`) plus custom parameter types with transformers
-- **Tag filtering** -- boolean tag expressions (`@smoke and not @slow`)
-- **Scenario Outline expansion** -- parameterized scenarios from Examples tables
-- **Background steps** -- shared Given setup across scenarios
-- **Async/parallel execution** -- concurrent feature processing with bounded concurrency
-- **Codegen** -- generate `_test.mbt` runner tests from `.feature` files
-- **Formatters** -- Pretty (console), Cucumber Messages (NDJSON), JUnit XML (CI)
+- **World trait** -- per-scenario state with `derive(Default)`
+- **StepLibrary trait** -- composable, reusable step groups
+- **Cucumber Expressions** -- 11 built-in parameter types plus custom types
+- **Gherkin** -- Feature, Scenario, Scenario Outline, Background, Rules, Data Tables, Doc Strings
+- **Lifecycle hooks** -- before/after for test run, test case, and test step
+- **Tag filtering** -- boolean expressions (`@smoke and not @slow`)
+- **Retries** -- `@retry(N)` tags or global config
+- **Dry-run** -- validate wiring without execution
+- **Skip** -- `@skip` / `@ignore` with optional reason
+- **Parallel execution** -- bounded concurrency via `@async.all()`
+- **Attachments** -- text, binary, or URL on steps and hooks
+- **Structured errors** -- `run_or_fail` with snippets and suggestions
+- **Codegen** -- generate `_test.mbt` runners from `.feature` files
+- **Formatters** -- Pretty, Cucumber Messages (NDJSON), JUnit XML
+
+## Cucumber Expression Parameters
+
+| Expression | MoonBit Type | StepValue Variant |
+|---|---|---|
+| `{int}` | `Int` | `IntVal(Int)` |
+| `{float}` | `Double` | `FloatVal(Double)` |
+| `{double}` | `Double` | `DoubleVal(Double)` |
+| `{long}` | `Int64` | `LongVal(Int64)` |
+| `{byte}` | `Byte` | `ByteVal(Byte)` |
+| `{short}` | `Int` | `ShortVal(Int)` |
+| `{bigdecimal}` | `@decimal.Decimal` | `BigDecimalVal(@decimal.Decimal)` |
+| `{biginteger}` | `BigInt` | `BigIntegerVal(BigInt)` |
+| `{string}` | `String` | `StringVal(String)` |
+| `{word}` | `String` | `WordVal(String)` |
+| `{}` | `String` | `AnonymousVal(String)` |
+
+Custom types: `setup.add_param_type_strings(name, patterns, transformer?)`.
+
+## Step Registration
+
+Register steps inside `World::configure` with `setup.given()`,
+`setup.when()`, `setup.then()`, or `setup.step()` (matches any keyword).
+Handlers have signature `(Ctx) -> Unit raise Error` -- use `raise` when a
+step can fail (assertions, validation):
+
+```moonbit
+setup.given("a user named {string}", fn(ctx) {
+  match ctx[0] {
+    { value: @moonspec.StepValue::StringVal(name), .. } => self.user = name
+    _ => ()
+  }
+})
+setup.when("they log in", fn(_ctx) { self.logged_in = true })
+setup.then("they see a welcome", fn(_ctx) raise { assert_true(self.logged_in) })
+setup.step("the system is ready", fn(_ctx) { () }) // matches any keyword
+```
+
+## Ctx and StepArg
+
+`Ctx` provides indexed access to matched arguments. Each `StepArg` has
+`value` (typed `StepValue`) and `raw` (original text). Use struct
+destructuring: `match ctx[0] { { value: IntVal(n), .. } => ... }`.
+
+Other methods: `ctx.value(0)` returns `StepValue` directly,
+`ctx.args()` returns `ArrayView[StepArg]`, `ctx.scenario()` returns
+`ScenarioInfo` (feature name, scenario name, tags), `ctx.step()` returns
+`StepInfo` (keyword, text).
+
+## StepLibrary
+
+Composable step groups via the `StepLibrary` trait. Returns `ArrayView[StepDef]`:
+
+```moonbit
+struct AccountSteps { world : BankWorld }
+
+impl @moonspec.StepLibrary for AccountSteps with steps(self) {
+  let defs : Array[@moonspec.StepDef] = [
+    @moonspec.StepDef::given("a balance of {int}", fn(ctx) {
+      match ctx[0] {
+        { value: @moonspec.StepValue::IntVal(n), .. } => self.world.balance = n
+        _ => ()
+      }
+    }),
+  ]
+  defs[:]
+}
+
+// Compose libraries in World::configure:
+setup.use_library(AccountSteps::new(self))
+```
+
+## Hooks
+
+Register lifecycle hooks on `Setup`. "After" variants receive `HookResult`:
+
+```moonbit
+setup.before_test_case(fn(ctx) {
+  println("Starting: " + ctx.scenario().scenario_name)
+})
+setup.after_test_case(fn(_ctx, result) {
+  // result: HookResult::Passed or HookResult::Failed(Array[HookError])
+  ignore(result)
+})
+```
+
+All six: `before/after_test_run`, `before/after_test_case`,
+`before/after_test_step`.
+
+## Attachments
+
+All context types (`Ctx`, `CaseHookCtx`, `StepHookCtx`, `RunHookCtx`)
+support attachments:
+
+```moonbit
+ctx.attach("log output", "text/plain")
+ctx.attach_bytes(png_bytes, "image/png", file_name="screenshot.png")
+ctx.attach_url("https://example.com/report", "text/html")
+```
+
+## RunOptions
+
+Configure a test run with `RunOptions::new(features)`:
+
+| Method | Default | Description |
+|---|---|---|
+| `parallel(Bool)` | `false` | Enable parallel scenario execution |
+| `max_concurrent(Int)` | `4` | Max concurrent scenarios when parallel |
+| `tag_expr(String)` | `""` | Boolean tag filter expression |
+| `scenario_name(String)` | `""` | Filter scenarios by name |
+| `retries(Int)` | `0` | Global retry count for failed scenarios |
+| `dry_run(Bool)` | `false` | Validate wiring without execution |
+| `skip_tags(Array[String])` | `["@skip", "@ignore"]` | Tags that skip scenarios |
+| `add_sink(&MessageSink)` | -- | Add a formatter for envelope output |
+
+Feature sources: `FeatureSource::Text(uri, content)` for inline Gherkin,
+`FeatureSource::File(path)` to load from disk.
+
+## Formatters
+
+Three built-in formatters (all implement `MessageSink`). Add via
+`opts.add_sink(formatter)`, then call `.output()` after the run:
+
+- **Pretty** -- `@moonspec_format.PrettyFormatter::new()` -- colored console
+- **Messages** -- `@moonspec_format.MessagesFormatter::new()` -- Cucumber Messages NDJSON
+- **JUnit** -- `@moonspec_format.JUnitFormatter::new()` -- XML for CI
+
+## Tag Filtering
+
+```moonbit
+opts.tag_expr("@smoke")                // only @smoke
+opts.tag_expr("@smoke and not @slow")  // boolean operators
+opts.tag_expr("@smoke or @regression") // either tag
+```
+
+## Retrying, Dry-Run, Skip
+
+**Retrying** -- global or per-scenario `@retry(N)` tag (overrides global).
+Each retry creates a fresh World:
+
+```moonbit
+opts.retries(2)  // retry failed scenarios up to 2 times
+```
+
+**Dry-run** -- validate step wiring without execution. Matched steps report
+as `Skipped("dry run")`, undefined steps report with snippets:
+
+```moonbit
+opts.dry_run(true)
+```
+
+**Skip** -- scenarios tagged `@skip` or `@ignore` are skipped by default.
+Add a reason with `@skip("flaky on CI")`. Configure:
+
+```moonbit
+opts.skip_tags(["@skip", "@ignore", "@wip"])
+```
+
+## Config File
+
+`moonspec.json5` controls codegen and runtime behavior:
+
+```json5
+{
+  world: "MyWorld",
+  mode: "per-scenario",  // or "per-feature", or per-file map
+  steps: { output: "steps.mbt", exclude: ["features/wip/**"] },
+  skip_tags: ["@skip", "@ignore"]
+}
+```
 
 ## Packages
 
 | Package | Description |
-|---------|-------------|
-| `moonrockz/moonspec` | Top-level facade -- `World`, `Setup`, `Ctx`, `RunOptions`, `run`, `run_or_fail` |
-| `moonrockz/moonspec/core` | World trait, Setup facade, HookRegistry, StepRegistry, Ctx types |
-| `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
-| `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
+|---|---|
+| `moonrockz/moonspec` | Facade -- `World`, `Setup`, `Ctx`, `RunOptions`, `run`, `run_or_fail` |
+| `moonrockz/moonspec/core` | World, Setup, HookRegistry, StepRegistry, Ctx |
+| `moonrockz/moonspec/runner` | Executor with tag filtering and parallel support |
+| `moonrockz/moonspec/format` | Pretty, Messages, JUnit formatters |
 | `moonrockz/moonspec/codegen` | Generate test files from Gherkin features |
+| `moonrockz/moonspec/config` | Configuration parsing (moonspec.json5) |
+| `moonrockz/moonspec/scanner` | Feature file discovery and conflict detection |
 
 ## Documentation
 
-Full documentation with CLI reference, architecture, and examples:
+Full docs, CLI reference, architecture, and examples:
 [github.com/moonrockz/moonspec](https://github.com/moonrockz/moonspec)
 
 ## License
