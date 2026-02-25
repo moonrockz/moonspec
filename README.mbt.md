@@ -18,19 +18,12 @@ Define a World, implement step definitions, and run against inline Gherkin:
 struct CalcWorld { mut result : Int } derive(Default)
 
 impl @moonspec.World for CalcWorld with configure(self, setup) {
-  setup.given("a calculator", fn(_ctx) { self.result = 0 })
-  setup.when("I add {int} and {int}", fn(ctx) {
-    match (ctx[0], ctx[1]) {
-      ({ value: @moonspec.StepValue::IntVal(a), .. },
-       { value: @moonspec.StepValue::IntVal(b), .. }) => self.result = a + b
-      _ => ()
-    }
+  setup.given0("a calculator", fn() { self.result = 0 })
+  setup.when2("I add {int} and {int}", fn(a : Int, b : Int) {
+    self.result = a + b
   })
-  setup.then("the result should be {int}", fn(ctx) raise {
-    match ctx[0] {
-      { value: @moonspec.StepValue::IntVal(n), .. } => assert_eq(self.result, n)
-      _ => ()
-    }
+  setup.then1("the result should be {int}", fn(n : Int) {
+    assert_eq!(self.result, n)
   })
 }
 
@@ -87,22 +80,29 @@ Custom types: `setup.add_param_type_strings(name, patterns, transformer?)`.
 
 ## Step Registration
 
-Register steps inside `World::configure` with `setup.given()`,
-`setup.when()`, `setup.then()`, or `setup.step()` (matches any keyword).
-Handlers have signature `(Ctx) -> Unit raise Error` -- use `raise` when a
-step can fail (assertions, validation):
+Register steps inside `World::configure` using typed arity-suffixed methods.
+The numeric suffix indicates how many parameters the handler takes:
 
 ```moonbit
-setup.given("a user named {string}", fn(ctx) {
-  match ctx[0] {
-    { value: @moonspec.StepValue::StringVal(name), .. } => self.user = name
-    _ => ()
-  }
-})
-setup.when("they log in", fn(_ctx) { self.logged_in = true })
-setup.then("they see a welcome", fn(_ctx) raise { assert_true(self.logged_in) })
-setup.step("the system is ready", fn(_ctx) { () }) // matches any keyword
+setup.given0("a calculator", fn() { self.result = 0 })
+setup.given1("a user named {string}", fn(name : String) { self.user = name })
+setup.when2("I add {int} and {int}", fn(a : Int, b : Int) { self.result = a + b })
+setup.then1("the result should be {int}", fn(n : Int) { assert_eq!(self.result, n) })
+setup.step0("the system is ready", fn() { () }) // matches any keyword
 ```
+
+The `_ctx` variants provide access to the full `Ctx` as the last parameter:
+
+```moonbit
+setup.given1_ctx("a user named {string}", fn(name : String, ctx : Ctx) {
+  self.user = name
+  self.feature = ctx.scenario().feature_name
+})
+```
+
+Arities 0--22 are supported for all keywords (`given`, `when`, `then`, `step`).
+The original `setup.given("pattern", fn(ctx) { ... })` form remains available
+for advanced use cases.
 
 ## Ctx and StepArg
 
@@ -124,11 +124,8 @@ struct AccountSteps { world : BankWorld }
 
 impl @moonspec.StepLibrary for AccountSteps with steps(self) {
   let defs : Array[@moonspec.StepDef] = [
-    @moonspec.StepDef::given("a balance of {int}", fn(ctx) {
-      match ctx[0] {
-        { value: @moonspec.StepValue::IntVal(n), .. } => self.world.balance = n
-        _ => ()
-      }
+    @moonspec.StepDef::given1("a balance of {int}", fn(n : Int) {
+      self.world.balance = n
     }),
   ]
   defs[:]
