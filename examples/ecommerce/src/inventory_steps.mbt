@@ -12,63 +12,34 @@ fn InventorySteps::new(world : EcomWorld) -> InventorySteps {
 ///|
 impl @moonspec.StepLibrary for InventorySteps with steps(self) {
   let defs : Array[@moonspec.StepDef] = [
-    @moonspec.StepDef::given(
+    @moonspec.StepDef::given2(
       "the inventory has {string} with stock {int}",
-      fn(args) {
-        match (args[0], args[1]) {
-          (
-            { value: @moonspec.StepValue::StringVal(name), .. },
-            { value: @moonspec.StepValue::IntVal(stock), .. },
-          ) => self.world.inventory[name] = stock
-          _ => ()
-        }
-      },
+      fn(name : String, stock : Int) { self.world.inventory[name] = stock },
     ),
-    @moonspec.StepDef::when(
+    @moonspec.StepDef::when1(
       "I check stock for {string}",
-      fn(args) {
-        match args[0] {
-          { value: @moonspec.StepValue::StringVal(name), .. } =>
-            self.world.last_checked_item = name
-          _ => ()
-        }
-      },
+      fn(name : String) { self.world.last_checked_item = name },
     ),
-    @moonspec.StepDef::then(
-      "the item should be in stock",
-      fn(_args) raise {
-        match self.world.inventory.get(self.world.last_checked_item) {
-          Some(stock) => assert_true(stock > 0)
-          None => fail("Item not found in inventory")
-        }
-      },
-    ),
-    @moonspec.StepDef::then(
-      "the stock level should be {int}",
-      fn(args) raise {
-        match args[0] {
-          { value: @moonspec.StepValue::IntVal(expected), .. } =>
-            match self.world.inventory.get(self.world.last_checked_item) {
-              Some(stock) => assert_eq(stock, expected)
-              None => fail("Item not found in inventory")
-            }
-          _ => ()
-        }
-      },
-    ),
-    @moonspec.StepDef::then(
+    @moonspec.StepDef::then0("the item should be in stock", fn() {
+      match self.world.inventory.get(self.world.last_checked_item) {
+        Some(stock) => assert_true!(stock > 0)
+        None => fail!("Item not found in inventory")
+      }
+    }),
+    @moonspec.StepDef::then1("the stock level should be {int}", fn(
+      expected : Int,
+    ) {
+      match self.world.inventory.get(self.world.last_checked_item) {
+        Some(stock) => assert_eq!(stock, expected)
+        None => fail!("Item not found in inventory")
+      }
+    }),
+    @moonspec.StepDef::then2(
       "the stock level for {string} should be {int}",
-      fn(args) raise {
-        match (args[0], args[1]) {
-          (
-            { value: @moonspec.StepValue::StringVal(name), .. },
-            { value: @moonspec.StepValue::IntVal(expected), .. },
-          ) =>
-            match self.world.inventory.get(name) {
-              Some(stock) => assert_eq(stock, expected)
-              None => fail("Item not found in inventory")
-            }
-          _ => ()
+      fn(name : String, expected : Int) {
+        match self.world.inventory.get(name) {
+          Some(stock) => assert_eq!(stock, expected)
+          None => fail!("Item not found in inventory")
         }
       },
     ),
