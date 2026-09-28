@@ -49,6 +49,7 @@ pub using @runner {
   type ScenarioStatus,
   type StepStatus,
   type RunOptions,
+  type OutputDest,
   run,
   run_or_fail,
 }

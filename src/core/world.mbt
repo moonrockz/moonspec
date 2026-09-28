@@ -18,5 +18,5 @@
 /// }
 /// ```
 pub(open) trait World {
-  configure(Self, Setup) -> Unit
+  fn configure(Self, Setup) -> Unit
 }

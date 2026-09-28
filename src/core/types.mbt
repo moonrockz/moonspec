@@ -18,7 +18,7 @@ pub(all) enum StepValue {
 }
 
 ///|
-impl Show for StepValue with output(self, logger) {
+pub impl Show for StepValue with fn output(self, logger) {
   match self {
     IntVal(v) => logger.write_string("IntVal(\{v})")
     FloatVal(v) => logger.write_string("FloatVal(\{v})")
@@ -45,7 +45,13 @@ impl Show for StepValue with output(self, logger) {
 }
 
 ///|
-impl Eq for StepValue with equal(self, other) -> Bool {
+/// Debug repr reuses the Show output, since CustomVal holds an opaque `Any`.
+pub impl @debug.Debug for StepValue with fn to_repr(self) {
+  @debug.Repr(self.to_string())
+}
+
+///|
+pub impl Eq for StepValue with fn equal(self, other) -> Bool {
   match (self, other) {
     (IntVal(a), IntVal(b)) => a == b
     (FloatVal(a), FloatVal(b)) => a == b
@@ -66,6 +72,15 @@ impl Eq for StepValue with equal(self, other) -> Bool {
 }
 
 ///|
+pub extend StepValue with Show::{to_string, output}
+
+///|
+pub extend StepValue with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend StepValue with Eq::{not_equal, equal}
+
+///|
 /// A buffered attachment waiting to be emitted as an envelope.
 pub(all) enum PendingAttachment {
   Embedded(
@@ -78,7 +93,7 @@ pub(all) enum PendingAttachment {
 }
 
 ///|
-impl Show for PendingAttachment with output(self, logger) {
+pub impl Show for PendingAttachment with fn output(self, logger) {
   match self {
     Embedded(body~, encoding~, media_type~, file_name~) => {
       let enc_str = encoding.to_json().stringify()
@@ -92,7 +107,7 @@ impl Show for PendingAttachment with output(self, logger) {
 }
 
 ///|
-impl Eq for PendingAttachment with equal(self, other) -> Bool {
+pub impl Eq for PendingAttachment with fn equal(self, other) -> Bool {
   match (self, other) {
     (
       Embedded(body=b1, encoding=e1, media_type=m1, file_name=f1),
@@ -109,11 +124,23 @@ impl Eq for PendingAttachment with equal(self, other) -> Bool {
 }
 
 ///|
+pub extend PendingAttachment with Show::{to_string, output}
+
+///|
+pub extend PendingAttachment with Eq::{not_equal, equal}
+
+///|
 /// A step argument carrying both the typed value and the original matched text.
 pub(all) struct StepArg {
   value : StepValue
   raw : String
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend StepArg with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend StepArg with Eq::{not_equal, equal}
 
 ///|
 /// Convert a cucumber-expressions Param to a StepArg.
@@ -132,7 +159,7 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
     @cucumber_expressions.ParamValue::BigIntegerVal(bi) => BigIntegerVal(bi)
     @cucumber_expressions.ParamValue::CustomVal(any) => CustomVal(any)
   }
-  { value, raw: param.raw }
+  { value, raw: param.raw, }
 }
 
 ///|
@@ -147,17 +174,24 @@ pub(all) struct Ctx {
 
 ///|
 /// Create a new Ctx.
-pub fn Ctx::new(
+#alias(new)
+pub fn Ctx::Ctx(
   args : Array[StepArg],
   scenario : ScenarioInfo,
   step : StepInfo,
 ) -> Ctx {
-  { step_args: args, scenario_info: scenario, step_info: step, attachments: [] }
+  {
+    step_args: args,
+    scenario_info: scenario,
+    step_info: step,
+    attachments: [],
+  }
 }
 
 ///|
 /// Index access to step arguments.
-pub fn Ctx::op_get(self : Ctx, index : Int) -> StepArg {
+#alias("_[_]")
+pub fn Ctx::at(self : Ctx, index : Int) -> StepArg {
   self.step_args[index]
 }
 
@@ -194,10 +228,10 @@ pub fn Ctx::step(self : Ctx) -> StepInfo {
 ///|
 /// Trait for any context that can buffer attachments.
 pub trait Attachable {
-  attach(Self, String, String, file_name? : String) -> Unit
-  attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
-  attach_url(Self, String, String) -> Unit
-  pending_attachments(Self) -> Array[PendingAttachment]
+  fn attach(Self, String, String, file_name? : String) -> Unit
+  fn attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+  fn attach_url(Self, String, String) -> Unit
+  fn pending_attachments(Self) -> Array[PendingAttachment]
 }
 
 ///|
@@ -269,14 +303,26 @@ pub(all) struct ScenarioInfo {
   feature_name : String
   scenario_name : String
   tags : Array[String]
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend ScenarioInfo with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend ScenarioInfo with Eq::{not_equal, equal}
 
 ///|
 /// Information about a step being executed.
 pub(all) struct StepInfo {
   keyword : String
   text : String
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend StepInfo with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend StepInfo with Eq::{not_equal, equal}
 
 ///|
 /// Structured error reported to after-hooks.
@@ -287,14 +333,26 @@ pub(all) enum HookError {
     scenario_name~ : String,
     message~ : String
   )
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend HookError with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend HookError with Eq::{not_equal, equal}
 
 ///|
 /// Result passed to after-hooks indicating pass/fail with structured errors.
 pub(all) enum HookResult {
   Passed
   Failed(Array[HookError])
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend HookResult with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend HookResult with Eq::{not_equal, equal}
 
 ///|
 /// Hook context for test run-level hooks (before/after_test_run).
@@ -303,8 +361,9 @@ pub(all) struct RunHookCtx {
 }
 
 ///|
-pub fn RunHookCtx::new() -> RunHookCtx {
-  { attachments: [] }
+#alias(new)
+pub fn RunHookCtx::RunHookCtx() -> RunHookCtx {
+  { attachments: [], }
 }
 
 ///|
@@ -358,8 +417,9 @@ pub(all) struct CaseHookCtx {
 }
 
 ///|
-pub fn CaseHookCtx::new(scenario : ScenarioInfo) -> CaseHookCtx {
-  { scenario_info: scenario, attachments: [] }
+#alias(new)
+pub fn CaseHookCtx::CaseHookCtx(scenario : ScenarioInfo) -> CaseHookCtx {
+  { scenario_info: scenario, attachments: [], }
 }
 
 ///|
@@ -419,11 +479,12 @@ pub(all) struct StepHookCtx {
 }
 
 ///|
-pub fn StepHookCtx::new(
+#alias(new)
+pub fn StepHookCtx::StepHookCtx(
   scenario : ScenarioInfo,
   step : StepInfo,
 ) -> StepHookCtx {
-  { scenario_info: scenario, step_info: step, attachments: [] }
+  { scenario_info: scenario, step_info: step, attachments: [], }
 }
 
 ///|
@@ -483,12 +544,16 @@ pub fn StepHookCtx::attach_url(
 /// Immutable wrapper around an array of cell values in a DataTable row.
 pub struct Cells {
   priv data : Array[String]
-
-  fn new(data : Array[String]) -> Cells
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-fn Cells::new(data : Array[String]) -> Cells {
+pub extend Cells with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Cells with Eq::{not_equal, equal}
+
+///|
+fn Cells::Cells(data : Array[String]) -> Cells {
   { data, }
 }
 
@@ -511,25 +576,33 @@ pub fn Cells::length(self : Cells) -> Int {
 /// A single row in a DataTable, wrapping its cell values in an immutable Cells.
 pub(all) struct Row {
   cells : Cells
-
-  fn new(cells : Array[String]) -> Row
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-fn Row::new(cells : Array[String]) -> Row {
-  { cells: Cells(cells) }
+pub extend Row with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Row with Eq::{not_equal, equal}
+
+///|
+fn Row::Row(cells : Array[String]) -> Row {
+  { cells: Cells(cells), }
 }
 
 ///|
 /// Immutable wrapper around an array of rows in a DataTable.
 pub struct Rows {
   priv data : Array[Row]
-
-  fn new(data : Array[Row]) -> Rows
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-fn Rows::new(data : Array[Row]) -> Rows {
+pub extend Rows with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Rows with Eq::{not_equal, equal}
+
+///|
+fn Rows::Rows(data : Array[Row]) -> Rows {
   { data, }
 }
 
@@ -553,25 +626,33 @@ pub fn Rows::length(self : Rows) -> Int {
 pub(all) struct Column {
   name : String
   index : Int
-
-  fn new(name~ : String, index~ : Int) -> Column
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-fn Column::new(name~ : String, index~ : Int) -> Column {
-  { name, index }
+pub extend Column with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Column with Eq::{not_equal, equal}
+
+///|
+fn Column::Column(name~ : String, index~ : Int) -> Column {
+  { name, index, }
 }
 
 ///|
 /// Immutable wrapper around an array of columns in a DataTable.
 pub struct Columns {
   priv data : Array[Column]
-
-  fn new(data : Array[Column]) -> Columns
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-fn Columns::new(data : Array[Column]) -> Columns {
+pub extend Columns with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Columns with Eq::{not_equal, equal}
+
+///|
+fn Columns::Columns(data : Array[Column]) -> Columns {
   { data, }
 }
 
@@ -605,25 +686,29 @@ pub fn Columns::find(self : Columns, name : String) -> Column? {
 pub(all) struct DataTable {
   rows : Rows
   columns : Columns
-
-  fn new(raw_rows : Array[Array[String]]) -> DataTable
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-fn DataTable::new(raw_rows : Array[Array[String]]) -> DataTable {
+pub extend DataTable with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend DataTable with Eq::{not_equal, equal}
+
+///|
+fn DataTable::DataTable(raw_rows : Array[Array[String]]) -> DataTable {
   let columns = if raw_rows.length() > 0 {
     Columns(raw_rows[0].mapi(fn(i, name) { Column(name~, index=i) }))
   } else {
     Columns([])
   }
   let rows = Rows(raw_rows.map(fn(cells) { Row(cells) }))
-  { rows, columns }
+  { rows, columns, }
 }
 
 ///|
 /// Construct a DataTable from raw row data (public factory).
 pub fn DataTable::from_rows(raw_rows : Array[Array[String]]) -> DataTable {
-  DataTable::new(raw_rows)
+  DataTable(raw_rows)
 }
 
 ///|
@@ -645,7 +730,7 @@ pub fn DataTable::as_maps(self : DataTable) -> Array[Map[String, String]] {
   let headers = self.columns.values()
   for i = 1; i < self.rows.length(); i = i + 1 {
     let row = self.rows.get(i)
-    let map : Map[String, String] = {}
+    let map : Map[String, String] = Map([])
     for j = 0; j < headers.length(); j = j + 1 {
       map[headers[j].name] = row.cells.get(j)
     }
@@ -659,11 +744,15 @@ pub fn DataTable::as_maps(self : DataTable) -> Array[Map[String, String]] {
 pub(all) struct DocString {
   content : String
   media_type : String?
-
-  fn new(content~ : String, media_type? : String) -> DocString
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-fn DocString::new(content~ : String, media_type? : String) -> DocString {
-  { content, media_type }
+pub extend DocString with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend DocString with Eq::{not_equal, equal}
+
+///|
+fn DocString::DocString(content~ : String, media_type? : String) -> DocString {
+  { content, media_type, }
 }

@@ -1,6 +1,6 @@
 ///|
 test "StepArg struct destructuring" {
-  let arg = StepArg::{ value: IntVal(42), raw: "42" }
+  let arg = StepArg::{ value: IntVal(42), raw: "42", }
   match arg {
     { value: IntVal(n), raw, .. } => {
       assert_eq(n, 42)
@@ -12,7 +12,7 @@ test "StepArg struct destructuring" {
 
 ///|
 test "StepArg struct wildcard" {
-  let arg = StepArg::{ value: IntVal(42), raw: "42" }
+  let arg = StepArg::{ value: IntVal(42), raw: "42", }
   match arg {
     { value: IntVal(n), .. } => assert_eq(n, 42)
     _ => fail("expected IntVal")
@@ -188,7 +188,7 @@ test "DocString constructor without media type" {
 ///|
 test "StepArg with DocStringVal" {
   let doc = DocString(content="hello", media_type="json")
-  let arg : StepArg = { value: DocStringVal(doc), raw: "" }
+  let arg : StepArg = { value: DocStringVal(doc), raw: "", }
   match arg {
     { value: DocStringVal(d), .. } => {
       assert_eq(d.content, "hello")
@@ -201,7 +201,7 @@ test "StepArg with DocStringVal" {
 ///|
 test "StepArg with DataTableVal" {
   let table = DataTable([["name"], ["Alice"]])
-  let arg : StepArg = { value: DataTableVal(table), raw: "" }
+  let arg : StepArg = { value: DataTableVal(table), raw: "", }
   match arg {
     { value: DataTableVal(t), .. } => {
       assert_eq(t.row_count(), 2)
@@ -213,18 +213,18 @@ test "StepArg with DataTableVal" {
 
 ///|
 test "Ctx op_get returns StepArg" {
-  let args = [StepArg::{ value: IntVal(42), raw: "42" }]
-  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
-  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let args = [StepArg::{ value: IntVal(42), raw: "42", }]
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [], }
+  let step : StepInfo = { keyword: "Given ", text: "something", }
   let ctx = Ctx::new(args, info, step)
   assert_eq(ctx[0].value, IntVal(42))
 }
 
 ///|
 test "Ctx arg method" {
-  let args = [StepArg::{ value: StringVal("hello"), raw: "hello" }]
-  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
-  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let args = [StepArg::{ value: StringVal("hello"), raw: "hello", }]
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [], }
+  let step : StepInfo = { keyword: "Given ", text: "something", }
   let ctx = Ctx::new(args, info, step)
   assert_eq(ctx.arg(0).raw, "hello")
 }
@@ -232,11 +232,11 @@ test "Ctx arg method" {
 ///|
 test "Ctx args returns view" {
   let args = [
-    StepArg::{ value: IntVal(1), raw: "1" },
-    StepArg::{ value: IntVal(2), raw: "2" },
+    StepArg::{ value: IntVal(1), raw: "1", },
+    StepArg::{ value: IntVal(2), raw: "2", },
   ]
-  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
-  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [], }
+  let step : StepInfo = { keyword: "Given ", text: "something", }
   let ctx = Ctx::new(args, info, step)
   let view = ctx.args()
   assert_eq(view.length(), 2)
@@ -250,7 +250,7 @@ test "Ctx scenario and step accessors" {
     scenario_name: "MyScenario",
     tags: ["@smoke"],
   }
-  let step : StepInfo = { keyword: "When ", text: "I do something" }
+  let step : StepInfo = { keyword: "When ", text: "I do something", }
   let ctx = Ctx::new(args, info, step)
   assert_eq(ctx.scenario().feature_name, "MyFeature")
   assert_eq(ctx.scenario().tags[0], "@smoke")
@@ -261,11 +261,11 @@ test "Ctx scenario and step accessors" {
 ///|
 test "Ctx value convenience accessor" {
   let args = [
-    StepArg::{ value: IntVal(42), raw: "42" },
-    StepArg::{ value: StringVal("hello"), raw: "hello" },
+    StepArg::{ value: IntVal(42), raw: "42", },
+    StepArg::{ value: StringVal("hello"), raw: "hello", },
   ]
-  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
-  let step : StepInfo = { keyword: "Given ", text: "something" }
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [], }
+  let step : StepInfo = { keyword: "Given ", text: "something", }
   let ctx = Ctx::new(args, info, step)
   assert_eq(ctx.value(0), IntVal(42))
   assert_eq(ctx.value(1), StringVal("hello"))
@@ -273,7 +273,7 @@ test "Ctx value convenience accessor" {
 
 ///|
 test "Ctx attach text" {
-  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [], }, {
     keyword: "Given ",
     text: "step",
   })
@@ -292,7 +292,7 @@ test "Ctx attach text" {
 
 ///|
 test "Ctx attach_bytes base64 encodes" {
-  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [], }, {
     keyword: "Given ",
     text: "step",
   })
@@ -310,7 +310,7 @@ test "Ctx attach_bytes base64 encodes" {
 
 ///|
 test "Ctx attach_url" {
-  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [], }, {
     keyword: "Given ",
     text: "step",
   })
@@ -327,7 +327,7 @@ test "Ctx attach_url" {
 
 ///|
 test "Ctx attach with file_name" {
-  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [], }, {
     keyword: "Given ",
     text: "step",
   })
@@ -341,7 +341,7 @@ test "Ctx attach with file_name" {
 
 ///|
 test "Ctx implements Attachable via pending_attachments" {
-  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [] }, {
+  let ctx = Ctx::new([], { feature_name: "F", scenario_name: "S", tags: [], }, {
     keyword: "Given ",
     text: "step",
   })
@@ -433,8 +433,8 @@ test "CaseHookCtx scenario accessor and attach" {
 
 ///|
 test "StepHookCtx scenario and step accessors and attach" {
-  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [] }
-  let step : StepInfo = { keyword: "When ", text: "I do something" }
+  let info : ScenarioInfo = { feature_name: "F", scenario_name: "S", tags: [], }
+  let step : StepInfo = { keyword: "When ", text: "I do something", }
   let ctx = StepHookCtx::new(info, step)
   assert_eq(ctx.scenario().scenario_name, "S")
   assert_eq(ctx.step().keyword, "When ")

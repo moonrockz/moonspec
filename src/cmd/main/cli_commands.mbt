@@ -4,20 +4,14 @@ fn cmd_version() -> Unit {
 }
 
 ///|
-fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
-  let files = value.positional_args
-  let output_dir : String? = match value.args.get("output-dir") {
-    Some(vals) => Some(vals[0])
-    None => None
-  }
-  let config_path : String? = match value.args.get("config") {
-    Some(vals) => Some(vals[0])
-    None => None
-  }
+fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
+  let files = positional_values(value, "files")
+  let output_dir : String? = option_value(value, "output-dir")
+  let config_path : String? = option_value(value, "config")
   let moonspec_config = load_config(config_path)
   // Resolve world: CLI --world overrides config
-  let world = match value.args.get("world") {
-    Some(vals) => vals[0]
+  let world = match option_value(value, "world") {
+    Some(v) => v
     None =>
       match moonspec_config.world {
         Some(w) => w
@@ -31,10 +25,7 @@ fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
     return
   }
   // CLI --mode flag (applies to all files if set)
-  let cli_mode : String? = match value.args.get("mode") {
-    Some(vals) => Some(vals[0])
-    None => None
-  }
+  let cli_mode : String? = option_value(value, "mode")
   for file in files {
     let mode_str = match cli_mode {
       Some(m) => m
@@ -77,15 +68,9 @@ fn cmd_gen_tests(value : @clap.SimpleValue) -> Unit {
 }
 
 ///|
-fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
-  let scan_dir = match value.args.get("dir") {
-    Some(vals) => vals[0]
-    None => "src"
-  }
-  let config = match value.args.get("config") {
-    Some(vals) => load_config(Some(vals[0]))
-    None => load_config(None)
-  }
+fn cmd_gen_steps(value : @argparse.Matches) -> Unit {
+  let scan_dir = option_value(value, "dir").unwrap_or("src")
+  let config = load_config(option_value(value, "config"))
   let output_mode = match config.steps {
     Some(steps) =>
       match steps.output {
@@ -102,8 +87,8 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
     return
   }
   // Scan all files, caching contents for reuse in conflict detection
-  let all_steps : Map[String, Array[@scanner.StepFnInfo]] = {}
-  let file_contents : Map[String, String] = {}
+  let all_steps : Map[String, Array[@scanner.StepFnInfo]] = Map([])
+  let file_contents : Map[String, String] = Map([])
   for file in files {
     let content = @fs.read_file_to_string(file) catch {
       @fs.IOError(msg) => {
@@ -156,8 +141,8 @@ fn cmd_gen_steps(value : @clap.SimpleValue) -> Unit {
 }
 
 ///|
-fn cmd_check(value : @clap.SimpleValue) -> Unit {
-  let files = value.positional_args
+fn cmd_check(value : @argparse.Matches) -> Unit {
+  let files = positional_values(value, "files")
   let mut has_errors = false
   for file in files {
     let content = @fs.read_file_to_string(file) catch {
@@ -208,7 +193,7 @@ fn cmd_check(value : @clap.SimpleValue) -> Unit {
           scenario_count += 1
           step_count += scenario.steps.length()
           for tag in scenario.tags {
-            if not(tags.contains(tag.name)) {
+            if !tags.contains(tag.name) {
               tags.push(tag.name)
             }
           }
@@ -221,7 +206,7 @@ fn cmd_check(value : @clap.SimpleValue) -> Unit {
     println("  Feature: \{feature.name}")
     println("  Scenarios: \{scenario_count}")
     println("  Steps: \{step_count}")
-    if not(tags.is_empty()) {
+    if !tags.is_empty() {
       let tag_list = tags.join(", ")
       println("  Tags: \{tag_list}")
     }

@@ -34,9 +34,9 @@ impl @moonspec.StepLibrary for CheckoutSteps with steps(self) {
     }),
     @moonspec.StepDef::then1("the order total should be {int}", fn(
       expected : Int,
-    ) { assert_eq!(self.world.order_total, expected) }),
+    ) { assert_eq(self.world.order_total, expected) }),
     @moonspec.StepDef::then0("the checkout should be rejected", fn() {
-      assert_true!(self.world.checkout_rejected)
+      assert_true(self.world.checkout_rejected)
     }),
   ]
   defs[:]

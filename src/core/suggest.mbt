@@ -43,7 +43,7 @@ fn levenshtein_distance(a : String, b : String) -> Int {
 ///|
 /// Normalize a pattern for comparison: replace {int}, {string}, etc. with placeholders.
 fn normalize_pattern(pattern : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let len = pattern.length()
   let mut i = 0
   while i < len {

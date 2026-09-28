@@ -7,7 +7,13 @@ pub(all) enum TagExpression {
   And(TagExpression, TagExpression)
   Or(TagExpression, TagExpression)
   Always // matches everything (empty expression)
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend TagExpression with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend TagExpression with Eq::{not_equal, equal}
 
 ///|
 /// Parse a tag expression string into a TagExpression AST.
@@ -31,7 +37,7 @@ pub fn TagExpression::matches(
   match self {
     Always => true
     TagLiteral(name) => array_contains(tags, name)
-    Not(inner) => not(inner.matches(tags))
+    Not(inner) => !inner.matches(tags)
     And(left, right) => left.matches(tags) && right.matches(tags)
     Or(left, right) => left.matches(tags) || right.matches(tags)
   }
@@ -56,7 +62,7 @@ fn trim_string(s : String) -> String {
   if start == 0 && end == len {
     return s
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = start; i < end; i = i + 1 {
     buf.write_char(chars[i])
   }
@@ -105,7 +111,7 @@ fn tokenize_tags(input : String) -> Array[String] {
       continue
     }
     // Read a word (tag or keyword)
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     while i < len &&
           chars[i] != ' ' &&
           chars[i] != '\t' &&

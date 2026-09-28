@@ -49,11 +49,11 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
     ),
     @moonspec.StepDef::then1(
       "the cart should contain {int} item",
-      fn(expected : Int) { assert_eq!(self.world.cart.length(), expected) },
+      fn(expected : Int) { assert_eq(self.world.cart.length(), expected) },
     ),
     @moonspec.StepDef::then1(
       "the cart should contain {int} items",
-      fn(expected : Int) { assert_eq!(self.world.cart.length(), expected) },
+      fn(expected : Int) { assert_eq(self.world.cart.length(), expected) },
     ),
     @moonspec.StepDef::then1("the cart total should be {int}", fn(
       expected : Int,
@@ -62,10 +62,10 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
       for item in self.world.cart {
         total = total + item.quantity * item.price
       }
-      assert_eq!(total, expected)
+      assert_eq(total, expected)
     }),
     @moonspec.StepDef::then0("the cart should be empty", fn() {
-      assert_eq!(self.world.cart.length(), 0)
+      assert_eq(self.world.cart.length(), 0)
     }),
   ]
   defs[:]

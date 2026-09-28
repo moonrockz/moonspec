@@ -7,7 +7,7 @@ pub fn StepDef::step0(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 0)
       handler()
     }),
@@ -25,7 +25,7 @@ pub fn StepDef::step0_ctx(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 0)
       handler(ctx)
     }),
@@ -43,7 +43,7 @@ pub fn[A : FromStepArg] StepDef::step1(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 1)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       handler(a)
@@ -62,7 +62,7 @@ pub fn[A : FromStepArg] StepDef::step1_ctx(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 1)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       handler(a, ctx)
@@ -81,7 +81,7 @@ pub fn[A : FromStepArg, B : FromStepArg] StepDef::step2(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 2)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -101,7 +101,7 @@ pub fn[A : FromStepArg, B : FromStepArg] StepDef::step2_ctx(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 2)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -121,7 +121,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::step3(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 3)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -142,7 +142,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::step3_ctx(
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 3)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -163,7 +163,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepD
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 4)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -185,7 +185,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepD
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 4)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -213,7 +213,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 5)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -242,7 +242,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 5)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -272,7 +272,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 6)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -303,7 +303,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 6)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -335,7 +335,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 7)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -368,7 +368,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 7)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -402,7 +402,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 8)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -437,7 +437,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 8)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -473,7 +473,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 9)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -510,7 +510,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 9)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -548,7 +548,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 10)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -587,7 +587,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 10)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -627,7 +627,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 11)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -668,7 +668,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 11)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -710,7 +710,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 12)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -753,7 +753,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 12)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -797,7 +797,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 13)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -842,7 +842,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 13)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -888,7 +888,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 14)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -935,7 +935,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 14)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -983,7 +983,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 15)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1032,7 +1032,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 15)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1082,7 +1082,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 16)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1133,7 +1133,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 16)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1185,7 +1185,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 17)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1238,7 +1238,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 17)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1292,7 +1292,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 18)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1347,7 +1347,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 18)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1403,7 +1403,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 19)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1460,7 +1460,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 19)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1518,7 +1518,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 20)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1577,7 +1577,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 20)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1637,7 +1637,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 21)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1698,7 +1698,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 21)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1762,7 +1762,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 22)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1849,7 +1849,7 @@ pub fn[
   {
     keyword: Step,
     pattern,
-    handler: StepHandler(fn(ctx) {
+    handler: StepHandler(fn(ctx) raise {
       validate_arity(ctx, 22)
       let a : A = FromStepArg::from_step_arg(ctx[0])
       let b : B = FromStepArg::from_step_arg(ctx[1])

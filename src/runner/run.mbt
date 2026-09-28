@@ -173,7 +173,7 @@ fn make_test_step_finished_envelope(
   status : String,
   message : String?,
 ) -> @cucumber_messages.Envelope {
-  let result_json : Map[String, Json] = {}
+  let result_json : Map[String, Json] = Map([])
   result_json["duration"] = {
     "seconds": (0 : Int).to_json(),
     "nanos": (0 : Int).to_json(),
@@ -208,7 +208,7 @@ fn make_attachment_envelope(
   test_case_started_id : String?,
   test_step_id : String?,
 ) -> @cucumber_messages.Envelope {
-  let json_map : Map[String, Json] = {}
+  let json_map : Map[String, Json] = Map([])
   json_map["body"] = body.to_json()
   json_map["contentEncoding"] = content_encoding.to_json()
   json_map["mediaType"] = media_type.to_json()
@@ -239,7 +239,7 @@ fn make_external_attachment_envelope(
   test_case_started_id : String?,
   test_step_id : String?,
 ) -> @cucumber_messages.Envelope {
-  let json_map : Map[String, Json] = {}
+  let json_map : Map[String, Json] = Map([])
   json_map["url"] = url.to_json()
   json_map["mediaType"] = media_type.to_json()
   match test_case_started_id {
@@ -274,8 +274,8 @@ fn emit_run_hook_attachments(
         file_name~
       ) => {
         let enc_str = encoding.to_json().stringify()
-        let enc_clean = enc_str.substring(start=1, end=enc_str.length() - 1)
-        let json_map : Map[String, Json] = {}
+        let enc_clean = enc_str[1:enc_str.length() - 1].to_owned()
+        let json_map : Map[String, Json] = Map([])
         json_map["body"] = body.to_json()
         json_map["contentEncoding"] = enc_clean.to_json()
         json_map["mediaType"] = media_type.to_json()
@@ -294,7 +294,7 @@ fn emit_run_hook_attachments(
         emit(sinks, envelope)
       }
       @core.PendingAttachment::External(url~, media_type~) => {
-        let json_map : Map[String, Json] = {}
+        let json_map : Map[String, Json] = Map([])
         json_map["url"] = url.to_json()
         json_map["mediaType"] = media_type.to_json()
         json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
@@ -345,7 +345,7 @@ priv struct TestCaseMapping {
 fn extract_test_case_mappings(
   tc_envelopes : Array[@cucumber_messages.Envelope],
 ) -> Map[String, TestCaseMapping] {
-  let mappings : Map[String, TestCaseMapping] = {}
+  let mappings : Map[String, TestCaseMapping] = Map([])
   for env in tc_envelopes {
     match env {
       @cucumber_messages.Envelope::TestCase(tc) => {
@@ -353,7 +353,10 @@ fn extract_test_case_mappings(
         for ts in tc.testSteps {
           step_ids.push(ts.id)
         }
-        mappings[tc.pickleId] = { test_case_id: tc.id, test_step_ids: step_ids }
+        mappings[tc.pickleId] = {
+          test_case_id: tc.id,
+          test_step_ids: step_ids,
+        }
       }
       _ => ()
     }
@@ -376,8 +379,9 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
   let max_retries = 100
   for tag in tags {
     let n : Int = lexmatch tag with longest {
-      ("@retry" "[(]" ("[0-9]+" as digits) "[)]") => {
-        let parsed = @strconv.parse_int(digits.to_string()) catch { _ => 0 }
+      re"^@retry\([0-9]+\)$" as matched => {
+        let digits = matched["@retry(".length():matched.length() - 1]
+        let parsed = @string.parse_int(digits) catch { _ => 0 }
         if parsed > max_retries {
           max_retries
         } else {
@@ -408,11 +412,16 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
 fn parse_skip_tag(tags : Array[String], skip_tags : Array[String]) -> String? {
   for tag in tags {
     let (name, reason) : (String, String?) = lexmatch tag with longest {
-      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n) "[(]\"" ("[^\"]+" as r) "\"[)]") =>
-        (n.to_string(), Some(r.to_string()))
-      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n) "[(]" "[^)]*" "[)]") =>
-        (n.to_string(), None)
-      ("@" ("[a-zA-Z_][a-zA-Z0-9_]*" as n)) => (n.to_string(), None)
+      (re"^@[a-zA-Z_][a-zA-Z0-9_]*" as ident, after=rest) => {
+        let n = ident[1:].to_owned()
+        lexmatch rest with longest {
+          re"^\(\"[^\"]+\"\)$" as quoted =>
+            (n, Some(quoted[2:quoted.length() - 2].to_owned()))
+          re"^\([^)]*\)$" => (n, None)
+          re"^$" => (n, None)
+          _ => continue
+        }
+      }
       _ => continue
     }
     let full_tag = "@" + name
@@ -479,7 +488,7 @@ pub async fn[W : @core.World] run(
   // Emit ParseError envelopes
   if sinks.length() > 0 {
     for pe in all_parse_errors {
-      let source_ref : Map[String, Json] = {}
+      let source_ref : Map[String, Json] = Map([])
       source_ref["uri"] = pe.uri.to_json()
       match pe.line {
         Some(line) => source_ref["location"] = { "line": line.to_json() }
@@ -553,7 +562,7 @@ pub async fn[W : @core.World] run(
   if sinks.length() > 0 {
     let hook_reg = setup.hook_registry()
     for hook in hook_reg.hooks() {
-      let source_ref : Map[String, Json] = {}
+      let source_ref : Map[String, Json] = Map([])
       match hook.source {
         Some(src) => {
           match src.uri {
@@ -805,7 +814,7 @@ pub async fn[W : @core.World] run(
   for entry in options.get_formatters() {
     write_formatter_output(entry)
   }
-  { features: feature_results, summary, parse_errors: all_parse_errors }
+  { features: feature_results, summary, parse_errors: all_parse_errors, }
 }
 
 ///|
@@ -979,7 +988,7 @@ fn make_skipped_pickle_result(
     status: ScenarioStatus::Skipped(Some(reason)),
     duration_ms: 0L,
   }
-  { result, was_retried: false }
+  { result, was_retried: false, }
 }
 
 ///|
@@ -1026,7 +1035,7 @@ async fn[W : @core.World] execute_pickle(
       pickle, tags, reason, mapping, test_case_id, test_step_ids, sinks, id_gen,
     )
   }
-  let attempt : Ref[Int] = { val: 0 }
+  let attempt : Ref[Int] = { val: 0, }
   let execute_attempt : async () -> ScenarioResult = () => {
     let current_attempt = attempt.val
     attempt.val += 1
@@ -1089,7 +1098,7 @@ async fn[W : @core.World] execute_pickle(
     }
     result
   }
-  let result = if max_retries > 0 && not(dry_run) {
+  let result = if max_retries > 0 && !dry_run {
     @async.retry(
       @async.Immediate,
       max_retry=max_retries,
@@ -1108,7 +1117,7 @@ async fn[W : @core.World] execute_pickle(
     execute_attempt()
   }
   let was_retried = attempt.val > 1
-  { result, was_retried }
+  { result, was_retried, }
 }
 
 ///|
@@ -1117,7 +1126,7 @@ fn group_by_feature(
   results : Array[ScenarioResult],
   cache : FeatureCache,
 ) -> Array[FeatureResult] {
-  let groups : Map[String, Array[ScenarioResult]] = {}
+  let groups : Map[String, Array[ScenarioResult]] = Map([])
   let order : Array[String] = []
   for r in results {
     let key = r.feature_name
@@ -1139,7 +1148,7 @@ fn group_by_feature(
       Some(f) => f.name
       None => uri
     }
-    feature_results.push({ name, scenarios, duration_ms: 0L })
+    feature_results.push({ name, scenarios, duration_ms: 0L, })
   }
   feature_results
 }

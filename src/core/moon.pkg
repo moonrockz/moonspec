@@ -1,9 +1,9 @@
 import {
-  "moonrockz/cucumber-expressions" as @cucumber_expressions,
-  "moonrockz/cucumber-messages" as @cucumber_messages,
+  "moonrockz/cucumber-expressions" @cucumber_expressions,
+  "moonrockz/cucumber-messages" @cucumber_messages,
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "moonbitlang/core/strconv",
-  "moonbitlang/x/codec/base64" as @base64,
-  "moonbitlang/x/decimal" as @decimal,
-  "tonyfettes/any" as @any,
+  "moonbitlang/x/codec/base64",
+  "moonbitlang/x/decimal",
+  "tonyfettes/any",
 }

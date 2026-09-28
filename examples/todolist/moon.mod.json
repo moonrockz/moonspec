@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "deps": {
     "moonrockz/moonspec": { "path": "../.." },
-    "moonbitlang/async": "0.16.6"
+    "moonbitlang/async": "0.22.4"
   },
   "source": "src"
 }

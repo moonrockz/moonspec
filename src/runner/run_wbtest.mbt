@@ -2,7 +2,10 @@
 struct RunWorld {} derive(Default)
 
 ///|
-impl @core.World for RunWorld with configure(_self, setup) {
+pub extend RunWorld with Default::{default}
+
+///|
+impl @core.World for RunWorld with fn configure(_self, setup) {
   setup.given("a step", fn(_ctx) {  })
 }
 
@@ -23,7 +26,10 @@ async test "run single feature and collect summary" {
 struct RunWorld2 {} derive(Default)
 
 ///|
-impl @core.World for RunWorld2 with configure(_self, setup) {
+pub extend RunWorld2 with Default::{default}
+
+///|
+impl @core.World for RunWorld2 with fn configure(_self, setup) {
   setup.given("pass", fn(_ctx) {  })
   setup.given("fail", fn(_ctx) raise { raise Failure::Failure("fail") })
 }
@@ -49,7 +55,10 @@ async test "run multiple features" {
 struct PassWorld {} derive(Default)
 
 ///|
-impl @core.World for PassWorld with configure(_self, setup) {
+pub extend PassWorld with Default::{default}
+
+///|
+impl @core.World for PassWorld with fn configure(_self, setup) {
   setup.given("a calculator", fn(_ctx) {  })
 }
 
@@ -66,7 +75,10 @@ async test "run_or_fail succeeds when all pass" {
 struct NoStepsWorld {} derive(Default)
 
 ///|
-impl @core.World for NoStepsWorld with configure(_self, _setup) {
+pub extend NoStepsWorld with Default::{default}
+
+///|
+impl @core.World for NoStepsWorld with fn configure(_self, _setup) {
 
 }
 
@@ -359,7 +371,10 @@ async test "run emits no ParameterType envelopes for built-in types only" {
 struct ParamWorld {} derive(Default)
 
 ///|
-impl @core.World for ParamWorld with configure(_self, setup) {
+pub extend ParamWorld with Default::{default}
+
+///|
+impl @core.World for ParamWorld with fn configure(_self, setup) {
   setup.add_param_type_strings("color", ["red|blue|green"])
   setup.given("I pick a {color} cucumber", fn(_ctx) {  })
 }
@@ -462,7 +477,10 @@ struct HookEnvWorld {
 } derive(Default)
 
 ///|
-impl @core.World for HookEnvWorld with configure(self, setup) {
+pub extend HookEnvWorld with Default::{default}
+
+///|
+impl @core.World for HookEnvWorld with fn configure(self, setup) {
   setup.before_test_case(fn(_ctx) { self.log.push("before") })
   setup.after_test_case(fn(_ctx, _result) { self.log.push("after") })
   setup.given("a step", fn(_ctx) {  })
@@ -518,7 +536,10 @@ async test "run emits Hook envelopes in correct position" {
 struct RunHookWorld {} derive(Default)
 
 ///|
-impl @core.World for RunHookWorld with configure(_self, setup) {
+pub extend RunHookWorld with Default::{default}
+
+///|
+impl @core.World for RunHookWorld with fn configure(_self, setup) {
   setup.before_test_run(fn(_ctx) {  })
   setup.given("a step", fn(_ctx) {  })
 }
@@ -607,7 +628,10 @@ async test "hook steps emit TestStepStarted and TestStepFinished" {
 struct ContextWorld {} derive(Default)
 
 ///|
-impl @core.World for ContextWorld with configure(_self, setup) {
+pub extend ContextWorld with Default::{default}
+
+///|
+impl @core.World for ContextWorld with fn configure(_self, setup) {
   setup.given("a passing step", fn(_ctx) {  })
   setup.then("it should fail", fn(_ctx) raise {
     raise Failure::Failure("assertion failed")

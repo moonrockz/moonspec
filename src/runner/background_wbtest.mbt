@@ -4,7 +4,10 @@ struct BgWorld {
 } derive(Default)
 
 ///|
-impl @core.World for BgWorld with configure(self, setup) {
+pub extend BgWorld with Default::{default}
+
+///|
+impl @core.World for BgWorld with fn configure(self, setup) {
   setup.given("a common setup", fn(_ctx) { self.context = "setup" })
   setup.when("I do something", fn(_ctx) {  })
   setup.then("it works", fn(_ctx) raise { assert_eq(self.context, "setup") })

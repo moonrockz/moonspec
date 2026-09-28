@@ -35,7 +35,7 @@ fn strip_trailing_space(s : String) -> String {
   if end == len {
     return s
   }
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < end; i = i + 1 {
     buf.write_char(s[i].to_int().unsafe_to_char())
   }
@@ -56,7 +56,7 @@ fn generate_snippet(step_text : String, keyword : String) -> String {
   }
   let pattern = infer_pattern(step_text)
   let kw = strip_trailing_space(keyword)
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   buf.write_string("s.")
   buf.write_string(method)
   buf.write_string("(\"")
@@ -75,7 +75,7 @@ fn generate_snippet(step_text : String, keyword : String) -> String {
 /// Infer cucumber expression pattern from concrete step text.
 /// Replaces integers with {int}, quoted strings with {string}, decimals with {float}.
 fn infer_pattern(text : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let len = text.length()
   let mut i = 0
   while i < len {
@@ -97,10 +97,7 @@ fn infer_pattern(text : String) -> String {
       let mut j = i
       let mut has_dot = false
       while j < len &&
-            (
-              (text[j] >= '0' && text[j] <= '9') ||
-              (text[j] == '.' && not(has_dot))
-            ) {
+            ((text[j] >= '0' && text[j] <= '9') || (text[j] == '.' && !has_dot)) {
         if text[j] == '.' {
           has_dot = true
         }

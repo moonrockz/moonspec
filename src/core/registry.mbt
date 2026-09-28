@@ -17,7 +17,7 @@ priv struct IdGenerator {
 
 ///|
 fn IdGenerator::new() -> IdGenerator {
-  { counter: 0 }
+  { counter: 0, }
 }
 
 ///|
@@ -36,7 +36,7 @@ pub(all) struct StepRegistry {
 ///|
 /// Create an empty step registry.
 pub fn StepRegistry::new() -> StepRegistry {
-  { entries: [], id_gen: IdGenerator::new() }
+  { entries: [], id_gen: IdGenerator::new(), }
 }
 
 ///|
@@ -59,7 +59,7 @@ pub fn StepRegistry::register_def(
     _ => return
   }
   step_def.id = Some(self.id_gen.next_step_def_id())
-  self.entries.push({ def: step_def, expression: expr })
+  self.entries.push({ def: step_def, expression: expr, })
 }
 
 ///|

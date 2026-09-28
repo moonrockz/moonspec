@@ -4,7 +4,13 @@ pub(all) enum OutputDest {
   Stdout
   Stderr
   File(String)
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend OutputDest with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend OutputDest with Eq::{not_equal, equal}
 
 ///|
 /// A formatter paired with its output destination.
@@ -26,12 +32,11 @@ pub(all) struct RunOptions {
   priv mut retries_ : Int
   priv mut dry_run_ : Bool
   priv skip_tags_ : Array[String]
-
-  fn new(features : Array[FeatureSource]) -> RunOptions
 }
 
 ///|
-pub fn RunOptions::new(features : Array[FeatureSource]) -> RunOptions {
+#alias(new)
+pub fn RunOptions::RunOptions(features : Array[FeatureSource]) -> RunOptions {
   {
     features_: features,
     parallel_: false,
@@ -110,7 +115,7 @@ pub fn RunOptions::add_formatter(
   sink : &@core.MessageSink,
   dest : OutputDest,
 ) -> Unit {
-  self.formatters_.push({ sink, dest })
+  self.formatters_.push({ sink, dest, })
   self.sinks_.push(sink)
 }
 

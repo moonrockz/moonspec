@@ -46,12 +46,12 @@ pub fn JUnitFormatter::new() -> JUnitFormatter {
 }
 
 ///|
-pub impl @core.MessageSink for JUnitFormatter with output(self) {
+pub impl @core.MessageSink for JUnitFormatter with fn output(self) {
   self.buffer
 }
 
 ///|
-pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
+pub impl @core.MessageSink for JUnitFormatter with fn on_message(self, envelope) {
   match envelope {
     GherkinDocument(doc) => {
       let uri = match doc.uri {
@@ -65,7 +65,7 @@ pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
       self.features[uri] = feature_name
     }
     Pickle(pickle) =>
-      self.pickles[pickle.id] = { name: pickle.name, uri: pickle.uri }
+      self.pickles[pickle.id] = { name: pickle.name, uri: pickle.uri, }
     TestCase(tc) => self.test_cases[tc.id] = tc.pickleId
     TestCaseStarted(tcs) => {
       self.test_case_started[tcs.id] = tcs.testCaseId
@@ -139,71 +139,104 @@ pub impl @core.MessageSink for JUnitFormatter with on_message(self, envelope) {
         None => self.feature_results[pickle.uri] = [data]
       }
     }
-    TestRunFinished(_) => {
-      // Count totals
-      let mut total_tests = 0
-      let mut total_failures = 0
-      self.feature_results.each(fn(_uri, cases) {
-        for tc in cases {
-          total_tests = total_tests + 1
-          if tc.status == "FAILED" {
-            total_failures = total_failures + 1
-          }
-        }
-      })
-      let writer = @xml.Writer::new()
-      writer.start_element("testsuites", [
-        ("tests", total_tests.to_string()),
-        ("failures", total_failures.to_string()),
-      ])
-      // Iterate features in insertion order
-      self.feature_results.each(fn(uri, cases) {
-        let suite_name = match self.features.get(uri) {
-          Some(n) => n
-          None => uri
-        }
-        writer.start_element("testsuite", [
-          ("name", suite_name),
-          ("tests", cases.length().to_string()),
-        ])
-        for tc in cases {
-          match tc.status {
-            "FAILED" => {
-              writer.start_element("testcase", [
-                ("name", tc.name),
-                ("classname", tc.classname),
-              ])
-              let msg = match tc.failure_message {
-                Some(m) => m
-                None => "unknown failure"
-              }
-              writer.empty_element("failure", [("message", msg)])
-              writer.end_element("testcase")
-            }
-            "SKIPPED" => {
-              writer.start_element("testcase", [
-                ("name", tc.name),
-                ("classname", tc.classname),
-              ])
-              writer.empty_element("skipped", [])
-              writer.end_element("testcase")
-            }
-            _ => {
-              // PASSED or other
-              writer.start_element("testcase", [
-                ("name", tc.name),
-                ("classname", tc.classname),
-              ])
-              writer.end_element("testcase")
-            }
-          }
-        }
-        writer.end_element("testsuite")
-      })
-      writer.end_element("testsuites")
-      self.buffer = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-        writer.to_string()
-    }
+    TestRunFinished(_) =>
+      self.buffer = self.render_xml() catch {
+        err =>
+          abort("JUnit formatter failed to write XML: \{@debug.to_string(err)}")
+      }
     _ => ()
   }
+}
+
+///|
+pub extend JUnitFormatter with @moonrockz/moonspec/core.MessageSink::{
+  output,
+  on_message,
+}
+
+///|
+/// Render the accumulated results as a JUnit XML document.
+fn JUnitFormatter::render_xml(
+  self : JUnitFormatter,
+) -> String raise @xml.WriterError {
+  // Count totals
+  let mut total_tests = 0
+  let mut total_failures = 0
+  for _, cases in self.feature_results {
+    for tc in cases {
+      total_tests = total_tests + 1
+      if tc.status == "FAILED" {
+        total_failures = total_failures + 1
+      }
+    }
+  }
+  let writer = @xml.Writer::new()
+  writer.start_element("testsuites", [
+    ("tests", total_tests.to_string()),
+    ("failures", total_failures.to_string()),
+  ])
+  // Iterate features in insertion order
+  for uri, cases in self.feature_results {
+    let suite_name = match self.features.get(uri) {
+      Some(n) => n
+      None => uri
+    }
+    writer.start_element("testsuite", [
+      ("name", xml_safe(suite_name)),
+      ("tests", cases.length().to_string()),
+    ])
+    for tc in cases {
+      match tc.status {
+        "FAILED" => {
+          writer.start_element("testcase", [
+            ("name", xml_safe(tc.name)),
+            ("classname", xml_safe(tc.classname)),
+          ])
+          let msg = match tc.failure_message {
+            Some(m) => m
+            None => "unknown failure"
+          }
+          writer.empty_element("failure", [("message", xml_safe(msg))])
+          writer.end_element("testcase")
+        }
+        "SKIPPED" => {
+          writer.start_element("testcase", [
+            ("name", xml_safe(tc.name)),
+            ("classname", xml_safe(tc.classname)),
+          ])
+          writer.empty_element("skipped", [])
+          writer.end_element("testcase")
+        }
+        _ => {
+          // PASSED or other
+          writer.start_element("testcase", [
+            ("name", xml_safe(tc.name)),
+            ("classname", xml_safe(tc.classname)),
+          ])
+          writer.end_element("testcase")
+        }
+      }
+    }
+    writer.end_element("testsuite")
+  }
+  writer.end_element("testsuites")
+  "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" + writer.to_string()
+}
+
+///|
+/// Drop characters that XML 1.0 does not allow (e.g. ANSI escape codes).
+fn xml_safe(s : String) -> String {
+  let buf = StringBuilder()
+  for c in s {
+    let code = c.to_int()
+    if code == 0x09 ||
+      code == 0x0A ||
+      code == 0x0D ||
+      (code >= 0x20 && code <= 0xD7FF) ||
+      (code >= 0xE000 && code <= 0xFFFD) ||
+      code >= 0x10000 {
+      buf.write_char(c)
+    }
+  }
+  buf.to_string()
 }

@@ -4,9 +4,12 @@ struct CalcWorld {
 } derive(Default)
 
 ///|
-impl @core.World for CalcWorld with configure(self, setup) {
+pub extend CalcWorld with Default::{default}
+
+///|
+impl @core.World for CalcWorld with fn configure(self, setup) {
   setup.given("a calculator", fn(_ctx) { self.result_val = 0 })
-  setup.when("I add {int} and {int}", fn(ctx) {
+  setup.when("I add {int} and {int}", ctx => {
     match (ctx[0], ctx[1]) {
       (
         { value: @core.StepValue::IntVal(a), .. },
@@ -15,7 +18,7 @@ impl @core.World for CalcWorld with configure(self, setup) {
       _ => ()
     }
   })
-  setup.when("I subtract {int} from {int}", fn(ctx) {
+  setup.when("I subtract {int} from {int}", ctx => {
     match (ctx[0], ctx[1]) {
       (
         { value: @core.StepValue::IntVal(a), .. },
@@ -24,7 +27,7 @@ impl @core.World for CalcWorld with configure(self, setup) {
       _ => ()
     }
   })
-  setup.when("I multiply {int} and {int}", fn(ctx) {
+  setup.when("I multiply {int} and {int}", ctx => {
     match (ctx[0], ctx[1]) {
       (
         { value: @core.StepValue::IntVal(a), .. },
@@ -58,7 +61,10 @@ async test "end-to-end: calculator feature" {
 struct TagWorld {} derive(Default)
 
 ///|
-impl @core.World for TagWorld with configure(_self, setup) {
+pub extend TagWorld with Default::{default}
+
+///|
+impl @core.World for TagWorld with fn configure(_self, setup) {
   setup.given("a calculator", fn(_ctx) {  })
   setup.when("I add {int} and {int}", fn(_ctx) {  })
   setup.then("the result should be {int}", fn(_ctx) {  })
@@ -81,8 +87,11 @@ struct DocWorld {
 } derive(Default)
 
 ///|
-impl @core.World for DocWorld with configure(self, setup) {
-  setup.given("a JSON payload", fn(ctx) {
+pub extend DocWorld with Default::{default}
+
+///|
+impl @core.World for DocWorld with fn configure(self, setup) {
+  setup.given("a JSON payload", ctx => {
     match ctx[0] {
       { value: @core.StepValue::DocStringVal(doc), .. } => {
         self.payload = doc.content
@@ -91,7 +100,7 @@ impl @core.World for DocWorld with configure(self, setup) {
       _ => ()
     }
   })
-  setup.given("the following users", fn(ctx) {
+  setup.given("the following users", ctx => {
     match ctx[0] {
       { value: @core.StepValue::DataTableVal(table), .. } =>
         self.users = table.as_maps()
@@ -174,8 +183,11 @@ async test "end-to-end: data table" {
 struct AttachWorld {} derive(Default)
 
 ///|
-impl @core.World for AttachWorld with configure(_self, setup) {
-  setup.given("I attach a {string}", fn(ctx) {
+pub extend AttachWorld with Default::{default}
+
+///|
+impl @core.World for AttachWorld with fn configure(_self, setup) {
+  setup.given("I attach a {string}", ctx => {
     ctx.attach("my note", "text/plain", file_name="note.txt")
   })
 }
@@ -201,8 +213,11 @@ async test "end-to-end: step attachment emits envelope" {
 struct UrlAttachWorld {} derive(Default)
 
 ///|
-impl @core.World for UrlAttachWorld with configure(_self, setup) {
-  setup.given("I attach an external {string}", fn(ctx) {
+pub extend UrlAttachWorld with Default::{default}
+
+///|
+impl @core.World for UrlAttachWorld with fn configure(_self, setup) {
+  setup.given("I attach an external {string}", ctx => {
     ctx.attach_url("https://example.com/img.png", "image/png")
   })
 }
@@ -228,9 +243,12 @@ async test "end-to-end: attach_url emits ExternalAttachment" {
 struct CaseHookAttachWorld {} derive(Default)
 
 ///|
-impl @core.World for CaseHookAttachWorld with configure(_self, setup) {
+pub extend CaseHookAttachWorld with Default::{default}
+
+///|
+impl @core.World for CaseHookAttachWorld with fn configure(_self, setup) {
   setup.given("a step", fn(_ctx) { () })
-  setup.before_test_case(fn(ctx) { ctx.attach("case setup log", "text/plain") })
+  setup.before_test_case(ctx => ctx.attach("case setup log", "text/plain"))
 }
 
 ///|
@@ -255,7 +273,10 @@ async test "end-to-end: case hook attachment emits envelope" {
 struct StepHookAttachWorld {} derive(Default)
 
 ///|
-impl @core.World for StepHookAttachWorld with configure(_self, setup) {
+pub extend StepHookAttachWorld with Default::{default}
+
+///|
+impl @core.World for StepHookAttachWorld with fn configure(_self, setup) {
   setup.given("a step", fn(_ctx) { () })
   setup.after_test_step(fn(ctx, _result) {
     ctx.attach("step trace", "text/plain")
@@ -283,15 +304,21 @@ async test "end-to-end: step hook attachment emits envelope" {
 ///|
 struct RetryWorld {
   call_count : Ref[Int]
-} derive(Show)
+} derive(Debug)
 
 ///|
-impl Default for RetryWorld with default() {
-  { call_count: { val: 0 } }
+pub extend RetryWorld with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+impl Default for RetryWorld with fn default() {
+  { call_count: { val: 0, }, }
 }
 
 ///|
-impl @core.World for RetryWorld with configure(self, setup) {
+extend RetryWorld with Default::{default}
+
+///|
+impl @core.World for RetryWorld with fn configure(self, setup) {
   setup.given("a step that fails once", fn(_ctx) raise {
     self.call_count.val += 1
     if self.call_count.val <= 1 {
@@ -303,7 +330,7 @@ impl @core.World for RetryWorld with configure(self, setup) {
 
 ///|
 async test "retry: failed scenario retries and passes on second attempt" {
-  let counter : Ref[Int] = { val: 0 }
+  let counter : Ref[Int] = { val: 0, }
   let content =
     #|Feature: Retry
     #|
@@ -311,7 +338,7 @@ async test "retry: failed scenario retries and passes on second attempt" {
     #|  Scenario: Flaky
     #|    Given a step that fails once
   let result = run(
-    fn() -> RetryWorld { { call_count: counter } },
+    fn() -> RetryWorld { { call_count: counter, } },
     RunOptions([FeatureSource::Text("test://retry", content)]),
   )
   assert_eq(result.summary.passed, 1)
@@ -321,7 +348,7 @@ async test "retry: failed scenario retries and passes on second attempt" {
 
 ///|
 async test "retry: scenario without retry tag uses global retries" {
-  let counter : Ref[Int] = { val: 0 }
+  let counter : Ref[Int] = { val: 0, }
   let content =
     #|Feature: GlobalRetry
     #|
@@ -329,7 +356,7 @@ async test "retry: scenario without retry tag uses global retries" {
     #|    Given a step that fails once
   let opts = RunOptions([FeatureSource::Text("test://global-retry", content)])
   opts.retries(1)
-  let result = run(fn() -> RetryWorld { { call_count: counter } }, opts)
+  let result = run(fn() -> RetryWorld { { call_count: counter, } }, opts)
   assert_eq(result.summary.passed, 1)
   assert_eq(result.summary.failed, 0)
   assert_eq(result.summary.retried, 1)
@@ -337,14 +364,14 @@ async test "retry: scenario without retry tag uses global retries" {
 
 ///|
 async test "retry: no retry when retries is zero" {
-  let counter : Ref[Int] = { val: 0 }
+  let counter : Ref[Int] = { val: 0, }
   let content =
     #|Feature: NoRetry
     #|
     #|  Scenario: Flaky
     #|    Given a step that fails once
   let result = run(
-    fn() -> RetryWorld { { call_count: counter } },
+    fn() -> RetryWorld { { call_count: counter, } },
     RunOptions([FeatureSource::Text("test://no-retry", content)]),
   )
   assert_eq(result.summary.passed, 0)
@@ -372,7 +399,10 @@ async test "retry: passing scenario is not counted as retried" {
 struct UndefinedRetryWorld {} derive(Default)
 
 ///|
-impl @core.World for UndefinedRetryWorld with configure(_self, _setup) {
+pub extend UndefinedRetryWorld with Default::{default}
+
+///|
+impl @core.World for UndefinedRetryWorld with fn configure(_self, _setup) {
   // No steps defined — scenario will be Undefined
 }
 
@@ -402,7 +432,7 @@ async test "retry: undefined scenario is not retried" {
 
 ///|
 async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
-  let counter : Ref[Int] = { val: 0 }
+  let counter : Ref[Int] = { val: 0, }
   let content =
     #|Feature: RetryEnvelopes
     #|
@@ -412,7 +442,7 @@ async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
   let collector = CollectorSink::new()
   let opts = RunOptions([FeatureSource::Text("test://retry-env", content)])
   opts.add_sink(collector)
-  let _ = run(fn() -> RetryWorld { { call_count: counter } }, opts)
+  let _ = run(fn() -> RetryWorld { { call_count: counter, } }, opts)
   let mut tcs_count = 0
   let mut tcf_will_retry_count = 0
   for env in collector.envelopes {
@@ -436,7 +466,10 @@ async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
 struct DryRunWorld {} derive(Default)
 
 ///|
-impl @core.World for DryRunWorld with configure(_self, setup) {
+pub extend DryRunWorld with Default::{default}
+
+///|
+impl @core.World for DryRunWorld with fn configure(_self, setup) {
   setup.given("a defined step", fn(_ctx) {  })
   setup.when("another defined step", fn(_ctx) {  })
 }
@@ -505,7 +538,10 @@ async test "dry-run: envelopes emitted with SKIPPED status" {
 struct SkipTagWorld {} derive(Default)
 
 ///|
-impl @core.World for SkipTagWorld with configure(_self, setup) {
+pub extend SkipTagWorld with Default::{default}
+
+///|
+impl @core.World for SkipTagWorld with fn configure(_self, setup) {
   setup.given("a step", fn(_ctx) {  })
 }
 

@@ -4,7 +4,7 @@ test "StepDef::given0 creates zero-arg step def" {
   let sd = StepDef::given0("an empty cart", fn() { called[0] = true })
   assert_eq(sd.keyword, StepKeyword::Given)
   assert_eq(sd.pattern, "an empty cart")
-  let ctx = Ctx::new([], { feature_name: "f", scenario_name: "s", tags: [] }, {
+  let ctx = Ctx::new([], { feature_name: "f", scenario_name: "s", tags: [], }, {
     keyword: "Given ",
     text: "an empty cart",
   })
@@ -20,9 +20,9 @@ test "StepDef::given1 creates one-arg step def" {
   })
   assert_eq(sd.keyword, StepKeyword::Given)
   let ctx = Ctx::new(
-    [{ value: IntVal(7), raw: "7" }],
-    { feature_name: "f", scenario_name: "s", tags: [] },
-    { keyword: "Given ", text: "I have 7 items" },
+    [{ value: IntVal(7), raw: "7", }],
+    { feature_name: "f", scenario_name: "s", tags: [], },
+    { keyword: "Given ", text: "I have 7 items", },
   )
   (sd.handler.0)(ctx)
   assert_eq(captured[0], 7)
@@ -39,11 +39,11 @@ test "StepDef::given2 creates two-arg step def" {
   })
   let ctx = Ctx::new(
     [
-      { value: StringVal("apple"), raw: "apple" },
-      { value: IntVal(5), raw: "5" },
+      { value: StringVal("apple"), raw: "apple", },
+      { value: IntVal(5), raw: "5", },
     ],
-    { feature_name: "f", scenario_name: "s", tags: [] },
-    { keyword: "Given ", text: "I add apple at 5" },
+    { feature_name: "f", scenario_name: "s", tags: [], },
+    { keyword: "Given ", text: "I add apple at 5", },
   )
   (sd.handler.0)(ctx)
   assert_eq(captured[0], ("apple", 5))
@@ -74,9 +74,9 @@ test "StepDef::given1_ctx passes Ctx" {
     captured.push(ctx.scenario().feature_name)
   })
   let ctx = Ctx::new(
-    [{ value: IntVal(1), raw: "1" }],
-    { feature_name: "test_feat", scenario_name: "s", tags: [] },
-    { keyword: "Given ", text: "I have 1" },
+    [{ value: IntVal(1), raw: "1", }],
+    { feature_name: "test_feat", scenario_name: "s", tags: [], },
+    { keyword: "Given ", text: "I have 1", },
   )
   (sd.handler.0)(ctx)
   assert_eq(captured[0], "test_feat")
@@ -113,12 +113,12 @@ test "StepDef::given9 creates nine-arg step def" {
   )
   let args : Array[StepArg] = []
   for n = 1; n <= 9; n = n + 1 {
-    args.push({ value: IntVal(n), raw: n.to_string() })
+    args.push({ value: IntVal(n), raw: n.to_string(), })
   }
   let ctx = Ctx::new(
     args,
-    { feature_name: "f", scenario_name: "s", tags: [] },
-    { keyword: "Given ", text: "1 2 3 4 5 6 7 8 9" },
+    { feature_name: "f", scenario_name: "s", tags: [], },
+    { keyword: "Given ", text: "1 2 3 4 5 6 7 8 9", },
   )
   (sd.handler.0)(ctx)
   assert_eq(result[0], 45)

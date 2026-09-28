@@ -18,7 +18,7 @@ fn emit_attachments(
         // from outside cucumber-messages, so we convert via JSON stringify
         // and strip the surrounding quotes.
         let enc_str = encoding.to_json().stringify()
-        let enc_clean = enc_str.substring(start=1, end=enc_str.length() - 1)
+        let enc_clean = enc_str[1:enc_str.length() - 1].to_owned()
         emit(
           sinks,
           make_attachment_envelope(
@@ -74,7 +74,7 @@ pub fn execute_scenario(
   test_step_ids? : Array[String] = [],
   dry_run? : Bool = false,
 ) -> ScenarioResult {
-  let info : @core.ScenarioInfo = { feature_name, scenario_name, tags }
+  let info : @core.ScenarioInfo = { feature_name, scenario_name, tags, }
   let has_sinks = sinks.length() > 0 && test_step_ids.length() > 0
   let before_case_hooks = hook_registry.by_type(@core.HookType::BeforeTestCase)
   let after_case_hooks = hook_registry.by_type(@core.HookType::AfterTestCase)
@@ -345,7 +345,7 @@ pub fn execute_scenario(
       })
       continue
     }
-    let step_info : @core.StepInfo = { keyword, text: step.text }
+    let step_info : @core.StepInfo = { keyword, text: step.text, }
     // before_test_step hooks
     let before_err : String? = if before_step_hooks.length() > 0 {
       let mut err : String? = None
@@ -440,7 +440,7 @@ pub fn execute_scenario(
               let enriched = "Step '" +
                 step.text +
                 "' (" +
-                keyword.trim(chars=" ").to_string() +
+                keyword.trim(chars=" ").to_owned() +
                 "): " +
                 e.to_string()
               (

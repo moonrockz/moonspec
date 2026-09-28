@@ -43,11 +43,11 @@ test "Setup.add_param_type_strings with transformer" {
     ["\\w+"],
     transformer=@cucumber_expressions.Transformer::new(fn(groups) {
       @cucumber_expressions.ParamValue::CustomVal(
-        @any.of(groups[0][:].to_upper().to_string()),
+        @any.of(groups[0][:].to_upper().to_owned()),
       )
     }),
   )
-  setup.given("I say {upper}", fn(ctx) {
+  setup.given("I say {upper}", fn(ctx) raise {
     match ctx[0] {
       { value: CustomVal(any), raw, .. } => {
         let v : String = any.to()

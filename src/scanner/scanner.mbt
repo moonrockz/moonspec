@@ -5,7 +5,7 @@ pub fn scan_source(source : String, file_name : String) -> ScanResult {
   let step_fns : Array[StepFnInfo] = []
   let world_configs : Array[WorldConfigInfo] = []
   walk_impls(impls, file_name, step_fns, world_configs)
-  { step_fns, world_configs }
+  { step_fns, world_configs, }
 }
 
 ///|
@@ -234,14 +234,14 @@ fn collect_params_loop(
 fn param_to_info(param : @syntax.Parameter) -> ParamInfo {
   match param {
     Positional(binder~, ty~) =>
-      { name: binder.name, type_name: type_to_string(ty) }
+      { name: binder.name, type_name: type_to_string(ty), }
     Labelled(binder~, ty~) =>
-      { name: binder.name, type_name: type_to_string(ty) }
+      { name: binder.name, type_name: type_to_string(ty), }
     Optional(binder~, ty~, ..) =>
-      { name: binder.name, type_name: type_to_string(ty) }
+      { name: binder.name, type_name: type_to_string(ty), }
     QuestionOptional(binder~, ty~) =>
-      { name: binder.name, type_name: type_to_string(ty) }
-    DiscardPositional(ty~, ..) => { name: "_", type_name: type_to_string(ty) }
+      { name: binder.name, type_name: type_to_string(ty), }
+    DiscardPositional(ty~, ..) => { name: "_", type_name: type_to_string(ty), }
   }
 }
 

@@ -2,36 +2,28 @@
 // moonspec:hash:352843387
 
 impl @moonspec.World for TodoWorld with configure(self, setup) {
-  setup.given("a todo list", fn(args) raise {
+  setup.given0("a todo list", fn() {
     given_todo_list(self)
   })
-  setup.when("I add a todo {string}", fn(args) raise {
-    let _arg0 = match args[0] { { value: StringVal(v), .. } => v; { value: WordVal(v), .. } => v; _ => "" }
+  setup.when1("I add a todo {string}", fn(_arg0 : String) {
     when_add_todo(self, _arg0)
   })
-  setup.then("I should have {int} todos", fn(args) raise {
-    let _arg0 = match args[0] { { value: IntVal(v), .. } => v; _ => 0 }
+  setup.then1("I should have {int} todos", fn(_arg0 : Int) {
     then_todo_count(self, _arg0)
   })
-  setup.when("I complete todo {string}", fn(args) raise {
-    let _arg0 = match args[0] { { value: StringVal(v), .. } => v; { value: WordVal(v), .. } => v; _ => "" }
+  setup.when1("I complete todo {string}", fn(_arg0 : String) {
     when_complete_todo(self, _arg0)
   })
-  setup.then("todo {string} should be completed", fn(args) raise {
-    let _arg0 = match args[0] { { value: StringVal(v), .. } => v; { value: WordVal(v), .. } => v; _ => "" }
+  setup.then1("todo {string} should be completed", fn(_arg0 : String) {
     then_todo_completed(self, _arg0)
   })
-  setup.when("I remove todo {string}", fn(args) raise {
-    let _arg0 = match args[0] { { value: StringVal(v), .. } => v; { value: WordVal(v), .. } => v; _ => "" }
+  setup.when1("I remove todo {string}", fn(_arg0 : String) {
     when_remove_todo(self, _arg0)
   })
-  setup.given("I have {int} completed and {int} pending todos", fn(args) raise {
-    let _arg0 = match args[0] { { value: IntVal(v), .. } => v; _ => 0 }
-    let _arg1 = match args[1] { { value: IntVal(v), .. } => v; _ => 0 }
+  setup.given2("I have {int} completed and {int} pending todos", fn(_arg0 : Int, _arg1 : Int) {
     given_mixed_todos(self, _arg0, _arg1)
   })
-  setup.then("the pending count should be {int}", fn(args) raise {
-    let _arg0 = match args[0] { { value: IntVal(v), .. } => v; _ => 0 }
+  setup.then1("the pending count should be {int}", fn(_arg0 : Int) {
     then_pending_count(self, _arg0)
   })
 }

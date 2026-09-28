@@ -13,7 +13,7 @@ test "detect_manual_registration returns false for other types" {
     #|impl @moonspec.World for OtherWorld with configure(self, setup) {
     #|  s.given("something", fn(ctx) { () })
     #|}
-  assert_true(not(has_manual_registration(source, "MyWorld")))
+  assert_true(!has_manual_registration(source, "MyWorld"))
 }
 
 ///|
@@ -22,10 +22,10 @@ test "detect_manual_registration returns false for unrelated code" {
     #|fn some_function() -> Unit {
     #|  ()
     #|}
-  assert_true(not(has_manual_registration(source, "MyWorld")))
+  assert_true(!has_manual_registration(source, "MyWorld"))
 }
 
 ///|
 test "detect_manual_registration returns false for empty string" {
-  assert_true(not(has_manual_registration("", "MyWorld")))
+  assert_true(!has_manual_registration("", "MyWorld"))
 }

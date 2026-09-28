@@ -42,7 +42,7 @@ impl @moonspec.World for CalcWorld with configure(self, setup) {
     self.result = a + b
   })
   setup.then1("the result should be {int}", fn(expected : Int) {
-    assert_eq!(self.result, expected)
+    assert_eq(self.result, expected)
   })
 }
 ```
@@ -146,7 +146,7 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
   })
 
   setup.then1("I should have {int} cucumbers", fn(expected : Int) {
-    assert_eq!(self.cucumbers, expected)
+    assert_eq(self.cucumbers, expected)
   })
 }
 ```
@@ -229,7 +229,7 @@ impl @moonspec.StepLibrary for AccountSteps with steps(self) {
       self.world.balance = n
     }),
     @moonspec.StepDef::then1("the balance should be {int}", fn(n : Int) {
-      assert_eq!(self.world.balance, n)
+      assert_eq(self.world.balance, n)
     }),
   ]
   defs[:]
@@ -257,7 +257,7 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
   setup.add_param_type("color", [@cucumber_expressions.RegexPattern("red|green|blue")])
 
   setup.then1("the light should be {color}", fn(color : String) {
-    assert_eq!(self.light_color, color)
+    assert_eq(self.light_color, color)
   })
 }
 ```
@@ -324,7 +324,7 @@ Available matchers:
 All matchers raise with descriptive messages on failure, e.g.:
 `"Expected [Apple, Banana] to contain Widget"`.
 
-Standard MoonBit assertions (`assert_eq!`, `assert_true!`, `fail!`) continue to work
+Standard MoonBit assertions (`assert_eq`, `assert_true`, `fail`) continue to work
 in step handlers. Step failure messages are automatically enriched with step context:
 
 ```
@@ -1019,7 +1019,7 @@ Users should import `moonrockz/moonspec` and reference types via `@moonspec.Worl
 | [moonrockz/gherkin](https://mooncakes.io/docs/#/moonrockz/gherkin/) | Gherkin parser |
 | [moonrockz/cucumber-expressions](https://mooncakes.io/docs/#/moonrockz/cucumber-expressions/) | Step pattern matching |
 | [moonrockz/cucumber-messages](https://mooncakes.io/docs/#/moonrockz/cucumber-messages/) | Cucumber Messages protocol |
-| [TheWaWaR/clap](https://mooncakes.io/docs/#/TheWaWaR/clap/) | CLI argument parsing |
+| [moonbitlang/core/argparse](https://mooncakes.io/docs/moonbitlang/core/argparse) | CLI argument parsing |
 | [moonbitlang/x](https://mooncakes.io/docs/#/moonbitlang/x/) | Standard library extensions |
 | [moonbitlang/async](https://mooncakes.io/docs/#/moonbitlang/async/) | Async execution primitives |
 | [moonbitlang/regexp](https://mooncakes.io/docs/#/moonbitlang/regexp/) | Regular expressions |

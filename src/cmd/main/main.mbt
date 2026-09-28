@@ -4,48 +4,44 @@ fn main {
   let args = @env.args()
   // Skip the program name (args[0])
   let cli_args : Array[String] = if args.length() > 1 {
-    args[1:].to_array()
+    args[1:].to_owned()
   } else {
     []
   }
-  let value = @clap.SimpleValue::new(parser.prog)
-  let help_message = parser.parse(value, cli_args[:]) catch {
+  let matches = parser.parse(argv=cli_args) catch {
     err => {
-      die("Error: \{err}")
+      die("\{err}")
       return
     }
   }
-  match help_message {
-    Some(msg) => {
-      println(msg)
-      return
-    }
-    None => ()
-  }
-  match value.subcmd {
-    Some(subcmd) =>
-      match subcmd.name {
-        "version" => cmd_version()
-        "gen" =>
-          match subcmd.subcmd {
-            Some(gen_subcmd) =>
-              match gen_subcmd.name {
-                "tests" => cmd_gen_tests(gen_subcmd)
-                "steps" => cmd_gen_steps(gen_subcmd)
-                _ => ()
-              }
-            None => {
-              let help = parser.gen_help_message(["moonspec", "gen"], {})
-              println(help)
-            }
-          }
-        "check" => cmd_check(subcmd)
+  match matches.subcommand {
+    Some(("version", _)) => cmd_version()
+    Some(("gen", gen_matches)) =>
+      match gen_matches.subcommand {
+        Some(("tests", sub)) => cmd_gen_tests(sub)
+        Some(("steps", sub)) => cmd_gen_steps(sub)
         _ => ()
       }
-    None => {
-      // No subcommand — show help
-      let help = parser.gen_help_message(["moonspec"], {})
-      println(help)
-    }
+    Some(("check", sub)) => cmd_check(sub)
+    // No subcommand: argparse prints help (arg_required_else_help)
+    _ => ()
   }
+}
+
+///|
+/// Return the first value given for option `name`, if any.
+fn option_value(matches : @argparse.Matches, name : String) -> String? {
+  match matches.values.get(name) {
+    Some(vals) if vals.length() > 0 => Some(vals[0])
+    _ => None
+  }
+}
+
+///|
+/// Return all values given for positional `name`.
+fn positional_values(
+  matches : @argparse.Matches,
+  name : String,
+) -> Array[String] {
+  matches.values.get_or_default(name, [])
 }

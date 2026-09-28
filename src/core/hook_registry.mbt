@@ -7,7 +7,13 @@ pub(all) enum HookType {
   AfterTestCase
   BeforeTestStep
   AfterTestStep
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend HookType with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend HookType with Eq::{not_equal, equal}
 
 ///|
 /// Typed handler for different hook scopes.
@@ -39,7 +45,7 @@ pub(all) struct HookRegistry {
 ///|
 /// Create an empty hook registry.
 pub fn HookRegistry::new() -> HookRegistry {
-  { hooks_: [], counter: 0 }
+  { hooks_: [], counter: 0, }
 }
 
 ///|
@@ -52,7 +58,7 @@ pub fn HookRegistry::add(
 ) -> Unit {
   self.counter += 1
   let id = "hook-" + self.counter.to_string()
-  self.hooks_.push({ id, type_, handler, source })
+  self.hooks_.push({ id, type_, handler, source, })
 }
 
 ///|

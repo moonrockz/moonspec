@@ -3,14 +3,26 @@
 pub(all) enum ModeConfig {
   Simple(String)
   PerFile(Map[String, String])
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend ModeConfig with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend ModeConfig with Eq::{not_equal, equal}
 
 ///|
 /// Steps codegen configuration.
 pub(all) struct StepsConfig {
   output : String?
   exclude : Array[String]?
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend StepsConfig with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend StepsConfig with Eq::{not_equal, equal}
 
 ///|
 /// Configuration for a single output formatter.
@@ -18,7 +30,13 @@ pub(all) struct FormatterConfig {
   type_ : String
   output : String
   no_color : Bool
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend FormatterConfig with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend FormatterConfig with Eq::{not_equal, equal}
 
 ///|
 /// Moonspec configuration with optional fields for hierarchical merging.
@@ -28,11 +46,17 @@ pub(all) struct MoonspecConfig {
   steps : StepsConfig?
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend MoonspecConfig with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend MoonspecConfig with Eq::{not_equal, equal}
 
 ///|
 pub fn MoonspecConfig::empty() -> MoonspecConfig {
-  { world: None, mode: None, steps: None, skip_tags: None, formatters: None }
+  { world: None, mode: None, steps: None, skip_tags: None, formatters: None, }
 }
 
 ///|
@@ -53,7 +77,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
       match obj.get("mode") {
         Some(String(s)) => mode = Some(Simple(s))
         Some(Object(map)) => {
-          let result : Map[String, String] = {}
+          let result : Map[String, String] = Map([])
           for key, value in map {
             match value {
               String(s) => result.set(key, s)
@@ -98,7 +122,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
             }
             _ => ()
           }
-          steps = Some(StepsConfig::{ output, exclude })
+          steps = Some(StepsConfig::{ output, exclude, })
         }
         _ => ()
       }
@@ -123,7 +147,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
                   Some(True) => no_color = true
                   _ => ()
                 }
-                items.push(FormatterConfig::{ type_, output, no_color })
+                items.push(FormatterConfig::{ type_, output, no_color, })
               }
               _ => ()
             }
@@ -135,7 +159,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
     }
     _ => ()
   }
-  { world, mode, steps, skip_tags, formatters }
+  { world, mode, steps, skip_tags, formatters, }
 }
 
 ///|

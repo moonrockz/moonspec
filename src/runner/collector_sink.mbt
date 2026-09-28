@@ -6,15 +6,21 @@ pub(all) struct CollectorSink {
 
 ///|
 pub fn CollectorSink::new() -> CollectorSink {
-  { envelopes: [] }
+  { envelopes: [], }
 }
 
 ///|
-pub impl @core.MessageSink for CollectorSink with on_message(self, envelope) {
+pub impl @core.MessageSink for CollectorSink with fn on_message(self, envelope) {
   self.envelopes.push(envelope)
 }
 
 ///|
-pub impl @core.MessageSink for CollectorSink with output(_self) {
+pub impl @core.MessageSink for CollectorSink with fn output(_self) {
   ""
+}
+
+///|
+pub extend CollectorSink with @moonrockz/moonspec/core.MessageSink::{
+  output,
+  on_message,
 }

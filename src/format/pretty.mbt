@@ -72,7 +72,7 @@ pub fn PrettyFormatter::new(no_color? : Bool = false) -> PrettyFormatter {
 
 ///|
 /// Return accumulated output.
-pub impl @core.MessageSink for PrettyFormatter with output(self) {
+pub impl @core.MessageSink for PrettyFormatter with fn output(self) {
   self.buffer
 }
 
@@ -196,7 +196,10 @@ fn increment_count_for_severity(counts : SummaryCounts, severity : Int) -> Unit 
 // ---------------------------------------------------------------------------
 
 ///|
-pub impl @core.MessageSink for PrettyFormatter with on_message(self, envelope) {
+pub impl @core.MessageSink for PrettyFormatter with fn on_message(
+  self,
+  envelope,
+) {
   match envelope {
     GherkinDocument(doc) => {
       let uri = match doc.uri {
@@ -210,10 +213,10 @@ pub impl @core.MessageSink for PrettyFormatter with on_message(self, envelope) {
       self.features[uri] = feature_name
     }
     Pickle(pickle) => {
-      self.pickles[pickle.id] = { name: pickle.name, uri: pickle.uri }
+      self.pickles[pickle.id] = { name: pickle.name, uri: pickle.uri, }
       for step in pickle.steps {
         let keyword = keyword_from_step_type(step.type_)
-        self.pickle_steps[step.id] = { text: step.text, keyword }
+        self.pickle_steps[step.id] = { text: step.text, keyword, }
       }
     }
     TestCase(tc) => {
@@ -339,6 +342,12 @@ pub impl @core.MessageSink for PrettyFormatter with on_message(self, envelope) {
         ")]\n"
     _ => () // Ignore other envelope types
   }
+}
+
+///|
+pub extend PrettyFormatter with @moonrockz/moonspec/core.MessageSink::{
+  output,
+  on_message,
 }
 
 // ---------------------------------------------------------------------------

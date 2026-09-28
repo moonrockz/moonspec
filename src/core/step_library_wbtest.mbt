@@ -14,9 +14,9 @@ fn MathSteps::new(world : TestWorld) -> MathSteps {
 }
 
 ///|
-impl StepLibrary for MathSteps with steps(self) {
+impl StepLibrary for MathSteps with fn steps(self) {
   [
-    StepDef::given("a value of {int}", fn(ctx) {
+    StepDef::given("a value of {int}", ctx => {
       match ctx[0] {
         { value: StepValue::IntVal(n), .. } => self.world.value = n
         _ => ()
@@ -32,8 +32,11 @@ impl StepLibrary for MathSteps with steps(self) {
 }
 
 ///|
+extend MathSteps with StepLibrary::{steps}
+
+///|
 test "StepLibrary returns ArrayView of StepDefs" {
-  let world : TestWorld = { value: 0 }
+  let world : TestWorld = { value: 0, }
   let lib = MathSteps::new(world)
   let defs = lib.steps()
   assert_eq(defs.length(), 2)

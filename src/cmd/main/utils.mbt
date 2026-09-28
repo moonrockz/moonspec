@@ -29,7 +29,7 @@ fn str_ends_with(s : String, suffix : String) -> Bool {
 
 ///|
 fn str_to_lower(s : String) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   for i = 0; i < s.length(); i = i + 1 {
     let c = s[i]
     if c >= 'A' && c <= 'Z' {
@@ -54,7 +54,7 @@ fn dirname(path : String) -> String {
   } else if last_slash == 0 {
     "/"
   } else {
-    let buf = StringBuilder::new()
+    let buf = StringBuilder()
     for i = 0; i < last_slash; i = i + 1 {
       buf.write_char(path[i].to_int().unsafe_to_char())
     }
@@ -65,7 +65,7 @@ fn dirname(path : String) -> String {
 ///|
 fn ensure_parent_dir(path : String) -> Unit {
   let dir = dirname(path)
-  if dir != "." && dir != "/" && not(@fs.path_exists(dir)) {
+  if dir != "." && dir != "/" && !@fs.path_exists(dir) {
     // Create parent dirs recursively
     ensure_parent_dir(dir)
     @fs.create_dir(dir) catch {
@@ -96,8 +96,8 @@ fn discover_mbt_files(dir : String, files : Array[String]) -> Unit {
     if is_directory {
       discover_mbt_files(full_path, files)
     } else if str_ends_with(entry, ".mbt") &&
-      not(str_ends_with(entry, "_wbtest.mbt")) &&
-      not(str_ends_with(entry, "_test.mbt")) {
+      !str_ends_with(entry, "_wbtest.mbt") &&
+      !str_ends_with(entry, "_test.mbt") {
       files.push(full_path)
     }
   }

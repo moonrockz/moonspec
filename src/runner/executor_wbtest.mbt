@@ -172,7 +172,7 @@ test "execute_scenario passes doc string as last arg" {
   let setup = @core.Setup::new()
   let mut received_content = ""
   let mut received_media_type : String? = None
-  setup.given("a payload", fn(ctx) {
+  setup.given("a payload", ctx => {
     match ctx[0] {
       { value: @core.StepValue::DocStringVal(doc), .. } => {
         received_content = doc.content
@@ -189,7 +189,7 @@ test "execute_scenario passes doc string as last arg" {
       astNodeIds: [],
       type_: Some(@cucumber_messages.PickleStepType::Context),
       argument: Some({
-        docString: Some({ content: "hello world", mediaType: Some("json") }),
+        docString: Some({ content: "hello world", mediaType: Some("json"), }),
         dataTable: None,
       }),
     },
@@ -212,7 +212,7 @@ test "execute_scenario passes data table as last arg" {
   let setup = @core.Setup::new()
   let mut received_rows = 0
   let mut first_name = ""
-  setup.given("the following users", fn(ctx) {
+  setup.given("the following users", ctx => {
     match ctx[0] {
       { value: @core.StepValue::DataTableVal(table), .. } => {
         received_rows = table.row_count()
@@ -232,8 +232,8 @@ test "execute_scenario passes data table as last arg" {
         docString: None,
         dataTable: Some({
           rows: [
-            { cells: [{ value: "name" }, { value: "age" }] },
-            { cells: [{ value: "Alice" }, { value: "30" }] },
+            { cells: [{ value: "name", }, { value: "age", }], },
+            { cells: [{ value: "Alice", }, { value: "30", }], },
           ],
         }),
       }),
@@ -257,7 +257,7 @@ test "execute_scenario appends doc string after text params" {
   let setup = @core.Setup::new()
   let mut url = ""
   let mut body = ""
-  setup.when("I POST to {string}", fn(ctx) {
+  setup.when("I POST to {string}", ctx => {
     match ctx[0] {
       { value: @core.StepValue::StringVal(u), .. } => url = u
       _ => ()

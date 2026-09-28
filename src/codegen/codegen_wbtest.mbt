@@ -41,7 +41,7 @@ test "generate_test_file handles empty feature" {
   let output = generate_test_file(content, "features/empty.feature")
   assert_true(output.contains("// moonspec:hash:"))
   // Should not contain any async test blocks
-  assert_true(not(output.contains("async test")))
+  assert_true(!output.contains("async test"))
 }
 
 ///|
@@ -69,8 +69,8 @@ test "per-scenario mode generates runner call with world" {
   assert_true(output.contains("@moonspec.FeatureSource::File"))
   assert_true(output.contains("options.scenario_name("))
   assert_true(output.contains("features/login.feature"))
-  assert_true(not(output.contains("|> ignore")))
-  assert_true(not(output.contains("assert_eq!(result.summary.failed, 0)")))
+  assert_true(!output.contains("|> ignore"))
+  assert_true(!output.contains("assert_eq!(result.summary.failed, 0)"))
 }
 
 ///|
@@ -89,7 +89,7 @@ test "per-feature mode generates file-based runner call" {
   assert_true(output.contains("features/login.feature"))
   // Should produce a single test for the whole feature
   assert_true(output.contains("Feature: Login"))
-  assert_true(not(output.contains("Scenario:")))
+  assert_true(!output.contains("Scenario:"))
 }
 
 ///|
@@ -129,7 +129,7 @@ test "stub mode when world is empty" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let output = generate_test_file(content, "features/login.feature")
   assert_true(output.contains("ignore"))
-  assert_true(not(output.contains("@moonspec.run")))
+  assert_true(!output.contains("@moonspec.run"))
 }
 
 ///|
@@ -168,7 +168,7 @@ test "per-scenario mode omits skip_tags when None" {
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.scenario_name("))
-  assert_true(not(output.contains("options.skip_tags(")))
+  assert_true(!output.contains("options.skip_tags("))
 }
 
 ///|
@@ -208,7 +208,7 @@ test "skip_tags not emitted for stub tests" {
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("ignore(\"\")"))
-  assert_true(not(output.contains("options.skip_tags(")))
+  assert_true(!output.contains("options.skip_tags("))
 }
 
 ///|
@@ -236,7 +236,7 @@ test "codegen emits default pretty formatter when formatters is None" {
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
     output.contains(
-      "options.add_formatter(&@format.PrettyFormatter::new(), @moonspec.Stdout)",
+      "options.add_formatter(@format.PrettyFormatter::new(), @moonspec.OutputDest::Stdout)",
     ),
   )
 }
@@ -259,7 +259,7 @@ test "codegen emits add_formatter for pretty on stdout" {
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
     output.contains(
-      "options.add_formatter(&@format.PrettyFormatter::new(), @moonspec.Stdout)",
+      "options.add_formatter(@format.PrettyFormatter::new(), @moonspec.OutputDest::Stdout)",
     ),
   )
 }
@@ -282,7 +282,7 @@ test "codegen emits add_formatter for junit to file" {
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
     output.contains(
-      "options.add_formatter(&@format.JUnitFormatter::new(), @moonspec.File(\"reports/results.xml\"))",
+      "options.add_formatter(@format.JUnitFormatter::new(), @moonspec.OutputDest::File(\"reports/results.xml\"))",
     ),
   )
 }
@@ -305,7 +305,7 @@ test "codegen emits add_formatter with no_color for pretty" {
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
     output.contains(
-      "options.add_formatter(&@format.PrettyFormatter::new(no_color=true), @moonspec.Stderr)",
+      "options.add_formatter(@format.PrettyFormatter::new(no_color=true), @moonspec.OutputDest::Stderr)",
     ),
   )
 }
@@ -320,5 +320,5 @@ test "codegen emits no formatter lines for empty formatters array" {
     formatters: Some([]),
   }
   let output = generate_test_file(content, "features/login.feature", config~)
-  assert_true(not(output.contains("add_formatter")))
+  assert_true(!output.contains("add_formatter"))
 }
