@@ -624,3 +624,41 @@ async test "skip tag: takes precedence over dry-run" {
     ScenarioStatus::Skipped(Some("explicit")),
   )
 }
+
+///|
+async test "end-to-end: Markdown with Gherkin feature" {
+  let content =
+    #|# Feature: Calculator
+    #|
+    #|Prose paragraphs are ignored by the parser.
+    #|
+    #|## Background:
+    #|
+    #|- Given a calculator
+    #|
+    #|## Scenario: Addition
+    #|
+    #|- When I add 5 and 3
+    #|- Then the result should be 8
+    #|
+    #|`@slow`
+    #|## Scenario Outline: Multiplication
+    #|
+    #|- When I multiply <a> and <b>
+    #|- Then the result should be <result>
+    #|
+    #|### Examples:
+    #|
+    #|  | a  | b | result |
+    #|  | -- | - | ------ |
+    #|  | 2  | 3 | 6      |
+    #|  | 10 | 5 | 50     |
+    #|
+  let result = run(
+    CalcWorld::default,
+    RunOptions([FeatureSource::Text("features/calc.feature.md", content)]),
+  )
+  assert_eq(result.summary.total_scenarios, 3)
+  assert_eq(result.summary.passed, 3)
+  assert_eq(result.summary.failed, 0)
+}

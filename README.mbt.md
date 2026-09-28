@@ -49,6 +49,7 @@ reference types -- mutations in closures are visible across step handlers.
 - **StepLibrary trait** -- composable, reusable step groups
 - **Cucumber Expressions** -- 11 built-in parameter types plus custom types
 - **Gherkin** -- Feature, Scenario, Scenario Outline, Background, Rules, Data Tables, Doc Strings
+- **Markdown with Gherkin** -- `.feature.md` files are parsed as [MDG](https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md)
 - **Lifecycle hooks** -- before/after for test run, test case, and test step
 - **Tag filtering** -- boolean expressions (`@smoke and not @slow`)
 - **Retries** -- `@retry(N)` tags or global config
@@ -57,7 +58,7 @@ reference types -- mutations in closures are visible across step handlers.
 - **Parallel execution** -- bounded concurrency via `@async.all()`
 - **Attachments** -- text, binary, or URL on steps and hooks
 - **Structured errors** -- `run_or_fail` with snippets and suggestions
-- **Codegen** -- generate `_test.mbt` runners from `.feature` files
+- **Codegen** -- generate `_test.mbt` runners from `.feature` and `.feature.md` files
 - **Formatters** -- Pretty, Cucumber Messages (NDJSON), JUnit XML
 
 ## Cucumber Expression Parameters

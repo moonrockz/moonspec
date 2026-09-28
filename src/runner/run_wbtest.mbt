@@ -760,3 +760,15 @@ test "parse_skip_tag returns first match" {
   ])
   assert_eq(result, Some("a"))
 }
+
+///|
+test "gherkin_media_type selects markdown for .feature.md" {
+  assert_eq(
+    gherkin_media_type("features/a.feature"),
+    "text/x.cucumber.gherkin+plain",
+  )
+  assert_eq(
+    gherkin_media_type("features/a.feature.md"),
+    "text/x.cucumber.gherkin+markdown",
+  )
+}
