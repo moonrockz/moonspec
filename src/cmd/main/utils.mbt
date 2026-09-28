@@ -169,3 +169,16 @@ fn load_config_file_optional(path : String) -> @config.MoonspecConfig? {
   }
   Some(@config.MoonspecConfig::from_json5(content))
 }
+
+///|
+/// Resolve where `gen tests` writes the test file for `feature_file`.
+///
+/// An `output` ending in `.mbt` is the exact file path (for example
+/// `-o $output` in a moon pre-build). Any other `output` is a directory.
+fn test_output_path(output : String?, feature_file : String) -> String {
+  match output {
+    Some(path) if str_ends_with(path, ".mbt") => path
+    Some(dir) => dir + "/" + @codegen.feature_to_test_filename(feature_file)
+    None => @codegen.feature_to_test_filename(feature_file)
+  }
+}

@@ -513,17 +513,30 @@ Use `moonspec gen` as a [pre-build](https://docs.moonbitlang.com/en/latest/toolc
 step so that test files are regenerated automatically from `.feature` files on
 every `moon check`, `moon build`, or `moon test`:
 
-```json
-{
+```moonbit
+// src/moon.pkg
+import {
+  "moonrockz/moonspec",
+  "moonrockz/moonspec/format",
+  "moonbitlang/async",
+}
+
+options(
   "pre-build": [
     {
       "input": "../features/calculator.feature",
-      "output": "calculator_feature_test.mbt",
-      "command": "moonspec gen features/calculator.feature -w CalcWorld -o src/"
-    }
-  ]
-}
+      "output": "calculator_feature_wbtest.mbt",
+      "command": "moonspec gen tests $input -w CalcWorld -o $output",
+    },
+  ],
+)
 ```
+
+moon runs pre-build commands from the module root and expands `$input` and
+`$output` to paths relative to it. Pass `-o $output` so the test file is written
+to the declared output. When `-o` ends in `.mbt`, `gen tests` uses it as the
+exact file path. Generated tests use `@format.PrettyFormatter` unless a config
+file sets other formatters, so import `moonrockz/moonspec/format`.
 
 The `--world` (`-w`) flag tells codegen which World type to use. Generated tests
 call `@moonspec.run_or_fail` with `FeatureSource::File` to load the `.feature`
@@ -616,7 +629,7 @@ to load the feature at runtime and execute it through the full runner pipeline.
 **Arguments:**
 - One or more `.feature` file paths (required)
 - `--world` / `-w`: World type name, e.g. `CalcWorld` (required)
-- `--output-dir` / `-o`: write generated files to this directory (default: current directory)
+- `--output-dir` / `-o`: write generated files to this directory (default: current directory). A value ending in `.mbt` is the exact output file; use it with one feature file
 - `--mode` / `-m`: `per-scenario` (default) or `per-feature`
 - `--config` / `-c`: path to a `moonspec.json5` config file
 

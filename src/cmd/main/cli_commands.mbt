@@ -24,6 +24,14 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
     )
     return
   }
+  if files.length() > 1 &&
+    output_dir is Some(path) &&
+    str_ends_with(path, ".mbt") {
+    die(
+      "Error: --output-dir (-o) names a single .mbt file, but got \{files.length()} feature files",
+    )
+    return
+  }
   // CLI --mode flag (applies to all files if set)
   let cli_mode : String? = option_value(value, "mode")
   for file in files {
@@ -52,11 +60,7 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
       }
     }
     let test_code = @codegen.generate_test_file(content, file, config~)
-    let test_filename = @codegen.feature_to_test_filename(file)
-    let output_path = match output_dir {
-      Some(dir) => dir + "/" + test_filename
-      None => test_filename
-    }
+    let output_path = test_output_path(output_dir, file)
     @fs.write_string_to_file(output_path, test_code) catch {
       @fs.IOError(msg) => {
         die("Error writing \{output_path}: \{msg}")

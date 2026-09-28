@@ -1,6 +1,6 @@
 ///|
 fn get_version() -> String {
-  "0.7.0"
+  "0.7.1"
 }
 
 ///|
@@ -19,7 +19,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "output-dir",
         short='o',
-        about="Output directory for generated test files",
+        about="Output directory, or an exact .mbt file path for one feature file",
       ),
       @argparse.OptionArg(
         "world",

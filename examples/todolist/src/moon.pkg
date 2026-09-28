@@ -1,5 +1,6 @@
 import {
   "moonrockz/moonspec",
+  "moonrockz/moonspec/format",
   "moonbitlang/async",
 }
 
@@ -8,12 +9,12 @@ options(
     {
       "input": "../features/todolist.feature",
       "output": "todolist_feature_wbtest.mbt",
-      "command": "moonspec gen tests $input -w TodoWorld -o .",
+      "command": "moonspec gen tests $input -w TodoWorld -o $output",
     },
     {
       "input": "steps.mbt",
       "output": "todoworld_steps_gen.mbt",
-      "command": "moonspec gen steps -d .",
+      "command": "moonspec gen steps -d src",
     },
   ],
 )
