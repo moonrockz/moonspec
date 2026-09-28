@@ -108,7 +108,7 @@ External dependencies:
   Each package has its files and blackbox test files (common, ending in
   `_test.mbt`) and whitebox test files (ending in `_wbtest.mbt`).
 
-- In the toplevel directory, there is a `moon.mod.json` file listing about the
+- In the toplevel directory, there is a `moon.mod` file listing about the
   module and some meta information.
 
 ## Design Philosophy

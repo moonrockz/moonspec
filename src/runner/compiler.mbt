@@ -7,7 +7,7 @@ priv struct IdCounter {
 
 ///|
 fn IdCounter::new() -> IdCounter {
-  { pickle_count: 0, step_count: 0 }
+  { pickle_count: 0, step_count: 0, }
 }
 
 ///|
@@ -32,7 +32,7 @@ fn string_replace_compiler(
   old : String,
   new_val : String,
 ) -> String {
-  let buf = StringBuilder::new()
+  let buf = StringBuilder()
   let s_len = s.length()
   let old_len = old.length()
   if old_len == 0 {
@@ -81,7 +81,7 @@ fn compile_tags(
 ) -> Array[@cucumber_messages.PickleTag] {
   let result : Array[@cucumber_messages.PickleTag] = []
   for tag in tags {
-    result.push({ name: tag.name, astNodeId: tag.id })
+    result.push({ name: tag.name, astNodeId: tag.id, })
   }
   result
 }
@@ -116,7 +116,7 @@ fn compile_step(
         )
       }
       Some({
-        docString: Some({ content, mediaType: ds.media_type }),
+        docString: Some({ content, mediaType: ds.media_type, }),
         dataTable: None,
       })
     }
@@ -137,7 +137,7 @@ fn compile_step(
         }
         rows.push({ cells, })
       }
-      Some({ docString: None, dataTable: Some({ rows, }) })
+      Some({ docString: None, dataTable: Some({ rows, }), })
     }
     None => None
   }

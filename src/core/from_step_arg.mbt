@@ -3,11 +3,11 @@
 /// Implementations convert a StepArg into the target type,
 /// raising an Error if the StepValue variant doesn't match.
 pub(open) trait FromStepArg {
-  from_step_arg(StepArg) -> Self raise Error
+  fn from_step_arg(StepArg) -> Self raise Error
 }
 
 ///|
-impl FromStepArg for Int with from_step_arg(arg) {
+pub impl FromStepArg for Int with fn from_step_arg(arg) {
   match arg.value {
     IntVal(v) => v
     other => raise Failure::Failure("expected IntVal, got \{other}")
@@ -15,7 +15,7 @@ impl FromStepArg for Int with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for Double with from_step_arg(arg) {
+pub impl FromStepArg for Double with fn from_step_arg(arg) {
   match arg.value {
     FloatVal(v) => v
     DoubleVal(v) => v
@@ -25,7 +25,7 @@ impl FromStepArg for Double with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for Int64 with from_step_arg(arg) {
+pub impl FromStepArg for Int64 with fn from_step_arg(arg) {
   match arg.value {
     LongVal(v) => v
     other => raise Failure::Failure("expected LongVal, got \{other}")
@@ -33,7 +33,7 @@ impl FromStepArg for Int64 with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for Byte with from_step_arg(arg) {
+pub impl FromStepArg for Byte with fn from_step_arg(arg) {
   match arg.value {
     ByteVal(v) => v
     other => raise Failure::Failure("expected ByteVal, got \{other}")
@@ -41,7 +41,7 @@ impl FromStepArg for Byte with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for String with from_step_arg(arg) {
+pub impl FromStepArg for String with fn from_step_arg(arg) {
   match arg.value {
     StringVal(v) => v
     WordVal(v) => v
@@ -54,7 +54,7 @@ impl FromStepArg for String with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for BigInt with from_step_arg(arg) {
+pub impl FromStepArg for BigInt with fn from_step_arg(arg) {
   match arg.value {
     BigIntegerVal(v) => v
     other => raise Failure::Failure("expected BigIntegerVal, got \{other}")
@@ -62,7 +62,7 @@ impl FromStepArg for BigInt with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for @decimal.Decimal with from_step_arg(arg) {
+pub impl FromStepArg for @decimal.Decimal with fn from_step_arg(arg) {
   match arg.value {
     BigDecimalVal(v) => v
     other => raise Failure::Failure("expected BigDecimalVal, got \{other}")
@@ -70,7 +70,7 @@ impl FromStepArg for @decimal.Decimal with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for @any.Any with from_step_arg(arg) {
+pub impl FromStepArg for @any.Any with fn from_step_arg(arg) {
   match arg.value {
     CustomVal(v) => v
     other => raise Failure::Failure("expected CustomVal, got \{other}")
@@ -78,7 +78,7 @@ impl FromStepArg for @any.Any with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for DataTable with from_step_arg(arg) {
+pub impl FromStepArg for DataTable with fn from_step_arg(arg) {
   match arg.value {
     DataTableVal(v) => v
     other => raise Failure::Failure("expected DataTableVal, got \{other}")
@@ -86,9 +86,15 @@ impl FromStepArg for DataTable with from_step_arg(arg) {
 }
 
 ///|
-impl FromStepArg for DocString with from_step_arg(arg) {
+pub extend DataTable with FromStepArg::{from_step_arg}
+
+///|
+pub impl FromStepArg for DocString with fn from_step_arg(arg) {
   match arg.value {
     DocStringVal(v) => v
     other => raise Failure::Failure("expected DocStringVal, got \{other}")
   }
 }
+
+///|
+pub extend DocString with FromStepArg::{from_step_arg}

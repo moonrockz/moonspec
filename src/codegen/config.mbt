@@ -3,7 +3,13 @@
 pub(all) enum CodegenMode {
   PerScenario
   PerFeature
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend CodegenMode with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend CodegenMode with Eq::{not_equal, equal}
 
 ///|
 /// Configuration for code generation.
@@ -12,12 +18,18 @@ pub(all) struct CodegenConfig {
   world : String
   skip_tags : Array[String]?
   formatters : Array[@config.FormatterConfig]?
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend CodegenConfig with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend CodegenConfig with Eq::{not_equal, equal}
 
 ///|
 /// Create a default config (per-scenario mode, empty world name).
 pub fn CodegenConfig::default() -> CodegenConfig {
-  { mode: PerScenario, world: "", skip_tags: None, formatters: None }
+  { mode: PerScenario, world: "", skip_tags: None, formatters: None, }
 }
 
 ///|
@@ -47,5 +59,5 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
     }
     _ => ()
   }
-  { mode, world, skip_tags: None, formatters: None }
+  { mode, world, skip_tags: None, formatters: None, }
 }

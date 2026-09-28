@@ -2,12 +2,19 @@
 /// A unique identifier for a step definition, assigned by the StepRegistry.
 pub(all) struct StepDefId {
   priv value : String
-
-  fn new(value : String) -> StepDefId
-} derive(Show, Eq, Hash)
+} derive(Debug, Eq, Hash)
 
 ///|
-fn StepDefId::new(value : String) -> StepDefId {
+pub extend StepDefId with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend StepDefId with Eq::{not_equal, equal}
+
+///|
+pub extend StepDefId with Hash::{hash, hash_combine}
+
+///|
+fn StepDefId::StepDefId(value : String) -> StepDefId {
   { value, }
 }
 
@@ -23,17 +30,33 @@ pub(all) enum StepKeyword {
   When
   Then
   Step
-} derive(Show, Eq)
+} derive(Debug, Eq)
+
+///|
+pub extend StepKeyword with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend StepKeyword with Eq::{not_equal, equal}
 
 ///|
 /// Optional source location for a step definition (populated by codegen).
 pub(all) struct StepSource {
   uri : String?
   line : Int?
-} derive(Show, Eq)
+} derive(Debug, Eq)
 
 ///|
-pub fn StepSource::new(uri? : String = "", line? : Int = 0) -> StepSource {
+pub extend StepSource with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend StepSource with Eq::{not_equal, equal}
+
+///|
+#alias(new)
+pub fn StepSource::StepSource(
+  uri? : String = "",
+  line? : Int = 0,
+) -> StepSource {
   {
     uri: if uri == "" {
       None
@@ -64,7 +87,7 @@ pub fn StepDef::given(
   handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Given, pattern, handler: StepHandler(handler), source, id: None }
+  { keyword: Given, pattern, handler: StepHandler(handler), source, id: None, }
 }
 
 ///|
@@ -73,7 +96,7 @@ pub fn StepDef::when(
   handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: When, pattern, handler: StepHandler(handler), source, id: None }
+  { keyword: When, pattern, handler: StepHandler(handler), source, id: None, }
 }
 
 ///|
@@ -82,7 +105,7 @@ pub fn StepDef::then(
   handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Then, pattern, handler: StepHandler(handler), source, id: None }
+  { keyword: Then, pattern, handler: StepHandler(handler), source, id: None, }
 }
 
 ///|
@@ -91,5 +114,5 @@ pub fn StepDef::step(
   handler : (Ctx) -> Unit raise Error,
   source? : StepSource,
 ) -> StepDef {
-  { keyword: Step, pattern, handler: StepHandler(handler), source, id: None }
+  { keyword: Step, pattern, handler: StepHandler(handler), source, id: None, }
 }

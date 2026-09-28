@@ -5,7 +5,7 @@ fn make_test_pickle(
   uri? : String = "test://feature",
 ) -> @cucumber_messages.Pickle {
   let pickle_tags = tags.map(fn(t) {
-    let tag : @cucumber_messages.PickleTag = { name: t, astNodeId: "t1" }
+    let tag : @cucumber_messages.PickleTag = { name: t, astNodeId: "t1", }
     tag
   })
   {

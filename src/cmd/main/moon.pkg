@@ -3,12 +3,10 @@ import {
   "moonrockz/moonspec/config",
   "moonrockz/moonspec/scanner",
   "moonrockz/gherkin",
-  "TheWaWaR/clap",
+  "moonbitlang/core/argparse",
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",
   "moonbitlang/core/env",
 }
 
-options(
-  "is-main": true,
-)
+pkgtype(kind: "executable")

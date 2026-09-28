@@ -4,14 +4,17 @@ struct CucumberWorld {
 } derive(Default)
 
 ///|
-impl @core.World for CucumberWorld with configure(self, setup) {
-  setup.given("I have {int} cucumbers", fn(ctx) {
+pub extend CucumberWorld with Default::{default}
+
+///|
+impl @core.World for CucumberWorld with fn configure(self, setup) {
+  setup.given("I have {int} cucumbers", ctx => {
     match ctx[0] {
       { value: @core.StepValue::IntVal(n), .. } => self.total = n
       _ => ()
     }
   })
-  setup.when("I eat {int} cucumbers", fn(ctx) {
+  setup.when("I eat {int} cucumbers", ctx => {
     match ctx[0] {
       { value: @core.StepValue::IntVal(n), .. } => self.total = self.total - n
       _ => ()
@@ -41,7 +44,10 @@ async test "feature parses and runs all scenarios" {
 struct EmptyWorld {} derive(Default)
 
 ///|
-impl @core.World for EmptyWorld with configure(_self, _setup) {
+pub extend EmptyWorld with Default::{default}
+
+///|
+impl @core.World for EmptyWorld with fn configure(_self, _setup) {
   ()
 }
 

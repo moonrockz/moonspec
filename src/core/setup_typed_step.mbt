@@ -4,7 +4,7 @@ pub fn Setup::step0(
   pattern : String,
   handler : () -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 0)
     handler()
   })
@@ -16,7 +16,7 @@ pub fn Setup::step0_ctx(
   pattern : String,
   handler : (Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 0)
     handler(ctx)
   })
@@ -28,7 +28,7 @@ pub fn[A : FromStepArg] Setup::step1(
   pattern : String,
   handler : (A) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 1)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     handler(a)
@@ -41,7 +41,7 @@ pub fn[A : FromStepArg] Setup::step1_ctx(
   pattern : String,
   handler : (A, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 1)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     handler(a, ctx)
@@ -54,7 +54,7 @@ pub fn[A : FromStepArg, B : FromStepArg] Setup::step2(
   pattern : String,
   handler : (A, B) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 2)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -68,7 +68,7 @@ pub fn[A : FromStepArg, B : FromStepArg] Setup::step2_ctx(
   pattern : String,
   handler : (A, B, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 2)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -82,7 +82,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::step3(
   pattern : String,
   handler : (A, B, C) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 3)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -97,7 +97,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::step3_ctx(
   pattern : String,
   handler : (A, B, C, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 3)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -112,7 +112,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup
   pattern : String,
   handler : (A, B, C, D) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 4)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -128,7 +128,7 @@ pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup
   pattern : String,
   handler : (A, B, C, D, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 4)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -150,7 +150,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 5)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -173,7 +173,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 5)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -197,7 +197,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 6)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -222,7 +222,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 6)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -248,7 +248,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 7)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -275,7 +275,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 7)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -303,7 +303,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 8)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -332,7 +332,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 8)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -362,7 +362,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 9)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -393,7 +393,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 9)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -425,7 +425,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 10)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -458,7 +458,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 10)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -492,7 +492,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 11)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -527,7 +527,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 11)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -563,7 +563,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 12)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -600,7 +600,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 12)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -638,7 +638,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 13)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -677,7 +677,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 13)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -717,7 +717,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 14)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -758,7 +758,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 14)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -800,7 +800,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 15)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -843,7 +843,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 15)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -887,7 +887,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 16)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -932,7 +932,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 16)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -978,7 +978,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 17)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1025,7 +1025,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 17)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1073,7 +1073,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 18)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1122,7 +1122,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 18)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1172,7 +1172,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 19)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1223,7 +1223,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 19)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1275,7 +1275,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 20)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1328,7 +1328,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 20)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1382,7 +1382,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 21)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1437,7 +1437,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 21)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1493,7 +1493,7 @@ pub fn[
   pattern : String,
   handler : (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 22)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])
@@ -1574,7 +1574,7 @@ pub fn[
     Ctx,
   ) -> Unit raise Error,
 ) -> Unit {
-  self.step(pattern, fn(ctx) {
+  self.step(pattern, fn(ctx) raise {
     validate_arity(ctx, 22)
     let a : A = FromStepArg::from_step_arg(ctx[0])
     let b : B = FromStepArg::from_step_arg(ctx[1])

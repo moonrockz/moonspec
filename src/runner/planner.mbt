@@ -6,7 +6,7 @@ pub(all) struct IdGenerator {
 
 ///|
 pub fn IdGenerator::new() -> IdGenerator {
-  { counter: 0 }
+  { counter: 0, }
 }
 
 ///|
@@ -98,7 +98,7 @@ pub fn build_step_definition_envelopes(
       Some(id) => id.to_string()
       None => continue
     }
-    let source_ref : Map[String, Json] = {}
+    let source_ref : Map[String, Json] = Map([])
     match step_def.source {
       Some(src) => {
         match src.uri {

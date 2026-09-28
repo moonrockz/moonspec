@@ -8,7 +8,7 @@ BDD test framework for MoonBit with Gherkin and Cucumber Expressions.
 moon add moonrockz/moonspec
 ```
 
-Add `moonrockz/moonspec` to the `import` array in your `moon.pkg.json`.
+Add `moonrockz/moonspec` to the `import` array in your `moon.pkg`.
 
 ## Quick Start
 
@@ -23,7 +23,7 @@ impl @moonspec.World for CalcWorld with configure(self, setup) {
     self.result = a + b
   })
   setup.then1("the result should be {int}", fn(n : Int) {
-    assert_eq!(self.result, n)
+    assert_eq(self.result, n)
   })
 }
 
@@ -87,7 +87,7 @@ The numeric suffix indicates how many parameters the handler takes:
 setup.given0("a calculator", fn() { self.result = 0 })
 setup.given1("a user named {string}", fn(name : String) { self.user = name })
 setup.when2("I add {int} and {int}", fn(a : Int, b : Int) { self.result = a + b })
-setup.then1("the result should be {int}", fn(n : Int) { assert_eq!(self.result, n) })
+setup.then1("the result should be {int}", fn(n : Int) { assert_eq(self.result, n) })
 setup.step0("the system is ready", fn() { () }) // matches any keyword
 ```
 
@@ -194,11 +194,11 @@ Three built-in formatters (all implement `MessageSink`):
 Register with a destination:
 
 ```moonbit
-options.add_formatter(&@format.PrettyFormatter::new(), @moonspec.Stdout)
-options.add_formatter(&@format.JUnitFormatter::new(), @moonspec.File("report.xml"))
+options.add_formatter(@format.PrettyFormatter::new(), @moonspec.OutputDest::Stdout)
+options.add_formatter(@format.JUnitFormatter::new(), @moonspec.OutputDest::File("report.xml"))
 ```
 
-Output destinations: `@moonspec.Stdout`, `@moonspec.Stderr`, `@moonspec.File(path)`.
+Output destinations: `@moonspec.OutputDest::Stdout`, `@moonspec.OutputDest::Stderr`, `@moonspec.OutputDest::File(path)`.
 
 When no formatters are configured, defaults to pretty output on stdout.
 

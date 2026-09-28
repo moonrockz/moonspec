@@ -26,7 +26,7 @@ fn make_result(
   summary? : @runner.RunSummary = make_summary(),
   parse_errors? : Array[@runner.ParseErrorInfo] = [],
 ) -> @runner.RunResult {
-  { features: [], summary, parse_errors }
+  { features: [], summary, parse_errors, }
 }
 
 ///|
@@ -119,7 +119,7 @@ test "assert_no_parse_errors passes on empty parse_errors" {
 ///|
 test "assert_no_parse_errors fails when parse errors exist" {
   let result = make_result(parse_errors=[
-    { uri: "test.feature", message: "syntax error", line: Some(1) },
+    { uri: "test.feature", message: "syntax error", line: Some(1), },
   ])
   let mut caught = false
   assert_no_parse_errors(result) catch {

@@ -362,6 +362,6 @@ test "string_contains basic cases" {
   assert_true(string_contains("hello world", "world"))
   assert_true(string_contains("hello world", "hello"))
   assert_true(string_contains("hello world", ""))
-  assert_true(not(string_contains("hello", "xyz")))
-  assert_true(not(string_contains("hi", "longer string")))
+  assert_true(!string_contains("hello", "xyz"))
+  assert_true(!string_contains("hi", "longer string"))
 }

@@ -1,7 +1,8 @@
 import {
   "moonrockz/moonspec/core",
   "moonrockz/moonspec/runner",
-  "moonrockz/cucumber-messages" as @cucumber_messages,
+  "moonrockz/cucumber-messages" @cucumber_messages,
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "Milky2018/xml" as @xml,
+  "Milky2018/xml",
 }

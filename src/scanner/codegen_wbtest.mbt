@@ -6,7 +6,7 @@ test "generate_configure produces valid impl block" {
       pattern: "I have {int} cucumbers",
       fn_name: "set_cucumbers",
       world_type: "MyWorld",
-      params: [{ name: "count", type_name: "Int" }],
+      params: [{ name: "count", type_name: "Int", }],
       is_method: true,
       raises: false,
       source_file: "src/steps.mbt",
@@ -40,8 +40,8 @@ test "generate_configure handles multiple params" {
       fn_name: "eat_food",
       world_type: "W",
       params: [
-        { name: "count", type_name: "Int" },
-        { name: "food", type_name: "String" },
+        { name: "count", type_name: "Int", },
+        { name: "food", type_name: "String", },
       ],
       is_method: true,
       raises: false,
@@ -87,7 +87,7 @@ test "generate_configure handles no-param steps" {
 test "generate_configure falls back to ctx-based for arity > 22" {
   let params : Array[ParamInfo] = []
   for i = 0; i < 23; i = i + 1 {
-    params.push({ name: "p" + i.to_string(), type_name: "Int" })
+    params.push({ name: "p" + i.to_string(), type_name: "Int", })
   }
   let steps : Array[StepFnInfo] = [
     {
@@ -108,5 +108,5 @@ test "generate_configure falls back to ctx-based for arity > 22" {
   assert_true(str_contains(output, "fn(ctx) raise"))
   assert_true(str_contains(output, "IntVal(v)"))
   // Should NOT use arity-suffixed method
-  assert_true(not(str_contains(output, "setup.given23(")))
+  assert_true(!str_contains(output, "setup.given23("))
 }

@@ -22,24 +22,24 @@ impl @moonspec.StepLibrary for InventorySteps with steps(self) {
     ),
     @moonspec.StepDef::then0("the item should be in stock", fn() {
       match self.world.inventory.get(self.world.last_checked_item) {
-        Some(stock) => assert_true!(stock > 0)
-        None => fail!("Item not found in inventory")
+        Some(stock) => assert_true(stock > 0)
+        None => fail("Item not found in inventory")
       }
     }),
     @moonspec.StepDef::then1("the stock level should be {int}", fn(
       expected : Int,
     ) {
       match self.world.inventory.get(self.world.last_checked_item) {
-        Some(stock) => assert_eq!(stock, expected)
-        None => fail!("Item not found in inventory")
+        Some(stock) => assert_eq(stock, expected)
+        None => fail("Item not found in inventory")
       }
     }),
     @moonspec.StepDef::then2(
       "the stock level for {string} should be {int}",
       fn(name : String, expected : Int) {
         match self.world.inventory.get(name) {
-          Some(stock) => assert_eq!(stock, expected)
-          None => fail!("Item not found in inventory")
+          Some(stock) => assert_eq(stock, expected)
+          None => fail("Item not found in inventory")
         }
       },
     ),

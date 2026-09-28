@@ -1,13 +1,15 @@
 import {
   "moonrockz/moonspec/core",
   "moonrockz/gherkin",
-  "moonrockz/cucumber-messages" as @cucumber_messages,
+  "moonrockz/cucumber-messages" @cucumber_messages,
   "moonbitlang/async",
   "moonbitlang/x/fs",
+  "moonbitlang/core/debug",
   "moonbitlang/core/json",
-  "moonbitlang/core/strconv",
+  "moonbitlang/core/string",
 }
 
-import "wbtest" {
+import {
   "moonrockz/moonspec/format",
-}
+  "moonbitlang/core/debug",
+} for "wbtest"

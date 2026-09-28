@@ -9,12 +9,12 @@ pub(all) struct MessagesFormatter {
 ///|
 /// Create a new MessagesFormatter.
 pub fn MessagesFormatter::new() -> MessagesFormatter {
-  { buffer: "" }
+  { buffer: "", }
 }
 
 ///|
 /// Return accumulated NDJSON output.
-pub impl @core.MessageSink for MessagesFormatter with output(self) {
+pub impl @core.MessageSink for MessagesFormatter with fn output(self) {
   self.buffer
 }
 
@@ -31,7 +31,16 @@ fn MessagesFormatter::emit_line(
 }
 
 ///|
-pub impl @core.MessageSink for MessagesFormatter with on_message(self, envelope) {
+pub impl @core.MessageSink for MessagesFormatter with fn on_message(
+  self,
+  envelope,
+) {
   let json = envelope.to_json().stringify()
   self.emit_line(json)
+}
+
+///|
+pub extend MessagesFormatter with @moonrockz/moonspec/core.MessageSink::{
+  output,
+  on_message,
 }

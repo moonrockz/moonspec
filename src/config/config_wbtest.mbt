@@ -60,7 +60,7 @@ test "merge: package config overrides module config" {
   let package_config = MoonspecConfig::{
     world: None,
     mode: Some(Simple("per-feature")),
-    steps: Some(StepsConfig::{ output: Some("alongside"), exclude: None }),
+    steps: Some(StepsConfig::{ output: Some("alongside"), exclude: None, }),
     skip_tags: None,
     formatters: None,
   }
@@ -90,7 +90,7 @@ test "resolve_mode with simple mode" {
 
 ///|
 test "resolve_mode with per-file map" {
-  let map : Map[String, String] = {}
+  let map : Map[String, String] = Map([])
   map.set("features/checkout.feature", "per-feature")
   map.set("*", "per-scenario")
   let config = MoonspecConfig::{
@@ -229,7 +229,7 @@ test "merge: formatters override takes precedence" {
     steps: None,
     skip_tags: None,
     formatters: Some([
-      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false },
+      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false, },
     ]),
   }
   let override_ = MoonspecConfig::{
@@ -238,7 +238,11 @@ test "merge: formatters override takes precedence" {
     steps: None,
     skip_tags: None,
     formatters: Some([
-      FormatterConfig::{ type_: "junit", output: "report.xml", no_color: false },
+      FormatterConfig::{
+        type_: "junit",
+        output: "report.xml",
+        no_color: false,
+      },
     ]),
   }
   let merged = base.merge(override_)
@@ -259,7 +263,7 @@ test "merge: formatters falls back to base when override absent" {
     steps: None,
     skip_tags: None,
     formatters: Some([
-      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false },
+      FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false, },
     ]),
   }
   let override_ = MoonspecConfig::empty()

@@ -2,7 +2,10 @@
 struct ParWorld {} derive(Default)
 
 ///|
-impl @core.World for ParWorld with configure(_self, setup) {
+pub extend ParWorld with Default::{default}
+
+///|
+impl @core.World for ParWorld with fn configure(_self, setup) {
   setup.given("a step", fn(_ctx) {  })
   setup.given("step a", fn(_ctx) {  })
   setup.given("step b", fn(_ctx) {  })

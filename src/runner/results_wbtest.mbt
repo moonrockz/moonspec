@@ -1,22 +1,22 @@
 ///|
 test "StepStatus::Passed shows correctly" {
-  inspect(StepStatus::Passed, content="Passed")
+  @debug.debug_inspect(StepStatus::Passed, content="Passed")
 }
 
 ///|
 test "StepStatus::Failed shows with error" {
   let status = StepStatus::Failed("assertion failed")
-  inspect(status, content="Failed(\"assertion failed\")")
+  @debug.debug_inspect(status, content="Failed(\"assertion failed\")")
 }
 
 ///|
 test "StepStatus::Skipped shows correctly" {
-  inspect(StepStatus::Skipped(None), content="Skipped(None)")
+  @debug.debug_inspect(StepStatus::Skipped(None), content="Skipped(None)")
 }
 
 ///|
 test "StepStatus::Skipped with reason shows correctly" {
-  inspect(
+  @debug.debug_inspect(
     StepStatus::Skipped(Some("dry run")),
     content="Skipped(Some(\"dry run\"))",
   )
@@ -24,12 +24,12 @@ test "StepStatus::Skipped with reason shows correctly" {
 
 ///|
 test "StepStatus::Undefined shows correctly" {
-  inspect(StepStatus::Undefined, content="Undefined")
+  @debug.debug_inspect(StepStatus::Undefined, content="Undefined")
 }
 
 ///|
 test "StepStatus::Pending shows correctly" {
-  inspect(StepStatus::Pending, content="Pending")
+  @debug.debug_inspect(StepStatus::Pending, content="Pending")
 }
 
 ///|

@@ -2,7 +2,10 @@
 struct FilterWorld {} derive(Default)
 
 ///|
-impl @core.World for FilterWorld with configure(_self, setup) {
+pub extend FilterWorld with Default::{default}
+
+///|
+impl @core.World for FilterWorld with fn configure(_self, setup) {
   setup.given("a step", fn(_ctx) {  })
 }
 

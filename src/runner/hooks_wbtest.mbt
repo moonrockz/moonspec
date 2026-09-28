@@ -7,8 +7,11 @@ struct IsolationWorld {
 } derive(Default)
 
 ///|
-impl @core.World for IsolationWorld with configure(self, setup) {
-  setup.given("I set counter to {int}", fn(ctx) {
+pub extend IsolationWorld with Default::{default}
+
+///|
+impl @core.World for IsolationWorld with fn configure(self, setup) {
+  setup.given("I set counter to {int}", ctx => {
     match ctx[0] {
       { value: @core.StepValue::IntVal(n), .. } => self.counter = n
       _ => ()
@@ -58,10 +61,13 @@ struct HookWorld {
 } derive(Default)
 
 ///|
-impl @core.World for HookWorld with configure(self, setup) {
+pub extend HookWorld with Default::{default}
+
+///|
+impl @core.World for HookWorld with fn configure(self, setup) {
   setup.given("a step", fn(_ctx) { () })
   setup.then("it passes", fn(_ctx) { () })
-  setup.before_test_case(fn(ctx) {
+  setup.before_test_case(ctx => {
     self.log.push("before_scenario:" + ctx.scenario().scenario_name)
   })
   setup.after_test_case(fn(ctx, result) {
@@ -77,9 +83,7 @@ impl @core.World for HookWorld with configure(self, setup) {
       "after_scenario:" + ctx.scenario().scenario_name + ":" + status,
     )
   })
-  setup.before_test_step(fn(ctx) {
-    self.log.push("before_step:" + ctx.step().text)
-  })
+  setup.before_test_step(ctx => self.log.push("before_step:" + ctx.step().text))
   setup.after_test_step(fn(ctx, result) {
     let status = match result {
       @core.HookResult::Passed => "ok"
@@ -138,7 +142,10 @@ struct FailHookWorld {
 } derive(Default)
 
 ///|
-impl @core.World for FailHookWorld with configure(self, setup) {
+pub extend FailHookWorld with Default::{default}
+
+///|
+impl @core.World for FailHookWorld with fn configure(self, setup) {
   setup.given("a step", fn(_ctx) { () })
   setup.before_test_case(fn(_ctx) raise {
     self.log.push("before_scenario")

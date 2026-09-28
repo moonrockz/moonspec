@@ -8,7 +8,7 @@ pub struct FeatureCache {
 ///|
 /// Create an empty feature cache.
 pub fn FeatureCache::new() -> FeatureCache {
-  { cache: {} }
+  { cache: {}, }
 }
 
 ///|
@@ -71,14 +71,14 @@ pub fn FeatureCache::load_from_source(
         self.load_text(path, content)
         []
       } catch {
-        e => [{ uri: path, message: e.to_string(), line: None }]
+        e => [{ uri: path, message: e.to_string(), line: None, }]
       }
     File(path) =>
       try {
         self.load_file(path)
         []
       } catch {
-        e => [{ uri: path, message: e.to_string(), line: None }]
+        e => [{ uri: path, message: e.to_string(), line: None, }]
       }
   }
 }
