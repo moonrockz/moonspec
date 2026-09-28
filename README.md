@@ -108,6 +108,51 @@ Supported constructs:
 - **Tags** -- `@tag` annotations for filtering, metadata, `@retry(N)` retry control, and `@skip("reason")`/`@ignore("reason")` for skipping
 - **Comments** -- lines starting with `#`
 
+### Markdown with Gherkin
+
+moonspec also reads [Markdown with Gherkin](https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md)
+(MDG) files. Use the `.feature.md` extension, and moonspec parses the file as
+MDG. Other Markdown prose is documentation only, so a feature file can also be
+a readable document.
+
+````markdown
+# Feature: Shopping Cart
+
+Customers collect items before checkout.
+
+## Background:
+
+- Given a logged-in user
+
+`@smoke`
+## Scenario: Add item to cart
+
+- When I add "Widget" to the cart
+- Then the cart should contain 1 item
+
+## Scenario Outline: Bulk discount
+
+- When I add <quantity> of "<product>" to the cart
+- Then the discount should be <discount>%
+
+### Examples:
+
+  | quantity | product | discount |
+  | -------- | ------- | -------- |
+  | 10       | Widget  | 5        |
+  | 100      | Gadget  | 20       |
+````
+
+MDG uses headings for features, rules, backgrounds, scenarios and examples.
+It uses `-` or `*` list items for steps, code spans for tags, indented GFM
+tables for data tables and examples, and fenced code blocks for doc strings.
+
+`.feature.md` files work everywhere `.feature` files do: `FeatureSource::File`,
+`FeatureSource::Text` (the path selects the format), `moonspec gen tests` and
+`moonspec check`. `moonspec gen tests features/cart.feature.md` writes
+`cart_feature_test.mbt`. Cucumber Messages `source` envelopes use the media type
+`text/x.cucumber.gherkin+markdown`.
+
 ## World and Step Definitions
 
 Following the [cucumber-rs pattern](https://cucumber-rs.github.io/cucumber/main/quickstart.html),
@@ -929,6 +974,7 @@ See [`examples/calculator/`](examples/calculator/) -- one test per scenario:
 - Codegen via `moonspec gen` with per-scenario mode (default)
 - World struct with `derive(Default)` and inline step definitions
 - Background steps, Scenario Outlines, and tag filtering
+- The same feature as Markdown with Gherkin (`features/calculator.feature.md`)
 
 ### Bank Account (PerFeature mode + StepLibrary)
 

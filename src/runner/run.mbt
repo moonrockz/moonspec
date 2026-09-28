@@ -52,6 +52,16 @@ fn make_meta_envelope() -> @cucumber_messages.Envelope {
 }
 
 ///|
+/// Cucumber Messages media type for a Gherkin source, based on its URI.
+fn gherkin_media_type(uri : String) -> String {
+  if uri.has_suffix(".feature.md") {
+    "text/x.cucumber.gherkin+markdown"
+  } else {
+    "text/x.cucumber.gherkin+plain"
+  }
+}
+
+///|
 fn make_source_envelope(
   uri : String,
   data : String,
@@ -60,7 +70,7 @@ fn make_source_envelope(
     "source": {
       "uri": uri.to_json(),
       "data": data.to_json(),
-      "mediaType": "text/x.cucumber.gherkin+plain".to_json(),
+      "mediaType": gherkin_media_type(uri).to_json(),
     },
   }
   @json.from_json(json) catch {

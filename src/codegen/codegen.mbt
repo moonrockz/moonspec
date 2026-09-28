@@ -89,15 +89,19 @@ fn substring_from(s : String, start : Int) -> String {
 }
 
 ///|
-/// Convert a .feature file path to a _test.mbt filename.
+/// Convert a .feature (or .feature.md) file path to a _test.mbt filename.
 ///
 /// - Strip "features/" prefix
+/// - Strip the ".md" of a Markdown with Gherkin ".feature.md" path
 /// - Replace "/" with "_"
 /// - Replace ".feature" with "_feature_test.mbt"
 pub fn feature_to_test_filename(path : String) -> String {
   let mut result = path
   if starts_with(result, "features/") {
     result = substring_from(result, 9) // len("features/") == 9
+  }
+  if result.has_suffix(".feature.md") {
+    result = result[:result.length() - 3].to_owned()
   }
   result = string_replace(result, "/", "_")
   result = string_replace(result, ".feature", "_feature_test.mbt")
@@ -116,7 +120,8 @@ pub fn generate_test_file(
   config? : CodegenConfig = CodegenConfig::default(),
 ) -> String {
   let hash = simple_hash(feature_content)
-  let source = @gherkin.Source::from_string(feature_content)
+  // The URI lets the parser pick Markdown with Gherkin for .feature.md paths
+  let source = @gherkin.Source::from_string(feature_content, uri=source_path)
   let doc = @gherkin.parse(source) catch {
     _ =>
       return "// moonspec:hash:" +

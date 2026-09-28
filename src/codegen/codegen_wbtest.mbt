@@ -27,6 +27,26 @@ test "feature_to_test_filename converts paths" {
 }
 
 ///|
+test "feature_to_test_filename converts Markdown with Gherkin paths" {
+  assert_eq(
+    feature_to_test_filename("features/login.feature.md"),
+    "login_feature_test.mbt",
+  )
+  assert_eq(
+    feature_to_test_filename("features/admin/users.feature.md"),
+    "admin_users_feature_test.mbt",
+  )
+}
+
+///|
+test "generate_test_file parses Markdown with Gherkin sources" {
+  let content = "# Feature: Login\n\n## Scenario: Success\n\n- Given a user\n"
+  let output = generate_test_file(content, "features/login.feature.md")
+  assert_true(output.contains("Scenario: Success"))
+  assert_false(output.contains("ERROR"))
+}
+
+///|
 test "generate_test_file handles scenario outline with examples" {
   let content = "Feature: Math\n\n  Scenario Outline: Add numbers\n    Given <a> and <b>\n    Then result is <sum>\n\n    Examples:\n      | a | b | sum |\n      | 1 | 2 | 3   |\n      | 4 | 5 | 9   |\n"
   let output = generate_test_file(content, "features/math.feature")

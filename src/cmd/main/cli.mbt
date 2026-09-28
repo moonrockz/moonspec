@@ -12,7 +12,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.PositionArg(
         "files",
         num_args=@argparse.ValueRange(lower=1),
-        about=".feature files to generate tests from",
+        about=".feature or .feature.md files to generate tests from",
       ),
     ],
     options=[
@@ -37,7 +37,7 @@ fn build_parser() -> @argparse.Command {
         about="Path to moonspec.json5 config file",
       ),
     ],
-    about="Generate _test.mbt files from .feature files",
+    about="Generate _test.mbt files from .feature or .feature.md files",
   )
   // -- gen steps: generate configure from #moonspec.* attributes
   let gen_steps = @argparse.Command(
@@ -70,10 +70,10 @@ fn build_parser() -> @argparse.Command {
       @argparse.PositionArg(
         "files",
         num_args=@argparse.ValueRange(lower=1),
-        about=".feature files to check",
+        about=".feature or .feature.md files to check",
       ),
     ],
-    about="Parse and validate .feature files",
+    about="Parse and validate .feature or .feature.md files",
   )
   // -- version
   let version = @argparse.Command("version", about="Print version information")

@@ -99,3 +99,14 @@ test "FeatureCache::load_from_source returns ParseErrorInfo on invalid feature" 
   assert_true(errors[0].message.length() > 0)
   assert_eq(errors[0].line, None)
 }
+
+///|
+test "FeatureCache::load_text parses Markdown with Gherkin for .feature.md" {
+  let cache = FeatureCache::new()
+  cache.load_text(
+    "features/login.feature.md", "# Feature: Login\n\n## Scenario: Success\n\n- Given a user\n",
+  )
+  let feature = cache.get("features/login.feature.md").unwrap()
+  assert_eq(feature.name, "Login")
+  assert_eq(feature.children.length(), 1)
+}

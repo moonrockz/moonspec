@@ -21,7 +21,8 @@ pub fn FeatureCache::load_file(
     return
   }
   let content = @fs.read_file_to_string(path)
-  let source = @gherkin.Source::from_string(content)
+  // The URI lets the parser pick Markdown with Gherkin for .feature.md paths
+  let source = @gherkin.Source::from_string(content, uri=path)
   let doc = @gherkin.parse(source)
   match doc.feature {
     Some(feature) => self.cache.set(path, feature)
@@ -36,7 +37,7 @@ pub fn FeatureCache::load_text(
   path : String,
   content : String,
 ) -> Unit raise Error {
-  let source = @gherkin.Source::from_string(content)
+  let source = @gherkin.Source::from_string(content, uri=path)
   let doc = @gherkin.parse(source)
   match doc.feature {
     Some(feature) => self.cache.set(path, feature)
