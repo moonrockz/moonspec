@@ -72,14 +72,14 @@ pub fn FeatureCache::load_from_source(
         self.load_text(path, content)
         []
       } catch {
-        e => [{ uri: path, message: e.to_string(), line: None, }]
+        e => parse_error_infos(path, e)
       }
     File(path) =>
       try {
         self.load_file(path)
         []
       } catch {
-        e => [{ uri: path, message: e.to_string(), line: None, }]
+        e => parse_error_infos(path, e)
       }
   }
 }
@@ -113,4 +113,27 @@ pub fn FeatureCache::contains(self : FeatureCache, path : String) -> Bool {
 /// Number of cached features.
 pub fn FeatureCache::length(self : FeatureCache) -> Int {
   self.cache.length()
+}
+
+///|
+/// Turn a load error into ParseErrorInfo entries. Gherkin parse errors keep
+/// their message and line; a CompositeError gives one entry per inner error.
+fn parse_error_infos(path : String, err : Error) -> Array[ParseErrorInfo] {
+  let infos : Array[ParseErrorInfo] = []
+  fn add(e : Error) -> Unit {
+    match e {
+      @gherkin.UnexpectedToken(message~, location~)
+      | @gherkin.UnexpectedEof(message~, location~)
+      | @gherkin.InconsistentTableCells(message~, location~) =>
+        infos.push({ uri: path, message, line: Some(location.line), })
+      @gherkin.CompositeError(errors~) =>
+        for inner in errors {
+          add(inner)
+        }
+      other =>
+        infos.push({ uri: path, message: other.to_string(), line: None, })
+    }
+  }
+  add(err)
+  infos
 }

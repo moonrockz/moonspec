@@ -182,3 +182,9 @@ fn test_output_path(output : String?, feature_file : String) -> String {
     None => @codegen.feature_to_test_filename(feature_file)
   }
 }
+
+///|
+/// The `--no-color` flag or `"no_color": true` in the config turns color off.
+fn resolve_no_color(cli_flag : Bool, config : @config.MoonspecConfig) -> Bool {
+  cli_flag || config.no_color.unwrap_or(false)
+}

@@ -52,6 +52,10 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
       world,
       skip_tags: moonspec_config.skip_tags,
       formatters: moonspec_config.formatters,
+      no_color: resolve_no_color(
+        value.flags.get_or_default("no-color", false),
+        moonspec_config,
+      ),
     }
     let content = @fs.read_file_to_string(file) catch {
       @fs.IOError(msg) => {

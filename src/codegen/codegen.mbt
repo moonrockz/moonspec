@@ -165,6 +165,9 @@ fn generate_per_feature(
       "\")])\n",
     )
     generate_skip_tags_line(buf, skip, config)
+    if config.no_color {
+      buf.write_string("  options.no_color(true)\n")
+    }
     generate_formatter_lines(buf, config)
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
@@ -254,6 +257,9 @@ fn generate_scenario_runner_test(
       "\")\n",
     )
     generate_skip_tags_line(buf, skip, config)
+    if config.no_color {
+      buf.write_string("  options.no_color(true)\n")
+    }
     generate_formatter_lines(buf, config)
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
@@ -339,7 +345,7 @@ fn generate_formatter_lines(
       for fmt in fmts {
         let ctor = match fmt.type_ {
           "pretty" =>
-            if fmt.no_color {
+            if fmt.no_color || config.no_color {
               "@format.PrettyFormatter::new(no_color=true)"
             } else {
               "@format.PrettyFormatter::new()"
@@ -358,11 +364,15 @@ fn generate_formatter_lines(
           "  options.add_formatter(" + ctor + ", " + dest + ")\n",
         )
       }
-    None =>
+    None => {
       // Default: PrettyFormatter on stdout
+      let args = if config.no_color { "no_color=true" } else { "" }
       buf.write_string(
-        "  options.add_formatter(@format.PrettyFormatter::new(), @moonspec.OutputDest::Stdout)\n",
+        "  options.add_formatter(@format.PrettyFormatter::new(" +
+        args +
+        "), @moonspec.OutputDest::Stdout)\n",
       )
+    }
   }
 }
 

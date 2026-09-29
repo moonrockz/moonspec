@@ -2,7 +2,8 @@
 /// Structured error hierarchy for moonspec.
 ///
 /// Step-level errors aggregate into ScenarioFailed, which aggregates
-/// into RunFailed. This enables rich diagnostics and the `run_or_fail!` API.
+/// into RunFailed together with ParseFailed. This enables rich diagnostics
+/// and the `run_or_fail` API. See `report.mbt` for the printed form.
 pub suberror MoonspecError {
   UndefinedStep(
     step~ : String,
@@ -12,12 +13,27 @@ pub suberror MoonspecError {
   )
   PendingStep(step~ : String, keyword~ : String, message~ : String)
   StepFailed(step~ : String, keyword~ : String, message~ : String)
+  ParseFailed(uri~ : String, line~ : Int?, message~ : String)
   ScenarioFailed(
     scenario~ : String,
     feature~ : String,
+    location~ : String?,
+    steps~ : Array[StepReport],
     errors~ : Array[MoonspecError]
   )
-  RunFailed(summary~ : String, errors~ : Array[MoonspecError])
+  RunFailed(summary~ : String, errors~ : Array[MoonspecError], color~ : Bool)
+}
+
+///|
+/// One step of a failed scenario, in execution order.
+///
+/// `Problem` holds the StepFailed, UndefinedStep or PendingStep error of the
+/// step. The failure report prints all steps, so readers see the context of
+/// the failing step.
+pub(all) enum StepReport {
+  Passed(keyword~ : String, step~ : String)
+  Skipped(keyword~ : String, step~ : String)
+  Problem(MoonspecError)
 }
 
 ///|
@@ -52,87 +68,36 @@ pub fn step_failed_error(
 }
 
 ///|
+/// Create a ParseFailed error.
+pub fn parse_failed_error(
+  uri~ : String,
+  line~ : Int?,
+  message~ : String,
+) -> MoonspecError {
+  ParseFailed(uri~, line~, message~)
+}
+
+///|
 /// Create a ScenarioFailed error.
+///
+/// `location` is `path:line` of the scenario. `steps` lists every step of the
+/// scenario; when it is empty, the report prints `errors` instead.
 pub fn scenario_failed_error(
   scenario~ : String,
   feature~ : String,
+  location? : String? = None,
+  steps? : Array[StepReport] = [],
   errors~ : Array[MoonspecError],
 ) -> MoonspecError {
-  MoonspecError::ScenarioFailed(scenario~, feature~, errors~)
+  MoonspecError::ScenarioFailed(scenario~, feature~, location~, steps~, errors~)
 }
 
 ///|
-/// Create a RunFailed error.
+/// Create a RunFailed error. When `color` is true, the report uses ANSI colors.
 pub fn run_failed_error(
   summary~ : String,
   errors~ : Array[MoonspecError],
+  color? : Bool = false,
 ) -> Error {
-  RunFailed(summary~, errors~)
-}
-
-///|
-/// Human-readable failure report. `moon test` prints this when
-/// `run_or_fail` raises, so it names each failed feature, scenario and step.
-pub impl Show for MoonspecError with fn output(self, logger) {
-  let lines : Array[String] = []
-  error_lines(self, lines, "")
-  logger.write_string(lines.join("\n"))
-}
-
-///|
-pub extend MoonspecError with Show::{to_string, output}
-
-///|
-fn error_lines(
-  err : MoonspecError,
-  lines : Array[String],
-  indent : String,
-) -> Unit {
-  let nested = indent + "  "
-  match err {
-    UndefinedStep(step~, keyword~, snippet~, suggestions~) => {
-      lines.push(step_line(indent, keyword, step))
-      lines.push(nested + "Undefined step. Implement it with:")
-      push_indented(lines, nested + "  ", snippet)
-      if suggestions.length() > 0 {
-        lines.push(nested + "Did you mean:")
-        for suggestion in suggestions {
-          lines.push(nested + "  " + suggestion)
-        }
-      }
-    }
-    PendingStep(step~, keyword~, message~) => {
-      lines.push(step_line(indent, keyword, step))
-      push_indented(lines, nested, "Pending: " + message)
-    }
-    StepFailed(step~, keyword~, message~) => {
-      lines.push(step_line(indent, keyword, step))
-      push_indented(lines, nested, message)
-    }
-    ScenarioFailed(scenario~, feature~, errors~) => {
-      lines.push(indent + "Feature: \{feature} / Scenario: \{scenario}")
-      for error in errors {
-        error_lines(error, lines, nested)
-      }
-    }
-    RunFailed(summary~, errors~) => {
-      lines.push(indent + summary)
-      for error in errors {
-        error_lines(error, lines, indent)
-      }
-    }
-  }
-}
-
-///|
-fn step_line(indent : String, keyword : String, step : String) -> String {
-  indent + keyword.trim(chars=" ").to_owned() + " " + step
-}
-
-///|
-/// Push each line of `text` with `indent` in front of it.
-fn push_indented(lines : Array[String], indent : String, text : String) -> Unit {
-  for line in text.split("\n") {
-    lines.push(indent + line.to_owned())
-  }
+  RunFailed(summary~, errors~, color~)
 }

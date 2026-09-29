@@ -716,22 +716,69 @@ test "gherkin_media_type selects markdown for .feature.md" {
 }
 
 ///|
-async test "run_or_fail error message names feature, scenario and step" {
-  let content = "Feature: B\n\n  Scenario: Fail\n    Given pass\n    Given fail\n"
-  let mut message = ""
-  run_or_fail(
-    RunWorld2::default,
-    RunOptions([FeatureSource::Text("test://b", content)]),
-  ) catch {
-    e => message = e.to_string()
+/// Run `run_or_fail` without color and return the failure report.
+async fn failure_report(content : String, uri? : String = "test://b") -> String {
+  let options = RunOptions([FeatureSource::Text(uri, content)])
+  options.no_color(true)
+  let mut report = ""
+  run_or_fail(RunWorld2::default, options) catch {
+    e => report = e.to_string()
   }
+  report
+}
+
+///|
+async test "run_or_fail report lists every step of a failed scenario" {
+  let report = failure_report(
+    "Feature: B\n\n  Scenario: Fail\n    Given pass\n    Given fail\n    Given pass\n",
+  )
   inspect(
-    message,
+    report,
     content=(
       #|1 failed, 1 total
-      #|Feature: B / Scenario: Fail
-      #|  Given fail
-      #|    Step 'fail' (Given): Failure(fail)
+      #|
+      #|1) Feature: B / Scenario: Fail # test://b:3
+      #|   ✔ Given pass
+      #|   ✖ Given fail
+      #|       Step 'fail' (Given): Failure(fail)
+      #|   - Given pass
     ),
   )
+}
+
+///|
+async test "run_or_fail report locates scenario outline rows" {
+  let report = failure_report(
+    "Feature: B\n\n  Scenario Outline: Rows\n    Given <step>\n\n    Examples:\n      | step |\n      | pass |\n      | fail |\n",
+  )
+  assert_true(
+    report.contains("1) Feature: B / Scenario: Rows (step=fail) # test://b:9\n"),
+  )
+}
+
+///|
+async test "run_or_fail report shows parse errors" {
+  let report = failure_report("Not valid Gherkin", uri="test://bad")
+  assert_true(
+    report.has_prefix(
+      "1 parse error, 0 total\n\n1) Parse error: test://bad:1\n",
+    ),
+  )
+  assert_false(report.contains("moonrockz/gherkin"))
+}
+
+///|
+async test "run_or_fail report has no ANSI codes when no_color is set" {
+  let report = failure_report(
+    "Feature: B\n\n  Scenario: Fail\n    Given fail\n",
+  )
+  assert_false(report.contains("\u001b["))
+}
+
+///|
+test "RunOptions no_color defaults to false" {
+  let options = RunOptions([])
+  assert_false(options.get_no_color())
+  options.no_color(true)
+  assert_true(options.get_no_color())
 }

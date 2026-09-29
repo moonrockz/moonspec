@@ -2,6 +2,7 @@ import {
   "moonrockz/cucumber-expressions" @cucumber_expressions,
   "moonrockz/cucumber-messages" @cucumber_messages,
   "moonbitlang/core/debug",
+  "moonbitlang/core/env",
   "moonbitlang/core/json",
   "moonbitlang/x/codec/base64",
   "moonbitlang/x/decimal",

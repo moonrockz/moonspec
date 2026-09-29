@@ -365,3 +365,38 @@ test "string_contains basic cases" {
   assert_true(!string_contains("hello", "xyz"))
   assert_true(!string_contains("hi", "longer string"))
 }
+
+///|
+fn passed_scenario_output(fmt : PrettyFormatter) -> String {
+  let sink : &@core.MessageSink = fmt
+  sink.on_message(make_gherkin_doc_envelope("math.feature", "Math"))
+  sink.on_message(
+    make_pickle_envelope("p1", "math.feature", "Addition", [
+      ("ps1", "I have 5 cucumbers", "Context"),
+    ]),
+  )
+  sink.on_message(make_test_case_envelope("tc1", "p1", [("ts1", Some("ps1"))]))
+  sink.on_message(make_test_case_started_envelope("tcs1", "tc1"))
+  sink.on_message(make_test_step_finished_envelope("tcs1", "ts1", "PASSED"))
+  sink.on_message(make_test_case_finished_envelope("tcs1"))
+  fmt.output()
+}
+
+///|
+test "PrettyFormatter follows MOONSPEC_COLOR over its no_color argument" {
+  let saved = @env.get_env_var("MOONSPEC_COLOR")
+  defer (match saved {
+    Some(v) => @env.set_env_var("MOONSPEC_COLOR", v)
+    None => @env.unset_env_var("MOONSPEC_COLOR")
+  })
+  @env.set_env_var("MOONSPEC_COLOR", "never")
+  assert_false(
+    passed_scenario_output(PrettyFormatter::new()).contains("\u001b["),
+  )
+  @env.set_env_var("MOONSPEC_COLOR", "always")
+  assert_true(
+    passed_scenario_output(PrettyFormatter::new(no_color=true)).contains(
+      "\u001b[",
+    ),
+  )
+}

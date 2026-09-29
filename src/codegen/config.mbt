@@ -18,6 +18,8 @@ pub(all) struct CodegenConfig {
   world : String
   skip_tags : Array[String]?
   formatters : Array[@config.FormatterConfig]?
+  /// Emit `options.no_color(true)` and turn off color in pretty formatters.
+  no_color : Bool
 } derive(Debug, Eq)
 
 ///|
@@ -29,7 +31,13 @@ pub extend CodegenConfig with Eq::{not_equal, equal}
 ///|
 /// Create a default config (per-scenario mode, empty world name).
 pub fn CodegenConfig::default() -> CodegenConfig {
-  { mode: PerScenario, world: "", skip_tags: None, formatters: None, }
+  {
+    mode: PerScenario,
+    world: "",
+    skip_tags: None,
+    formatters: None,
+    no_color: false,
+  }
 }
 
 ///|
@@ -59,5 +67,5 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
     }
     _ => ()
   }
-  { mode, world, skip_tags: None, formatters: None, }
+  { mode, world, skip_tags: None, formatters: None, no_color: false, }
 }

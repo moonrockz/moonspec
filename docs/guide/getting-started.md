@@ -250,10 +250,19 @@ If an assertion fails, you will see a detailed error showing which scenario and 
 
 ```
 [moon/test] test ... ("calculator") failed: 1 failed, 2 total
-Feature: Calculator / Scenario: Subtraction
-  Then the result should be 7
-    Step 'the result should be 7' (Then): ...
+
+1) Feature: Calculator / Scenario: Subtraction # features/calculator.feature:9
+   ✔ Given a calculator
+   ✔ When I subtract 3 from 10
+   ✖ Then the result should be 7
+       Step 'the result should be 7' (Then): ...
 ```
+
+The report lists every step of each failed scenario, in the style of other
+cucumber implementations: `✔` passed (green), `✖` failed (red), `?` undefined
+or pending (yellow), `-` skipped (cyan). Feature files that do not parse are
+listed too, with their line and the parser message. See
+[Colors](configuration.md#colors) to turn colors off.
 
 ## Codegen Mode
 

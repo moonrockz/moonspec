@@ -318,8 +318,9 @@ moonspec uses a structured error hierarchy (`MoonspecError`) for test failures:
 - `UndefinedStep` -- step has no matching definition (includes a copy-paste snippet and "did you mean?" suggestions)
 - `PendingStep` -- step is marked as pending (placeholder implementation)
 - `StepFailed` -- step assertion failed
-- `ScenarioFailed` -- aggregates step errors for a scenario
-- `RunFailed` -- aggregates scenario errors for a run
+- `ParseFailed` -- a feature file did not parse (with its line and the parser message)
+- `ScenarioFailed` -- a failed scenario: its location, every step (`StepReport`) and its step errors
+- `RunFailed` -- aggregates parse errors and failed scenarios for a run
 
 Use `run_or_fail` to raise on any failure instead of inspecting results manually:
 
@@ -328,6 +329,21 @@ async test "my feature" {
   @moonspec.run_or_fail(MyWorld::default, @moonspec.RunOptions::new(features))
 }
 ```
+
+When it fails, `moon test` prints a cucumber-style report:
+
+```
+1 failed, 1 total
+
+1) Feature: Add / Scenario: wrong sum # features/add.feature:3
+   ✔ Given the numbers 1 and 2
+   ✖ Then the result is 4
+       Expected 3 to equal 4
+   - And it is logged
+```
+
+`✔` passed (green), `✖` failed (red), `?` undefined or pending (yellow),
+`-` skipped (cyan). See [Colors](#colors) to turn colors off.
 
 ## Assertions
 
@@ -505,6 +521,7 @@ Builder methods (use `..` cascade syntax):
 - `scenario_name(string)` -- run only the scenario matching this name
 - `dry_run(bool)` -- enable dry-run mode (default: `false`); see [Dry-Run Mode](#dry-run-mode)
 - `skip_tags(array)` -- set skip tags (default: `["@skip", "@ignore"]`); see [Skipping Scenarios](#skipping-scenarios)
+- `no_color(bool)` -- turn off ANSI colors in the failure report (default: `false`); see [Colors](#colors)
 - `add_sink(sink)` -- add a message sink for envelope output
 
 ### Mode 2: Build-Rule Codegen
@@ -639,6 +656,7 @@ to load the feature at runtime and execute it through the full runner pipeline.
 - `--output-dir` / `-o`: write generated files to this directory (default: current directory). A value ending in `.mbt` is the exact output file; use it with one feature file
 - `--mode` / `-m`: `per-scenario` (default) or `per-feature`
 - `--config` / `-c`: path to a `moonspec.json5` config file
+- `--no-color`: generate tests whose failure report and pretty output have no ANSI colors
 
 **Config file** (`moonspec.json5`):
 
@@ -936,6 +954,26 @@ opts.skip_tags(["@skip", "@ignore", "@wip"])
 ```
 
 The default skip tags are `@skip` and `@ignore`.
+
+## Colors
+
+The `run_or_fail` failure report and `PrettyFormatter` use ANSI colors. Turn
+them off when you build the tests:
+
+- `moonspec.json5`: `"no_color": true`
+- CLI: `moonspec gen tests --no-color`
+- Code: `options.no_color(true)` or `@format.PrettyFormatter::new(no_color=true)`
+
+Environment variables override the compiled value when the tests run:
+
+| Variable | Effect |
+|----------|--------|
+| `MOONSPEC_COLOR=always` | Color on, even when `no_color` is set |
+| `MOONSPEC_COLOR=never` | Color off |
+| `NO_COLOR=<any non-empty value>` | Color off, unless `MOONSPEC_COLOR=always` ([no-color.org](https://no-color.org)) |
+
+Editor test panels that read `moon test --test-failure-json` may show ANSI
+codes as raw text. Set `NO_COLOR=1` for those runs.
 
 ## Formatters
 
