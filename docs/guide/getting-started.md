@@ -294,6 +294,32 @@ async test "Feature: Calculator / Scenario: Subtraction" {
 
 Each scenario becomes its own test, so `moon test` reports pass/fail at the scenario level.
 
+### Running Scenarios with moon test
+
+Because each scenario is a normal `moon test` test, the native `moon test`
+options work on scenarios:
+
+```sh
+# Run the scenarios whose test name matches a glob pattern
+moon test --target js -f "Feature: Calculator / Scenario: Add*"
+
+# List the scenarios that will run, without running them
+moon test --target js --outline
+
+# Run one scenario by its 0-based index in a generated file (see --outline)
+moon test --target js src/calculator_feature_wbtest.mbt -i 1
+
+# Also run scenarios that have a skip tag (@skip, @ignore, ...)
+moon test --target js --include-skipped
+```
+
+Each row of a `Scenario Outline` is its own test, named
+`Feature: <feature> / Scenario: <outline> (<header>=<value>, ...)`.
+
+Scenarios with a skip tag get a `#skip("reason")` attribute, so `moon test`
+reports them as skipped. In `per-feature` mode the whole feature is one test,
+so these options work only at the feature level.
+
 ### Generating Step Definitions with Annotations
 
 Instead of writing the `configure` method by hand, you can annotate standalone step functions with `#moonspec.*` attributes:
@@ -348,9 +374,29 @@ Options:
 - `mode` -- `"per-scenario"` (default) generates one test per scenario; `"per-feature"` generates one test per feature file
 - `steps.output` -- `"generated"` (default) writes to a `*_steps_gen.mbt` file; `"alongside"` places it next to the source files
 
-### Pre-build Hooks
+### Build Rules
 
-For a fully automated workflow, add the codegen commands as pre-build hooks so generated files stay up to date whenever you build or test. Consult the MoonBit documentation for how to configure pre-build scripts in your `moon.pkg.json`.
+For a fully automated workflow, add the codegen commands as `rule` and
+`dev_build` entries in `moon.pkg`. moon runs them before `moon check`,
+`moon build` and `moon test`, so generated files stay up to date:
+
+```moonbit
+rule(
+  name: "moonspec-tests",
+  command: "moonspec gen tests $input -w CalcWorld -o $output",
+)
+
+dev_build(
+  rule: "moonspec-tests",
+  input: "../features/calculator.feature",
+  output: "calculator_feature_wbtest.mbt",
+)
+```
+
+Add one `dev_build` entry per feature file. To share one `rule` between
+packages, declare it in `moon.mod`. Commit the generated files: moon does not
+run `dev_build` steps when the package is used as a dependency. The older
+`options("pre-build": [...])` form is deprecated.
 
 ## Where to Put Files
 

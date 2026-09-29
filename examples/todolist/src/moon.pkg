@@ -4,17 +4,21 @@ import {
   "moonbitlang/async",
 }
 
-options(
-  "pre-build": [
-    {
-      "input": "../features/todolist.feature",
-      "output": "todolist_feature_wbtest.mbt",
-      "command": "moonspec gen tests $input -w TodoWorld -o $output",
-    },
-    {
-      "input": "steps.mbt",
-      "output": "todoworld_steps_gen.mbt",
-      "command": "moonspec gen steps -d src",
-    },
-  ],
+rule(
+  name: "moonspec-tests",
+  command: "moonspec gen tests $input -w TodoWorld -o $output",
+)
+
+rule(name: "moonspec-steps", command: "moonspec gen steps -d src")
+
+dev_build(
+  rule: "moonspec-tests",
+  input: "../features/todolist.feature",
+  output: "todolist_feature_wbtest.mbt",
+)
+
+dev_build(
+  rule: "moonspec-steps",
+  input: "steps.mbt",
+  output: "todoworld_steps_gen.mbt",
 )

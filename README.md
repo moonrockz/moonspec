@@ -507,9 +507,9 @@ Builder methods (use `..` cascade syntax):
 - `skip_tags(array)` -- set skip tags (default: `["@skip", "@ignore"]`); see [Skipping Scenarios](#skipping-scenarios)
 - `add_sink(sink)` -- add a message sink for envelope output
 
-### Mode 2: Pre-build Codegen
+### Mode 2: Build-Rule Codegen
 
-Use `moonspec gen` as a [pre-build](https://docs.moonbitlang.com/en/latest/toolchain/moon/package.html#pre-build)
+Use `moonspec gen` as a [`rule` / `dev_build`](https://docs.moonbitlang.com/en/latest/toolchain/moon/package.html)
 step so that test files are regenerated automatically from `.feature` files on
 every `moon check`, `moon build`, or `moon test`:
 
@@ -521,18 +521,24 @@ import {
   "moonbitlang/async",
 }
 
-options(
-  "pre-build": [
-    {
-      "input": "../features/calculator.feature",
-      "output": "calculator_feature_wbtest.mbt",
-      "command": "moonspec gen tests $input -w CalcWorld -o $output",
-    },
-  ],
+rule(
+  name: "moonspec-tests",
+  command: "moonspec gen tests $input -w CalcWorld -o $output",
+)
+
+dev_build(
+  rule: "moonspec-tests",
+  input: "../features/calculator.feature",
+  output: "calculator_feature_wbtest.mbt",
 )
 ```
 
-moon runs pre-build commands from the module root and expands `$input` and
+Add one `dev_build` entry per feature file. A `rule` declared in `moon.mod`
+is visible to every package in the module, so you can declare it once there.
+The older `options("pre-build": [...])` form still works but is deprecated,
+and `moon.pkg.json` supports only `pre-build`.
+
+moon runs build commands from the module root and expands `$input` and
 `$output` to paths relative to it. Pass `-o $output` so the test file is written
 to the declared output. When `-o` ends in `.mbt`, `gen tests` uses it as the
 exact file path. Generated tests use `@format.PrettyFormatter` unless a config
@@ -542,8 +548,9 @@ The `--world` (`-w`) flag tells codegen which World type to use. Generated tests
 call `@moonspec.run_or_fail` with `FeatureSource::File` to load the `.feature`
 file at runtime and execute each scenario through the full runner pipeline.
 
-The generated `*_feature_test.mbt` files should be gitignored -- your `.feature`
-files are the single source of truth.
+Commit the generated test files. moon does not run `dev_build` steps when your
+package is used as a dependency, and a fresh clone then builds without the
+moonspec CLI installed. The `.feature` files stay the single source of truth.
 
 See [CLI: `gen` command](#gen----generate-test-files) and the
 [calculator example](examples/calculator/) for a full walkthrough.
@@ -910,6 +917,11 @@ Scenario: Blocked
 ```
 
 Skipped scenarios appear in the summary as skipped with their reason.
+
+Generated tests (`moonspec gen tests`) put a native `#skip("reason")` attribute
+above each skipped scenario, so `moon test` reports it as skipped instead of
+passed. To run skipped scenarios anyway, use `moon test --include-skipped`. The
+generated test clears the runtime skip tags, so the scenario really runs.
 
 > **Note:** Gherkin tags cannot contain spaces. Use single-word or
 > underscore-separated reasons: `@skip("flaky")`, `@skip("not_ready")`.

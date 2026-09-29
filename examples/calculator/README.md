@@ -52,7 +52,7 @@ moon install moonrockz/moonspec/src/cmd/main
 ```
 
 This installs the `moonspec` binary globally so it can be used from the command
-line and in pre-build steps.
+line and in `moon.pkg` build rules.
 
 ### 4. Write a feature file
 
@@ -118,23 +118,26 @@ Each generated test loads the `.feature` file at runtime and runs a single scena
 through the full runner pipeline (parsing, pickle compilation, step matching, and
 execution).
 
-You can also configure this as a **pre-build step** in `src/moon.pkg.json` so tests
+You can also configure this as a **build rule** in `src/moon.pkg` so tests
 are regenerated automatically on every build:
 
-```json
-{
-  "import": [
-    "moonrockz/moonspec",
-    "moonbitlang/async"
-  ],
-  "pre-build": [
-    {
-      "input": "../features/calculator.feature",
-      "output": "calculator_feature_wbtest.mbt",
-      "command": "moonspec gen tests features/calculator.feature -w CalcWorld -o src/"
-    }
-  ]
+```
+import {
+  "moonrockz/moonspec",
+  "moonrockz/moonspec/format",
+  "moonbitlang/async",
 }
+
+rule(
+  name: "moonspec-tests",
+  command: "moonspec gen tests $input -w CalcWorld -o $output",
+)
+
+dev_build(
+  rule: "moonspec-tests",
+  input: "../features/calculator.feature",
+  output: "calculator_feature_wbtest.mbt",
+)
 ```
 
 Edit your `.feature` files and the generated tests update automatically on the
