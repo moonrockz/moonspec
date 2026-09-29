@@ -566,3 +566,13 @@ test "no_color false emits no options.no_color line" {
   })
   assert_false(output.contains("options.no_color("))
 }
+
+///|
+test "generate_test_file gives the same output with or without a leading ./" {
+  let content = "Feature: Login\n\n  Scenario: A\n    Given a user\n"
+  let config = CodegenConfig::{ ..CodegenConfig::default(), world: "MyWorld", }
+  let plain = generate_test_file(content, "features/login.feature", config~)
+  let dotted = generate_test_file(content, "./features/login.feature", config~)
+  assert_eq(dotted, plain)
+  assert_false(plain.contains("./features"))
+}

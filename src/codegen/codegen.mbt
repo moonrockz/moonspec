@@ -119,6 +119,12 @@ pub fn generate_test_file(
   source_path : String,
   config? : CodegenConfig = CodegenConfig::default(),
 ) -> String {
+  // moon passes `$input` as "./features/x.feature"; drop the "./" so the
+  // output does not depend on how the path was written.
+  let mut source_path = source_path
+  while source_path.has_prefix("./") {
+    source_path = source_path[2:].to_owned()
+  }
   let hash = simple_hash(feature_content)
   // The URI lets the parser pick Markdown with Gherkin for .feature.md paths
   let source = @gherkin.Source::from_string(feature_content, uri=source_path)
