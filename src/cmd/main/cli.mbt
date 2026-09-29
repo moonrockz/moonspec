@@ -37,6 +37,13 @@ fn build_parser() -> @argparse.Command {
         about="Path to moonspec.json5 config file",
       ),
     ],
+    flags=[
+      @argparse.FlagArg(
+        "no-color",
+        long="no-color",
+        about="Generate tests that print the failure report without ANSI colors",
+      ),
+    ],
     about="Generate _test.mbt files from .feature or .feature.md files",
   )
   // -- gen steps: generate configure from #moonspec.* attributes

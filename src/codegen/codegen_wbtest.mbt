@@ -82,6 +82,7 @@ test "per-scenario mode generates runner call with world" {
     world: "MyWorld",
     skip_tags: None,
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("@moonspec.run_or_fail"))
@@ -101,6 +102,7 @@ test "per-feature mode generates file-based runner call" {
     world: "MyWorld",
     skip_tags: None,
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("@moonspec.run_or_fail"))
@@ -120,6 +122,7 @@ test "per-scenario mode uses file source with scenario_name" {
     world: "AuthWorld",
     skip_tags: None,
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/auth.feature", config~)
   assert_true(output.contains("@moonspec.FeatureSource::File"))
@@ -135,6 +138,7 @@ test "per-scenario mode expands scenario outline" {
     world: "MathWorld",
     skip_tags: None,
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/math.feature", config~)
   assert_true(output.contains("a=1, b=2, sum=3"))
@@ -185,6 +189,7 @@ test "per-scenario mode omits skip_tags when None" {
     world: "MyWorld",
     skip_tags: None,
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.scenario_name("))
@@ -199,6 +204,7 @@ test "per-scenario mode emits skip_tags when configured" {
     world: "MyWorld",
     skip_tags: Some(["@skip", "@wip"]),
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.skip_tags([\"@skip\", \"@wip\"])"))
@@ -212,6 +218,7 @@ test "per-feature mode emits skip_tags when configured" {
     world: "MyWorld",
     skip_tags: Some(["@ignore"]),
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.skip_tags([\"@ignore\"])"))
@@ -225,6 +232,7 @@ test "skip_tags not emitted for stub tests" {
     world: "",
     skip_tags: Some(["@skip"]),
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("ignore(\"\")"))
@@ -239,6 +247,7 @@ test "empty skip_tags array emits empty array call" {
     world: "MyWorld",
     skip_tags: Some([]),
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(output.contains("options.skip_tags([])"))
@@ -252,6 +261,7 @@ test "codegen emits default pretty formatter when formatters is None" {
     world: "MyWorld",
     skip_tags: None,
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
@@ -275,6 +285,7 @@ test "codegen emits add_formatter for pretty on stdout" {
         no_color: false,
       },
     ]),
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
@@ -298,6 +309,7 @@ test "codegen emits add_formatter for junit to file" {
         no_color: false,
       },
     ]),
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
@@ -321,6 +333,7 @@ test "codegen emits add_formatter with no_color for pretty" {
         no_color: true,
       },
     ]),
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(
@@ -338,6 +351,7 @@ test "codegen emits no formatter lines for empty formatters array" {
     world: "MyWorld",
     skip_tags: None,
     formatters: Some([]),
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(!output.contains("add_formatter"))
@@ -345,7 +359,13 @@ test "codegen emits no formatter lines for empty formatters array" {
 
 ///|
 fn skip_config(mode : CodegenMode, skip_tags : Array[String]?) -> CodegenConfig {
-  CodegenConfig::{ mode, world: "MyWorld", skip_tags, formatters: Some([]), }
+  CodegenConfig::{
+    mode,
+    world: "MyWorld",
+    skip_tags,
+    formatters: Some([]),
+    no_color: false,
+  }
 }
 
 ///|
@@ -476,7 +496,73 @@ test "stub tests emit no #skip" {
     world: "",
     skip_tags: None,
     formatters: None,
+    no_color: false,
   }
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(!output.contains("#skip("))
+}
+
+///|
+fn no_color_config(
+  mode : CodegenMode,
+  formatters : Array[@config.FormatterConfig]?,
+) -> CodegenConfig {
+  CodegenConfig::{
+    mode,
+    world: "MyWorld",
+    skip_tags: None,
+    formatters,
+    no_color: true,
+  }
+}
+
+///|
+test "no_color emits options.no_color(true) in every generated test" {
+  let content = "Feature: Login\n\n  Scenario: A\n    Given a user\n\n  Scenario: B\n    Given a user\n"
+  let per_scenario = generate_test_file(
+    content,
+    "features/login.feature",
+    config=no_color_config(PerScenario, Some([])),
+  )
+  assert_eq(per_scenario.split("  options.no_color(true)\n").count(), 3)
+  let per_feature = generate_test_file(
+    content,
+    "features/login.feature",
+    config=no_color_config(PerFeature, Some([])),
+  )
+  assert_eq(per_feature.split("  options.no_color(true)\n").count(), 2)
+}
+
+///|
+test "no_color turns off color in pretty formatters" {
+  let content = "Feature: Login\n\n  Scenario: A\n    Given a user\n"
+  let default_fmt = generate_test_file(
+    content,
+    "features/login.feature",
+    config=no_color_config(PerScenario, None),
+  )
+  assert_true(
+    default_fmt.contains("@format.PrettyFormatter::new(no_color=true)"),
+  )
+  let configured = generate_test_file(
+    content,
+    "features/login.feature",
+    config=no_color_config(
+      PerScenario,
+      Some([{ type_: "pretty", output: "stdout", no_color: false, }]),
+    ),
+  )
+  assert_true(
+    configured.contains("@format.PrettyFormatter::new(no_color=true)"),
+  )
+}
+
+///|
+test "no_color false emits no options.no_color line" {
+  let content = "Feature: Login\n\n  Scenario: A\n    Given a user\n"
+  let output = generate_test_file(content, "features/login.feature", config=CodegenConfig::{
+    ..CodegenConfig::default(),
+    world: "MyWorld",
+  })
+  assert_false(output.contains("options.no_color("))
 }

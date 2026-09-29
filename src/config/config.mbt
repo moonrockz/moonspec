@@ -46,6 +46,7 @@ pub(all) struct MoonspecConfig {
   steps : StepsConfig?
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
+  no_color : Bool?
 } derive(Debug, Eq)
 
 ///|
@@ -56,7 +57,14 @@ pub extend MoonspecConfig with Eq::{not_equal, equal}
 
 ///|
 pub fn MoonspecConfig::empty() -> MoonspecConfig {
-  { world: None, mode: None, steps: None, skip_tags: None, formatters: None, }
+  {
+    world: None,
+    mode: None,
+    steps: None,
+    skip_tags: None,
+    formatters: None,
+    no_color: None,
+  }
 }
 
 ///|
@@ -68,6 +76,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
   let mut steps : StepsConfig? = None
   let mut skip_tags : Array[String]? = None
   let mut formatters : Array[FormatterConfig]? = None
+  let mut no_color : Bool? = None
   match json {
     Object(obj) => {
       match obj.get("world") {
@@ -86,6 +95,11 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
           }
           mode = Some(PerFile(result))
         }
+        _ => ()
+      }
+      match obj.get("no_color") {
+        Some(True) => no_color = Some(true)
+        Some(False) => no_color = Some(false)
         _ => ()
       }
       match obj.get("skip_tags") {
@@ -159,7 +173,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
     }
     _ => ()
   }
-  { world, mode, steps, skip_tags, formatters, }
+  { world, mode, steps, skip_tags, formatters, no_color, }
 }
 
 ///|
@@ -191,6 +205,10 @@ pub fn MoonspecConfig::merge(
       (_, Some(s)) => Some(s)
       (Some(s), None) => Some(s)
       (None, None) => None
+    },
+    no_color: match override_.no_color {
+      Some(_) => override_.no_color
+      None => self.no_color
     },
   }
 }

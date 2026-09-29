@@ -25,3 +25,12 @@ test "test_output_path uses an .mbt output as the exact file path" {
     "./src/todolist_feature_wbtest.mbt",
   )
 }
+
+///|
+test "resolve_no_color: the CLI flag or the config turns color off" {
+  let empty = @config.MoonspecConfig::empty()
+  let config_on = @config.MoonspecConfig::from_json5("{ no_color: true }")
+  assert_false(resolve_no_color(false, empty))
+  assert_true(resolve_no_color(true, empty))
+  assert_true(resolve_no_color(false, config_on))
+}

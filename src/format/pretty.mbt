@@ -47,9 +47,12 @@ priv struct SummaryCounts {
 
 ///|
 /// Create a new PrettyFormatter.
+///
+/// `no_color` is the compiled default. At runtime, `MOONSPEC_COLOR=always|never`
+/// and `NO_COLOR` override it (see `@core.color_enabled`).
 pub fn PrettyFormatter::new(no_color? : Bool = false) -> PrettyFormatter {
   {
-    no_color,
+    no_color: !@core.color_enabled(no_color~),
     buffer: "",
     features: {},
     pickles: {},

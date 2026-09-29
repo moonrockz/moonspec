@@ -6,3 +6,7 @@ import {
   "moonbitlang/core/json",
   "Milky2018/xml",
 }
+
+import {
+  "moonbitlang/core/env",
+} for "wbtest"
