@@ -32,6 +32,7 @@ pub(all) struct RunOptions {
   priv mut retries_ : Int
   priv mut dry_run_ : Bool
   priv skip_tags_ : Array[String]
+  priv mut no_color_ : Bool
 }
 
 ///|
@@ -48,6 +49,7 @@ pub fn RunOptions::RunOptions(features : Array[FeatureSource]) -> RunOptions {
     retries_: 0,
     dry_run_: false,
     skip_tags_: @config.default_skip_tags(),
+    no_color_: false,
   }
 }
 
@@ -213,4 +215,19 @@ pub fn RunOptions::skip_tags(self : RunOptions, tags : Array[String]) -> Unit {
 /// Get the configured skip tags.
 pub fn RunOptions::get_skip_tags(self : RunOptions) -> Array[String] {
   self.skip_tags_
+}
+
+///|
+/// Turn off ANSI colors in the `run_or_fail` failure report.
+///
+/// This is the compiled default. At runtime, `MOONSPEC_COLOR=always|never`
+/// and `NO_COLOR` override it (see `@core.color_enabled`).
+pub fn RunOptions::no_color(self : RunOptions, no_color : Bool) -> Unit {
+  self.no_color_ = no_color
+}
+
+///|
+/// Get the configured no_color value.
+pub fn RunOptions::get_no_color(self : RunOptions) -> Bool {
+  self.no_color_
 }

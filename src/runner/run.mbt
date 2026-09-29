@@ -416,6 +416,16 @@ pub async fn[W : @core.World] run(
   factory : () -> W,
   options : RunOptions,
 ) -> RunResult {
+  run_detailed(factory, options).0
+}
+
+///|
+/// Run all features. Also return the `path:line` location of each pickle, by
+/// pickle id, for the failure report of `run_or_fail`.
+async fn[W : @core.World] run_detailed(
+  factory : () -> W,
+  options : RunOptions,
+) -> (RunResult, Map[String, String]) {
   let features = options.features()
   let sinks = options.get_sinks()
   let tag_expr = options.get_tag_expr()
@@ -478,6 +488,12 @@ pub async fn[W : @core.World] run(
     }
   }
   let pickles = compile_pickles(cache)
+  let locations : Map[String, String] = Map([])
+  for pickle in pickles {
+    if pickle_line(cache, pickle) is Some(line) {
+      locations[pickle.id] = pickle.uri + ":" + line.to_string()
+    }
+  }
   // Emit Pickle envelopes
   if sinks.length() > 0 {
     for pickle in pickles {
@@ -785,7 +801,10 @@ pub async fn[W : @core.World] run(
   for entry in options.get_formatters() {
     write_formatter_output(entry)
   }
-  { features: feature_results, summary, parse_errors: all_parse_errors, }
+  (
+    { features: feature_results, summary, parse_errors: all_parse_errors, },
+    locations,
+  )
 }
 
 ///|
@@ -793,44 +812,124 @@ pub async fn[W : @core.World] run(
 ///
 /// This is the ergonomic test API. Use in generated tests and manual tests
 /// where you want structured error output instead of manual result inspection.
+/// The raised `RunFailed` prints a cucumber-style report of every parse error
+/// and failed scenario. It uses ANSI colors unless `RunOptions::no_color` is
+/// set, or the environment overrides it (see `@core.color_enabled`).
 pub async fn[W : @core.World] run_or_fail(
   factory : () -> W,
   options : RunOptions,
 ) -> Unit {
-  let result = run(factory, options)
+  let (result, locations) = run_detailed(factory, options)
   if result.parse_errors.length() > 0 ||
     result.summary.failed > 0 ||
     result.summary.undefined > 0 ||
     result.summary.pending > 0 {
-    let errors = collect_scenario_errors(result)
-    let summary = format_run_summary(result.summary)
-    raise @core.run_failed_error(summary~, errors~)
+    let errors : Array[@core.MoonspecError] = result.parse_errors.map(fn(pe) {
+      @core.parse_failed_error(uri=pe.uri, line=pe.line, message=pe.message)
+    })
+    errors.append(collect_scenario_errors(result, locations))
+    let summary = format_run_summary(
+      result.summary,
+      parse_errors=result.parse_errors.length(),
+    )
+    raise @core.run_failed_error(
+      summary~,
+      errors~,
+      color=@core.color_enabled(no_color=options.get_no_color()),
+    )
   }
 }
 
 ///|
-/// Collect MoonspecError for each non-passing scenario.
-fn collect_scenario_errors(result : RunResult) -> Array[@core.MoonspecError] {
+/// Find the line of the scenario, or of the Examples row, that a pickle was
+/// compiled from.
+fn pickle_line(
+  cache : FeatureCache,
+  pickle : @cucumber_messages.Pickle,
+) -> Int? {
+  guard cache.get(pickle.uri) is Some(feature) else { return None }
+  guard pickle.astNodeIds.get(0) is Some(scenario_id) else { return None }
+  let scenarios : Array[@gherkin.Scenario] = []
+  for child in feature.children {
+    match child {
+      Scenario(s) => scenarios.push(s)
+      Rule(rule) =>
+        for rule_child in rule.children {
+          if rule_child is Scenario(s) {
+            scenarios.push(s)
+          }
+        }
+      _ => ()
+    }
+  }
+  for scenario in scenarios {
+    if scenario.id != scenario_id {
+      continue
+    }
+    guard pickle.astNodeIds.get(1) is Some(row_id) else {
+      return Some(scenario.location.line)
+    }
+    for examples in scenario.examples {
+      for row in examples.table_body {
+        if row.id == row_id {
+          return Some(row.location.line)
+        }
+      }
+    }
+    return Some(scenario.location.line)
+  }
+  None
+}
+
+///|
+/// Collect MoonspecError for each non-passing scenario, with every step.
+fn collect_scenario_errors(
+  result : RunResult,
+  locations : Map[String, String],
+) -> Array[@core.MoonspecError] {
   let errors : Array[@core.MoonspecError] = []
   for feature in result.features {
     for scenario in feature.scenarios {
       match scenario.status {
-        ScenarioStatus::Passed => continue
+        ScenarioStatus::Passed | ScenarioStatus::Skipped(_) => continue
         _ => {
+          let steps : Array[@core.StepReport] = []
           let step_errors : Array[@core.MoonspecError] = []
           for step in scenario.steps {
-            match step.diagnostic {
-              Some(@core.UndefinedStep(..) as e) => step_errors.push(e)
-              Some(@core.PendingStep(..) as e) => step_errors.push(e)
-              Some(@core.MoonspecError::StepFailed(..) as e) =>
+            let problem : @core.MoonspecError? = match
+              (step.status, step.diagnostic) {
+              (_, Some(@core.UndefinedStep(..) as e)) => Some(e)
+              (_, Some(@core.PendingStep(..) as e)) => Some(e)
+              (_, Some(@core.MoonspecError::StepFailed(..) as e)) => Some(e)
+              (StepStatus::Failed(message), _) =>
+                match
+                  @core.step_failed_error(
+                    step=step.text,
+                    keyword=step.keyword,
+                    message~,
+                  ) {
+                  @core.MoonspecError::StepFailed(..) as e => Some(e)
+                  _ => None
+                }
+              _ => None
+            }
+            match (problem, step.status) {
+              (Some(e), _) => {
+                steps.push(Problem(e))
                 step_errors.push(e)
-              _ => ()
+              }
+              (None, StepStatus::Passed) =>
+                steps.push(Passed(keyword=step.keyword, step=step.text))
+              (None, _) =>
+                steps.push(Skipped(keyword=step.keyword, step=step.text))
             }
           }
           errors.push(
             @core.scenario_failed_error(
               scenario=scenario.scenario_name,
               feature=feature.name,
+              location=locations.get(scenario.pickle_id),
+              steps~,
               errors=step_errors,
             ),
           )
@@ -842,8 +941,12 @@ fn collect_scenario_errors(result : RunResult) -> Array[@core.MoonspecError] {
 }
 
 ///|
-fn format_run_summary(summary : RunSummary) -> String {
+fn format_run_summary(summary : RunSummary, parse_errors? : Int = 0) -> String {
   let parts : Array[String] = []
+  if parse_errors > 0 {
+    let noun = if parse_errors == 1 { "parse error" } else { "parse errors" }
+    parts.push(parse_errors.to_string() + " " + noun)
+  }
   if summary.failed > 0 {
     parts.push(summary.failed.to_string() + " failed")
   }

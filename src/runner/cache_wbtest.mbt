@@ -97,7 +97,7 @@ test "FeatureCache::load_from_source returns ParseErrorInfo on invalid feature" 
   assert_true(errors.length() > 0)
   assert_eq(errors[0].uri, "test://bad")
   assert_true(errors[0].message.length() > 0)
-  assert_eq(errors[0].line, None)
+  assert_eq(errors[0].line, Some(1))
 }
 
 ///|
@@ -109,4 +109,18 @@ test "FeatureCache::load_text parses Markdown with Gherkin for .feature.md" {
   let feature = cache.get("features/login.feature.md").unwrap()
   assert_eq(feature.name, "Login")
   assert_eq(feature.children.length(), 1)
+}
+
+///|
+test "load_from_source reports the Gherkin parse message and line" {
+  let cache = FeatureCache::new()
+  let errors = cache.load_from_source(
+    FeatureSource::Text(
+      "test://bad", "Feature: A\n\n  Scenario: B\n    Given x\n  | a |\n  | b | c |\n",
+    ),
+  )
+  assert_eq(errors.length(), 1)
+  assert_eq(errors[0].uri, "test://bad")
+  assert_eq(errors[0].line, Some(6))
+  assert_false(errors[0].message.contains("moonrockz/gherkin"))
 }
