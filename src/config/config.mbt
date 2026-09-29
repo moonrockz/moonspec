@@ -215,3 +215,50 @@ pub fn MoonspecConfig::resolve_mode(
     None => "per-scenario"
   }
 }
+
+///|
+/// Skip tags used when no `skip_tags` are configured.
+pub fn default_skip_tags() -> Array[String] {
+  ["@skip", "@ignore"]
+}
+
+///|
+/// Check if tags match any configured skip tag.
+///
+/// Shared by the runner (runtime skip) and codegen (`#skip` attribute).
+///
+/// Scans tags for matches against the skip tag list. Supports two formats:
+/// - Bare tag: `@skip` → reason is the tag name without `@` (e.g., `"skip"`)
+/// - Tag with reason: `@skip("reason")` → extracts the quoted reason string
+///
+/// Returns `Some(reason)` for the first match, or `None` if no skip tag found.
+/// Invalid reason formats (empty parens, unquoted) fall back to the tag name.
+///
+/// ```
+/// skip_reason(["@skip(\"flaky\")"], ["@skip"]) // => Some("flaky")
+/// skip_reason(["@smoke"], ["@skip"])            // => None
+/// ```
+pub fn skip_reason(tags : Array[String], skip_tags : Array[String]) -> String? {
+  for tag in tags {
+    let (name, reason) : (String, String?) = lexmatch tag with longest {
+      (re"^@[a-zA-Z_][a-zA-Z0-9_]*" as ident, after=rest) => {
+        let n = ident[1:].to_owned()
+        lexmatch rest with longest {
+          re"^\(\"[^\"]+\"\)$" as quoted =>
+            (n, Some(quoted[2:quoted.length() - 2].to_owned()))
+          re"^\([^)]*\)$" => (n, None)
+          re"^$" => (n, None)
+          _ => continue
+        }
+      }
+      _ => continue
+    }
+    let full_tag = "@" + name
+    for skip in skip_tags {
+      if full_tag == skip {
+        return Some(reason.unwrap_or(name))
+      }
+    }
+  }
+  None
+}

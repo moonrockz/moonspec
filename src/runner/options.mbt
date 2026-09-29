@@ -47,7 +47,7 @@ pub fn RunOptions::RunOptions(features : Array[FeatureSource]) -> RunOptions {
     scenario_name_: "",
     retries_: 0,
     dry_run_: false,
-    skip_tags_: ["@skip", "@ignore"],
+    skip_tags_: @config.default_skip_tags(),
   }
 }
 

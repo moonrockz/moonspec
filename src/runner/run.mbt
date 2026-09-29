@@ -406,45 +406,6 @@ fn parse_retry_tag(tags : Array[String]) -> Int? {
 }
 
 ///|
-/// Check if a pickle's tags match any configured skip tag.
-///
-/// Scans tags for matches against the skip tag list. Supports two formats:
-/// - Bare tag: `@skip` → reason is the tag name without `@` (e.g., `"skip"`)
-/// - Tag with reason: `@skip("reason")` → extracts the quoted reason string
-///
-/// Returns `Some(reason)` for the first match, or `None` if no skip tag found.
-/// Invalid reason formats (empty parens, unquoted) fall back to the tag name.
-///
-/// ```
-/// parse_skip_tag(["@skip(\"flaky\")"], ["@skip"]) // => Some("flaky")
-/// parse_skip_tag(["@smoke"], ["@skip"])            // => None
-/// ```
-fn parse_skip_tag(tags : Array[String], skip_tags : Array[String]) -> String? {
-  for tag in tags {
-    let (name, reason) : (String, String?) = lexmatch tag with longest {
-      (re"^@[a-zA-Z_][a-zA-Z0-9_]*" as ident, after=rest) => {
-        let n = ident[1:].to_owned()
-        lexmatch rest with longest {
-          re"^\(\"[^\"]+\"\)$" as quoted =>
-            (n, Some(quoted[2:quoted.length() - 2].to_owned()))
-          re"^\([^)]*\)$" => (n, None)
-          re"^$" => (n, None)
-          _ => continue
-        }
-      }
-      _ => continue
-    }
-    let full_tag = "@" + name
-    for skip in skip_tags {
-      if full_tag == skip {
-        return Some(reason.unwrap_or(name))
-      }
-    }
-  }
-  None
-}
-
-///|
 /// Run all features and collect results.
 ///
 /// A fresh world is created per scenario via `factory()` for isolation.
@@ -1039,7 +1000,7 @@ async fn[W : @core.World] execute_pickle(
     None => []
   }
   // Check if scenario should be skipped via tags
-  let skip_reason = parse_skip_tag(tags, skip_tags)
+  let skip_reason = @config.skip_reason(tags, skip_tags)
   if skip_reason is Some(reason) {
     return make_skipped_pickle_result(
       pickle, tags, reason, mapping, test_case_id, test_step_ids, sinks, id_gen,

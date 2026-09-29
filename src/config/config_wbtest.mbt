@@ -273,3 +273,61 @@ test "merge: formatters falls back to base when override absent" {
     None => assert_true(false)
   }
 }
+
+///|
+test "skip_reason returns None when no skip tag present" {
+  let result = skip_reason(["@smoke", "@fast"], ["@skip", "@ignore"])
+  assert_eq(result, None)
+}
+
+///|
+test "skip_reason matches bare @skip tag" {
+  let result = skip_reason(["@smoke", "@skip"], ["@skip", "@ignore"])
+  assert_eq(result, Some("skip"))
+}
+
+///|
+test "skip_reason matches bare @ignore tag" {
+  let result = skip_reason(["@ignore", "@smoke"], ["@skip", "@ignore"])
+  assert_eq(result, Some("ignore"))
+}
+
+///|
+test "skip_reason extracts reason from @skip with quoted reason" {
+  let result = skip_reason(["@skip(\"flaky on CI\")"], ["@skip", "@ignore"])
+  assert_eq(result, Some("flaky on CI"))
+}
+
+///|
+test "skip_reason extracts reason from @ignore with quoted reason" {
+  let result = skip_reason(["@ignore(\"not implemented\")"], [
+    "@skip", "@ignore",
+  ])
+  assert_eq(result, Some("not implemented"))
+}
+
+///|
+test "skip_reason uses tag name for empty parens" {
+  let result = skip_reason(["@skip()"], ["@skip", "@ignore"])
+  assert_eq(result, Some("skip"))
+}
+
+///|
+test "skip_reason uses tag name for unquoted content" {
+  let result = skip_reason(["@skip(no quotes)"], ["@skip", "@ignore"])
+  assert_eq(result, Some("skip"))
+}
+
+///|
+test "skip_reason works with custom skip tags" {
+  let result = skip_reason(["@wip"], ["@wip"])
+  assert_eq(result, Some("wip"))
+}
+
+///|
+test "skip_reason returns first match" {
+  let result = skip_reason(["@ignore(\"a\")", "@skip(\"b\")"], [
+    "@skip", "@ignore",
+  ])
+  assert_eq(result, Some("a"))
+}
