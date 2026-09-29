@@ -20,6 +20,7 @@ fn main {
       match gen_matches.subcommand {
         Some(("tests", sub)) => cmd_gen_tests(sub)
         Some(("steps", sub)) => cmd_gen_steps(sub)
+        Some(("build", sub)) => cmd_gen_build(sub)
         _ => ()
       }
     Some(("check", sub)) => cmd_check(sub)

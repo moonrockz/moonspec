@@ -550,6 +550,9 @@ dev_build(
 )
 ```
 
+`moonspec gen build features/calculator.feature --apply` writes these entries
+for you; see [`gen build`](#gen-build----set-up-build-rules).
+
 Add one `dev_build` entry per feature file. A `rule` declared in `moon.mod`
 is visible to every package in the module, so you can declare it once there.
 The older `options("pre-build": [...])` form still works but is deprecated,
@@ -727,6 +730,33 @@ async test "Feature: Calculator" {
   )
 }
 ```
+
+### `gen build` -- Set Up Build Rules
+
+Writes the `rule` and `dev_build` entries that regenerate the tests of each
+feature file before every `moon check`, `moon build` or `moon test`:
+
+```bash
+# Print the entries for src/moon.pkg
+moonspec gen build features/calculator.feature -w CalcWorld
+
+# Add the missing entries to src/moon.pkg and generate missing test files
+moonspec gen build features/*.feature -w CalcWorld --apply
+```
+
+**Arguments:**
+- One or more `.feature` file paths, relative to the module root (required)
+- `--world` / `-w`: World type name (or `world` in the config file)
+- `--package` / `-p`: package directory that gets the tests (default: `src`)
+- `--config` / `-c`: path to a `moonspec.json5` config file
+- `--apply`: write to `<package>/moon.pkg` instead of printing
+
+`--apply` adds only entries that are missing (the rule by name, a `dev_build`
+by its output file), so running it again changes nothing. It also writes test
+files that do not exist yet: moon does not compile a `dev_build` output that
+did not exist when the build started, so without this the first `moon test`
+would find no tests. `moon.pkg.json` does not support build rules; run
+`moon fmt` to migrate it to `moon.pkg` first.
 
 ### `check` -- Validate Feature Files
 

@@ -34,44 +34,157 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
   }
   // CLI --mode flag (applies to all files if set)
   let cli_mode : String? = option_value(value, "mode")
+  let no_color = resolve_no_color(
+    value.flags.get_or_default("no-color", false),
+    moonspec_config,
+  )
   for file in files {
-    let mode_str = match cli_mode {
-      Some(m) => m
-      None => moonspec_config.resolve_mode(file)
-    }
-    let mode = match mode_str {
-      "per-feature" => @codegen.CodegenMode::PerFeature
-      "per-scenario" => @codegen.CodegenMode::PerScenario
-      other => {
-        die("Unknown mode: \{other} (expected per-scenario or per-feature)")
-        return
-      }
-    }
-    let config = @codegen.CodegenConfig::{
-      mode,
-      world,
-      skip_tags: moonspec_config.skip_tags,
-      formatters: moonspec_config.formatters,
-      no_color: resolve_no_color(
-        value.flags.get_or_default("no-color", false),
-        moonspec_config,
-      ),
-    }
-    let content = @fs.read_file_to_string(file) catch {
-      @fs.IOError(msg) => {
-        die("Error reading \{file}: \{msg}")
-        return
-      }
-    }
-    let test_code = @codegen.generate_test_file(content, file, config~)
     let output_path = test_output_path(output_dir, file)
-    @fs.write_string_to_file(output_path, test_code) catch {
-      @fs.IOError(msg) => {
-        die("Error writing \{output_path}: \{msg}")
-        return
-      }
+    if !write_test_file(
+        file,
+        output_path,
+        world~,
+        cli_mode~,
+        no_color~,
+        moonspec_config~,
+      ) {
+      return
     }
     println(output_path)
+  }
+}
+
+///|
+/// Generate the test file for one feature file. Returns false (after `die`)
+/// on an error.
+fn write_test_file(
+  file : String,
+  output_path : String,
+  world~ : String,
+  cli_mode~ : String?,
+  no_color~ : Bool,
+  moonspec_config~ : @config.MoonspecConfig,
+) -> Bool {
+  let mode_str = match cli_mode {
+    Some(m) => m
+    None => moonspec_config.resolve_mode(file)
+  }
+  let mode = match mode_str {
+    "per-feature" => @codegen.CodegenMode::PerFeature
+    "per-scenario" => @codegen.CodegenMode::PerScenario
+    other => {
+      die("Unknown mode: \{other} (expected per-scenario or per-feature)")
+      return false
+    }
+  }
+  let config = @codegen.CodegenConfig::{
+    mode,
+    world,
+    skip_tags: moonspec_config.skip_tags,
+    formatters: moonspec_config.formatters,
+    no_color,
+  }
+  let content = @fs.read_file_to_string(file) catch {
+    @fs.IOError(msg) => {
+      die("Error reading \{file}: \{msg}")
+      return false
+    }
+  }
+  let test_code = @codegen.generate_test_file(content, file, config~)
+  @fs.write_string_to_file(output_path, test_code) catch {
+    @fs.IOError(msg) => {
+      die("Error writing \{output_path}: \{msg}")
+      return false
+    }
+  }
+  true
+}
+
+///|
+fn cmd_gen_build(value : @argparse.Matches) -> Unit {
+  let files = positional_values(value, "files")
+  let package_dir = option_value(value, "package").unwrap_or("src")
+  let moonspec_config = load_config(option_value(value, "config"))
+  let world = match option_value(value, "world") {
+    Some(v) => v
+    None => moonspec_config.world.unwrap_or("")
+  }
+  if world.length() == 0 {
+    die("Error: --world (-w) is required, or set \"world\" in moonspec.json5")
+    return
+  }
+  let pkg_path = package_dir + "/moon.pkg"
+  if !@fs.path_exists(pkg_path) &&
+    @fs.path_exists(package_dir + "/moon.pkg.json") {
+    die(
+      "Error: \{package_dir}/moon.pkg.json does not support rule/dev_build. Run `moon fmt` to migrate it to moon.pkg.",
+    )
+    return
+  }
+  let apply = value.flags.get_or_default("apply", false)
+  if !apply {
+    let (snippet, _) = @codegen.render_build_rules(
+      "",
+      files,
+      package_dir~,
+      world~,
+    )
+    println(snippet.trim_end(chars="\n"))
+    return
+  }
+  let existing = if @fs.path_exists(pkg_path) {
+    @fs.read_file_to_string(pkg_path) catch {
+      @fs.IOError(msg) => {
+        die("Error reading \{pkg_path}: \{msg}")
+        return
+      }
+    }
+  } else {
+    ""
+  }
+  let (content, added) = @codegen.render_build_rules(
+    existing,
+    files,
+    package_dir~,
+    world~,
+  )
+  if added == 0 {
+    println("\{pkg_path} is up to date")
+    return
+  }
+  @fs.write_string_to_file(pkg_path, content) catch {
+    @fs.IOError(msg) => {
+      die("Error writing \{pkg_path}: \{msg}")
+      return
+    }
+  }
+  println("Updated \{pkg_path}: added \{added} entries")
+  // moon does not compile a dev_build output that did not exist when the
+  // build started, so write missing test files now. Then the first
+  // `moon test` already runs them.
+  for file in files {
+    let output_path = package_dir +
+      "/" +
+      @codegen.build_rules_test_filename(file)
+    if @fs.path_exists(output_path) {
+      continue
+    }
+    if !write_test_file(
+        file,
+        output_path,
+        world~,
+        cli_mode=None,
+        no_color=resolve_no_color(false, moonspec_config),
+        moonspec_config~,
+      ) {
+      return
+    }
+    println("Generated \{output_path}")
+  }
+  if content.contains("\"pre-build\"") {
+    println(
+      "Note: \{pkg_path} still has options(\"pre-build\"). Remove the moonspec entries there to avoid running codegen twice.",
+    )
   }
 }
 

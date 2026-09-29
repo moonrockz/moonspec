@@ -402,6 +402,15 @@ dev_build(
 )
 ```
 
+To write these entries for you, run:
+
+```sh
+moonspec gen build features/calculator.feature -w CalcWorld --apply
+```
+
+It adds only the missing entries to `src/moon.pkg` (use `-p` for another
+package) and generates test files that do not exist yet.
+
 Add one `dev_build` entry per feature file. To share one `rule` between
 packages, declare it in `moon.mod`. Commit the generated files: moon does not
 run `dev_build` steps when the package is used as a dependency. The older
