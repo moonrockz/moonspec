@@ -41,7 +41,10 @@ moonspec gen tests --config path/to/custom.json5 features/*.feature
   "steps": {
     "output": "generated",
     "exclude": ["lib/*", "vendor/*"]
-  }
+  },
+
+  // Generate tests that print reports without ANSI colors
+  "no_color": false
 }
 ```
 
@@ -84,6 +87,13 @@ When omitted from config, the runtime default is `["@skip", "@ignore"]`.
 above each generated test whose scenario, feature or `Examples` block has a skip
 tag, so `moon test` reports the scenario as skipped. `moon test --include-skipped`
 runs it anyway. In `per-feature` mode, only a feature-level skip tag adds `#skip`.
+
+#### `no_color` (boolean)
+
+When `true`, `moonspec gen tests` generates tests that call
+`options.no_color(true)` and create pretty formatters with `no_color=true`.
+Default: `false`. Environment variables can override it at runtime; see
+[Colors](#colors).
 
 #### `steps` (object)
 
@@ -230,6 +240,11 @@ Set the tags that cause scenarios to be skipped. Default: `["@skip", "@ignore"]`
 
 Replaces the entire skip tag list. Scenarios with any of these tags are skipped without executing steps or hooks.
 
+#### `no_color(value : Bool)`
+
+Turn off ANSI colors in the `run_or_fail` failure report. Default: `false`.
+Environment variables can override it at runtime; see [Colors](#colors).
+
 #### `add_sink(sink : &MessageSink)`
 
 Add a message sink for envelope output. Sinks receive structured messages as the run progresses. Multiple sinks can be added.
@@ -258,6 +273,7 @@ CLI flags override the corresponding config file fields for the current invocati
 | `--mode`          | `-m`  | `mode`           | Codegen mode: `per-scenario` or `per-feature` |
 | `--config`        | `-c`  | (all)            | Explicit config file path                     |
 | `--output-dir`    | `-o`  | --               | Output directory for generated test files     |
+| `--no-color`      |       | `no_color`       | Generate tests without ANSI colors            |
 
 When `--world` or `--mode` is provided, the CLI value takes precedence over the config file value. When `--config` is provided, auto-discovery is bypassed entirely and only the specified file is loaded.
 
@@ -275,6 +291,26 @@ Note: `--mode` on the CLI applies uniformly to all files in that invocation. To 
 The `check` subcommand accepts positional `.feature` file arguments and does not use config file settings.
 
 ---
+
+## Colors
+
+The `run_or_fail` failure report and `PrettyFormatter` use ANSI colors. Turn
+them off when you build the tests:
+
+- `moonspec.json5`: `"no_color": true`
+- CLI: `moonspec gen tests --no-color`
+- Code: `options.no_color(true)` or `@format.PrettyFormatter::new(no_color=true)`
+
+Environment variables override the compiled value when the tests run:
+
+| Variable | Effect |
+|----------|--------|
+| `MOONSPEC_COLOR=always` | Color on, even when `no_color` is set |
+| `MOONSPEC_COLOR=never` | Color off |
+| `NO_COLOR=<any non-empty value>` | Color off, unless `MOONSPEC_COLOR=always` ([no-color.org](https://no-color.org)) |
+
+Editor test panels that read `moon test --test-failure-json` may show ANSI
+codes as raw text. Set `NO_COLOR=1` for those runs.
 
 ## Precedence Order
 

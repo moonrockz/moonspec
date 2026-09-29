@@ -15,6 +15,7 @@ pub using @core {
   type StepSource,
   type StepMatchResult,
   type MoonspecError,
+  type StepReport,
   type ScenarioInfo,
   type StepInfo,
   type Cells,
@@ -36,6 +37,7 @@ pub using @core {
   type StepHookCtx,
   trait Attachable,
   type RegisteredHook,
+  color_enabled,
 }
 
 ///|
