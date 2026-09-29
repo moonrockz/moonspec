@@ -18,6 +18,11 @@ struct EcomWorld {
 } derive(Default)
 
 ///|
+/// Make `EcomWorld::default` an explicit method, so tests can pass it as the
+/// World factory without the implicit-promotion deprecation warning.
+pub extend EcomWorld with Default::{default}
+
+///|
 /// Compose all step libraries into the world.
 impl @moonspec.World for EcomWorld with configure(self, setup) {
   setup.use_library(CartSteps::new(self))

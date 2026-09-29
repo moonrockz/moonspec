@@ -6,6 +6,11 @@ struct BankWorld {
 } derive(Default)
 
 ///|
+/// Make `BankWorld::default` an explicit method, so tests can pass it as the
+/// World factory without the implicit-promotion deprecation warning.
+pub extend BankWorld with Default::{default}
+
+///|
 /// Step library for account setup and balance assertions.
 struct AccountSteps {
   world : BankWorld

@@ -22,11 +22,17 @@ fresh instance for each scenario, so scenarios are isolated from one another.
 struct CalcWorld {
   mut result : Int
 } derive(Default)
+
+pub extend CalcWorld with Default::{default}
 ```
 
 The `derive(Default)` annotation auto-generates a constructor that
 zero-initializes all fields. For `Int` that means `0`, for `String` it means
 `""`, for `Array` it means `[]`, and so on.
+
+The `pub extend` line makes `CalcWorld::default` a regular method, so you can pass
+`CalcWorld::default` as the World factory. Without it, current MoonBit versions warn
+that the method is "implicitly promoted" from the `Default` impl.
 
 ### Custom Default Implementation
 
@@ -41,6 +47,8 @@ struct AppWorld {
 impl Default for AppWorld with default() {
   { balance: 1000, currency: "USD" }
 }
+
+pub extend AppWorld with Default::{default}
 ```
 
 ### Reference Type Semantics
@@ -452,6 +460,8 @@ struct EcomWorld {
   mut order_total : Int
 } derive(Default)
 
+pub extend EcomWorld with Default::{default}
+
 impl @moonspec.World for EcomWorld with configure(self, setup) {
   setup.use_library(CartSteps::new(self))
   setup.use_library(InventorySteps::new(self))
@@ -658,6 +668,8 @@ Annotate your world struct with `#moonspec.world`:
 struct TodoWorld {
   todos : Array[TodoItem]
 } derive(Default)
+
+pub extend TodoWorld with Default::{default}
 ```
 
 ### Writing Step Functions
