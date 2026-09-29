@@ -6,6 +6,11 @@ struct CalcWorld {
 } derive(Default)
 
 ///|
+/// Make `CalcWorld::default` an explicit method, so tests can pass it as the
+/// World factory without the implicit-promotion deprecation warning.
+pub extend CalcWorld with Default::{default}
+
+///|
 /// Register step definitions. Closures capture `self` to share state
 /// between steps within a single scenario.
 impl @moonspec.World for CalcWorld with configure(self, setup) {

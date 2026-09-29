@@ -63,9 +63,11 @@ The World struct holds per-scenario state. moonspec creates a fresh instance for
 struct CalcWorld {
   mut result : Int
 } derive(Default)
+
+pub extend CalcWorld with Default::{default}
 ```
 
-`derive(Default)` is required -- moonspec calls `CalcWorld::default()` to create a new instance before each scenario runs. Because MoonBit structs are reference types, mutations made by step closures are visible to all subsequent steps within the same scenario.
+`derive(Default)` is required -- moonspec calls `CalcWorld::default()` to create a new instance before each scenario runs. The `pub extend` line makes `CalcWorld::default` a regular method, so you can pass it as the World factory. Without it, current MoonBit versions warn that the method is "implicitly promoted" from the `Default` impl. Because MoonBit structs are reference types, mutations made by step closures are visible to all subsequent steps within the same scenario.
 
 ## Step 4: Implement the World Trait
 
@@ -339,6 +341,8 @@ struct CalcWorld {
   mut result : Int
 } derive(Default)
 
+pub extend CalcWorld with Default::{default}
+
 ///|
 #moonspec.given("a calculator")
 fn given_calculator(world : CalcWorld) -> Unit {
@@ -446,6 +450,8 @@ Every scenario gets a completely fresh World instance created by calling the `de
 struct CalcWorld {
   mut result : Int    // Reset to 0 (default) for every scenario
 } derive(Default)
+
+pub extend CalcWorld with Default::{default}
 ```
 
 This design follows the same principle as Cucumber's World pattern: each scenario is an independent test that sets up, acts, and asserts without depending on any other scenario's side effects.

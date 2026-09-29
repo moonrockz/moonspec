@@ -36,6 +36,8 @@ struct CalcWorld {
   mut result : Int
 } derive(Default)
 
+pub extend CalcWorld with Default::{default}
+
 impl @moonspec.World for CalcWorld with configure(self, setup) {
   setup.given0("a calculator", fn() { self.result = 0 })
   setup.when2("I add {int} and {int}", fn(a : Int, b : Int) {
@@ -66,7 +68,8 @@ async test "calculator" {
 ```
 
 Each scenario gets a fresh `CalcWorld` instance (via `derive(Default)`), so state
-never leaks between scenarios.
+never leaks between scenarios. The `pub extend CalcWorld with Default::{default}`
+line lets you pass `CalcWorld::default` without a deprecation warning.
 
 ## Writing Features
 
@@ -166,10 +169,16 @@ struct MyWorld {
   mut cucumbers : Int
   mut belly_full : Bool
 } derive(Default)
+
+pub extend MyWorld with Default::{default}
 ```
 
 `derive(Default)` zero-initializes all fields. For custom initialization, implement
 `Default` manually.
+
+The `pub extend` line makes `MyWorld::default` a regular method, so you can pass
+`MyWorld::default` as the World factory. Without it, current MoonBit versions warn
+that the method is "implicitly promoted" from the `Default` impl.
 
 ### Configuring Steps
 
