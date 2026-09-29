@@ -63,10 +63,46 @@ fn build_parser() -> @argparse.Command {
     ],
     about="Generate configure from #moonspec.* attributes",
   )
+  // -- gen build: moon.pkg rule/dev_build entries for feature files
+  let gen_build = @argparse.Command(
+    "build",
+    positionals=[
+      @argparse.PositionArg(
+        "files",
+        num_args=@argparse.ValueRange(lower=1),
+        about=".feature or .feature.md files, relative to the module root",
+      ),
+    ],
+    options=[
+      @argparse.OptionArg(
+        "package",
+        short='p',
+        about="Package directory that gets the tests (default: src)",
+      ),
+      @argparse.OptionArg(
+        "world",
+        short='w',
+        about="World type name (e.g. CalcWorld)",
+      ),
+      @argparse.OptionArg(
+        "config",
+        short='c',
+        about="Path to moonspec.json5 config file",
+      ),
+    ],
+    flags=[
+      @argparse.FlagArg(
+        "apply",
+        long="apply",
+        about="Write the missing entries to <package>/moon.pkg instead of printing them",
+      ),
+    ],
+    about="Generate moon.pkg rule/dev_build entries that run `gen tests` before each build",
+  )
   // -- gen: code generation commands
   let gen = @argparse.Command(
     "gen",
-    subcommands=[gen_tests, gen_steps],
+    subcommands=[gen_tests, gen_steps, gen_build],
     about="Code generation commands",
     arg_required_else_help=true,
   )

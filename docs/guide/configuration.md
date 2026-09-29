@@ -286,6 +286,15 @@ Note: `--mode` on the CLI applies uniformly to all files in that invocation. To 
 | `--config`        | `-c`  | Explicit config file path              |
 | `--dir`           | `-d`  | Directory to scan for step definitions |
 
+### `moonspec gen build`
+
+| Flag              | Short | Overrides Config | Description                                        |
+|-------------------|-------|------------------|----------------------------------------------------|
+| `--world`         | `-w`  | `world`          | World type name (e.g. `CalcWorld`)                 |
+| `--package`       | `-p`  | --               | Package directory that gets the tests (default: `src`) |
+| `--config`        | `-c`  | (all)            | Explicit config file path                          |
+| `--apply`         |       | --               | Write missing entries to `<package>/moon.pkg`      |
+
 ### `moonspec check`
 
 The `check` subcommand accepts positional `.feature` file arguments and does not use config file settings.
