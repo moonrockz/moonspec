@@ -342,3 +342,141 @@ test "codegen emits no formatter lines for empty formatters array" {
   let output = generate_test_file(content, "features/login.feature", config~)
   assert_true(!output.contains("add_formatter"))
 }
+
+///|
+fn skip_config(mode : CodegenMode, skip_tags : Array[String]?) -> CodegenConfig {
+  CodegenConfig::{ mode, world: "MyWorld", skip_tags, formatters: Some([]), }
+}
+
+///|
+test "per-scenario mode emits #skip for a scenario with a skip tag" {
+  let content = "Feature: Login\n\n  @skip\n  Scenario: Skipped\n    Given a user\n\n  Scenario: Runs\n    Given a user\n"
+  let output = generate_test_file(
+    content,
+    "features/login.feature",
+    config=skip_config(PerScenario, None),
+  )
+  assert_true(
+    output.contains(
+      "#skip(\"skip\")\nasync test \"Feature: Login / Scenario: Skipped\" {\n",
+    ),
+  )
+  assert_true(
+    output.contains(
+      "\nasync test \"Feature: Login / Scenario: Runs\" {\n  let options",
+    ),
+  )
+  assert_eq(output.split("#skip(").count(), 2)
+}
+
+///|
+test "skipped test clears runtime skip tags so --include-skipped runs it" {
+  let content = "Feature: Login\n\n  @wip\n  Scenario: Skipped\n    Given a user\n"
+  let output = generate_test_file(
+    content,
+    "features/login.feature",
+    config=skip_config(PerScenario, Some(["@wip"])),
+  )
+  assert_true(output.contains("#skip(\"wip\")"))
+  assert_true(output.contains("options.skip_tags([])"))
+  assert_true(!output.contains("options.skip_tags([\"@wip\"])"))
+}
+
+///|
+test "feature-level skip tag skips every scenario" {
+  let content = "@ignore\nFeature: Login\n\n  Scenario: A\n    Given a user\n\n  Scenario: B\n    Given a user\n"
+  let output = generate_test_file(
+    content,
+    "features/login.feature",
+    config=skip_config(PerScenario, None),
+  )
+  assert_eq(output.split("#skip(\"ignore\")\nasync test").count(), 3)
+}
+
+///|
+test "skip tag argument becomes the #skip reason" {
+  let content = "Feature: Login\n\n  @skip(\"flaky\")\n  Scenario: A\n    Given a user\n"
+  let output = generate_test_file(
+    content,
+    "features/login.feature",
+    config=skip_config(PerScenario, None),
+  )
+  assert_true(output.contains("#skip(\"flaky\")\nasync test"))
+}
+
+///|
+test "configured skip tags replace the defaults" {
+  let content = "Feature: Login\n\n  @skip\n  Scenario: A\n    Given a user\n\n  @wip\n  Scenario: B\n    Given a user\n"
+  let output = generate_test_file(
+    content,
+    "features/login.feature",
+    config=skip_config(PerScenario, Some(["@wip"])),
+  )
+  assert_true(
+    output.contains(
+      "#skip(\"wip\")\nasync test \"Feature: Login / Scenario: B\"",
+    ),
+  )
+  assert_eq(output.split("#skip(").count(), 2)
+}
+
+///|
+test "empty skip tags emit no #skip" {
+  let content = "Feature: Login\n\n  @skip\n  Scenario: A\n    Given a user\n"
+  let output = generate_test_file(
+    content,
+    "features/login.feature",
+    config=skip_config(PerScenario, Some([])),
+  )
+  assert_true(!output.contains("#skip("))
+}
+
+///|
+test "examples-level skip tag skips only the rows of that block" {
+  let content = "Feature: Math\n\n  Scenario Outline: Add\n    Given <a>\n\n    Examples:\n      | a |\n      | 1 |\n\n    @skip\n    Examples:\n      | a |\n      | 2 |\n"
+  let output = generate_test_file(
+    content,
+    "features/math.feature",
+    config=skip_config(PerScenario, None),
+  )
+  assert_true(
+    output.contains(
+      "#skip(\"skip\")\nasync test \"Feature: Math / Scenario: Add (a=2)\"",
+    ),
+  )
+  assert_eq(output.split("#skip(").count(), 2)
+}
+
+///|
+test "per-feature mode emits #skip only for a feature-level skip tag" {
+  let scenario_tagged = "Feature: Login\n\n  @skip\n  Scenario: A\n    Given a user\n"
+  let output = generate_test_file(
+    scenario_tagged,
+    "features/login.feature",
+    config=skip_config(PerFeature, None),
+  )
+  assert_true(!output.contains("#skip("))
+  let feature_tagged = "@skip\nFeature: Login\n\n  Scenario: A\n    Given a user\n"
+  let output = generate_test_file(
+    feature_tagged,
+    "features/login.feature",
+    config=skip_config(PerFeature, None),
+  )
+  assert_true(
+    output.contains("#skip(\"skip\")\nasync test \"Feature: Login\" {\n"),
+  )
+  assert_true(output.contains("options.skip_tags([])"))
+}
+
+///|
+test "stub tests emit no #skip" {
+  let content = "Feature: Login\n\n  @skip\n  Scenario: A\n    Given a user\n"
+  let config = CodegenConfig::{
+    mode: PerScenario,
+    world: "",
+    skip_tags: None,
+    formatters: None,
+  }
+  let output = generate_test_file(content, "features/login.feature", config~)
+  assert_true(!output.contains("#skip("))
+}

@@ -155,6 +155,8 @@ fn generate_per_feature(
   config : CodegenConfig,
 ) -> Unit {
   let test_name = "Feature: " + feature.name
+  let skip = skip_reason_for(config, [feature.tags])
+  generate_skip_attribute(buf, skip, config)
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
@@ -162,7 +164,7 @@ fn generate_per_feature(
       escape_string(source_path) +
       "\")])\n",
     )
-    generate_skip_tags_line(buf, config)
+    generate_skip_tags_line(buf, skip, config)
     generate_formatter_lines(buf, config)
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
@@ -192,6 +194,7 @@ fn generate_per_scenario(
             feature.name,
             scenario.name,
             source_path,
+            skip_reason_for(config, [feature.tags, scenario.tags]),
             config,
           )
           buf.write_string("\n")
@@ -213,6 +216,11 @@ fn generate_per_scenario(
                 feature.name,
                 scenario_name,
                 source_path,
+                skip_reason_for(config, [
+                  feature.tags,
+                  scenario.tags,
+                  examples.tags,
+                ]),
                 config,
               )
               buf.write_string("\n")
@@ -231,9 +239,11 @@ fn generate_scenario_runner_test(
   feature_name : String,
   scenario_name : String,
   source_path : String,
+  skip : String?,
   config : CodegenConfig,
 ) -> Unit {
   let test_name = "Feature: " + feature_name + " / Scenario: " + scenario_name
+  generate_skip_attribute(buf, skip, config)
   buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
@@ -243,7 +253,7 @@ fn generate_scenario_runner_test(
       escape_string(scenario_name) +
       "\")\n",
     )
-    generate_skip_tags_line(buf, config)
+    generate_skip_tags_line(buf, skip, config)
     generate_formatter_lines(buf, config)
     buf.write_string(
       "  @moonspec.run_or_fail(\n    " +
@@ -258,8 +268,50 @@ fn generate_scenario_runner_test(
 }
 
 ///|
+/// Find the `#skip` reason for a test from its tags (feature first, as in
+/// pickles). Returns `None` for stub tests, which have nothing to skip.
+fn skip_reason_for(
+  config : CodegenConfig,
+  tag_groups : Array[Array[@gherkin.Tag]],
+) -> String? {
+  if config.world.length() == 0 {
+    return None
+  }
+  let tags : Array[String] = []
+  for group in tag_groups {
+    for tag in group {
+      tags.push(tag.name)
+    }
+  }
+  let skip_tags = config.skip_tags.unwrap_or(@config.default_skip_tags())
+  @config.skip_reason(tags, skip_tags)
+}
+
+///|
+/// Generate a `#skip("reason")` attribute so `moon test` reports the test as
+/// skipped. `moon test --include-skipped` still runs it.
+fn generate_skip_attribute(
+  buf : StringBuilder,
+  skip : String?,
+  config : CodegenConfig,
+) -> Unit {
+  if config.world.length() > 0 && skip is Some(reason) {
+    buf.write_string("#skip(\"" + escape_string(reason) + "\")\n")
+  }
+}
+
+///|
 /// Generate `options.skip_tags([...])` line if custom skip tags are configured.
-fn generate_skip_tags_line(buf : StringBuilder, config : CodegenConfig) -> Unit {
+/// A skipped test clears the skip tags, so `--include-skipped` runs the scenario.
+fn generate_skip_tags_line(
+  buf : StringBuilder,
+  skip : String?,
+  config : CodegenConfig,
+) -> Unit {
+  if skip is Some(_) {
+    buf.write_string("  options.skip_tags([])\n")
+    return
+  }
   match config.skip_tags {
     Some(tags) => {
       buf.write_string("  options.skip_tags([")

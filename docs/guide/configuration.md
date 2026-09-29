@@ -80,6 +80,11 @@ Tags may include a reason using the `@skip("reason")` syntax. The reason is extr
 
 When omitted from config, the runtime default is `["@skip", "@ignore"]`.
 
+`moonspec gen tests` uses the same tags. It puts a `#skip("reason")` attribute
+above each generated test whose scenario, feature or `Examples` block has a skip
+tag, so `moon test` reports the scenario as skipped. `moon test --include-skipped`
+runs it anyway. In `per-feature` mode, only a feature-level skip tag adds `#skip`.
+
 #### `steps` (object)
 
 Configuration for the `moonspec gen steps` command.

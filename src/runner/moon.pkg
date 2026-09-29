@@ -1,5 +1,6 @@
 import {
   "moonrockz/moonspec/core",
+  "moonrockz/moonspec/config",
   "moonrockz/gherkin",
   "moonrockz/cucumber-messages" @cucumber_messages,
   "moonbitlang/async",
