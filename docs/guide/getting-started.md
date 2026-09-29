@@ -246,7 +246,14 @@ Total tests: 1, passed: 1, failed: 0.
 
 If a step is undefined (no matching step definition), moonspec will raise an error with a helpful message showing the unmatched step text and a suggested code snippet.
 
-If an assertion fails, you will see a detailed error showing which scenario and step failed, along with the assertion message.
+If an assertion fails, you will see a detailed error showing which scenario and step failed, along with the assertion message:
+
+```
+[moon/test] test ... ("calculator") failed: 1 failed, 2 total
+Feature: Calculator / Scenario: Subtraction
+  Then the result should be 7
+    Step 'the result should be 7' (Then): ...
+```
 
 ## Codegen Mode
 
