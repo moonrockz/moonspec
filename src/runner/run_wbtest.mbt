@@ -772,3 +772,24 @@ test "gherkin_media_type selects markdown for .feature.md" {
     "text/x.cucumber.gherkin+markdown",
   )
 }
+
+///|
+async test "run_or_fail error message names feature, scenario and step" {
+  let content = "Feature: B\n\n  Scenario: Fail\n    Given pass\n    Given fail\n"
+  let mut message = ""
+  run_or_fail(
+    RunWorld2::default,
+    RunOptions([FeatureSource::Text("test://b", content)]),
+  ) catch {
+    e => message = e.to_string()
+  }
+  inspect(
+    message,
+    content=(
+      #|1 failed, 1 total
+      #|Feature: B / Scenario: Fail
+      #|  Given fail
+      #|    Step 'fail' (Given): Failure(fail)
+    ),
+  )
+}

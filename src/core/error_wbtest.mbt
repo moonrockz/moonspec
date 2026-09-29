@@ -68,3 +68,85 @@ test "RunFailed aggregates scenario errors" {
     _ => fail("expected RunFailed")
   }
 }
+
+///|
+test "StepFailed shows keyword, step and message" {
+  let err = MoonspecError::StepFailed(
+    step="the result is 4",
+    keyword="Then ",
+    message="Expected 3 to equal 4",
+  )
+  inspect(
+    err,
+    content=(
+      #|Then the result is 4
+      #|  Expected 3 to equal 4
+    ),
+  )
+}
+
+///|
+test "UndefinedStep shows snippet and suggestions" {
+  let err = MoonspecError::UndefinedStep(
+    step="I have 5 bananas",
+    keyword="Given ",
+    snippet="s.given(\"I have {int} bananas\", fn(ctx) {\n  ...\n})",
+    suggestions=["I have {int} cucumbers"],
+  )
+  inspect(
+    err,
+    content=(
+      #|Given I have 5 bananas
+      #|  Undefined step. Implement it with:
+      #|    s.given("I have {int} bananas", fn(ctx) {
+      #|      ...
+      #|    })
+      #|  Did you mean:
+      #|    I have {int} cucumbers
+    ),
+  )
+}
+
+///|
+test "PendingStep shows message" {
+  let err = MoonspecError::PendingStep(
+    step="a pending step",
+    keyword="Given",
+    message="TODO: implement",
+  )
+  inspect(
+    err,
+    content=(
+      #|Given a pending step
+      #|  Pending: TODO: implement
+    ),
+  )
+}
+
+///|
+test "RunFailed shows summary and each failed scenario" {
+  let err : Error = RunFailed(summary="2 failed, 3 total", errors=[
+    ScenarioFailed(scenario="wrong sum", feature="Add", errors=[
+      StepFailed(
+        step="the result is 4",
+        keyword="Then ",
+        message="Expected 3 to equal 4",
+      ),
+    ]),
+    ScenarioFailed(scenario="later", feature="Add", errors=[
+      PendingStep(step="a later step", keyword="When ", message="TODO"),
+    ]),
+  ])
+  inspect(
+    err,
+    content=(
+      #|2 failed, 3 total
+      #|Feature: Add / Scenario: wrong sum
+      #|  Then the result is 4
+      #|    Expected 3 to equal 4
+      #|Feature: Add / Scenario: later
+      #|  When a later step
+      #|    Pending: TODO
+    ),
+  )
+}
