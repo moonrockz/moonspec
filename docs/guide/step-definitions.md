@@ -5,8 +5,8 @@ file is matched against registered patterns, and the corresponding handler
 function is executed.
 
 This guide covers the World struct, step registration (both typed and
-context-based), Cucumber Expressions, context and arguments, custom parameter
-types, step libraries, data tables, doc strings, error handling, and the
+context-based), Cucumber Expressions, expression tools, context and arguments,
+custom parameter types, step libraries, data tables, doc strings, error handling, and the
 experimental attribute-based approach.
 
 ---
@@ -395,7 +395,7 @@ value is required.
 ### Typed Domain Values
 
 `define_param_type1` wraps a single-capture transformer and returns a
-`@cucumber_expressions.ParameterType[T]` handle. Keep the handle in your step
+`@moonspec.ParameterType[T]` handle. Keep the handle in your step
 closure and use `ctx[index].get(handle)` to retrieve the value without a cast:
 
 ```moonbit
@@ -435,8 +435,8 @@ struct Shade {
 let shade = setup.define_param_type_with(
   "shade",
   ["(red|blue)-(light|dark)"],
-  @cucumber_expressions.Captures::string().zip(
-    @cucumber_expressions.Captures::string(),
+  @moonspec.Captures::string().zip(
+    @moonspec.Captures::string(),
   ).map(fn(color, tone) { Shade::{ color, tone } }),
 )
 setup.given("I pick {shade}", fn(ctx) raise {
@@ -453,6 +453,91 @@ fixed-arity helpers with two through eight captures, use
 `setup.param_registry().define_type1()` or `.define2()` through `.define8()`.
 
 ---
+
+## Expression tools
+
+moonspec exposes the cucumber-expressions tools through its main import. Each
+`Setup` supplies a factory and generator backed by its own parameter registry,
+so they see the custom types you register, including typed handles.
+
+| Capability | Public API | Use |
+|---|---|---|
+| Typed domain values | `define_param_type1`, `define_param_type_with`, `StepArg::get` | Decode custom parameters and retrieve them with their typed handles |
+| Expression creation | `setup.expression_factory()` | Create Cucumber or regex expression objects for validation and matching |
+| Candidate generation | `setup.expression_generator()` | Suggest Cucumber Expressions from concrete step text |
+
+`ParameterType`, `Captures`, `Captures1`, `ExpressionFactory`,
+`CucumberExpressionGenerator`, `StepExpression`, `GeneratedExpression`, and
+`Match` are available under `@moonspec`. The error types `ExpressionError`,
+`ParameterTypeError`, and `AmbiguousParameterTypeError` are also re-exported.
+These are the upstream types, so handles and results remain compatible with
+code that imports cucumber-expressions directly.
+
+### Create and match expressions
+
+The factory selects the expression kind from the pattern:
+
+- Patterns starting with `^` or ending with `$` become regular expressions.
+- Patterns wrapped in `/.../` become regular expressions with the slashes removed.
+- Other patterns become Cucumber Expressions.
+
+```moonbit
+let setup = @moonspec.Setup::new()
+let color : @moonspec.ParameterType[String] = setup.define_param_type1(
+  "color",
+  ["red|blue"],
+  fn(text) { text },
+  prefer_for_regexp_match=true,
+)
+let factory = setup.expression_factory()
+let expression = factory.create_expression("I pick {color}")
+match expression.match_("I pick red") {
+  Some(matched) => assert_eq(matched.get(color), "red")
+  None => fail("expected a match")
+}
+
+let regex = factory.create_expression("^(red|blue)$")
+match regex.match_("red") {
+  Some(matched) => assert_eq(matched.get(color), "red")
+  None => fail("expected a regex match")
+}
+```
+
+For regex matches, custom types are selected by their capture patterns;
+`prefer_for_regexp_match` helps resolve types sharing a pattern. Invalid
+expressions raise `ExpressionError`. Matching can raise conversion or
+ambiguity errors, and a handle rejects a value from another registration.
+
+The factory creates objects for explicit matching and tooling. Register scenario
+handlers with `setup.given`, `when`, `then`, or `step`, which currently accept
+Cucumber Expression patterns. Creating a factory expression does not register a
+handler or add regex support to those registration methods.
+
+### Generate expression candidates
+
+The generator recognizes parameter types marked `use_for_snippets=true`,
+escapes literal Cucumber Expression syntax, and returns the best candidate
+first. Each candidate exposes `source()`, `parameter_names()`, and
+`parameter_infos()` for tools that build step definitions.
+
+```moonbit
+let setup = @moonspec.Setup::new()
+let color = setup.define_param_type1("color", ["red|blue"], fn(text) { text })
+let candidates = setup.expression_generator().generate_expressions("I pick red")
+// candidates[0].source() is "I pick {color}".
+// candidates[0].parameter_names() is ["color"].
+setup.given(candidates[0].source(), fn(ctx) raise {
+  assert_eq(ctx[0].get(color), "red")
+})
+```
+
+Set `use_for_snippets=false` on a typed registration to keep that type out of
+these candidates. `source()` returns Cucumber Expression text; tools emitting
+MoonBit code must also escape it as a MoonBit string literal.
+
+This generator is available for your own tools and workflows. The runner's
+automatic undefined-step snippets currently use the built-in integer, decimal,
+and quoted-string inference.
 
 ## StepLibrary Trait
 

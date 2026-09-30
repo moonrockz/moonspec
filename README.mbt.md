@@ -47,7 +47,8 @@ reference types -- mutations in closures are visible across step handlers.
 
 - **World trait** -- per-scenario state with `derive(Default)`
 - **StepLibrary trait** -- composable, reusable step groups
-- **Cucumber Expressions** -- 11 built-in parameter types plus custom types
+- **Cucumber Expressions** -- 11 built-in parameter types, custom typed handles, and capture decoders
+- **Expression tools** -- registry-aware expression factory and candidate generator
 - **Gherkin** -- Feature, Scenario, Scenario Outline, Background, Rules, Data Tables, Doc Strings
 - **Markdown with Gherkin** -- `.feature.md` files are parsed as [MDG](https://github.com/cucumber/gherkin/blob/main/MARKDOWN_WITH_GHERKIN.md)
 - **Lifecycle hooks** -- before/after for test run, test case, and test step
@@ -78,6 +79,47 @@ reference types -- mutations in closures are visible across step handlers.
 | `{}` | `String` | `AnonymousVal(String)` |
 
 Custom types: `setup.add_param_type_strings(name, patterns, transformer?)`.
+
+## Typed parameters and expression tools
+
+Define custom domain values with `setup.define_param_type1` or composable
+`@moonspec.Captures` decoders through `setup.define_param_type_with`. Retrieve
+values with `ctx[index].get(handle)`:
+
+```moonbit
+let color : @moonspec.ParameterType[String] = setup.define_param_type1(
+  "color", ["red|blue"], fn(text) { text },
+)
+setup.given("I pick {color}", fn(ctx) raise {
+  assert_eq(ctx[0].get(color), "red")
+})
+```
+
+The expression factory and generator are available through the same setup,
+using its registered parameter types:
+
+```moonbit
+let factory = setup.expression_factory()
+let expression = factory.create_expression("I pick {color}")
+let candidates = setup.expression_generator().generate_expressions("I pick red")
+// candidates[0].source() is "I pick {color}".
+```
+
+The factory creates expression objects for validation and explicit matching.
+Anchored patterns and `/.../` patterns create regex objects; other patterns
+create Cucumber Expressions. The generator returns candidates and parameter
+metadata, honoring custom types' `use_for_snippets` flags. Choose a candidate's
+`source()` to register a Cucumber step pattern.
+
+`ParameterType`, `Captures`, `Captures1`, `ExpressionFactory`,
+`CucumberExpressionGenerator`, `StepExpression`, `GeneratedExpression`, `Match`,
+and the expression/parameter error types are re-exported by `@moonspec`.
+Step registration currently accepts Cucumber Expressions, and automatic
+undefined-step snippets use moonspec's built-in inference. The factory and
+generator are exposed for users' own tools and workflows.
+
+See the [expression tools guide](https://github.com/moonrockz/moonspec/blob/main/docs/guide/step-definitions.md#expression-tools)
+for full examples.
 
 ## Step Registration
 
