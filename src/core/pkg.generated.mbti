@@ -7,7 +7,6 @@ import {
   "moonbitlang/x/decimal",
   "moonrockz/cucumber-expressions",
   "moonrockz/cucumber-messages",
-  "tonyfettes/any",
 }
 
 // Values
@@ -244,6 +243,8 @@ pub fn Setup::before_test_run(Self, (RunHookCtx) -> Unit raise, loc~ : SourceLoc
 #callsite(autofill(loc))
 pub fn Setup::before_test_step(Self, (StepHookCtx) -> Unit raise, loc~ : SourceLoc) -> Unit
 pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
+pub fn[T] Setup::define_param_type1(Self, String, Array[String], (String) -> T raise, use_for_snippets? : Bool, prefer_for_regexp_match? : Bool) -> @cucumber-expressions.ParameterType[T] raise @cucumber-expressions.ParameterTypeError
+pub fn[T] Setup::define_param_type_with(Self, String, Array[String], @cucumber-expressions.Captures1[T], use_for_snippets? : Bool, prefer_for_regexp_match? : Bool) -> @cucumber-expressions.ParameterType[T] raise @cucumber-expressions.ParameterTypeError
 pub fn Setup::given(Self, String, (Ctx) -> Unit raise) -> Unit
 pub fn Setup::given0(Self, String, () -> Unit raise) -> Unit
 pub fn Setup::given0_ctx(Self, String, (Ctx) -> Unit raise) -> Unit
@@ -444,6 +445,7 @@ pub(all) struct StepArg {
 } derive(Eq, @debug.Debug)
 pub fn StepArg::equal(Self, Self) -> Bool
 pub fn StepArg::from_param(@cucumber-expressions.Param) -> Self
+pub fn[T] StepArg::get(Self, @cucumber-expressions.ParameterType[T]) -> T raise
 pub fn StepArg::not_equal(Self, Self) -> Bool
 pub fn StepArg::to_repr(Self) -> @debug.Repr
 
@@ -728,7 +730,7 @@ pub(all) enum StepValue {
   AnonymousVal(String)
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(@bigint.BigInt)
-  CustomVal(@any.Any)
+  TypedVal(@cucumber-expressions.TypedValue)
   NullVal
   DocStringVal(DocString)
   DataTableVal(DataTable)
@@ -762,7 +764,6 @@ pub impl FromStepArg for Double
 pub impl FromStepArg for String
 pub impl FromStepArg for @bigint.BigInt
 pub impl FromStepArg for @decimal.Decimal
-pub impl FromStepArg for @any.Any
 
 pub(open) trait MessageSink {
   fn on_message(Self, @cucumber-messages.Envelope) -> Unit

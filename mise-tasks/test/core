@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Test core parameter matching on a selected MoonBit target"
+set -euo pipefail
+moon test --target "${1:-js}" src/core

@@ -12,7 +12,7 @@ pub(all) enum StepValue {
   AnonymousVal(String)
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(BigInt)
-  CustomVal(@any.Any)
+  TypedVal(@cucumber_expressions.TypedValue)
   NullVal
   DocStringVal(DocString)
   DataTableVal(DataTable)
@@ -32,7 +32,7 @@ pub impl Show for StepValue with fn output(self, logger) {
     AnonymousVal(v) => logger.write_string("AnonymousVal(\{v})")
     BigDecimalVal(v) => logger.write_string("BigDecimalVal(\{v})")
     BigIntegerVal(v) => logger.write_string("BigIntegerVal(\{v})")
-    CustomVal(any) => logger.write_string("CustomVal(<\{any.type_name()}>)")
+    TypedVal(value) => logger.write_string("TypedVal(<\{value.type_name()}>)")
     NullVal => logger.write_string("NullVal")
     DocStringVal(d) => {
       let mt = match d.media_type {
@@ -47,7 +47,7 @@ pub impl Show for StepValue with fn output(self, logger) {
 }
 
 ///|
-/// Debug repr reuses the Show output, since CustomVal holds an opaque `Any`.
+/// Debug repr reuses the Show output, since TypedVal holds an opaque typed value.
 pub impl @debug.Debug for StepValue with fn to_repr(self) {
   @debug.Repr(self.to_string())
 }
@@ -66,7 +66,7 @@ pub impl Eq for StepValue with fn equal(self, other) -> Bool {
     (AnonymousVal(a), AnonymousVal(b)) => a == b
     (BigDecimalVal(a), BigDecimalVal(b)) => a == b
     (BigIntegerVal(a), BigIntegerVal(b)) => a == b
-    (CustomVal(_), CustomVal(_)) => true
+    (TypedVal(a), TypedVal(b)) => physical_equal(a, b)
     (NullVal, NullVal) => true
     (DocStringVal(a), DocStringVal(b)) => a == b
     (DataTableVal(a), DataTableVal(b)) => a == b
@@ -160,10 +160,34 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
     @cucumber_expressions.ParamValue::AnonymousVal(s) => AnonymousVal(s)
     @cucumber_expressions.ParamValue::BigDecimalVal(d) => BigDecimalVal(d)
     @cucumber_expressions.ParamValue::BigIntegerVal(bi) => BigIntegerVal(bi)
-    @cucumber_expressions.ParamValue::CustomVal(any) => CustomVal(any)
+    @cucumber_expressions.ParamValue::TypedVal(value) => TypedVal(value)
     @cucumber_expressions.ParamValue::NullVal => NullVal
   }
   { value, raw: param.raw, }
+}
+
+///|
+/// Read a custom value using the handle returned by typed registration.
+/// Raises WrongParameterType for another handle, or Failure for a built-in value.
+pub fn[T] StepArg::get(
+  self : StepArg,
+  handle : @cucumber_expressions.ParameterType[T],
+) -> T raise Error {
+  match self.value {
+    TypedVal(value) => {
+      // The handle reads the opaque value's identity; capture metadata is not
+      // used for extraction. StepArg retains the original matched text.
+      let param : @cucumber_expressions.Param = {
+        value: @cucumber_expressions.ParamValue::TypedVal(value),
+        type_: @cucumber_expressions.ParamType::Custom(value.type_name()),
+        raw: self.raw,
+        group: { value: Some(self.raw), start: None, end: None, children: [], },
+      }
+      handle.get(param)
+    }
+    other =>
+      raise Failure("expected typed parameter '\{handle.name()}', got \{other}")
+  }
 }
 
 ///|

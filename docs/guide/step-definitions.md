@@ -165,7 +165,6 @@ The `FromStepArg` trait maps `StepValue` variants to MoonBit types:
 | `String`           | `StringVal`, `WordVal`, `AnonymousVal`        | `{string}`, `{word}`, `{}`    |
 | `BigInt`           | `BigIntegerVal`                               | `{biginteger}`                 |
 | `@decimal.Decimal` | `BigDecimalVal`                               | `{bigdecimal}`                 |
-| `@any.Any`         | `CustomVal`                                   | custom types                   |
 | `DataTable`        | `DataTableVal`                                | data tables                    |
 | `DocString`        | `DocStringVal`                                | doc strings                    |
 
@@ -227,7 +226,7 @@ parameter types are supported:
 | `{biginteger}` | `BigIntegerVal(BigInt)`        | `"value {biginteger}"`      |
 | `{string}`     | `StringVal(String)`            | `"named {string}"`          |
 | `{word}`       | `WordVal(String)`              | `"as {word}"`               |
-| custom         | `CustomVal(@any.Any)`          | user-defined                |
+| custom         | `TypedVal(TypedValue)`         | handle-based domain values  |
 
 The difference between `{string}` and `{word}`:
 - `{string}` matches text enclosed in double quotes (e.g., `"Alice"`)
@@ -337,20 +336,14 @@ the `cucumber-expressions` package directly:
 ```moonbit
 impl @moonspec.World for MyWorld with configure(self, setup) {
   setup.add_param_type_strings("color", ["red|blue|green"])
-  setup.given("I pick a {color} cucumber", fn(ctx) {
-    match ctx[0] {
-      { value: CustomVal(any), .. } => {
-        let color : String = any.to()
-        self.selected_color = color
-      }
-      _ => ()
-    }
+  setup.given1("I pick a {color} cucumber", fn(color : String) {
+    self.selected_color = color
   })
 }
 ```
 
-Custom parameter values arrive as `CustomVal(@any.Any)`. Use `any.to()` to
-unbox them to the expected type.
+Without a transformer, custom parameter values arrive as `StringVal`.
+They work with the built-in `FromStepArg` implementation for `String`.
 
 ### Custom Type with RegexPattern
 
@@ -372,17 +365,16 @@ setup.add_param_type_strings(
   "upper",
   ["\\w+"],
   transformer=@cucumber_expressions.Transformer::new(fn(groups) {
-    @cucumber_expressions.ParamValue::CustomVal(
-      @any.of(groups[0][:].to_upper().to_string()),
+    @cucumber_expressions.ParamValue::StringVal(
+      groups[0][:].to_upper().to_owned(),
     )
   }),
 )
 
 setup.given("I say {upper}", fn(ctx) {
   match ctx[0] {
-    { value: CustomVal(any), raw, .. } => {
-      let v : String = any.to()  // "HELLO" (transformed)
-      // raw is "hello" (original text)
+    { value: StringVal(value), raw } => {
+      // value is "HELLO" (transformed); raw is "hello" (original text).
     }
     _ => ()
   }
@@ -391,14 +383,74 @@ setup.given("I say {upper}", fn(ctx) {
 
 The transformer receives its parameter's capture groups, or the whole match
 when the pattern has no capture groups, and must return a
-`@cucumber_expressions.ParamValue`. Wrap the result with
-`@cucumber_expressions.ParamValue::CustomVal(@any.of(value))` for custom types.
+`@cucumber_expressions.ParamValue`, such as `StringVal` or `IntVal`.
+Use typed registration for custom domain values.
 Transformer errors report as failed steps, including in dry-run mode. Direct
 calls to `StepRegistry::find_match` can also raise these errors.
 
 `StepValue::NullVal` preserves an unmatched optional capture from a parameter
 returned by cucumber-expressions. Typed handlers reject it when a concrete
 value is required.
+
+### Typed Domain Values
+
+`define_param_type1` wraps a single-capture transformer and returns a
+`@cucumber_expressions.ParameterType[T]` handle. Keep the handle in your step
+closure and use `ctx[index].get(handle)` to retrieve the value without a cast:
+
+```moonbit
+enum Color {
+  Red
+  Blue
+}
+
+impl @moonspec.World for MyWorld with fn configure(self, setup) {
+  let color = setup.define_param_type1("color", ["red|blue"], fn(text) {
+    match text {
+      "red" => Color::Red
+      _ => Color::Blue
+    }
+  })
+  setup.given("I pick a {color} cucumber", fn(ctx) raise {
+    self.selected_color = ctx[0].get(color)
+  })
+}
+```
+
+A handle accepts only values produced by its own registration. Another handle
+with the same name still raises `WrongParameterType`. Extracting a built-in
+value with a custom handle raises `Failure`. `TypedVal` equality uses value
+identity: separate matches are distinct even when their decoded values are
+structurally equal. Extract the domain value to compare it structurally.
+
+Use `define_param_type_with` for multiple or optional captures. The upstream
+`Captures` decoders compose with `zip` and `map`:
+
+```moonbit
+struct Shade {
+  color : String
+  tone : String
+}
+
+let shade = setup.define_param_type_with(
+  "shade",
+  ["(red|blue)-(light|dark)"],
+  @cucumber_expressions.Captures::string().zip(
+    @cucumber_expressions.Captures::string(),
+  ).map(fn(color, tone) { Shade::{ color, tone } }),
+)
+setup.given("I pick {shade}", fn(ctx) raise {
+  let selected : Shade = ctx[0].get(shade)
+  // ctx[0].raw still contains the original matched text.
+})
+```
+
+Both typed helpers raise `ParameterTypeError` for invalid registration, including
+capture arity mismatches, and accept `use_for_snippets` and
+`prefer_for_regexp_match` options. Decoder errors propagate through matching
+and are reported by the runner as failed steps. For trait-based registration or
+fixed-arity helpers with two through eight captures, use
+`setup.param_registry().define_type1()` or `.define2()` through `.define8()`.
 
 ---
 

@@ -219,7 +219,7 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 | `{biginteger}` | `BigIntegerVal(BigInt)` | `"value {biginteger}"` |
 | `{string}` | `StringVal(String)` | `"named {string}"` |
 | `{word}` | `WordVal(String)` | `"as {word}"` |
-| custom | `CustomVal(@any.Any)` | user-defined types (see [Custom Parameter Types](#custom-parameter-types)) |
+| custom | `TypedVal(TypedValue)` | handle-based custom values (see [Custom Parameter Types](#custom-parameter-types)) |
 
 ### Ctx and StepArg Access
 
@@ -316,9 +316,25 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 }
 ```
 
-Custom parameter types are automatically extracted by the `FromStepArg` trait.
-For types that need manual extraction, use the context-based `setup.then("pattern", fn(ctx) { ... })` form
-and match on `CustomVal(@any.Any)` in the `StepValue` enum.
+Custom parameters registered without a transformer arrive as `StringVal` and
+work with `FromStepArg` for `String`. For domain values, define a typed parameter
+and keep its handle:
+
+```moonbit
+let color = setup.define_param_type1("color", ["red|green|blue"], fn(text) {
+  Color::from_text(text)
+})
+setup.then("the light should be {color}", fn(ctx) raise {
+  let actual : Color = ctx[0].get(color)
+  assert_eq(self.light_color, actual)
+})
+```
+
+`Color::from_text` is your domain constructor. `define_param_type_with` accepts
+composable `@cucumber_expressions.Captures` decoders for multiple capture groups.
+Typed parameters arrive as `TypedVal`; retrieve them with `StepArg::get(handle)`.
+Registration errors propagate from `World::configure`. Decoder errors are
+reported as failed steps, including in dry-run mode.
 
 ### Error Handling
 
