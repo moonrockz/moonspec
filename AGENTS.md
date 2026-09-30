@@ -285,15 +285,20 @@ This project publishes to **mooncakes.io** (MoonBit package registry) and
 
 ## Issue Tracking
 
-This project uses **bd** (beads) for issue tracking. Run `bd onboard` to get
-started.
+This project uses **bd** (beads) with embedded Dolt for issue tracking. In a
+fresh clone or worktree, run `bd bootstrap --yes` to restore the database from
+the configured remote, then `bd hooks install --beads` and
+`git config core.hooksPath .beads/hooks` to use the current worktree's hooks. See
+[the Beads guide](.beads/README.md) for setup and recovery. Run `bd onboard`
+for a command reference.
 
 ```bash
 bd ready              # Find available work
 bd show <id>          # View issue details
 bd update <id> --status in_progress  # Claim work
 bd close <id>         # Complete work
-bd sync               # Sync with git
+bd sync               # Pull and push Dolt issue history
+bd export -o .beads/issues.jsonl  # Refresh the tracked snapshot before committing
 ```
 
 ## Landing the Plane (Session Completion)

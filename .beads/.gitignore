@@ -58,3 +58,20 @@ embeddeddolt/
 embeddeddolt.gate.lock
 backup/
 .auto-import-issues.jsonl
+
+# Added by bd (missing required patterns)
+.env
+*.gate.lock*
+export-state.json
+last_pull
+proxieddb/
+dolt-server.pid
+dolt-server.log
+dolt-server.lock
+dolt-server.port
+dolt-server.activity
+daemon.*
+*.lock
+*.corrupt.backup/
+.beads-credential-key
+proxied_server_client_info.json
