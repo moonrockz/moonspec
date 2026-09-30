@@ -99,7 +99,7 @@ test "StepArg from_param Word" {
 ///|
 test "StepArg from_param Custom" {
   let param = @cucumber_expressions.Param::{
-    value: @cucumber_expressions.ParamValue::CustomVal(@any.of("red")),
+    value: @cucumber_expressions.ParamValue::StringVal("red"),
     type_: @cucumber_expressions.ParamType::Custom("color"),
     raw: "red",
     group: { value: Some("red"), start: Some(0), end: Some(3), children: [], },

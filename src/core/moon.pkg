@@ -6,5 +6,4 @@ import {
   "moonbitlang/core/json",
   "moonbitlang/x/codec/base64",
   "moonbitlang/x/decimal",
-  "tonyfettes/any",
 }

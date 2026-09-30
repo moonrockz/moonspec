@@ -254,3 +254,43 @@ pub fn Setup::after_test_step(
   let source : StepSource? = Some(StepSource::new(uri=loc.to_string()))
   self.hook_reg.add(HookType::AfterTestStep, StepAfterHandler(handler), source~)
 }
+
+///|
+/// Define a custom parameter with one capture and return its typed handle.
+/// Use the handle with StepArg::get to read the transformed domain value.
+pub fn[T] Setup::define_param_type1(
+  self : Setup,
+  name : String,
+  patterns : Array[String],
+  transformer : (String) -> T raise Error,
+  use_for_snippets? : Bool = true,
+  prefer_for_regexp_match? : Bool = false,
+) -> @cucumber_expressions.ParameterType[T] raise @cucumber_expressions.ParameterTypeError {
+  self.param_reg.define1(
+    name,
+    patterns.map(fn(p) { @cucumber_expressions.RegexPattern(p) }),
+    transformer,
+    use_for_snippets~,
+    prefer_for_regexp_match~,
+  )
+}
+
+///|
+/// Define a custom parameter using a composable capture decoder.
+/// Captures can be zipped and mapped to construct domain values without casts.
+pub fn[T] Setup::define_param_type_with(
+  self : Setup,
+  name : String,
+  patterns : Array[String],
+  captures : @cucumber_expressions.Captures1[T],
+  use_for_snippets? : Bool = true,
+  prefer_for_regexp_match? : Bool = false,
+) -> @cucumber_expressions.ParameterType[T] raise @cucumber_expressions.ParameterTypeError {
+  self.param_reg.define_with(
+    name,
+    patterns.map(fn(p) { @cucumber_expressions.RegexPattern(p) }),
+    captures,
+    use_for_snippets~,
+    prefer_for_regexp_match~,
+  )
+}

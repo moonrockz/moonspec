@@ -28,6 +28,17 @@ test "Setup registers custom param type" {
 }
 
 ///|
+test "untransformed custom parameters are strings" {
+  let setup = Setup::new()
+  setup.add_param_type_strings("color", ["red|blue"])
+  setup.given("I pick {color}", fn(_ctx) {  })
+  match setup.step_registry().find_match("I pick red") {
+    Matched(_, args) => assert_eq(args[0].value, StringVal("red"))
+    _ => fail("expected Matched")
+  }
+}
+
+///|
 test "Setup rejects duplicate custom parameter types" {
   let setup = Setup::new()
   setup.add_param_type_strings("color", ["red|blue"])
@@ -56,19 +67,18 @@ test "Setup.add_param_type_strings with transformer" {
     "upper",
     ["\\w+"],
     transformer=@cucumber_expressions.Transformer::new(fn(groups) {
-      @cucumber_expressions.ParamValue::CustomVal(
-        @any.of(groups[0][:].to_upper().to_owned()),
+      @cucumber_expressions.ParamValue::StringVal(
+        groups[0][:].to_upper().to_owned(),
       )
     }),
   )
   setup.given("I say {upper}", fn(ctx) raise {
     match ctx[0] {
-      { value: CustomVal(any), raw, .. } => {
-        let v : String = any.to()
+      { value: StringVal(v), raw, } => {
         assert_eq(v, "HELLO")
         assert_eq(raw, "hello")
       }
-      _ => fail("expected CustomVal")
+      _ => fail("expected StringVal")
     }
   })
   // Verify registration succeeded

@@ -70,14 +70,6 @@ pub impl FromStepArg for @decimal.Decimal with fn from_step_arg(arg) {
 }
 
 ///|
-pub impl FromStepArg for @any.Any with fn from_step_arg(arg) {
-  match arg.value {
-    CustomVal(v) => v
-    other => raise Failure::Failure("expected CustomVal, got \{other}")
-  }
-}
-
-///|
 pub impl FromStepArg for DataTable with fn from_step_arg(arg) {
   match arg.value {
     DataTableVal(v) => v

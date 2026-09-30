@@ -12,5 +12,6 @@ import {
 
 import {
   "moonrockz/moonspec/format",
+  "moonrockz/cucumber-expressions" @cucumber_expressions,
   "moonbitlang/core/debug",
 } for "wbtest"

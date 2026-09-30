@@ -37,18 +37,15 @@ test "StepRegistry custom transformer receives capture groups without shifting t
     ["(red|blue)-(light|dark)"],
     transformer=@cucumber_expressions.Transformer::new(fn(groups) raise {
       assert_eq(groups, ["red", "dark"])
-      @cucumber_expressions.ParamValue::CustomVal(@any.of(groups.join(" ")))
+      @cucumber_expressions.ParamValue::StringVal(groups.join(" "))
     }),
   )
   setup.given("I pick {shade} and {int}", fn(_ctx) {  })
   match setup.step_registry().find_match("I pick red-dark and 42") {
     Matched(_, args) => {
       match args[0].value {
-        CustomVal(value) => {
-          let shade : String = value.to()
-          assert_eq(shade, "red dark")
-        }
-        _ => fail("expected CustomVal")
+        StringVal(shade) => assert_eq(shade, "red dark")
+        _ => fail("expected StringVal")
       }
       assert_eq(args[1].value, IntVal(42))
     }
