@@ -1,81 +1,64 @@
-# Beads - AI-Native Issue Tracking
+# Beads issue tracking
 
-Welcome to Beads! This repository uses **Beads** for issue tracking - a modern, AI-native tool designed to live directly in your codebase alongside your code.
+This repository uses Beads with embedded Dolt. The database and its history
+sync through `refs/dolt/data` on the GitHub remote. `.beads/issues.jsonl` is
+a tracked issue snapshot for inspection and interchange, not the live database.
 
-## What is Beads?
+## Set up a clone or worktree
 
-Beads is issue tracking that lives in your repo, making it perfect for AI coding agents and developers who want their issues close to their code. No web UI required - everything works through the CLI and integrates seamlessly with git.
-
-**Learn more:** [github.com/steveyegge/beads](https://github.com/steveyegge/beads)
-
-## Quick Start
-
-### Essential Commands
+Install Beads 1.3.0 or later, then run these commands from the repository root:
 
 ```bash
-# Create new issues
-bd create "Add user authentication"
+bd bootstrap --yes
+chmod 700 .beads
+git config beads.role maintainer
+bd hooks install --beads
+git config core.hooksPath .beads/hooks
+bd ready
+```
 
-# View all issues
-bd list
+Use `contributor` instead of `maintainer` when working as an external contributor.
+Bootstrap restores the configured Dolt remote without replacing existing history.
+Each worktree needs a local database unless it has a Beads redirect to another
+worktree. Run bootstrap in a new worktree before using the tracker.
+The relative hook path makes Git use the hooks in the current worktree. Set it
+after installing hooks, since the installer can select the main checkout's path.
 
-# View issue details
+If `bd` reports `no beads database found`, run `bd bootstrap --yes` again.
+Do not use a destructive reinitialization to recover a clone with remote history.
+
+## Work with issues
+
+```bash
+bd ready
+bd list --status open
 bd show <issue-id>
-
-# Update issue status
+bd create "Describe the work" --type task --priority 2
 bd update <issue-id> --status in_progress
-bd update <issue-id> --status done
-
-# Sync with git remote
-bd sync
+bd close <issue-id> --reason "Describe the completed work and validation"
 ```
 
-### Working with Issues
-
-Issues in Beads are:
-- **Git-native**: Stored in `.beads/issues.jsonl` and synced like code
-- **AI-friendly**: CLI-first design works perfectly with AI coding agents
-- **Branch-aware**: Issues can follow your branch workflow
-- **Always in sync**: Auto-syncs with your commits
-
-## Why Beads?
-
-✨ **AI-Native Design**
-- Built specifically for AI-assisted development workflows
-- CLI-first interface works seamlessly with AI coding agents
-- No context switching to web UIs
-
-🚀 **Developer Focused**
-- Issues live in your repo, right next to your code
-- Works offline, syncs when you push
-- Fast, lightweight, and stays out of your way
-
-🔧 **Git Integration**
-- Automatic sync with git commits
-- Branch-aware issue tracking
-- Intelligent JSONL merge resolution
-
-## Get Started with Beads
-
-Try Beads in your own projects:
+## Sync and publish
 
 ```bash
-# Install Beads
-curl -sSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
-
-# Initialize in your repo
-bd init
-
-# Create your first issue
-bd create "Try out Beads"
+bd sync
+bd export --output .beads/issues.jsonl
 ```
 
-## Learn More
+`bd sync` pulls and pushes Dolt history independently of the Git code branch.
+Auto-export refreshes the JSONL snapshot after writes, at most once per minute.
+Use the explicit export above before committing tracker changes so the snapshot
+contains the latest remote issues and local updates. Commit the snapshot and
+push the Git branch as part of the normal session completion workflow.
 
-- **Documentation**: [github.com/steveyegge/beads/docs](https://github.com/steveyegge/beads/tree/main/docs)
-- **Quick Start Guide**: Run `bd quickstart`
-- **Examples**: [github.com/steveyegge/beads/examples](https://github.com/steveyegge/beads/tree/main/examples)
+## Check the installation
 
----
+```bash
+bd dolt status
+bd hooks list
+bd doctor --check-health
+bd doctor --check=conventions
+```
 
-*Beads: Issue tracking that moves at the speed of thought* ⚡
+The local Dolt database, locks, and runtime files are ignored by Git. Keep the
+tracked configuration, hooks, and issue snapshot in version control.
