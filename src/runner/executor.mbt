@@ -103,21 +103,34 @@ pub fn execute_scenario(
           make_test_step_started_envelope(test_case_started_id, ts_id),
         )
       }
-      let (status, diagnostic) : (StepStatus, Error?) = match
-        registry.find_match(step.text, keyword~) {
-        Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
+      let (status, diagnostic) : (StepStatus, Error?) = try {
+        match registry.find_match(step.text, keyword~) {
+          Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
+            (
+              StepStatus::Undefined,
+              Some(
+                @core.undefined_step_error(
+                  step=step_text,
+                  keyword=kw,
+                  snippet~,
+                  suggestions~,
+                ),
+              ),
+            )
+          Matched(_, _) => (StepStatus::Skipped(Some("dry run")), None)
+        }
+      } catch {
+        e =>
           (
-            StepStatus::Undefined,
+            StepStatus::Failed(e.to_string()),
             Some(
-              @core.undefined_step_error(
-                step=step_text,
-                keyword=kw,
-                snippet~,
-                suggestions~,
+              @core.step_failed_error(
+                step=step.text,
+                keyword~,
+                message=e.to_string(),
               ),
             ),
           )
-        Matched(_, _) => (StepStatus::Skipped(Some("dry run")), None)
       }
       if has_sinks {
         emit(
@@ -383,78 +396,92 @@ pub fn execute_scenario(
         Some(@core.step_failed_error(step=step.text, keyword~, message=msg)),
       )
     } else {
-      match registry.find_match(step.text, keyword~) {
-        Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
+      try {
+        match registry.find_match(step.text, keyword~) {
+          Undefined(step_text~, keyword=kw, snippet~, suggestions~) =>
+            (
+              StepStatus::Undefined,
+              Some(
+                @core.undefined_step_error(
+                  step=step_text,
+                  keyword=kw,
+                  snippet~,
+                  suggestions~,
+                ),
+              ),
+            )
+          Matched(step_def, args) =>
+            try {
+              // Append block argument (DocString/DataTable) as last StepArg
+              match step.argument {
+                Some(arg) =>
+                  match (arg.docString, arg.dataTable) {
+                    (Some(ds), _) => {
+                      let doc : @core.DocString = {
+                        content: ds.content,
+                        media_type: ds.mediaType,
+                      }
+                      args.push(@core.StepArg::{
+                        value: DocStringVal(doc),
+                        raw: ds.content,
+                      })
+                    }
+                    (_, Some(dt)) => {
+                      let raw_rows = dt.rows.map(fn(row) {
+                        row.cells.map(fn(cell) { cell.value })
+                      })
+                      let table = @core.DataTable::from_rows(raw_rows)
+                      args.push(@core.StepArg::{
+                        value: DataTableVal(table),
+                        raw: "",
+                      })
+                    }
+                    _ => ()
+                  }
+                None => ()
+              }
+              let ctx = @core.Ctx::new(args, info, step_info)
+              (step_def.handler.0)(ctx)
+              ctx_for_drain = Some(ctx)
+              (StepStatus::Passed, None)
+            } catch {
+              @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
+                (
+                  StepStatus::Pending,
+                  Some(@core.pending_step_error(step~, keyword=kw, message~)),
+                )
+              e => {
+                let enriched = "Step '" +
+                  step.text +
+                  "' (" +
+                  keyword.trim(chars=" ").to_owned() +
+                  "): " +
+                  e.to_string()
+                (
+                  StepStatus::Failed(enriched),
+                  Some(
+                    @core.step_failed_error(
+                      step=step.text,
+                      keyword~,
+                      message=enriched,
+                    ),
+                  ),
+                )
+              }
+            }
+        }
+      } catch {
+        e =>
           (
-            StepStatus::Undefined,
+            StepStatus::Failed(e.to_string()),
             Some(
-              @core.undefined_step_error(
-                step=step_text,
-                keyword=kw,
-                snippet~,
-                suggestions~,
+              @core.step_failed_error(
+                step=step.text,
+                keyword~,
+                message=e.to_string(),
               ),
             ),
           )
-        Matched(step_def, args) =>
-          try {
-            // Append block argument (DocString/DataTable) as last StepArg
-            match step.argument {
-              Some(arg) =>
-                match (arg.docString, arg.dataTable) {
-                  (Some(ds), _) => {
-                    let doc : @core.DocString = {
-                      content: ds.content,
-                      media_type: ds.mediaType,
-                    }
-                    args.push(@core.StepArg::{
-                      value: DocStringVal(doc),
-                      raw: ds.content,
-                    })
-                  }
-                  (_, Some(dt)) => {
-                    let raw_rows = dt.rows.map(fn(row) {
-                      row.cells.map(fn(cell) { cell.value })
-                    })
-                    let table = @core.DataTable::from_rows(raw_rows)
-                    args.push(@core.StepArg::{
-                      value: DataTableVal(table),
-                      raw: "",
-                    })
-                  }
-                  _ => ()
-                }
-              None => ()
-            }
-            let ctx = @core.Ctx::new(args, info, step_info)
-            (step_def.handler.0)(ctx)
-            ctx_for_drain = Some(ctx)
-            (StepStatus::Passed, None)
-          } catch {
-            @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
-              (
-                StepStatus::Pending,
-                Some(@core.pending_step_error(step~, keyword=kw, message~)),
-              )
-            e => {
-              let enriched = "Step '" +
-                step.text +
-                "' (" +
-                keyword.trim(chars=" ").to_owned() +
-                "): " +
-                e.to_string()
-              (
-                StepStatus::Failed(enriched),
-                Some(
-                  @core.step_failed_error(
-                    step=step.text,
-                    keyword~,
-                    message=enriched,
-                  ),
-                ),
-              )
-            }
-          }
       }
     }
     if has_sinks {

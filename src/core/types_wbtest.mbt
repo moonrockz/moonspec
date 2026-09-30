@@ -25,6 +25,7 @@ test "StepArg from_param Int" {
     value: @cucumber_expressions.ParamValue::IntVal(42),
     type_: @cucumber_expressions.ParamType::Int,
     raw: "42",
+    group: { value: Some("42"), start: Some(0), end: Some(2), children: [], },
   }
   let arg = StepArg::from_param(param)
   assert_eq(arg.raw, "42")
@@ -35,11 +36,23 @@ test "StepArg from_param Int" {
 }
 
 ///|
+test "StepArg from_param preserves unmatched capture as NullVal" {
+  let param = @cucumber_expressions.Param::{
+    value: @cucumber_expressions.ParamValue::NullVal,
+    type_: @cucumber_expressions.ParamType::Anonymous,
+    raw: "",
+    group: { value: None, start: None, end: None, children: [], },
+  }
+  assert_eq(StepArg::from_param(param).value, NullVal)
+}
+
+///|
 test "StepArg from_param Float" {
   let param = @cucumber_expressions.Param::{
     value: @cucumber_expressions.ParamValue::FloatVal(3.14),
     type_: @cucumber_expressions.ParamType::Float,
     raw: "3.14",
+    group: { value: Some("3.14"), start: Some(0), end: Some(4), children: [], },
   }
   let arg = StepArg::from_param(param)
   match arg {
@@ -54,6 +67,7 @@ test "StepArg from_param String_" {
     value: @cucumber_expressions.ParamValue::StringVal("hello"),
     type_: @cucumber_expressions.ParamType::String_,
     raw: "hello",
+    group: { value: Some("hello"), start: Some(0), end: Some(5), children: [], },
   }
   let arg = StepArg::from_param(param)
   match arg {
@@ -68,6 +82,12 @@ test "StepArg from_param Word" {
     value: @cucumber_expressions.ParamValue::WordVal("banana"),
     type_: @cucumber_expressions.ParamType::Word,
     raw: "banana",
+    group: {
+      value: Some("banana"),
+      start: Some(0),
+      end: Some(6),
+      children: [],
+    },
   }
   let arg = StepArg::from_param(param)
   match arg {
@@ -82,6 +102,7 @@ test "StepArg from_param Custom" {
     value: @cucumber_expressions.ParamValue::CustomVal(@any.of("red")),
     type_: @cucumber_expressions.ParamType::Custom("color"),
     raw: "red",
+    group: { value: Some("red"), start: Some(0), end: Some(3), children: [], },
   }
   let arg = StepArg::from_param(param)
   assert_eq(arg.raw, "red")

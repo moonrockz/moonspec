@@ -2,6 +2,7 @@
 package "moonrockz/moonspec/runner"
 
 import {
+  "moonbitlang/core/debug",
   "moonrockz/cucumber-messages",
   "moonrockz/gherkin",
   "moonrockz/moonspec/core",
@@ -18,7 +19,7 @@ pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_nam
 
 pub async fn[W : @core.World] run(() -> W, RunOptions) -> RunResult
 
-pub async fn[W : @core.World] run_or_fail(() -> W, RunOptions) -> RunResult
+pub async fn[W : @core.World] run_or_fail(() -> W, RunOptions) -> Unit
 
 // Errors
 
@@ -27,6 +28,8 @@ pub(all) struct CollectorSink {
   envelopes : Array[@cucumber-messages.Envelope]
 }
 pub fn CollectorSink::new() -> Self
+pub fn CollectorSink::on_message(Self, @cucumber-messages.Envelope) -> Unit
+pub fn CollectorSink::output(Self) -> String
 pub impl @core.MessageSink for CollectorSink
 
 pub struct FeatureCache {
@@ -46,16 +49,22 @@ pub(all) struct FeatureResult {
   name : String
   scenarios : Array[ScenarioResult]
   duration_ms : Int64
-}
-pub impl Show for FeatureResult
+} derive(@debug.Debug)
+pub fn FeatureResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum FeatureSource {
   Text(String, String)
   File(String)
   Parsed(String, @gherkin.Feature)
+} derive(Eq, @debug.Debug)
+pub fn FeatureSource::equal(Self, Self) -> Bool
+pub fn FeatureSource::not_equal(Self, Self) -> Bool
+pub fn FeatureSource::to_repr(Self) -> @debug.Repr
+
+pub(all) struct FormatterEntry {
+  sink : &@core.MessageSink
+  dest : OutputDest
 }
-pub impl Eq for FeatureSource
-pub impl Show for FeatureSource
 
 pub(all) struct IdGenerator {
   // private fields
@@ -65,13 +74,23 @@ pub fn IdGenerator::next(Self, String) -> String
 pub fn IdGenerator::next_hook_id(Self) -> String
 pub fn IdGenerator::next_param_type_id(Self) -> String
 
+pub(all) enum OutputDest {
+  Stdout
+  Stderr
+  File(String)
+} derive(Eq, @debug.Debug)
+pub fn OutputDest::equal(Self, Self) -> Bool
+pub fn OutputDest::not_equal(Self, Self) -> Bool
+pub fn OutputDest::to_repr(Self) -> @debug.Repr
+
 pub(all) struct ParseErrorInfo {
   uri : String
   message : String
   line : Int?
-}
-pub impl Eq for ParseErrorInfo
-pub impl Show for ParseErrorInfo
+} derive(Eq, @debug.Debug)
+pub fn ParseErrorInfo::equal(Self, Self) -> Bool
+pub fn ParseErrorInfo::not_equal(Self, Self) -> Bool
+pub fn ParseErrorInfo::to_repr(Self) -> @debug.Repr
 
 pub struct PickleFilter {
   tag_expression : TagExpression
@@ -84,13 +103,17 @@ pub fn PickleFilter::with_tags(Self, String) -> Self raise
 
 pub(all) struct RunOptions {
   // private fields
-
-  fn new(Array[FeatureSource]) -> RunOptions
 }
+#alias(new)
+pub fn RunOptions::RunOptions(Array[FeatureSource]) -> Self
+pub fn RunOptions::add_formatter(Self, &@core.MessageSink, OutputDest) -> Unit
 pub fn RunOptions::add_sink(Self, &@core.MessageSink) -> Unit
+pub fn RunOptions::clear_sinks(Self) -> Unit
 pub fn RunOptions::dry_run(Self, Bool) -> Unit
 pub fn RunOptions::features(Self) -> Array[FeatureSource]
+pub fn RunOptions::get_formatters(Self) -> Array[FormatterEntry]
 pub fn RunOptions::get_max_concurrent(Self) -> Int
+pub fn RunOptions::get_no_color(Self) -> Bool
 pub fn RunOptions::get_retries(Self) -> Int
 pub fn RunOptions::get_scenario_name(Self) -> String
 pub fn RunOptions::get_sinks(Self) -> Array[&@core.MessageSink]
@@ -99,7 +122,7 @@ pub fn RunOptions::get_tag_expr(Self) -> String
 pub fn RunOptions::is_dry_run(Self) -> Bool
 pub fn RunOptions::is_parallel(Self) -> Bool
 pub fn RunOptions::max_concurrent(Self, Int) -> Unit
-pub fn RunOptions::new(Array[FeatureSource]) -> Self
+pub fn RunOptions::no_color(Self, Bool) -> Unit
 pub fn RunOptions::parallel(Self, Bool) -> Unit
 pub fn RunOptions::retries(Self, Int) -> Unit
 pub fn RunOptions::scenario_name(Self, String) -> Unit
@@ -110,8 +133,8 @@ pub(all) struct RunResult {
   features : Array[FeatureResult]
   summary : RunSummary
   parse_errors : Array[ParseErrorInfo]
-}
-pub impl Show for RunResult
+} derive(@debug.Debug)
+pub fn RunResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RunSummary {
   total_scenarios : Int
@@ -122,9 +145,10 @@ pub(all) struct RunSummary {
   skipped : Int
   retried : Int
   duration_ms : Int64
-}
-pub impl Eq for RunSummary
-pub impl Show for RunSummary
+} derive(Eq, @debug.Debug)
+pub fn RunSummary::equal(Self, Self) -> Bool
+pub fn RunSummary::not_equal(Self, Self) -> Bool
+pub fn RunSummary::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ScenarioResult {
   feature_name : String
@@ -134,8 +158,8 @@ pub(all) struct ScenarioResult {
   steps : Array[StepResult]
   status : ScenarioStatus
   duration_ms : Int64
-}
-pub impl Show for ScenarioResult
+} derive(@debug.Debug)
+pub fn ScenarioResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum ScenarioStatus {
   Passed
@@ -143,10 +167,11 @@ pub(all) enum ScenarioStatus {
   Skipped(String?)
   Undefined
   Pending
-}
+} derive(Eq, @debug.Debug)
+pub fn ScenarioStatus::equal(Self, Self) -> Bool
 pub fn ScenarioStatus::from_steps(Array[StepStatus]) -> Self
-pub impl Eq for ScenarioStatus
-pub impl Show for ScenarioStatus
+pub fn ScenarioStatus::not_equal(Self, Self) -> Bool
+pub fn ScenarioStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) struct StepResult {
   text : String
@@ -154,8 +179,8 @@ pub(all) struct StepResult {
   status : StepStatus
   duration_ms : Int64
   diagnostic : Error?
-}
-pub impl Show for StepResult
+} derive(@debug.Debug)
+pub fn StepResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum StepStatus {
   Passed
@@ -163,10 +188,11 @@ pub(all) enum StepStatus {
   Skipped(String?)
   Undefined
   Pending
-}
+} derive(Eq, @debug.Debug)
+pub fn StepStatus::equal(Self, Self) -> Bool
 pub fn StepStatus::is_passed(Self) -> Bool
-pub impl Eq for StepStatus
-pub impl Show for StepStatus
+pub fn StepStatus::not_equal(Self, Self) -> Bool
+pub fn StepStatus::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TagExpression {
   TagLiteral(String)
@@ -174,13 +200,13 @@ pub(all) enum TagExpression {
   And(TagExpression, TagExpression)
   Or(TagExpression, TagExpression)
   Always
-}
+} derive(Eq, @debug.Debug)
+pub fn TagExpression::equal(Self, Self) -> Bool
 pub fn TagExpression::matches(Self, Array[String]) -> Bool
+pub fn TagExpression::not_equal(Self, Self) -> Bool
 pub fn TagExpression::parse(String) -> Self raise
-pub impl Eq for TagExpression
-pub impl Show for TagExpression
+pub fn TagExpression::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
 // Traits
-

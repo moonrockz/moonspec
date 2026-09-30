@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Build the local moonspec CLI"
+set -euo pipefail
+moon build --target native src/cmd/main

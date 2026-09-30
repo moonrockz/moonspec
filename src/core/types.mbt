@@ -13,6 +13,7 @@ pub(all) enum StepValue {
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(BigInt)
   CustomVal(@any.Any)
+  NullVal
   DocStringVal(DocString)
   DataTableVal(DataTable)
 }
@@ -32,6 +33,7 @@ pub impl Show for StepValue with fn output(self, logger) {
     BigDecimalVal(v) => logger.write_string("BigDecimalVal(\{v})")
     BigIntegerVal(v) => logger.write_string("BigIntegerVal(\{v})")
     CustomVal(any) => logger.write_string("CustomVal(<\{any.type_name()}>)")
+    NullVal => logger.write_string("NullVal")
     DocStringVal(d) => {
       let mt = match d.media_type {
         Some(t) => t
@@ -65,6 +67,7 @@ pub impl Eq for StepValue with fn equal(self, other) -> Bool {
     (BigDecimalVal(a), BigDecimalVal(b)) => a == b
     (BigIntegerVal(a), BigIntegerVal(b)) => a == b
     (CustomVal(_), CustomVal(_)) => true
+    (NullVal, NullVal) => true
     (DocStringVal(a), DocStringVal(b)) => a == b
     (DataTableVal(a), DataTableVal(b)) => a == b
     _ => false
@@ -158,6 +161,7 @@ pub fn StepArg::from_param(param : @cucumber_expressions.Param) -> StepArg {
     @cucumber_expressions.ParamValue::BigDecimalVal(d) => BigDecimalVal(d)
     @cucumber_expressions.ParamValue::BigIntegerVal(bi) => BigIntegerVal(bi)
     @cucumber_expressions.ParamValue::CustomVal(any) => CustomVal(any)
+    @cucumber_expressions.ParamValue::NullVal => NullVal
   }
   { value, raw: param.raw, }
 }

@@ -1,6 +1,10 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "moonrockz/moonspec/scanner"
 
+import {
+  "moonbitlang/core/debug",
+}
+
 // Values
 pub fn generate_configure(String, Array[StepFnInfo], source_hash~ : String) -> String
 
@@ -14,16 +18,18 @@ pub fn scan_source(String, String) -> ScanResult
 pub(all) struct ParamInfo {
   name : String
   type_name : String
-}
-pub impl Eq for ParamInfo
-pub impl Show for ParamInfo
+} derive(Eq, @debug.Debug)
+pub fn ParamInfo::equal(Self, Self) -> Bool
+pub fn ParamInfo::not_equal(Self, Self) -> Bool
+pub fn ParamInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct ScanResult {
   step_fns : Array[StepFnInfo]
   world_configs : Array[WorldConfigInfo]
-}
-pub impl Eq for ScanResult
-pub impl Show for ScanResult
+} derive(Eq, @debug.Debug)
+pub fn ScanResult::equal(Self, Self) -> Bool
+pub fn ScanResult::not_equal(Self, Self) -> Bool
+pub fn ScanResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct StepFnInfo {
   keyword : String
@@ -35,20 +41,21 @@ pub(all) struct StepFnInfo {
   raises : Bool
   source_file : String
   line : Int
-}
-pub impl Eq for StepFnInfo
-pub impl Show for StepFnInfo
+} derive(Eq, @debug.Debug)
+pub fn StepFnInfo::equal(Self, Self) -> Bool
+pub fn StepFnInfo::not_equal(Self, Self) -> Bool
+pub fn StepFnInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct WorldConfigInfo {
   type_name : String
   init_fn : String?
   source_file : String
   line : Int
-}
-pub impl Eq for WorldConfigInfo
-pub impl Show for WorldConfigInfo
+} derive(Eq, @debug.Debug)
+pub fn WorldConfigInfo::equal(Self, Self) -> Bool
+pub fn WorldConfigInfo::not_equal(Self, Self) -> Bool
+pub fn WorldConfigInfo::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
 // Traits
-

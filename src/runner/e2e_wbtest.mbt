@@ -4,6 +4,34 @@ struct CalcWorld {
 } derive(Default)
 
 ///|
+struct ByteWorld {} derive(Default)
+
+///|
+pub extend ByteWorld with Default::{default}
+
+///|
+impl @core.World for ByteWorld with fn configure(_self, setup) {
+  setup.given("a byte of {byte}", fn(_ctx) {  })
+}
+
+///|
+async test "parameter conversion errors are reported as failed steps" {
+  let feature =
+    #|Feature: Byte conversion
+    #|  Scenario: Out of range
+    #|    Given a byte of 256
+  for dry_run in [false, true] {
+    let options = RunOptions([FeatureSource::Text("test://byte", feature)])
+    options.dry_run(dry_run)
+    let result = run(ByteWorld::default, options)
+    assert_eq(result.summary.failed, 1)
+    let step = result.features[0].scenarios[0].steps[0]
+    assert_true(step.status is Failed(_))
+    assert_true(step.diagnostic is Some(_))
+  }
+}
+
+///|
 pub extend CalcWorld with Default::{default}
 
 ///|

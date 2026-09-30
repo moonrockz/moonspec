@@ -1,0 +1,23 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec/expect"
+
+import {
+  "moonrockz/moonspec/runner",
+}
+
+// Values
+pub fn assert_failed(@runner.RunResult) -> Unit raise
+
+pub fn assert_no_parse_errors(@runner.RunResult) -> Unit raise
+
+pub fn assert_passed(@runner.RunResult) -> Unit raise
+
+pub fn assert_summary(@runner.RunSummary, passed? : Int, failed? : Int, undefined? : Int, pending? : Int, skipped? : Int) -> Unit raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

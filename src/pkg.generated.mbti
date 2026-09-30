@@ -7,9 +7,11 @@ import {
 }
 
 // Values
+pub fn color_enabled(no_color? : Bool) -> Bool
+
 pub async fn[W : @core.World] run(() -> W, @runner.RunOptions) -> @runner.RunResult
 
-pub async fn[W : @core.World] run_or_fail(() -> W, @runner.RunOptions) -> @runner.RunResult
+pub async fn[W : @core.World] run_or_fail(() -> W, @runner.RunOptions) -> Unit
 
 // Errors
 
@@ -45,6 +47,8 @@ pub using @core {type HookResult}
 pub using @core {type HookType}
 
 pub using @core {type MoonspecError}
+
+pub using @runner {type OutputDest}
 
 pub using @core {type PendingAttachment}
 
@@ -84,6 +88,8 @@ pub using @core {type StepMatchResult}
 
 pub using @core {type StepRegistry}
 
+pub using @core {type StepReport}
+
 pub using @runner {type StepResult}
 
 pub using @core {type StepSource}
@@ -99,4 +105,3 @@ pub using @core {trait StepLibrary}
 pub using @core {trait World}
 
 // Traits
-

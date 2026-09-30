@@ -324,6 +324,10 @@ pub struct StepInfo {
 
 You can define custom parameter types that match specific patterns in step text.
 
+`add_param_type` and `add_param_type_strings` raise `ParameterTypeError` for
+duplicate names, invalid names, or an empty pattern list. `World::configure`
+can raise errors, so registration failures propagate to the caller of `run`.
+
 ### Simple Custom Type (String Matching)
 
 Use `add_param_type_strings` to register a custom type with string regex
@@ -385,9 +389,16 @@ setup.given("I say {upper}", fn(ctx) {
 })
 ```
 
-The transformer receives an array of matched groups and must return a
+The transformer receives its parameter's capture groups, or the whole match
+when the pattern has no capture groups, and must return a
 `@cucumber_expressions.ParamValue`. Wrap the result with
 `@cucumber_expressions.ParamValue::CustomVal(@any.of(value))` for custom types.
+Transformer errors report as failed steps, including in dry-run mode. Direct
+calls to `StepRegistry::find_match` can also raise these errors.
+
+`StepValue::NullVal` preserves an unmatched optional capture from a parameter
+returned by cucumber-expressions. Typed handlers reject it when a concrete
+value is required.
 
 ---
 

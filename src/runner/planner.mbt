@@ -50,14 +50,18 @@ pub fn build_test_cases(
         Some(@cucumber_messages.PickleStepType::Outcome) => "Then "
         _ => "* "
       }
-      let step_def_ids : Array[Json] = match
-        registry.find_match(step.text, keyword~) {
-        Matched(def, _) =>
-          match def.id {
-            Some(id) => [id.to_string().to_json()]
-            None => []
-          }
-        Undefined(..) => []
+      let step_def_ids : Array[Json] = try {
+        match registry.find_match(step.text, keyword~) {
+          Matched(def, _) =>
+            match def.id {
+              Some(id) => [id.to_string().to_json()]
+              None => []
+            }
+          Undefined(..) => []
+        }
+      } catch {
+        // Conversion failures are reported by the executor as failed steps.
+        _ => []
       }
       let step_id = id_gen.next("ts")
       test_steps.push({
