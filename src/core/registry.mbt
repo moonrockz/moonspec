@@ -83,11 +83,12 @@ pub fn[L : StepLibrary] StepRegistry::use_library(
 ///|
 /// Find a matching step definition for the given step text.
 /// Returns Matched with StepDef + extracted args, or Undefined with diagnostics.
+/// Parameter conversion and transformer errors propagate to the caller.
 pub fn StepRegistry::find_match(
   self : StepRegistry,
   text : String,
   keyword? : String = "* ",
-) -> StepMatchResult {
+) -> StepMatchResult raise Error {
   for entry in self.entries {
     match entry.expression.match_(text) {
       Some(m) => {

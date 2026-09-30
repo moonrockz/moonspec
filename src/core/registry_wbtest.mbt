@@ -20,6 +20,43 @@ test "StepRegistry matches step text" {
 }
 
 ///|
+test "StepRegistry unescapes quoted string parameters" {
+  let setup = Setup::new()
+  setup.given("I say {string}", fn(_ctx) {  })
+  match setup.step_registry().find_match("I say \"hello \\\"world\\\"\"") {
+    Matched(_, args) => assert_eq(args[0].value, StringVal("hello \"world\""))
+    _ => fail("expected Matched")
+  }
+}
+
+///|
+test "StepRegistry custom transformer receives capture groups without shifting the next parameter" {
+  let setup = Setup::new()
+  setup.add_param_type_strings(
+    "shade",
+    ["(red|blue)-(light|dark)"],
+    transformer=@cucumber_expressions.Transformer::new(fn(groups) raise {
+      assert_eq(groups, ["red", "dark"])
+      @cucumber_expressions.ParamValue::CustomVal(@any.of(groups.join(" ")))
+    }),
+  )
+  setup.given("I pick {shade} and {int}", fn(_ctx) {  })
+  match setup.step_registry().find_match("I pick red-dark and 42") {
+    Matched(_, args) => {
+      match args[0].value {
+        CustomVal(value) => {
+          let shade : String = value.to()
+          assert_eq(shade, "red dark")
+        }
+        _ => fail("expected CustomVal")
+      }
+      assert_eq(args[1].value, IntVal(42))
+    }
+    _ => fail("expected Matched")
+  }
+}
+
+///|
 test "StepRegistry returns Undefined for no match" {
   let setup = Setup::new()
   setup.given("I have {int} cucumbers", fn(_ctx) {  })

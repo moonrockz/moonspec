@@ -16,6 +16,7 @@ pub(all) struct JUnitFormatter {
   // private fields
 }
 pub fn JUnitFormatter::new() -> Self
+pub fn JUnitFormatter::on_message(Self, @cucumber-messages.Envelope) -> Unit
 pub fn JUnitFormatter::output(Self) -> String
 pub impl @core.MessageSink for JUnitFormatter
 
@@ -23,6 +24,7 @@ pub(all) struct MessagesFormatter {
   // private fields
 }
 pub fn MessagesFormatter::new() -> Self
+pub fn MessagesFormatter::on_message(Self, @cucumber-messages.Envelope) -> Unit
 pub fn MessagesFormatter::output(Self) -> String
 pub impl @core.MessageSink for MessagesFormatter
 
@@ -32,10 +34,10 @@ pub(all) struct PrettyFormatter {
   // private fields
 }
 pub fn PrettyFormatter::new(no_color? : Bool) -> Self
+pub fn PrettyFormatter::on_message(Self, @cucumber-messages.Envelope) -> Unit
 pub fn PrettyFormatter::output(Self) -> String
 pub impl @core.MessageSink for PrettyFormatter
 
 // Type aliases
 
 // Traits
-

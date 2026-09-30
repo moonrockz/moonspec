@@ -1,10 +1,21 @@
 // Generated using `moon info`, DON'T EDIT IT
 package "moonrockz/moonspec/codegen"
 
+import {
+  "moonbitlang/core/debug",
+  "moonrockz/moonspec/config",
+}
+
 // Values
+pub fn build_rules_test_filename(String) -> String
+
 pub fn feature_to_test_filename(String) -> String
 
 pub fn generate_test_file(String, String, config? : CodegenConfig) -> String
+
+pub fn relative_to_package(String, String) -> String
+
+pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String) -> (String, Int)
 
 // Errors
 
@@ -12,20 +23,24 @@ pub fn generate_test_file(String, String, config? : CodegenConfig) -> String
 pub(all) struct CodegenConfig {
   mode : CodegenMode
   world : String
-}
+  skip_tags : Array[String]?
+  formatters : Array[@config.FormatterConfig]?
+  no_color : Bool
+} derive(Eq, @debug.Debug)
 pub fn CodegenConfig::default() -> Self
+pub fn CodegenConfig::equal(Self, Self) -> Bool
 pub fn CodegenConfig::from_json5(String) -> Self raise
-pub impl Eq for CodegenConfig
-pub impl Show for CodegenConfig
+pub fn CodegenConfig::not_equal(Self, Self) -> Bool
+pub fn CodegenConfig::to_repr(Self) -> @debug.Repr
 
 pub(all) enum CodegenMode {
   PerScenario
   PerFeature
-}
-pub impl Eq for CodegenMode
-pub impl Show for CodegenMode
+} derive(Eq, @debug.Debug)
+pub fn CodegenMode::equal(Self, Self) -> Bool
+pub fn CodegenMode::not_equal(Self, Self) -> Bool
+pub fn CodegenMode::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 
 // Traits
-

@@ -2,6 +2,7 @@
 /// Step registration trait. Users implement this on their world struct.
 ///
 /// Called once per scenario with a fresh `Default`-constructed instance.
+/// Configuration errors, including invalid parameter registration, can raise.
 /// Closures registered via `Setup` capture `self`, sharing world
 /// state between steps within the same scenario. Since MoonBit structs
 /// are reference types, mutations through closures are visible to all
@@ -18,5 +19,5 @@
 /// }
 /// ```
 pub(open) trait World {
-  fn configure(Self, Setup) -> Unit
+  fn configure(Self, Setup) -> Unit raise Error
 }

@@ -28,6 +28,20 @@ test "Setup registers custom param type" {
 }
 
 ///|
+test "Setup rejects duplicate custom parameter types" {
+  let setup = Setup::new()
+  setup.add_param_type_strings("color", ["red|blue"])
+  let rejected = try {
+    setup.add_param_type_strings("color", ["green"])
+    false
+  } catch {
+    @cucumber_expressions.ParameterTypeError::DuplicateParameterType(..) => true
+    _ => false
+  }
+  assert_true(rejected)
+}
+
+///|
 test "Setup registers before_test_case hook" {
   let setup = Setup::new()
   setup.before_test_case(fn(_ctx) {  })

@@ -3,6 +3,7 @@ package "moonrockz/moonspec/core"
 
 import {
   "moonbitlang/core/bigint",
+  "moonbitlang/core/debug",
   "moonbitlang/x/decimal",
   "moonrockz/cucumber-expressions",
   "moonrockz/cucumber-messages",
@@ -10,11 +11,15 @@ import {
 }
 
 // Values
+pub fn color_enabled(no_color? : Bool) -> Bool
+
+pub fn parse_failed_error(uri~ : String, line~ : Int?, message~ : String) -> MoonspecError
+
 pub fn pending_step_error(step~ : String, keyword~ : String, message~ : String) -> Error
 
-pub fn run_failed_error(summary~ : String, errors~ : Array[MoonspecError]) -> Error
+pub fn run_failed_error(summary~ : String, errors~ : Array[MoonspecError], color? : Bool) -> Error
 
-pub fn scenario_failed_error(scenario~ : String, feature~ : String, errors~ : Array[MoonspecError]) -> MoonspecError
+pub fn scenario_failed_error(scenario~ : String, feature~ : String, location? : String?, steps? : Array[StepReport], errors~ : Array[MoonspecError]) -> MoonspecError
 
 pub fn step_failed_error(step~ : String, keyword~ : String, message~ : String) -> Error
 
@@ -25,65 +30,69 @@ pub suberror MoonspecError {
   UndefinedStep(step~ : String, keyword~ : String, snippet~ : String, suggestions~ : Array[String])
   PendingStep(step~ : String, keyword~ : String, message~ : String)
   StepFailed(step~ : String, keyword~ : String, message~ : String)
-  ScenarioFailed(scenario~ : String, feature~ : String, errors~ : Array[MoonspecError])
-  RunFailed(summary~ : String, errors~ : Array[MoonspecError])
+  ParseFailed(uri~ : String, line~ : Int?, message~ : String)
+  ScenarioFailed(scenario~ : String, feature~ : String, location~ : String?, steps~ : Array[StepReport], errors~ : Array[MoonspecError])
+  RunFailed(summary~ : String, errors~ : Array[MoonspecError], color~ : Bool)
 }
+pub fn MoonspecError::output(Self, &Logger) -> Unit
+pub fn MoonspecError::to_string(Self) -> String
+pub impl Show for MoonspecError
 
 // Types and methods
 pub(all) struct CaseHookCtx {
   // private fields
 }
+#alias(new)
+pub fn CaseHookCtx::CaseHookCtx(ScenarioInfo) -> Self
 pub fn CaseHookCtx::attach(Self, String, String, file_name? : String) -> Unit
 pub fn CaseHookCtx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
 pub fn CaseHookCtx::attach_url(Self, String, String) -> Unit
-pub fn CaseHookCtx::new(ScenarioInfo) -> Self
 pub fn CaseHookCtx::pending_attachments(Self) -> Array[PendingAttachment]
 pub fn CaseHookCtx::scenario(Self) -> ScenarioInfo
 
 pub struct Cells {
   // private fields
-
-  fn new(Array[String]) -> Cells
-}
+} derive(Eq, @debug.Debug)
+pub fn Cells::equal(Self, Self) -> Bool
 pub fn Cells::get(Self, Int) -> String
 pub fn Cells::length(Self) -> Int
+pub fn Cells::not_equal(Self, Self) -> Bool
+pub fn Cells::to_repr(Self) -> @debug.Repr
 pub fn Cells::values(Self) -> ArrayView[String]
-pub impl Eq for Cells
-pub impl Show for Cells
 
 pub(all) struct Column {
   name : String
   index : Int
-
-  fn new(name~ : String, index~ : Int) -> Column
-}
-pub impl Eq for Column
-pub impl Show for Column
+} derive(Eq, @debug.Debug)
+pub fn Column::equal(Self, Self) -> Bool
+pub fn Column::not_equal(Self, Self) -> Bool
+pub fn Column::to_repr(Self) -> @debug.Repr
 
 pub struct Columns {
   // private fields
-
-  fn new(Array[Column]) -> Columns
-}
+} derive(Eq, @debug.Debug)
+pub fn Columns::equal(Self, Self) -> Bool
 pub fn Columns::find(Self, String) -> Column?
 pub fn Columns::get(Self, Int) -> Column
 pub fn Columns::length(Self) -> Int
+pub fn Columns::not_equal(Self, Self) -> Bool
+pub fn Columns::to_repr(Self) -> @debug.Repr
 pub fn Columns::values(Self) -> ArrayView[Column]
-pub impl Eq for Columns
-pub impl Show for Columns
 
 type CompiledStep
 
 pub(all) struct Ctx {
   // private fields
 }
+#alias(new)
+pub fn Ctx::Ctx(Array[StepArg], ScenarioInfo, StepInfo) -> Self
 pub fn Ctx::arg(Self, Int) -> StepArg
 pub fn Ctx::args(Self) -> ArrayView[StepArg]
+#alias("_[_]")
+pub fn Ctx::at(Self, Int) -> StepArg
 pub fn Ctx::attach(Self, String, String, file_name? : String) -> Unit
 pub fn Ctx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
 pub fn Ctx::attach_url(Self, String, String) -> Unit
-pub fn Ctx::new(Array[StepArg], ScenarioInfo, StepInfo) -> Self
-pub fn Ctx::op_get(Self, Int) -> StepArg
 pub fn Ctx::pending_attachments(Self) -> Array[PendingAttachment]
 pub fn Ctx::scenario(Self) -> ScenarioInfo
 pub fn Ctx::step(Self) -> StepInfo
@@ -97,31 +106,34 @@ pub(all) struct CustomParamTypeInfo {
 pub(all) struct DataTable {
   rows : Rows
   columns : Columns
-
-  fn new(Array[Array[String]]) -> DataTable
-}
+} derive(Eq, @debug.Debug)
 pub fn DataTable::as_maps(Self) -> Array[Map[String, String]]
 pub fn DataTable::col_count(Self) -> Int
+pub fn DataTable::equal(Self, Self) -> Bool
 pub fn DataTable::from_rows(Array[Array[String]]) -> Self
+pub fn DataTable::from_step_arg(StepArg) -> Self raise
+pub fn DataTable::not_equal(Self, Self) -> Bool
 pub fn DataTable::row_count(Self) -> Int
-pub impl Eq for DataTable
-pub impl Show for DataTable
+pub fn DataTable::to_repr(Self) -> @debug.Repr
+pub impl FromStepArg for DataTable
 
 pub(all) struct DocString {
   content : String
   media_type : String?
-
-  fn new(content~ : String, media_type? : String) -> DocString
-}
-pub impl Eq for DocString
-pub impl Show for DocString
+} derive(Eq, @debug.Debug)
+pub fn DocString::equal(Self, Self) -> Bool
+pub fn DocString::from_step_arg(StepArg) -> Self raise
+pub fn DocString::not_equal(Self, Self) -> Bool
+pub fn DocString::to_repr(Self) -> @debug.Repr
+pub impl FromStepArg for DocString
 
 pub(all) enum HookError {
   StepFailed(step~ : String, keyword~ : StepKeyword, message~ : String)
   ScenarioFailed(feature_name~ : String, scenario_name~ : String, message~ : String)
-}
-pub impl Eq for HookError
-pub impl Show for HookError
+} derive(Eq, @debug.Debug)
+pub fn HookError::equal(Self, Self) -> Bool
+pub fn HookError::not_equal(Self, Self) -> Bool
+pub fn HookError::to_repr(Self) -> @debug.Repr
 
 pub(all) enum HookHandler {
   RunHandler((RunHookCtx) -> Unit raise)
@@ -143,9 +155,10 @@ pub fn HookRegistry::new() -> Self
 pub(all) enum HookResult {
   Passed
   Failed(Array[HookError])
-}
-pub impl Eq for HookResult
-pub impl Show for HookResult
+} derive(Eq, @debug.Debug)
+pub fn HookResult::equal(Self, Self) -> Bool
+pub fn HookResult::not_equal(Self, Self) -> Bool
+pub fn HookResult::to_repr(Self) -> @debug.Repr
 
 pub(all) enum HookType {
   BeforeTestRun
@@ -154,14 +167,21 @@ pub(all) enum HookType {
   AfterTestCase
   BeforeTestStep
   AfterTestStep
-}
-pub impl Eq for HookType
-pub impl Show for HookType
+} derive(Eq, @debug.Debug)
+pub fn HookType::equal(Self, Self) -> Bool
+pub fn HookType::not_equal(Self, Self) -> Bool
+pub fn HookType::to_repr(Self) -> @debug.Repr
 
 pub(all) enum PendingAttachment {
   Embedded(body~ : String, encoding~ : @cucumber-messages.AttachmentContentEncoding, media_type~ : String, file_name~ : String?)
   External(url~ : String, media_type~ : String)
 }
+pub fn PendingAttachment::equal(Self, Self) -> Bool
+pub fn PendingAttachment::not_equal(Self, Self) -> Bool
+pub fn PendingAttachment::output(Self, &Logger) -> Unit
+pub fn PendingAttachment::to_string(Self) -> String
+pub impl Eq for PendingAttachment
+pub impl Show for PendingAttachment
 
 pub(all) struct RegisteredHook {
   id : String
@@ -172,45 +192,45 @@ pub(all) struct RegisteredHook {
 
 pub(all) struct Row {
   cells : Cells
-
-  fn new(Array[String]) -> Row
-}
-pub impl Eq for Row
-pub impl Show for Row
+} derive(Eq, @debug.Debug)
+pub fn Row::equal(Self, Self) -> Bool
+pub fn Row::not_equal(Self, Self) -> Bool
+pub fn Row::to_repr(Self) -> @debug.Repr
 
 pub struct Rows {
   // private fields
-
-  fn new(Array[Row]) -> Rows
-}
+} derive(Eq, @debug.Debug)
+pub fn Rows::equal(Self, Self) -> Bool
 pub fn Rows::get(Self, Int) -> Row
 pub fn Rows::length(Self) -> Int
+pub fn Rows::not_equal(Self, Self) -> Bool
+pub fn Rows::to_repr(Self) -> @debug.Repr
 pub fn Rows::values(Self) -> ArrayView[Row]
-pub impl Eq for Rows
-pub impl Show for Rows
 
 pub(all) struct RunHookCtx {
   // private fields
 }
+#alias(new)
+pub fn RunHookCtx::RunHookCtx() -> Self
 pub fn RunHookCtx::attach(Self, String, String, file_name? : String) -> Unit
 pub fn RunHookCtx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
 pub fn RunHookCtx::attach_url(Self, String, String) -> Unit
-pub fn RunHookCtx::new() -> Self
 pub fn RunHookCtx::pending_attachments(Self) -> Array[PendingAttachment]
 
 pub(all) struct ScenarioInfo {
   feature_name : String
   scenario_name : String
   tags : Array[String]
-}
-pub impl Eq for ScenarioInfo
-pub impl Show for ScenarioInfo
+} derive(Eq, @debug.Debug)
+pub fn ScenarioInfo::equal(Self, Self) -> Bool
+pub fn ScenarioInfo::not_equal(Self, Self) -> Bool
+pub fn ScenarioInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Setup {
   // private fields
 }
-pub fn Setup::add_param_type(Self, String, Array[@cucumber-expressions.RegexPattern], transformer? : @cucumber-expressions.Transformer) -> Unit
-pub fn Setup::add_param_type_strings(Self, String, Array[String], transformer? : @cucumber-expressions.Transformer) -> Unit
+pub fn Setup::add_param_type(Self, String, Array[@cucumber-expressions.RegexPattern], transformer? : @cucumber-expressions.Transformer) -> Unit raise @cucumber-expressions.ParameterTypeError
+pub fn Setup::add_param_type_strings(Self, String, Array[String], transformer? : @cucumber-expressions.Transformer) -> Unit raise @cucumber-expressions.ParameterTypeError
 #callsite(autofill(loc))
 pub fn Setup::after_test_case(Self, (CaseHookCtx, HookResult) -> Unit raise, loc~ : SourceLoc) -> Unit
 #callsite(autofill(loc))
@@ -225,22 +245,207 @@ pub fn Setup::before_test_run(Self, (RunHookCtx) -> Unit raise, loc~ : SourceLoc
 pub fn Setup::before_test_step(Self, (StepHookCtx) -> Unit raise, loc~ : SourceLoc) -> Unit
 pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
 pub fn Setup::given(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn Setup::given0(Self, String, () -> Unit raise) -> Unit
+pub fn Setup::given0_ctx(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::given1(Self, String, (A) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::given10(Self, String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::given10_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::given11(Self, String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::given11_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::given12(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::given12_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::given13(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::given13_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::given14(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::given14_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::given15(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::given15_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::given16(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::given16_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::given17(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::given17_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::given18(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::given18_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::given19(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::given19_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::given1_ctx(Self, String, (A, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::given2(Self, String, (A, B) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::given20(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::given20_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::given21(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::given21_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::given22(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::given22_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::given2_ctx(Self, String, (A, B, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::given3(Self, String, (A, B, C) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::given3_ctx(Self, String, (A, B, C, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::given4(Self, String, (A, B, C, D) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::given4_ctx(Self, String, (A, B, C, D, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::given5(Self, String, (A, B, C, D, E) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::given5_ctx(Self, String, (A, B, C, D, E, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::given6(Self, String, (A, B, C, D, E, F) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::given6_ctx(Self, String, (A, B, C, D, E, F, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::given7(Self, String, (A, B, C, D, E, F, G) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::given7_ctx(Self, String, (A, B, C, D, E, F, G, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::given8(Self, String, (A, B, C, D, E, F, G, H) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::given8_ctx(Self, String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::given9(Self, String, (A, B, C, D, E, F, G, H, I) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::given9_ctx(Self, String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise) -> Unit
 pub fn Setup::hook_registry(Self) -> HookRegistry
 pub fn Setup::new() -> Self
 pub fn Setup::param_registry(Self) -> @cucumber-expressions.ParamTypeRegistry
 pub fn Setup::step(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn Setup::step0(Self, String, () -> Unit raise) -> Unit
+pub fn Setup::step0_ctx(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::step1(Self, String, (A) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::step10(Self, String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::step10_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::step11(Self, String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::step11_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::step12(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::step12_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::step13(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::step13_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::step14(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::step14_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::step15(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::step15_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::step16(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::step16_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::step17(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::step17_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::step18(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::step18_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::step19(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::step19_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::step1_ctx(Self, String, (A, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::step2(Self, String, (A, B) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::step20(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::step20_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::step21(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::step21_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::step22(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::step22_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::step2_ctx(Self, String, (A, B, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::step3(Self, String, (A, B, C) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::step3_ctx(Self, String, (A, B, C, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::step4(Self, String, (A, B, C, D) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::step4_ctx(Self, String, (A, B, C, D, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::step5(Self, String, (A, B, C, D, E) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::step5_ctx(Self, String, (A, B, C, D, E, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::step6(Self, String, (A, B, C, D, E, F) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::step6_ctx(Self, String, (A, B, C, D, E, F, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::step7(Self, String, (A, B, C, D, E, F, G) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::step7_ctx(Self, String, (A, B, C, D, E, F, G, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::step8(Self, String, (A, B, C, D, E, F, G, H) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::step8_ctx(Self, String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::step9(Self, String, (A, B, C, D, E, F, G, H, I) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::step9_ctx(Self, String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise) -> Unit
 pub fn Setup::step_registry(Self) -> StepRegistry
 pub fn Setup::then(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn Setup::then0(Self, String, () -> Unit raise) -> Unit
+pub fn Setup::then0_ctx(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::then1(Self, String, (A) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::then10(Self, String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::then10_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::then11(Self, String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::then11_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::then12(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::then12_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::then13(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::then13_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::then14(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::then14_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::then15(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::then15_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::then16(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::then16_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::then17(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::then17_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::then18(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::then18_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::then19(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::then19_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::then1_ctx(Self, String, (A, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::then2(Self, String, (A, B) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::then20(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::then20_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::then21(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::then21_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::then22(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::then22_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::then2_ctx(Self, String, (A, B, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::then3(Self, String, (A, B, C) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::then3_ctx(Self, String, (A, B, C, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::then4(Self, String, (A, B, C, D) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::then4_ctx(Self, String, (A, B, C, D, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::then5(Self, String, (A, B, C, D, E) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::then5_ctx(Self, String, (A, B, C, D, E, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::then6(Self, String, (A, B, C, D, E, F) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::then6_ctx(Self, String, (A, B, C, D, E, F, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::then7(Self, String, (A, B, C, D, E, F, G) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::then7_ctx(Self, String, (A, B, C, D, E, F, G, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::then8(Self, String, (A, B, C, D, E, F, G, H) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::then8_ctx(Self, String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::then9(Self, String, (A, B, C, D, E, F, G, H, I) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::then9_ctx(Self, String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise) -> Unit
 pub fn[L : StepLibrary] Setup::use_library(Self, L) -> Unit
 pub fn Setup::when(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn Setup::when0(Self, String, () -> Unit raise) -> Unit
+pub fn Setup::when0_ctx(Self, String, (Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::when1(Self, String, (A) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::when10(Self, String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] Setup::when10_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::when11(Self, String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] Setup::when11_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::when12(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] Setup::when12_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::when13(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] Setup::when13_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::when14(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] Setup::when14_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::when15(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] Setup::when15_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::when16(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] Setup::when16_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::when17(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] Setup::when17_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::when18(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] Setup::when18_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::when19(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] Setup::when19_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg] Setup::when1_ctx(Self, String, (A, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::when2(Self, String, (A, B) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::when20(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] Setup::when20_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::when21(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] Setup::when21_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::when22(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] Setup::when22_ctx(Self, String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg] Setup::when2_ctx(Self, String, (A, B, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::when3(Self, String, (A, B, C) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] Setup::when3_ctx(Self, String, (A, B, C, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::when4(Self, String, (A, B, C, D) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] Setup::when4_ctx(Self, String, (A, B, C, D, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::when5(Self, String, (A, B, C, D, E) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] Setup::when5_ctx(Self, String, (A, B, C, D, E, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::when6(Self, String, (A, B, C, D, E, F) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] Setup::when6_ctx(Self, String, (A, B, C, D, E, F, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::when7(Self, String, (A, B, C, D, E, F, G) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] Setup::when7_ctx(Self, String, (A, B, C, D, E, F, G, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::when8(Self, String, (A, B, C, D, E, F, G, H) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] Setup::when8_ctx(Self, String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::when9(Self, String, (A, B, C, D, E, F, G, H, I) -> Unit raise) -> Unit
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] Setup::when9_ctx(Self, String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise) -> Unit
 
 pub(all) struct StepArg {
   value : StepValue
   raw : String
-}
+} derive(Eq, @debug.Debug)
+pub fn StepArg::equal(Self, Self) -> Bool
 pub fn StepArg::from_param(@cucumber-expressions.Param) -> Self
-pub impl Eq for StepArg
-pub impl Show for StepArg
+pub fn StepArg::not_equal(Self, Self) -> Bool
+pub fn StepArg::to_repr(Self) -> @debug.Repr
 
 pub(all) struct StepDef {
   keyword : StepKeyword
@@ -250,31 +455,214 @@ pub(all) struct StepDef {
   mut id : StepDefId?
 }
 pub fn StepDef::given(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::given0(String, () -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::given0_ctx(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::given1(String, (A) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::given10(String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::given10_ctx(String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::given11(String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::given11_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::given12(String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::given12_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::given13(String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::given13_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::given14(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::given14_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::given15(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::given15_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::given16(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::given16_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::given17(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::given17_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::given18(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::given18_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::given19(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::given19_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::given1_ctx(String, (A, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::given2(String, (A, B) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::given20(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::given20_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::given21(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::given21_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::given22(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::given22_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::given2_ctx(String, (A, B, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::given3(String, (A, B, C) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::given3_ctx(String, (A, B, C, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::given4(String, (A, B, C, D) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::given4_ctx(String, (A, B, C, D, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::given5(String, (A, B, C, D, E) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::given5_ctx(String, (A, B, C, D, E, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::given6(String, (A, B, C, D, E, F) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::given6_ctx(String, (A, B, C, D, E, F, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::given7(String, (A, B, C, D, E, F, G) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::given7_ctx(String, (A, B, C, D, E, F, G, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::given8(String, (A, B, C, D, E, F, G, H) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::given8_ctx(String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::given9(String, (A, B, C, D, E, F, G, H, I) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::given9_ctx(String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise, source? : StepSource) -> Self
 pub fn StepDef::step(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::step0(String, () -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::step0_ctx(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::step1(String, (A) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::step10(String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::step10_ctx(String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::step11(String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::step11_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::step12(String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::step12_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::step13(String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::step13_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::step14(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::step14_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::step15(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::step15_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::step16(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::step16_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::step17(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::step17_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::step18(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::step18_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::step19(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::step19_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::step1_ctx(String, (A, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::step2(String, (A, B) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::step20(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::step20_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::step21(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::step21_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::step22(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::step22_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::step2_ctx(String, (A, B, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::step3(String, (A, B, C) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::step3_ctx(String, (A, B, C, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::step4(String, (A, B, C, D) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::step4_ctx(String, (A, B, C, D, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::step5(String, (A, B, C, D, E) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::step5_ctx(String, (A, B, C, D, E, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::step6(String, (A, B, C, D, E, F) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::step6_ctx(String, (A, B, C, D, E, F, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::step7(String, (A, B, C, D, E, F, G) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::step7_ctx(String, (A, B, C, D, E, F, G, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::step8(String, (A, B, C, D, E, F, G, H) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::step8_ctx(String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::step9(String, (A, B, C, D, E, F, G, H, I) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::step9_ctx(String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise, source? : StepSource) -> Self
 pub fn StepDef::then(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::then0(String, () -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::then0_ctx(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::then1(String, (A) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::then10(String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::then10_ctx(String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::then11(String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::then11_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::then12(String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::then12_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::then13(String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::then13_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::then14(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::then14_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::then15(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::then15_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::then16(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::then16_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::then17(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::then17_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::then18(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::then18_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::then19(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::then19_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::then1_ctx(String, (A, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::then2(String, (A, B) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::then20(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::then20_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::then21(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::then21_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::then22(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::then22_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::then2_ctx(String, (A, B, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::then3(String, (A, B, C) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::then3_ctx(String, (A, B, C, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::then4(String, (A, B, C, D) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::then4_ctx(String, (A, B, C, D, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::then5(String, (A, B, C, D, E) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::then5_ctx(String, (A, B, C, D, E, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::then6(String, (A, B, C, D, E, F) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::then6_ctx(String, (A, B, C, D, E, F, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::then7(String, (A, B, C, D, E, F, G) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::then7_ctx(String, (A, B, C, D, E, F, G, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::then8(String, (A, B, C, D, E, F, G, H) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::then8_ctx(String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::then9(String, (A, B, C, D, E, F, G, H, I) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::then9_ctx(String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise, source? : StepSource) -> Self
 pub fn StepDef::when(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::when0(String, () -> Unit raise, source? : StepSource) -> Self
+pub fn StepDef::when0_ctx(String, (Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::when1(String, (A) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::when10(String, (A, B, C, D, E, F, G, H, I, J) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg] StepDef::when10_ctx(String, (A, B, C, D, E, F, G, H, I, J, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::when11(String, (A, B, C, D, E, F, G, H, I, J, K) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg] StepDef::when11_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::when12(String, (A, B, C, D, E, F, G, H, I, J, K, L) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg] StepDef::when12_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::when13(String, (A, B, C, D, E, F, G, H, I, J, K, L, M) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg] StepDef::when13_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::when14(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg] StepDef::when14_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::when15(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg] StepDef::when15_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::when16(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg] StepDef::when16_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::when17(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg] StepDef::when17_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::when18(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg] StepDef::when18_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::when19(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg] StepDef::when19_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg] StepDef::when1_ctx(String, (A, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::when2(String, (A, B) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::when20(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg] StepDef::when20_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::when21(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg] StepDef::when21_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::when22(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg, J : FromStepArg, K : FromStepArg, L : FromStepArg, M : FromStepArg, N : FromStepArg, O : FromStepArg, P : FromStepArg, Q : FromStepArg, R : FromStepArg, S : FromStepArg, T : FromStepArg, U : FromStepArg, V : FromStepArg] StepDef::when22_ctx(String, (A, B, C, D, E, F, G, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg] StepDef::when2_ctx(String, (A, B, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::when3(String, (A, B, C) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg] StepDef::when3_ctx(String, (A, B, C, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::when4(String, (A, B, C, D) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg] StepDef::when4_ctx(String, (A, B, C, D, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::when5(String, (A, B, C, D, E) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg] StepDef::when5_ctx(String, (A, B, C, D, E, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::when6(String, (A, B, C, D, E, F) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg] StepDef::when6_ctx(String, (A, B, C, D, E, F, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::when7(String, (A, B, C, D, E, F, G) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg] StepDef::when7_ctx(String, (A, B, C, D, E, F, G, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::when8(String, (A, B, C, D, E, F, G, H) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg] StepDef::when8_ctx(String, (A, B, C, D, E, F, G, H, Ctx) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::when9(String, (A, B, C, D, E, F, G, H, I) -> Unit raise, source? : StepSource) -> Self
+pub fn[A : FromStepArg, B : FromStepArg, C : FromStepArg, D : FromStepArg, E : FromStepArg, F : FromStepArg, G : FromStepArg, H : FromStepArg, I : FromStepArg] StepDef::when9_ctx(String, (A, B, C, D, E, F, G, H, I, Ctx) -> Unit raise, source? : StepSource) -> Self
 
 pub(all) struct StepDefId {
   // private fields
-
-  fn new(String) -> StepDefId
-}
+} derive(Eq, Hash, @debug.Debug)
+pub fn StepDefId::equal(Self, Self) -> Bool
+pub fn StepDefId::hash(Self) -> Int
+pub fn StepDefId::hash_combine(Self, Hasher) -> Unit
+pub fn StepDefId::not_equal(Self, Self) -> Bool
+pub fn StepDefId::to_repr(Self) -> @debug.Repr
 pub fn StepDefId::to_string(Self) -> String
-pub impl Eq for StepDefId
-pub impl Hash for StepDefId
-pub impl Show for StepDefId
 
 pub struct StepHandler((Ctx) -> Unit raise)
-#deprecated
-pub fn StepHandler::inner(Self) -> (Ctx) -> Unit raise
 
 pub(all) struct StepHookCtx {
   // private fields
 }
+#alias(new)
+pub fn StepHookCtx::StepHookCtx(ScenarioInfo, StepInfo) -> Self
 pub fn StepHookCtx::attach(Self, String, String, file_name? : String) -> Unit
 pub fn StepHookCtx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
 pub fn StepHookCtx::attach_url(Self, String, String) -> Unit
-pub fn StepHookCtx::new(ScenarioInfo, StepInfo) -> Self
 pub fn StepHookCtx::pending_attachments(Self) -> Array[PendingAttachment]
 pub fn StepHookCtx::scenario(Self) -> ScenarioInfo
 pub fn StepHookCtx::step(Self) -> StepInfo
@@ -282,18 +670,20 @@ pub fn StepHookCtx::step(Self) -> StepInfo
 pub(all) struct StepInfo {
   keyword : String
   text : String
-}
-pub impl Eq for StepInfo
-pub impl Show for StepInfo
+} derive(Eq, @debug.Debug)
+pub fn StepInfo::equal(Self, Self) -> Bool
+pub fn StepInfo::not_equal(Self, Self) -> Bool
+pub fn StepInfo::to_repr(Self) -> @debug.Repr
 
 pub(all) enum StepKeyword {
   Given
   When
   Then
   Step
-}
-pub impl Eq for StepKeyword
-pub impl Show for StepKeyword
+} derive(Eq, @debug.Debug)
+pub fn StepKeyword::equal(Self, Self) -> Bool
+pub fn StepKeyword::not_equal(Self, Self) -> Bool
+pub fn StepKeyword::to_repr(Self) -> @debug.Repr
 
 pub(all) enum StepMatchResult {
   Matched(StepDef, Array[StepArg])
@@ -303,20 +693,28 @@ pub(all) enum StepMatchResult {
 pub(all) struct StepRegistry {
   // private fields
 }
-pub fn StepRegistry::find_match(Self, String, keyword? : String) -> StepMatchResult
+pub fn StepRegistry::find_match(Self, String, keyword? : String) -> StepMatchResult raise
 pub fn StepRegistry::len(Self) -> Int
 pub fn StepRegistry::new() -> Self
 pub fn StepRegistry::register_def(Self, StepDef, @cucumber-expressions.ParamTypeRegistry) -> Unit
 pub fn StepRegistry::step_defs(Self) -> Array[StepDef]
 pub fn[L : StepLibrary] StepRegistry::use_library(Self, L, @cucumber-expressions.ParamTypeRegistry) -> Unit
 
+pub(all) enum StepReport {
+  Passed(keyword~ : String, step~ : String)
+  Skipped(keyword~ : String, step~ : String)
+  Problem(MoonspecError)
+}
+
 pub(all) struct StepSource {
   uri : String?
   line : Int?
-}
-pub fn StepSource::new(uri? : String, line? : Int) -> Self
-pub impl Eq for StepSource
-pub impl Show for StepSource
+} derive(Eq, @debug.Debug)
+#alias(new)
+pub fn StepSource::StepSource(uri? : String, line? : Int) -> Self
+pub fn StepSource::equal(Self, Self) -> Bool
+pub fn StepSource::not_equal(Self, Self) -> Bool
+pub fn StepSource::to_repr(Self) -> @debug.Repr
 
 pub(all) enum StepValue {
   IntVal(Int)
@@ -331,29 +729,50 @@ pub(all) enum StepValue {
   BigDecimalVal(@decimal.Decimal)
   BigIntegerVal(@bigint.BigInt)
   CustomVal(@any.Any)
+  NullVal
   DocStringVal(DocString)
   DataTableVal(DataTable)
 }
+pub fn StepValue::equal(Self, Self) -> Bool
+pub fn StepValue::not_equal(Self, Self) -> Bool
+pub fn StepValue::output(Self, &Logger) -> Unit
+pub fn StepValue::to_repr(Self) -> @debug.Repr
+pub fn StepValue::to_string(Self) -> String
+pub impl Eq for StepValue
+pub impl Show for StepValue
+pub impl @debug.Debug for StepValue
 
 // Type aliases
 
 // Traits
 pub trait Attachable {
-  attach(Self, String, String, file_name? : String) -> Unit
-  attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
-  attach_url(Self, String, String) -> Unit
-  pending_attachments(Self) -> Array[PendingAttachment]
+  fn attach(Self, String, String, file_name? : String) -> Unit
+  fn attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
+  fn attach_url(Self, String, String) -> Unit
+  fn pending_attachments(Self) -> Array[PendingAttachment]
 }
 
+pub(open) trait FromStepArg {
+  fn from_step_arg(StepArg) -> Self raise
+}
+pub impl FromStepArg for Byte
+pub impl FromStepArg for Int
+pub impl FromStepArg for Int64
+pub impl FromStepArg for Double
+pub impl FromStepArg for String
+pub impl FromStepArg for @bigint.BigInt
+pub impl FromStepArg for @decimal.Decimal
+pub impl FromStepArg for @any.Any
+
 pub(open) trait MessageSink {
-  on_message(Self, @cucumber-messages.Envelope) -> Unit
+  fn on_message(Self, @cucumber-messages.Envelope) -> Unit
+  fn output(Self) -> String
 }
 
 pub(open) trait StepLibrary {
-  steps(Self) -> ArrayView[StepDef]
+  fn steps(Self) -> ArrayView[StepDef]
 }
 
 pub(open) trait World {
-  configure(Self, Setup) -> Unit
+  fn configure(Self, Setup) -> Unit raise
 }
-
