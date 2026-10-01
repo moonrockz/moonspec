@@ -1,0 +1,4 @@
+[bump]
+# Mooncakes requires 0.x.y versions; breaking changes bump the minor version.
+breaking_always_bump_major = false
+features_always_bump_minor = true
