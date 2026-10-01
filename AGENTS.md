@@ -232,6 +232,7 @@ All build, test, and release operations are **file-based mise tasks** in
 | Task                  | Purpose                                        |
 |-----------------------|------------------------------------------------|
 | `test:unit`           | Run MoonBit unit tests (`moon test`)           |
+| `hooks:install`       | Install the git hooks (lefthook; they call `bd hooks run`) |
 | `release:version`     | Compute next version from conventional commits |
 | `release:credentials` | Set up mooncakes.io credentials (CI only)      |
 | `release:publish`     | Publish package to mooncakes.io                |
@@ -283,47 +284,158 @@ This project publishes to **mooncakes.io** (MoonBit package registry) and
 - Pre-publish checks: `moon check`, `moon test`, `moon fmt`
 - Package published as `moonrockz/moonspec` on mooncakes.io
 
-## Issue Tracking
+## Work Tracking
 
-This project uses **bd** (beads) with embedded Dolt for issue tracking. In a
-fresh clone or worktree, run `bd bootstrap --yes` to restore the database from
-the configured remote, then `bd hooks install --beads` and
-`git config core.hooksPath .beads/hooks` to use the current worktree's hooks. See
-[the Beads guide](.beads/README.md) for setup and recovery. Run `bd onboard`
-for a command reference.
+**bd (beads) is the primary tracker for all work.** GitHub Issues are the
+public intake for reports from outside contributors.
+
+- Track every task, bug, feature and epic in bd. Do NOT use markdown TODO
+  lists or other tracking methods.
+- Mirror each GitHub issue into bd with `--external-ref gh-<number>`, and keep
+  the two in step: when the bd issue closes, close the GitHub issue.
+- A pull request that resolves a GitHub issue says `Closes #<number>` in its
+  body. Name the bd issue in the body too.
+- Work lands on `main` through pull requests (squash merge). Branch first;
+  do not push to `main` unless the user says so for that change.
+- bd runs with `agent.profile: team-maintainer` (`.beads/config.yaml`):
+  commit, `bd sync` and push are routine parts of the work. An explicit
+  "do not commit" or "do not push" from the user still wins, and pushes go to
+  your branch, not to `main`.
+
+## Persistent Memory
+
+Store knowledge that must outlive the session with `bd remember`. Do not use
+`MEMORY.md` files or any agent's own memory store for this project; bd
+memories sync through `refs/dolt/data`, so every machine and agent sees them.
 
 ```bash
-bd ready              # Find available work
-bd show <id>          # View issue details
-bd update <id> --status in_progress  # Claim work
-bd close <id>         # Complete work
-bd sync               # Pull and push Dolt issue history
-bd export -o .beads/issues.jsonl  # Refresh the tracked snapshot before committing
+bd remember "insight" --key <slug>   # store, or update the memory with that key
+bd memories <keyword>                # search
+bd recall <key>                      # read one
 ```
+
+`bd prime` (the SessionStart hook) injects the memories into each session.
+
+<!-- BEGIN BEADS INTEGRATION -->
+## Issue Tracking with bd (beads)
+
+**IMPORTANT**: This project uses **bd (beads)** for ALL issue tracking. Do NOT
+use markdown TODOs, task lists, or other tracking methods.
+
+### Why bd?
+
+- Dependency-aware: Track blockers and relationships between issues
+- Git-friendly: syncs through a Dolt remote on the Git origin
+  (`refs/dolt/data`), separate from source branches
+- Agent-optimized: JSON output, ready work detection, discovered-from links
+- Prevents duplicate tracking systems and confusion
+
+### Quick Start
+
+**Check for ready work:**
+
+```bash
+bd ready --json
+```
+
+**Create new issues:**
+
+```bash
+bd create "Issue title" --description="Detailed context" -t bug|feature|task -p 0-4 --json
+bd create "Issue title" --description="What this issue is about" -p 1 --deps discovered-from:moonspec-123 --json
+bd create "Issue title" --description="..." --external-ref gh-12 --json   # mirror a GitHub issue
+```
+
+**Claim and update:**
+
+```bash
+bd update moonspec-42 --status in_progress --json
+bd update moonspec-42 --priority 1 --json
+```
+
+**Complete work:**
+
+```bash
+bd close moonspec-42 --reason "Completed" --json
+```
+
+### Issue Types
+
+- `bug` - Something broken
+- `feature` - New functionality
+- `task` - Work item (tests, docs, refactoring)
+- `epic` - Large feature with subtasks
+- `chore` - Maintenance (dependencies, tooling)
+
+### Priorities
+
+- `0` - Critical (security, data loss, broken builds)
+- `1` - High (major features, important bugs)
+- `2` - Medium (default, nice-to-have)
+- `3` - Low (polish, optimization)
+- `4` - Backlog (future ideas)
+
+### Workflow for AI Agents
+
+1. **Check ready work**: `bd ready` shows unblocked issues
+2. **Claim your task**: `bd update <id> --status in_progress`
+3. **Work on it**: Implement, test, document
+4. **Discover new work?** Create linked issue:
+   - `bd create "Found bug" --description="Details about what was found" -p 1 --deps discovered-from:<parent-id>`
+5. **Complete**: `bd close <id> --reason "Done"`
+
+### Storage and Sync
+
+- bd stores issues in an embedded Dolt database at `.beads/embeddeddolt/`
+  (not committed).
+- Git worktrees share the database of the main checkout. Do not create a
+  database inside a worktree.
+- Cross-machine sync uses a Dolt remote on the GitHub origin. Dolt keeps issue
+  history under `refs/dolt/data`, separate from source branches:
+  - `bd sync` — pull, check for conflicts, and push in one step.
+  - `bd dolt pull` / `bd dolt push` — the individual steps.
+- Issue changes need no commit or pull request: `bd sync` publishes them to
+  `refs/dolt/data`.
+- `.beads/issues.jsonl` is a passive export (`bd export -o .beads/issues.jsonl`)
+  for viewers and interchange. It is gitignored; do not commit it.
+
+### Setup on a Fresh Clone
+
+```bash
+bd bootstrap            # clones refs/dolt/data from origin and wires the Dolt remote
+mise run hooks:install  # installs lefthook git hooks (these call `bd hooks run <hook>`)
+git config beads.role maintainer   # or contributor
+```
+
+### Important Rules
+
+- ✅ Use bd for ALL task tracking
+- ✅ Always use `--json` flag for programmatic use
+- ✅ Link discovered work with `discovered-from` dependencies
+- ✅ Check `bd ready` before asking "what should I work on?"
+- ❌ Do NOT create markdown TODO lists
+- ❌ Do NOT duplicate tracking systems (GitHub issues are mirrored, not tracked twice)
+
+<!-- END BEADS INTEGRATION -->
 
 ## Landing the Plane (Session Completion)
 
-**When ending a work session**, you MUST complete ALL steps below. Work is NOT
-complete until `git push` succeeds.
+When you end a work session, complete ALL steps below. Work is NOT complete
+until the pushes succeed.
 
-**MANDATORY WORKFLOW:**
-
-1. **File issues for remaining work** - Create issues for anything that needs follow-up
-2. **Run quality gates** (if code changed) - Tests, linters, builds
-3. **Update issue status** - Close finished work, update in-progress items
-4. **PUSH TO REMOTE** - This is MANDATORY:
+1. **File issues for remaining work** in bd.
+2. **Run quality gates** if code changed: `mise run test:unit`,
+   `moon info && moon fmt`.
+3. **Update issue status**: close finished work, update in-progress items.
+4. **Push** (mandatory):
    ```bash
+   bd sync                  # publish issue changes to refs/dolt/data
    git pull --rebase
-   bd sync
-   git push
-   git status  # MUST show "up to date with origin"
+   git push                 # your branch; open or update its pull request
+   git status               # MUST show "up to date with origin"
    ```
-5. **Clean up** - Clear stashes, prune remote branches
-6. **Verify** - All changes committed AND pushed
-7. **Hand off** - Provide context for next session
+5. **Clean up**: clear stashes, prune merged branches.
+6. **Hand off**: give context for the next session.
 
-**CRITICAL RULES:**
-- Work is NOT complete until `git push` succeeds
-- NEVER stop before pushing - that leaves work stranded locally
-- NEVER say "ready to push when you are" - YOU must push
-- If push fails, resolve and retry until it succeeds
+Never stop before pushing; that leaves work stranded on one machine. If a push
+fails, resolve the cause and retry.

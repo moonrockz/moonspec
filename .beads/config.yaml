@@ -31,7 +31,8 @@
 # - github.org
 # - github.repo
 
-sync.remote: "git+ssh://git@github.com/moonrockz/moonspec.git"
-# Keep the tracked issue snapshot current after local writes.
-export:
-  auto: true
+# Dolt remote for cross-machine sync (issue history lives in refs/dolt/data).
+sync:
+    remote: "git+https://github.com/moonrockz/moonspec.git"
+agent:
+    profile: team-maintainer
