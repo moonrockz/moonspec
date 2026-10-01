@@ -331,10 +331,29 @@ setup.then("the light should be {color}", fn(ctx) raise {
 ```
 
 `Color::from_text` is your domain constructor. `define_param_type_with` accepts
-composable `@cucumber_expressions.Captures` decoders for multiple capture groups.
+composable `@moonspec.Captures` decoders for multiple capture groups.
 Typed parameters arrive as `TypedVal`; retrieve them with `StepArg::get(handle)`.
 Registration errors propagate from `World::configure`. Decoder errors are
 reported as failed steps, including in dry-run mode.
+
+### Expression tools
+
+The main `@moonspec` import exposes `ExpressionFactory`,
+`CucumberExpressionGenerator`, typed `ParameterType` handles, and `Captures`
+decoders. Get a factory or generator from `Setup` to use its registered custom
+parameter types:
+
+```moonbit
+let factory = setup.expression_factory()
+let expression = factory.create_expression("the light is {color}")
+let candidates = setup.expression_generator().generate_expressions("the light is red")
+```
+
+The factory creates Cucumber or regex objects for explicit matching and
+validation. The generator suggests Cucumber Expression candidates you can
+register as steps. See the [expression tools guide](docs/guide/step-definitions.md#expression-tools)
+for examples, errors, and how these tools relate to step registration and
+automatic undefined-step snippets.
 
 ### Error Handling
 

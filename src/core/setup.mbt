@@ -23,11 +23,25 @@ pub fn Setup::step_registry(self : Setup) -> StepRegistry {
 }
 
 ///|
-/// Access the underlying param type registry (for runner internals).
+/// Access the underlying parameter registry for advanced upstream APIs.
 pub fn Setup::param_registry(
   self : Setup,
 ) -> @cucumber_expressions.ParamTypeRegistry {
   self.param_reg
+}
+
+///|
+/// Create expression objects for validation or matching with this setup's
+/// registered parameter types. This does not register a step handler.
+pub fn Setup::expression_factory(self : Setup) -> ExpressionFactory {
+  ExpressionFactory::new(self.param_reg)
+}
+
+///|
+/// Suggest expression candidates for step text using this setup's parameter
+/// types and their use_for_snippets flags. Use source() to register a candidate.
+pub fn Setup::expression_generator(self : Setup) -> CucumberExpressionGenerator {
+  CucumberExpressionGenerator::new(self.param_reg)
 }
 
 ///|

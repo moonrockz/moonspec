@@ -2,6 +2,7 @@
 package "moonrockz/moonspec"
 
 import {
+  "moonrockz/cucumber-expressions",
   "moonrockz/moonspec/core",
   "moonrockz/moonspec/runner",
 }
@@ -18,6 +19,12 @@ pub async fn[W : @core.World] run_or_fail(() -> W, @runner.RunOptions) -> Unit
 // Types and methods
 
 // Type aliases
+pub using @cucumber-expressions {type AmbiguousParameterTypeError}
+
+pub using @cucumber-expressions {type Captures}
+
+pub using @cucumber-expressions {type Captures1}
+
 pub using @core {type CaseHookCtx}
 
 pub using @core {type Cells}
@@ -28,13 +35,21 @@ pub using @core {type Columns}
 
 pub using @core {type Ctx}
 
+pub using @cucumber-expressions {type CucumberExpressionGenerator}
+
 pub using @core {type DataTable}
 
 pub using @core {type DocString}
 
+pub using @cucumber-expressions {type ExpressionError}
+
+pub using @cucumber-expressions {type ExpressionFactory}
+
 pub using @runner {type FeatureResult}
 
 pub using @runner {type FeatureSource}
+
+pub using @cucumber-expressions {type GeneratedExpression}
 
 pub using @core {type HookError}
 
@@ -46,9 +61,15 @@ pub using @core {type HookResult}
 
 pub using @core {type HookType}
 
+pub using @cucumber-expressions {type Match}
+
 pub using @core {type MoonspecError}
 
 pub using @runner {type OutputDest}
+
+pub using @cucumber-expressions {type ParameterType}
+
+pub using @cucumber-expressions {type ParameterTypeError}
 
 pub using @core {type PendingAttachment}
 
@@ -77,6 +98,8 @@ pub using @core {type Setup}
 pub using @core {type StepArg}
 
 pub using @core {type StepDef}
+
+pub using @cucumber-expressions {type StepExpression}
 
 pub using @core {type StepHookCtx}
 

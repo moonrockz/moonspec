@@ -245,6 +245,8 @@ pub fn Setup::before_test_step(Self, (StepHookCtx) -> Unit raise, loc~ : SourceL
 pub fn Setup::custom_param_types(Self) -> Array[CustomParamTypeInfo]
 pub fn[T] Setup::define_param_type1(Self, String, Array[String], (String) -> T raise, use_for_snippets? : Bool, prefer_for_regexp_match? : Bool) -> @cucumber-expressions.ParameterType[T] raise @cucumber-expressions.ParameterTypeError
 pub fn[T] Setup::define_param_type_with(Self, String, Array[String], @cucumber-expressions.Captures1[T], use_for_snippets? : Bool, prefer_for_regexp_match? : Bool) -> @cucumber-expressions.ParameterType[T] raise @cucumber-expressions.ParameterTypeError
+pub fn Setup::expression_factory(Self) -> @cucumber-expressions.ExpressionFactory
+pub fn Setup::expression_generator(Self) -> @cucumber-expressions.CucumberExpressionGenerator
 pub fn Setup::given(Self, String, (Ctx) -> Unit raise) -> Unit
 pub fn Setup::given0(Self, String, () -> Unit raise) -> Unit
 pub fn Setup::given0_ctx(Self, String, (Ctx) -> Unit raise) -> Unit
@@ -745,6 +747,27 @@ pub impl Show for StepValue
 pub impl @debug.Debug for StepValue
 
 // Type aliases
+pub using @cucumber-expressions {type AmbiguousParameterTypeError}
+
+pub using @cucumber-expressions {type Captures}
+
+pub using @cucumber-expressions {type Captures1}
+
+pub using @cucumber-expressions {type CucumberExpressionGenerator}
+
+pub using @cucumber-expressions {type ExpressionError}
+
+pub using @cucumber-expressions {type ExpressionFactory}
+
+pub using @cucumber-expressions {type GeneratedExpression}
+
+pub using @cucumber-expressions {type Match}
+
+pub using @cucumber-expressions {type ParameterType}
+
+pub using @cucumber-expressions {type ParameterTypeError}
+
+pub using @cucumber-expressions {type StepExpression}
 
 // Traits
 pub trait Attachable {
