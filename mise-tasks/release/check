@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+#MISE description="Validate formatting, types, and tests before a release"
+set -euo pipefail
+
+moon fmt --check
+moon check
+mise run test:unit
