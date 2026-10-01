@@ -1,0 +1,33 @@
+# Git hooks for moonrockz/moonspec. Install them with `mise run hooks:install`.
+# The bd hooks keep the beads issue database in step with git.
+
+pre-commit:
+  commands:
+    bd-pre-commit:
+      run: bd hooks run pre-commit
+    format-check:
+      run: moon fmt --check
+    lint-check:
+      run: moon check
+
+pre-push:
+  commands:
+    bd-pre-push:
+      run: bd hooks run pre-push
+    all-checks:
+      run: mise run test:unit
+
+post-merge:
+  commands:
+    bd-post-merge:
+      run: bd hooks run post-merge
+
+post-checkout:
+  commands:
+    bd-post-checkout:
+      run: bd hooks run post-checkout {1} {2} {3}
+
+prepare-commit-msg:
+  commands:
+    bd-prepare-commit-msg:
+      run: bd hooks run prepare-commit-msg {1} {2} {3}
