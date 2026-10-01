@@ -1,6 +1,6 @@
 name = "moonrockz/moonspec"
 
-version = "0.9.1"
+version = "1.0.0"
 
 import {
   "moonbitlang/x@0.5.5",
