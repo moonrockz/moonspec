@@ -68,11 +68,11 @@ pub fn execute_scenario(
   pickle_id~ : String,
   tags~ : Array[String],
   steps~ : Array[@cucumber_messages.PickleStep],
-  hook_registry? : @core.HookRegistry = @core.HookRegistry::new(),
-  sinks? : Array[&@core.MessageSink] = [],
-  test_case_started_id? : String = "",
-  test_step_ids? : Array[String] = [],
-  dry_run? : Bool = false,
+  hook_registry~ : @core.HookRegistry = @core.HookRegistry::new(),
+  sinks~ : Array[&@core.MessageSink] = [],
+  test_case_started_id~ : String = "",
+  test_step_ids~ : Array[String] = [],
+  dry_run~ : Bool = false,
 ) -> ScenarioResult {
   let info : @core.ScenarioInfo = { feature_name, scenario_name, tags, }
   let has_sinks = sinks.length() > 0 && test_step_ids.length() > 0

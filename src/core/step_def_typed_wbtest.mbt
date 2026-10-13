@@ -14,8 +14,8 @@ test "StepDef::given0 creates zero-arg step def" {
 
 ///|
 test "StepDef::given1 creates one-arg step def" {
-  let captured : Array[Int] = []
-  let sd = StepDef::given1("I have {int} items", fn(count : Int) {
+  let captured : Array[Int32] = []
+  let sd = StepDef::given1("I have {int} items", fn(count : Int32) {
     captured.push(count)
   })
   assert_eq(sd.keyword, StepKeyword::Given)
@@ -30,10 +30,10 @@ test "StepDef::given1 creates one-arg step def" {
 
 ///|
 test "StepDef::given2 creates two-arg step def" {
-  let captured : Array[(String, Int)] = []
+  let captured : Array[(String, Int32)] = []
   let sd = StepDef::given2("I add {string} at {int}", fn(
     name : String,
-    price : Int,
+    price : Int32,
   ) {
     captured.push((name, price))
   })
@@ -57,20 +57,20 @@ test "StepDef::when1 creates When step def" {
 
 ///|
 test "StepDef::then1 creates Then step def" {
-  let sd = StepDef::then1("I see {int}", fn(_n : Int) { () })
+  let sd = StepDef::then1("I see {int}", fn(_n : Int32) { () })
   assert_eq(sd.keyword, StepKeyword::Then)
 }
 
 ///|
 test "StepDef::step1 creates Step step def" {
-  let sd = StepDef::step1("there are {int}", fn(_n : Int) { () })
+  let sd = StepDef::step1("there are {int}", fn(_n : Int32) { () })
   assert_eq(sd.keyword, StepKeyword::Step)
 }
 
 ///|
 test "StepDef::given1_ctx passes Ctx" {
   let captured : Array[String] = []
-  let sd = StepDef::given1_ctx("I have {int}", fn(_n : Int, ctx : Ctx) {
+  let sd = StepDef::given1_ctx("I have {int}", fn(_n : Int32, ctx : Ctx) {
     captured.push(ctx.scenario().feature_name)
   })
   let ctx = Ctx::new(
@@ -86,7 +86,7 @@ test "StepDef::given1_ctx passes Ctx" {
 test "StepDef::given1 with source" {
   let sd = StepDef::given1(
     "I have {int}",
-    fn(_n : Int) { () },
+    fn(_n : Int32) { () },
     source=StepSource::new(uri="test.mbt", line=42),
   )
   assert_true(sd.source is Some(_))
@@ -94,19 +94,19 @@ test "StepDef::given1 with source" {
 
 ///|
 test "StepDef::given9 creates nine-arg step def" {
-  let result : Array[Int] = []
+  let result : Array[Int32] = []
   let sd = StepDef::given9(
     "{int} {int} {int} {int} {int} {int} {int} {int} {int}",
     fn(
-      a : Int,
-      b : Int,
-      c : Int,
-      d : Int,
-      e : Int,
-      f : Int,
-      g : Int,
-      h : Int,
-      i : Int,
+      a : Int32,
+      b : Int32,
+      c : Int32,
+      d : Int32,
+      e : Int32,
+      f : Int32,
+      g : Int32,
+      h : Int32,
+      i : Int32,
     ) {
       result.push(a + b + c + d + e + f + g + h + i)
     },

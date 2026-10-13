@@ -3,7 +3,7 @@
 
 ///|
 struct IsolationWorld {
-  mut counter : Int
+  mut counter : Int32
 } derive(Default)
 
 ///|

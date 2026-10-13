@@ -83,8 +83,8 @@ fn make_test_run_started_envelope(id : String) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testRunStarted": {
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
       "id": id.to_json(),
     },
@@ -103,8 +103,8 @@ fn make_test_run_finished_envelope(
     "testRunFinished": {
       "success": success.to_json(),
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
       "testRunStartedId": run_id.to_json(),
     },
@@ -118,7 +118,7 @@ fn make_test_run_finished_envelope(
 fn make_test_case_started_envelope(
   id : String,
   test_case_id : String,
-  attempt? : Int = 0,
+  attempt~ : Int32 = 0,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseStarted": {
@@ -126,8 +126,8 @@ fn make_test_case_started_envelope(
       "id": id.to_json(),
       "testCaseId": test_case_id.to_json(),
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
     },
   }
@@ -139,14 +139,14 @@ fn make_test_case_started_envelope(
 ///|
 fn make_test_case_finished_envelope(
   test_case_started_id : String,
-  will_be_retried? : Bool = false,
+  will_be_retried~ : Bool = false,
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseFinished": {
       "testCaseStartedId": test_case_started_id.to_json(),
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
       "willBeRetried": will_be_retried.to_json(),
     },
@@ -166,8 +166,8 @@ fn make_test_step_started_envelope(
       "testCaseStartedId": test_case_started_id.to_json(),
       "testStepId": test_step_id.to_json(),
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
     },
   }
@@ -185,8 +185,8 @@ fn make_test_step_finished_envelope(
 ) -> @cucumber_messages.Envelope {
   let result_json : Map[String, Json] = Map([])
   result_json["duration"] = {
-    "seconds": (0 : Int).to_json(),
-    "nanos": (0 : Int).to_json(),
+    "seconds": (0 : Int32).to_json(),
+    "nanos": (0 : Int32).to_json(),
   }
   result_json["status"] = status.to_json()
   match message {
@@ -199,8 +199,8 @@ fn make_test_step_finished_envelope(
       "testStepId": test_step_id.to_json(),
       "testStepResult": result_json.to_json(),
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
     },
   }
@@ -235,7 +235,7 @@ fn make_attachment_envelope(
     None => ()
   }
   json_map["timestamp"] = (
-    { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
+    { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } : Json)
   let json : Json = { "attachment": json_map.to_json() }
   @json.from_json(json) catch {
     _ => panic()
@@ -261,7 +261,7 @@ fn make_external_attachment_envelope(
     None => ()
   }
   json_map["timestamp"] = (
-    { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } : Json)
+    { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } : Json)
   let json : Json = { "externalAttachment": json_map.to_json() }
   @json.from_json(json) catch {
     _ => panic()
@@ -295,7 +295,7 @@ fn emit_run_hook_attachments(
         }
         json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
         json_map["timestamp"] = (
-          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } :
+          { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } :
           Json)
         let json : Json = { "attachment": json_map.to_json() }
         let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -309,7 +309,7 @@ fn emit_run_hook_attachments(
         json_map["mediaType"] = media_type.to_json()
         json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
         json_map["timestamp"] = (
-          { "seconds": (0 : Int).to_json(), "nanos": (0 : Int).to_json() } :
+          { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } :
           Json)
         let json : Json = { "externalAttachment": json_map.to_json() }
         let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -385,10 +385,10 @@ fn extract_test_case_mappings(
 /// parse_retry_tag(["@smoke", "@retry(3)"]) // => Some(3)
 /// parse_retry_tag(["@smoke", "@slow"])      // => None
 /// ```
-fn parse_retry_tag(tags : Array[String]) -> Int? {
+fn parse_retry_tag(tags : Array[String]) -> Int32? {
   let max_retries = 100
   for tag in tags {
-    let n : Int = lexmatch tag with longest {
+    let n : Int32 = lexmatch tag with longest {
       re"^@retry\([0-9]+\)$" as matched => {
         let digits = matched["@retry(".length():matched.length() - 1]
         let parsed = @string.parse_int(digits) catch { _ => 0 }
@@ -457,7 +457,7 @@ async fn[W : @core.World] run_detailed(
       let json : Json = {
         "gherkinDocument": {
           "uri": uri.to_json(),
-          "comments": ([] : Array[Int]).to_json(),
+          "comments": ([] : Array[Int32]).to_json(),
         },
       }
       let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -617,8 +617,8 @@ async fn[W : @core.World] run_detailed(
           "testRunStartedId": run_id.to_json(),
           "hookId": hook.id.to_json(),
           "timestamp": {
-            "seconds": (0 : Int).to_json(),
-            "nanos": (0 : Int).to_json(),
+            "seconds": (0 : Int32).to_json(),
+            "nanos": (0 : Int32).to_json(),
           },
         },
       }
@@ -647,14 +647,14 @@ async fn[W : @core.World] run_detailed(
           "testRunHookStartedId": trhs_id.to_json(),
           "result": {
             "duration": {
-              "seconds": (0 : Int).to_json(),
-              "nanos": (0 : Int).to_json(),
+              "seconds": (0 : Int32).to_json(),
+              "nanos": (0 : Int32).to_json(),
             },
             "status": result_status.to_json(),
           },
           "timestamp": {
-            "seconds": (0 : Int).to_json(),
-            "nanos": (0 : Int).to_json(),
+            "seconds": (0 : Int32).to_json(),
+            "nanos": (0 : Int32).to_json(),
           },
         },
       }
@@ -741,8 +741,8 @@ async fn[W : @core.World] run_detailed(
           "testRunStartedId": run_id.to_json(),
           "hookId": hook.id.to_json(),
           "timestamp": {
-            "seconds": (0 : Int).to_json(),
-            "nanos": (0 : Int).to_json(),
+            "seconds": (0 : Int32).to_json(),
+            "nanos": (0 : Int32).to_json(),
           },
         },
       }
@@ -771,14 +771,14 @@ async fn[W : @core.World] run_detailed(
           "testRunHookStartedId": trhs_id.to_json(),
           "result": {
             "duration": {
-              "seconds": (0 : Int).to_json(),
-              "nanos": (0 : Int).to_json(),
+              "seconds": (0 : Int32).to_json(),
+              "nanos": (0 : Int32).to_json(),
             },
             "status": result_status.to_json(),
           },
           "timestamp": {
-            "seconds": (0 : Int).to_json(),
-            "nanos": (0 : Int).to_json(),
+            "seconds": (0 : Int32).to_json(),
+            "nanos": (0 : Int32).to_json(),
           },
         },
       }
@@ -846,7 +846,7 @@ pub async fn[W : @core.World] run_or_fail(
 fn pickle_line(
   cache : FeatureCache,
   pickle : @cucumber_messages.Pickle,
-) -> Int? {
+) -> Int32? {
   guard cache.get(pickle.uri) is Some(feature) else { return None }
   guard pickle.astNodeIds.get(0) is Some(scenario_id) else { return None }
   let scenarios : Array[@gherkin.Scenario] = []
@@ -941,7 +941,10 @@ fn collect_scenario_errors(
 }
 
 ///|
-fn format_run_summary(summary : RunSummary, parse_errors? : Int = 0) -> String {
+fn format_run_summary(
+  summary : RunSummary,
+  parse_errors~ : Int32 = 0,
+) -> String {
   let parts : Array[String] = []
   if parse_errors > 0 {
     let noun = if parse_errors == 1 { "parse error" } else { "parse errors" }
@@ -968,12 +971,12 @@ fn format_run_summary(summary : RunSummary, parse_errors? : Int = 0) -> String {
 async fn[W : @core.World] run_pickles_sequential(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
-  sinks? : Array[&@core.MessageSink] = [],
-  tc_mappings? : Map[String, TestCaseMapping] = {},
-  id_gen? : IdGenerator = IdGenerator::new(),
-  retries? : Int = 0,
-  dry_run? : Bool = false,
-  skip_tags? : Array[String] = [],
+  sinks~ : Array[&@core.MessageSink] = [],
+  tc_mappings~ : Map[String, TestCaseMapping] = {},
+  id_gen~ : IdGenerator = IdGenerator::new(),
+  retries~ : Int32 = 0,
+  dry_run~ : Bool = false,
+  skip_tags~ : Array[String] = [],
 ) -> Array[PickleResult] {
   let results : Array[PickleResult] = []
   for pickle in pickles {
@@ -1080,12 +1083,12 @@ fn make_skipped_pickle_result(
 async fn[W : @core.World] execute_pickle(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
-  sinks? : Array[&@core.MessageSink] = [],
-  tc_mappings? : Map[String, TestCaseMapping] = {},
-  id_gen? : IdGenerator = IdGenerator::new(),
-  retries? : Int = 0,
-  dry_run? : Bool = false,
-  skip_tags? : Array[String] = [],
+  sinks~ : Array[&@core.MessageSink] = [],
+  tc_mappings~ : Map[String, TestCaseMapping] = {},
+  id_gen~ : IdGenerator = IdGenerator::new(),
+  retries~ : Int32 = 0,
+  dry_run~ : Bool = false,
+  skip_tags~ : Array[String] = [],
 ) -> PickleResult {
   let tags = pickle.tags.map(fn(t) { t.name })
   let tag_retries = parse_retry_tag(tags)
@@ -1109,7 +1112,7 @@ async fn[W : @core.World] execute_pickle(
       pickle, tags, reason, mapping, test_case_id, test_step_ids, sinks, id_gen,
     )
   }
-  let attempt : Ref[Int] = { val: 0, }
+  let attempt : Ref[Int32] = { val: 0, }
   let execute_attempt : async () -> ScenarioResult = () => {
     let current_attempt = attempt.val
     attempt.val += 1
@@ -1230,7 +1233,7 @@ fn group_by_feature(
 ///|
 fn compute_summary(
   features : Array[FeatureResult],
-  retried? : Int = 0,
+  retried~ : Int32 = 0,
 ) -> RunSummary {
   let mut total = 0
   let mut passed = 0

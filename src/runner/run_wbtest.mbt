@@ -717,7 +717,7 @@ test "gherkin_media_type selects markdown for .feature.md" {
 
 ///|
 /// Run `run_or_fail` without color and return the failure report.
-async fn failure_report(content : String, uri? : String = "test://b") -> String {
+async fn failure_report(content : String, uri~ : String = "test://b") -> String {
   let options = RunOptions([FeatureSource::Text(uri, content)])
   options.no_color(true)
   let mut report = ""

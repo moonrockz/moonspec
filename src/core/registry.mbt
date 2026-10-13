@@ -12,7 +12,7 @@ struct CompiledStep {
 ///|
 /// Internal: generates sequential StepDefIds.
 priv struct IdGenerator {
-  mut counter : Int
+  mut counter : Int32
 }
 
 ///|
@@ -41,7 +41,7 @@ pub fn StepRegistry::new() -> StepRegistry {
 
 ///|
 /// Number of registered step definitions.
-pub fn StepRegistry::len(self : StepRegistry) -> Int {
+pub fn StepRegistry::len(self : StepRegistry) -> Int32 {
   self.entries.length()
 }
 
@@ -87,7 +87,7 @@ pub fn[L : StepLibrary] StepRegistry::use_library(
 pub fn StepRegistry::find_match(
   self : StepRegistry,
   text : String,
-  keyword? : String = "* ",
+  keyword~ : String = "* ",
 ) -> StepMatchResult raise Error {
   for entry in self.entries {
     match entry.expression.match_(text) {

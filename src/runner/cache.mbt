@@ -111,7 +111,7 @@ pub fn FeatureCache::contains(self : FeatureCache, path : String) -> Bool {
 
 ///|
 /// Number of cached features.
-pub fn FeatureCache::length(self : FeatureCache) -> Int {
+pub fn FeatureCache::length(self : FeatureCache) -> Int32 {
   self.cache.length()
 }
 

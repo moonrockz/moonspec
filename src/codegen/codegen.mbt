@@ -1,7 +1,7 @@
 ///|
 /// Simple FNV-1a-like hash of a string, returned as a hex string.
 fn simple_hash(s : String) -> String {
-  let mut hash : UInt = 2166136261
+  let mut hash : UInt32 = 2166136261
   for i = 0; i < s.length(); i = i + 1 {
     hash = hash ^ s[i].to_int().reinterpret_as_uint()
     hash = hash * 16777619
@@ -11,7 +11,7 @@ fn simple_hash(s : String) -> String {
 
 ///|
 /// Convert a UInt to a lowercase hex string.
-fn uint_to_hex(n : UInt) -> String {
+fn uint_to_hex(n : UInt32) -> String {
   let digits = "0123456789abcdef"
   let buf = StringBuilder()
   let mut val = n
@@ -80,7 +80,7 @@ fn starts_with(s : String, prefix : String) -> Bool {
 }
 
 ///|
-fn substring_from(s : String, start : Int) -> String {
+fn substring_from(s : String, start : Int32) -> String {
   let buf = StringBuilder()
   for i = start; i < s.length(); i = i + 1 {
     buf.write_char(s[i].to_int().unsafe_to_char())
@@ -117,7 +117,7 @@ pub fn feature_to_test_filename(path : String) -> String {
 pub fn generate_test_file(
   feature_content : String,
   source_path : String,
-  config? : CodegenConfig = CodegenConfig::default(),
+  config~ : CodegenConfig = CodegenConfig::default(),
 ) -> String {
   // moon passes `$input` as "./features/x.feature"; drop the "./" so the
   // output does not depend on how the path was written.

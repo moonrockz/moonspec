@@ -17,8 +17,8 @@ test "Setup::given0 registers and runs zero-arg handler" {
 ///|
 test "Setup::given1 extracts Int arg" {
   let setup = Setup::new()
-  let captured : Array[Int] = []
-  setup.given1("I have {int} items", fn(count : Int) { captured.push(count) })
+  let captured : Array[Int32] = []
+  setup.given1("I have {int} items", fn(count : Int32) { captured.push(count) })
   let ctx = Ctx::new(
     [{ value: IntVal(5), raw: "5", }],
     { feature_name: "f", scenario_name: "s", tags: [], },
@@ -32,8 +32,8 @@ test "Setup::given1 extracts Int arg" {
 test "Setup::given2 extracts String and Int args" {
   let setup = Setup::new()
   let names : Array[String] = []
-  let prices : Array[Int] = []
-  setup.given2("I add {string} at {int}", fn(name : String, price : Int) {
+  let prices : Array[Int32] = []
+  setup.given2("I add {string} at {int}", fn(name : String, price : Int32) {
     names.push(name)
     prices.push(price)
   })
@@ -54,7 +54,7 @@ test "Setup::given2 extracts String and Int args" {
 test "Setup::given1_ctx passes Ctx as last arg" {
   let setup = Setup::new()
   let captured_feature : Array[String] = []
-  setup.given1_ctx("I have {int} items", fn(_count : Int, ctx : Ctx) {
+  setup.given1_ctx("I have {int} items", fn(_count : Int32, ctx : Ctx) {
     captured_feature.push(ctx.scenario().feature_name)
   })
   let ctx = Ctx::new(
@@ -69,7 +69,7 @@ test "Setup::given1_ctx passes Ctx as last arg" {
 ///|
 test "Setup::given1 raises on arity mismatch" {
   let setup = Setup::new()
-  setup.given1("I have {int} items", fn(_count : Int) { () })
+  setup.given1("I have {int} items", fn(_count : Int32) { () })
   let ctx = Ctx::new([], { feature_name: "f", scenario_name: "s", tags: [], }, {
     keyword: "Given ",
     text: "I have items",
@@ -101,8 +101,8 @@ test "Setup::when1 works for When keyword" {
 ///|
 test "Setup::then1 works for Then keyword" {
   let setup = Setup::new()
-  let captured : Array[Int] = []
-  setup.then1("I should see {int} results", fn(count : Int) {
+  let captured : Array[Int32] = []
+  setup.then1("I should see {int} results", fn(count : Int32) {
     captured.push(count)
   })
   let ctx = Ctx::new(
@@ -146,10 +146,10 @@ test "Setup::given0_ctx passes Ctx with zero args" {
 ///|
 test "Setup::given3 extracts three args" {
   let setup = Setup::new()
-  let result : Array[(String, Int, String)] = []
+  let result : Array[(String, Int32, String)] = []
   setup.given3("I add {string} qty {int} note {string}", fn(
     name : String,
-    qty : Int,
+    qty : Int32,
     note : String,
   ) {
     result.push((name, qty, note))
@@ -170,17 +170,17 @@ test "Setup::given3 extracts three args" {
 ///|
 test "Setup::given9 extracts nine args" {
   let setup = Setup::new()
-  let result : Array[Int] = []
+  let result : Array[Int32] = []
   setup.given9("{int} {int} {int} {int} {int} {int} {int} {int} {int}", fn(
-    a : Int,
-    b : Int,
-    c : Int,
-    d : Int,
-    e : Int,
-    f : Int,
-    g : Int,
-    h : Int,
-    i : Int,
+    a : Int32,
+    b : Int32,
+    c : Int32,
+    d : Int32,
+    e : Int32,
+    f : Int32,
+    g : Int32,
+    h : Int32,
+    i : Int32,
   ) {
     result.push(a + b + c + d + e + f + g + h + i)
   })
