@@ -36,7 +36,7 @@ fn generate_step_registration(buf : StringBuilder, step : StepFnInfo) -> Unit {
 fn generate_typed_step(
   buf : StringBuilder,
   step : StepFnInfo,
-  arity : Int,
+  arity : Int32,
 ) -> Unit {
   buf.write_string(
     "  setup." +

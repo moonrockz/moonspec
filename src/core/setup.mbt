@@ -277,8 +277,8 @@ pub fn[T] Setup::define_param_type1(
   name : String,
   patterns : Array[String],
   transformer : (String) -> T raise Error,
-  use_for_snippets? : Bool = true,
-  prefer_for_regexp_match? : Bool = false,
+  use_for_snippets~ : Bool = true,
+  prefer_for_regexp_match~ : Bool = false,
 ) -> @cucumber_expressions.ParameterType[T] raise @cucumber_expressions.ParameterTypeError {
   self.param_reg.define1(
     name,
@@ -297,8 +297,8 @@ pub fn[T] Setup::define_param_type_with(
   name : String,
   patterns : Array[String],
   captures : @cucumber_expressions.Captures1[T],
-  use_for_snippets? : Bool = true,
-  prefer_for_regexp_match? : Bool = false,
+  use_for_snippets~ : Bool = true,
+  prefer_for_regexp_match~ : Bool = false,
 ) -> @cucumber_expressions.ParameterType[T] raise @cucumber_expressions.ParameterTypeError {
   self.param_reg.define_with(
     name,

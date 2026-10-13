@@ -7,7 +7,7 @@
 ///
 /// - `MOONSPEC_COLOR=always` or `MOONSPEC_COLOR=never` forces color on or off.
 /// - `NO_COLOR` with any non-empty value turns color off (https://no-color.org).
-pub fn color_enabled(no_color? : Bool = false) -> Bool {
+pub fn color_enabled(no_color~ : Bool = false) -> Bool {
   match @env.get_env_var("MOONSPEC_COLOR") {
     Some("always") => return true
     Some("never") => return false

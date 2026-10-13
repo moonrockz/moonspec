@@ -20,7 +20,7 @@ pub(all) struct StepFnInfo {
   is_method : Bool
   raises : Bool
   source_file : String
-  line : Int
+  line : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -34,7 +34,7 @@ pub(all) struct WorldConfigInfo {
   type_name : String
   init_fn : String?
   source_file : String
-  line : Int
+  line : Int32
 } derive(Debug, Eq)
 
 ///|

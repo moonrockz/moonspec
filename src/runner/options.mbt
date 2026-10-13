@@ -24,12 +24,12 @@ pub(all) struct FormatterEntry {
 pub(all) struct RunOptions {
   priv features_ : Array[FeatureSource]
   priv mut parallel_ : Bool
-  priv mut max_concurrent_ : Int
+  priv mut max_concurrent_ : Int32
   priv sinks_ : Array[&@core.MessageSink]
   priv formatters_ : Array[FormatterEntry]
   priv mut tag_expr_ : String
   priv mut scenario_name_ : String
-  priv mut retries_ : Int
+  priv mut retries_ : Int32
   priv mut dry_run_ : Bool
   priv skip_tags_ : Array[String]
   priv mut no_color_ : Bool
@@ -61,7 +61,7 @@ pub fn RunOptions::parallel(self : RunOptions, value : Bool) -> Unit {
 
 ///|
 /// Set maximum concurrent scenarios for parallel execution.
-pub fn RunOptions::max_concurrent(self : RunOptions, value : Int) -> Unit {
+pub fn RunOptions::max_concurrent(self : RunOptions, value : Int32) -> Unit {
   self.max_concurrent_ = value
 }
 
@@ -100,7 +100,7 @@ pub fn RunOptions::is_parallel(self : RunOptions) -> Bool {
 
 ///|
 /// Get the max concurrent limit.
-pub fn RunOptions::get_max_concurrent(self : RunOptions) -> Int {
+pub fn RunOptions::get_max_concurrent(self : RunOptions) -> Int32 {
   self.max_concurrent_
 }
 
@@ -160,13 +160,13 @@ pub fn RunOptions::get_scenario_name(self : RunOptions) -> String {
 /// let opts = RunOptions::new(features)
 /// opts.retries(2) // retry failed scenarios up to 2 times
 /// ```
-pub fn RunOptions::retries(self : RunOptions, value : Int) -> Unit {
+pub fn RunOptions::retries(self : RunOptions, value : Int32) -> Unit {
   self.retries_ = if value < 0 { 0 } else { value }
 }
 
 ///|
 /// Get the global retry count for failed scenarios.
-pub fn RunOptions::get_retries(self : RunOptions) -> Int {
+pub fn RunOptions::get_retries(self : RunOptions) -> Int32 {
   self.retries_
 }
 

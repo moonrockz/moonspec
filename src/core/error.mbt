@@ -13,7 +13,7 @@ pub suberror MoonspecError {
   )
   PendingStep(step~ : String, keyword~ : String, message~ : String)
   StepFailed(step~ : String, keyword~ : String, message~ : String)
-  ParseFailed(uri~ : String, line~ : Int?, message~ : String)
+  ParseFailed(uri~ : String, line~ : Int32?, message~ : String)
   ScenarioFailed(
     scenario~ : String,
     feature~ : String,
@@ -71,7 +71,7 @@ pub fn step_failed_error(
 /// Create a ParseFailed error.
 pub fn parse_failed_error(
   uri~ : String,
-  line~ : Int?,
+  line~ : Int32?,
   message~ : String,
 ) -> MoonspecError {
   ParseFailed(uri~, line~, message~)
@@ -85,8 +85,8 @@ pub fn parse_failed_error(
 pub fn scenario_failed_error(
   scenario~ : String,
   feature~ : String,
-  location? : String? = None,
-  steps? : Array[StepReport] = [],
+  location~ : String? = None,
+  steps~ : Array[StepReport] = [],
   errors~ : Array[MoonspecError],
 ) -> MoonspecError {
   MoonspecError::ScenarioFailed(scenario~, feature~, location~, steps~, errors~)
@@ -97,7 +97,7 @@ pub fn scenario_failed_error(
 pub fn run_failed_error(
   summary~ : String,
   errors~ : Array[MoonspecError],
-  color? : Bool = false,
+  color~ : Bool = false,
 ) -> Error {
   RunFailed(summary~, errors~, color~)
 }

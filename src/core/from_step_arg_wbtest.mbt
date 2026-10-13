@@ -1,7 +1,7 @@
 ///|
 test "FromStepArg: Int from IntVal" {
   let arg : StepArg = { value: IntVal(42), raw: "42", }
-  let result : Int = FromStepArg::from_step_arg(arg)
+  let result : Int32 = FromStepArg::from_step_arg(arg)
   assert_eq(result, 42)
 }
 
@@ -10,7 +10,7 @@ test "FromStepArg: Int from non-IntVal raises" {
   let arg : StepArg = { value: StringVal("hello"), raw: "hello", }
   let mut raised = false
   try {
-    let _ : Int = FromStepArg::from_step_arg(arg)
+    let _ : Int32 = FromStepArg::from_step_arg(arg)
   } catch {
     _ => raised = true
   }

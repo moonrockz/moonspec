@@ -1,13 +1,13 @@
 ///|
 fn make_summary(
-  total_scenarios? : Int = 0,
-  passed? : Int = 0,
-  failed? : Int = 0,
-  undefined? : Int = 0,
-  pending? : Int = 0,
-  skipped? : Int = 0,
-  retried? : Int = 0,
-  duration_ms? : Int64 = 0L,
+  total_scenarios~ : Int32 = 0,
+  passed~ : Int32 = 0,
+  failed~ : Int32 = 0,
+  undefined~ : Int32 = 0,
+  pending~ : Int32 = 0,
+  skipped~ : Int32 = 0,
+  retried~ : Int32 = 0,
+  duration_ms~ : Int64 = 0L,
 ) -> @runner.RunSummary {
   {
     total_scenarios,
@@ -23,8 +23,8 @@ fn make_summary(
 
 ///|
 fn make_result(
-  summary? : @runner.RunSummary = make_summary(),
-  parse_errors? : Array[@runner.ParseErrorInfo] = [],
+  summary~ : @runner.RunSummary = make_summary(),
+  parse_errors~ : Array[@runner.ParseErrorInfo] = [],
 ) -> @runner.RunResult {
   { features: [], summary, parse_errors, }
 }

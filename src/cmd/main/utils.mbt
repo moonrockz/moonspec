@@ -76,11 +76,11 @@ fn ensure_parent_dir(path : String) -> Unit {
 
 ///|
 fn compute_steps_hash(steps : Array[@scanner.StepFnInfo]) -> String {
-  let mut hash : UInt = 5381
+  let mut hash : UInt32 = 5381
   for step in steps {
     let s = step.source_file + ":" + step.line.to_string() + ":" + step.fn_name
     for i = 0; i < s.length(); i = i + 1 {
-      let code : UInt = s[i].to_uint()
+      let code : UInt32 = s[i].to_uint()
       hash = (hash << 5) + hash + code
     }
   }

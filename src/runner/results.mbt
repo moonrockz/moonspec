@@ -131,13 +131,13 @@ pub extend FeatureResult with @moonbitlang/core/debug.Debug::{to_repr}
 /// regardless of their final outcome. A scenario that fails on the first
 /// attempt but passes on retry is counted as both `passed` and `retried`.
 pub(all) struct RunSummary {
-  total_scenarios : Int
-  passed : Int
-  failed : Int
-  undefined : Int
-  pending : Int
-  skipped : Int
-  retried : Int
+  total_scenarios : Int32
+  passed : Int32
+  failed : Int32
+  undefined : Int32
+  pending : Int32
+  skipped : Int32
+  retried : Int32
   duration_ms : Int64
 } derive(Debug, Eq)
 
@@ -152,7 +152,7 @@ pub extend RunSummary with Eq::{not_equal, equal}
 pub(all) struct ParseErrorInfo {
   uri : String
   message : String
-  line : Int?
+  line : Int32?
 } derive(Debug, Eq)
 
 ///|

@@ -1,8 +1,8 @@
 ///|
 /// Simple counter for generating unique IDs.
 priv struct IdCounter {
-  mut pickle_count : Int
-  mut step_count : Int
+  mut pickle_count : Int32
+  mut step_count : Int32
 }
 
 ///|

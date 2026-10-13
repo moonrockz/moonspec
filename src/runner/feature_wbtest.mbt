@@ -1,6 +1,6 @@
 ///|
 struct CucumberWorld {
-  mut total : Int
+  mut total : Int32
 } derive(Default)
 
 ///|

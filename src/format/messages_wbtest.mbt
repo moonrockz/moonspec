@@ -4,8 +4,8 @@ test "MessagesFormatter serializes TestRunStarted envelope" {
   let json : Json = {
     "testRunStarted": {
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
     },
   }
@@ -24,8 +24,8 @@ test "MessagesFormatter serializes TestRunFinished envelope" {
     "testRunFinished": {
       "success": true.to_json(),
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
     },
   }
@@ -44,8 +44,8 @@ test "MessagesFormatter emits NDJSON with multiple envelopes" {
   let json1 : Json = {
     "testRunStarted": {
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
     },
   }
@@ -53,8 +53,8 @@ test "MessagesFormatter emits NDJSON with multiple envelopes" {
     "testRunFinished": {
       "success": true.to_json(),
       "timestamp": {
-        "seconds": (0 : Int).to_json(),
-        "nanos": (0 : Int).to_json(),
+        "seconds": (0 : Int32).to_json(),
+        "nanos": (0 : Int32).to_json(),
       },
     },
   }

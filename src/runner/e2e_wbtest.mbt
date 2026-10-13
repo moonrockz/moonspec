@@ -1,6 +1,6 @@
 ///|
 struct CalcWorld {
-  mut result_val : Int
+  mut result_val : Int32
 } derive(Default)
 
 ///|
@@ -331,7 +331,7 @@ async test "end-to-end: step hook attachment emits envelope" {
 
 ///|
 struct RetryWorld {
-  call_count : Ref[Int]
+  call_count : Ref[Int32]
 } derive(Debug)
 
 ///|
@@ -358,7 +358,7 @@ impl @core.World for RetryWorld with fn configure(self, setup) {
 
 ///|
 async test "retry: failed scenario retries and passes on second attempt" {
-  let counter : Ref[Int] = { val: 0, }
+  let counter : Ref[Int32] = { val: 0, }
   let content =
     #|Feature: Retry
     #|
@@ -376,7 +376,7 @@ async test "retry: failed scenario retries and passes on second attempt" {
 
 ///|
 async test "retry: scenario without retry tag uses global retries" {
-  let counter : Ref[Int] = { val: 0, }
+  let counter : Ref[Int32] = { val: 0, }
   let content =
     #|Feature: GlobalRetry
     #|
@@ -392,7 +392,7 @@ async test "retry: scenario without retry tag uses global retries" {
 
 ///|
 async test "retry: no retry when retries is zero" {
-  let counter : Ref[Int] = { val: 0, }
+  let counter : Ref[Int32] = { val: 0, }
   let content =
     #|Feature: NoRetry
     #|
@@ -460,7 +460,7 @@ async test "retry: undefined scenario is not retried" {
 
 ///|
 async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
-  let counter : Ref[Int] = { val: 0, }
+  let counter : Ref[Int32] = { val: 0, }
   let content =
     #|Feature: RetryEnvelopes
     #|

@@ -42,7 +42,7 @@ pub extend StepKeyword with Eq::{not_equal, equal}
 /// Optional source location for a step definition (populated by codegen).
 pub(all) struct StepSource {
   uri : String?
-  line : Int?
+  line : Int32?
 } derive(Debug, Eq)
 
 ///|
@@ -54,8 +54,8 @@ pub extend StepSource with Eq::{not_equal, equal}
 ///|
 #alias(new)
 pub fn StepSource::StepSource(
-  uri? : String = "",
-  line? : Int = 0,
+  uri~ : String = "",
+  line~ : Int32 = 0,
 ) -> StepSource {
   {
     uri: if uri == "" {

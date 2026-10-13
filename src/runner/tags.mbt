@@ -133,7 +133,7 @@ fn tokenize_tags(input : String) -> Array[String] {
 // ---------------------------------------------------------------------------
 
 ///|
-fn parse_or(tokens : Array[String], pos : Int) -> (TagExpression, Int) {
+fn parse_or(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
   let result = parse_and(tokens, pos)
   let mut left = result.0
   let mut p = result.1
@@ -146,7 +146,7 @@ fn parse_or(tokens : Array[String], pos : Int) -> (TagExpression, Int) {
 }
 
 ///|
-fn parse_and(tokens : Array[String], pos : Int) -> (TagExpression, Int) {
+fn parse_and(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
   let result = parse_not(tokens, pos)
   let mut left = result.0
   let mut p = result.1
@@ -159,7 +159,7 @@ fn parse_and(tokens : Array[String], pos : Int) -> (TagExpression, Int) {
 }
 
 ///|
-fn parse_not(tokens : Array[String], pos : Int) -> (TagExpression, Int) {
+fn parse_not(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
   if pos < tokens.length() && tokens[pos] == "not" {
     let result = parse_not(tokens, pos + 1)
     (Not(result.0), result.1)
@@ -169,7 +169,7 @@ fn parse_not(tokens : Array[String], pos : Int) -> (TagExpression, Int) {
 }
 
 ///|
-fn parse_atom(tokens : Array[String], pos : Int) -> (TagExpression, Int) {
+fn parse_atom(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
   if pos >= tokens.length() {
     // Unexpected end; return Always as a safe fallback
     return (Always, pos)

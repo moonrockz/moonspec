@@ -1,7 +1,7 @@
 ///|
 /// ID generator for test planning.
 pub(all) struct IdGenerator {
-  priv mut counter : Int
+  priv mut counter : Int32
 }
 
 ///|

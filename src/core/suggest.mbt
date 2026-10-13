@@ -1,6 +1,6 @@
 ///|
 /// Return the smaller of two integers.
-fn min(a : Int, b : Int) -> Int {
+fn min(a : Int32, b : Int32) -> Int32 {
   if a < b {
     a
   } else {
@@ -10,7 +10,7 @@ fn min(a : Int, b : Int) -> Int {
 
 ///|
 /// Compute Levenshtein edit distance between two strings.
-fn levenshtein_distance(a : String, b : String) -> Int {
+fn levenshtein_distance(a : String, b : String) -> Int32 {
   let m = a.length()
   let n = b.length()
   if m == 0 {
@@ -19,8 +19,8 @@ fn levenshtein_distance(a : String, b : String) -> Int {
   if n == 0 {
     return m
   }
-  let mut prev : Array[Int] = Array::make(n + 1, 0)
-  let mut curr : Array[Int] = Array::make(n + 1, 0)
+  let mut prev : Array[Int32] = Array::make(n + 1, 0)
+  let mut curr : Array[Int32] = Array::make(n + 1, 0)
   for j = 0; j <= n; j = j + 1 {
     prev[j] = j
   }
@@ -68,7 +68,7 @@ fn normalize_pattern(pattern : String) -> String {
 /// Find up to 3 registered step patterns closest to the given step text.
 fn find_suggestions(registry : StepRegistry, text : String) -> Array[String] {
   let normalized_text = normalize_pattern(text)
-  let candidates : Array[(String, Int)] = []
+  let candidates : Array[(String, Int32)] = []
   for entry in registry.entries {
     let pattern = entry.def.pattern
     let normalized = normalize_pattern(pattern)

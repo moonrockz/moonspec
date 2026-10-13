@@ -42,11 +42,11 @@ pub fn assert_no_parse_errors(result : @runner.RunResult) -> Unit raise Error {
 /// Assert the run summary has specific counts. Only provided fields are checked.
 pub fn assert_summary(
   summary : @runner.RunSummary,
-  passed? : Int,
-  failed? : Int,
-  undefined? : Int,
-  pending? : Int,
-  skipped? : Int,
+  passed? : Int32,
+  failed? : Int32,
+  undefined? : Int32,
+  pending? : Int32,
+  skipped? : Int32,
 ) -> Unit raise Error {
   let mismatches : Array[String] = []
   match passed {

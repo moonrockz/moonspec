@@ -18,7 +18,7 @@ pub(all) struct PrettyFormatter {
   // pickle step id -> step info
   priv pickle_steps : Map[String, StepLookup]
   // test case started id -> worst severity (Int) seen so far
-  priv test_case_worst : Map[String, Int]
+  priv test_case_worst : Map[String, Int32]
   priv mut current_feature_uri : String
   priv counts : SummaryCounts
 }
@@ -37,12 +37,12 @@ priv struct StepLookup {
 
 ///|
 priv struct SummaryCounts {
-  mut total : Int
-  mut passed : Int
-  mut failed : Int
-  mut undefined : Int
-  mut pending : Int
-  mut skipped : Int
+  mut total : Int32
+  mut passed : Int32
+  mut failed : Int32
+  mut undefined : Int32
+  mut pending : Int32
+  mut skipped : Int32
 }
 
 ///|
@@ -50,7 +50,7 @@ priv struct SummaryCounts {
 ///
 /// `no_color` is the compiled default. At runtime, `MOONSPEC_COLOR=always|never`
 /// and `NO_COLOR` override it (see `@core.color_enabled`).
-pub fn PrettyFormatter::new(no_color? : Bool = false) -> PrettyFormatter {
+pub fn PrettyFormatter::new(no_color~ : Bool = false) -> PrettyFormatter {
   {
     no_color: !@core.color_enabled(no_color~),
     buffer: "",
@@ -168,7 +168,9 @@ fn keyword_from_step_type(type_ : @cucumber_messages.PickleStepType?) -> String 
 // ---------------------------------------------------------------------------
 
 ///|
-fn status_to_severity(status : @cucumber_messages.TestStepResultStatus) -> Int {
+fn status_to_severity(
+  status : @cucumber_messages.TestStepResultStatus,
+) -> Int32 {
   match status {
     Passed => 0
     Skipped => 1
@@ -182,7 +184,10 @@ fn status_to_severity(status : @cucumber_messages.TestStepResultStatus) -> Int {
 
 ///|
 /// Increment the appropriate counter based on severity level.
-fn increment_count_for_severity(counts : SummaryCounts, severity : Int) -> Unit {
+fn increment_count_for_severity(
+  counts : SummaryCounts,
+  severity : Int32,
+) -> Unit {
   match severity {
     0 => counts.passed = counts.passed + 1
     1 => counts.skipped = counts.skipped + 1

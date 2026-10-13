@@ -19,7 +19,7 @@ pub fn render_build_rules(
   features : Array[String],
   package_dir~ : String,
   world~ : String,
-) -> (String, Int) {
+) -> (String, Int32) {
   let blocks : Array[String] = []
   if !existing.contains("name: \"" + build_rule_name + "\"") {
     blocks.push(

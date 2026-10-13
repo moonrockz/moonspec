@@ -2,13 +2,13 @@
 async fn[W : @core.World] run_pickles_parallel(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],
-  max_concurrent~ : Int,
-  sinks? : Array[&@core.MessageSink] = [],
-  tc_mappings? : Map[String, TestCaseMapping] = {},
-  id_gen? : IdGenerator = IdGenerator::new(),
-  retries? : Int = 0,
-  dry_run? : Bool = false,
-  skip_tags? : Array[String] = [],
+  max_concurrent~ : Int32,
+  sinks~ : Array[&@core.MessageSink] = [],
+  tc_mappings~ : Map[String, TestCaseMapping] = {},
+  id_gen~ : IdGenerator = IdGenerator::new(),
+  retries~ : Int32 = 0,
+  dry_run~ : Bool = false,
+  skip_tags~ : Array[String] = [],
 ) -> Array[PickleResult] {
   let tasks : Array[async () -> PickleResult] = pickles.map(fn(pickle) {
     async fn() -> PickleResult {

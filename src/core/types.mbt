@@ -1,12 +1,12 @@
 ///|
 /// A typed value extracted from step text, pattern-matchable for built-in types.
 pub(all) enum StepValue {
-  IntVal(Int)
+  IntVal(Int32)
   FloatVal(Double)
   DoubleVal(Double)
   LongVal(Int64)
   ByteVal(Byte)
-  ShortVal(Int)
+  ShortVal(Int32)
   StringVal(String)
   WordVal(String)
   AnonymousVal(String)
@@ -219,13 +219,13 @@ pub fn Ctx::Ctx(
 ///|
 /// Index access to step arguments.
 #alias("_[_]")
-pub fn Ctx::at(self : Ctx, index : Int) -> StepArg {
+pub fn Ctx::at(self : Ctx, index : Int32) -> StepArg {
   self.step_args[index]
 }
 
 ///|
 /// Explicit index access to a step argument.
-pub fn Ctx::arg(self : Ctx, index : Int) -> StepArg {
+pub fn Ctx::arg(self : Ctx, index : Int32) -> StepArg {
   self.step_args[index]
 }
 
@@ -237,7 +237,7 @@ pub fn Ctx::args(self : Ctx) -> ArrayView[StepArg] {
 
 ///|
 /// Convenience accessor: returns the StepValue at the given argument index.
-pub fn Ctx::value(self : Ctx, index : Int) -> StepValue {
+pub fn Ctx::value(self : Ctx, index : Int32) -> StepValue {
   self.step_args[index].value
 }
 
@@ -591,12 +591,12 @@ pub fn Cells::values(self : Cells) -> ArrayView[String] {
 }
 
 ///|
-pub fn Cells::get(self : Cells, index : Int) -> String {
+pub fn Cells::get(self : Cells, index : Int32) -> String {
   self.data[index]
 }
 
 ///|
-pub fn Cells::length(self : Cells) -> Int {
+pub fn Cells::length(self : Cells) -> Int32 {
   self.data.length()
 }
 
@@ -640,12 +640,12 @@ pub fn Rows::values(self : Rows) -> ArrayView[Row] {
 }
 
 ///|
-pub fn Rows::get(self : Rows, index : Int) -> Row {
+pub fn Rows::get(self : Rows, index : Int32) -> Row {
   self.data[index]
 }
 
 ///|
-pub fn Rows::length(self : Rows) -> Int {
+pub fn Rows::length(self : Rows) -> Int32 {
   self.data.length()
 }
 
@@ -653,7 +653,7 @@ pub fn Rows::length(self : Rows) -> Int {
 /// A named column in a DataTable, derived from the header row.
 pub(all) struct Column {
   name : String
-  index : Int
+  index : Int32
 } derive(Debug, Eq)
 
 ///|
@@ -663,7 +663,7 @@ pub extend Column with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend Column with Eq::{not_equal, equal}
 
 ///|
-fn Column::Column(name~ : String, index~ : Int) -> Column {
+fn Column::Column(name~ : String, index~ : Int32) -> Column {
   { name, index, }
 }
 
@@ -690,12 +690,12 @@ pub fn Columns::values(self : Columns) -> ArrayView[Column] {
 }
 
 ///|
-pub fn Columns::get(self : Columns, index : Int) -> Column {
+pub fn Columns::get(self : Columns, index : Int32) -> Column {
   self.data[index]
 }
 
 ///|
-pub fn Columns::length(self : Columns) -> Int {
+pub fn Columns::length(self : Columns) -> Int32 {
   self.data.length()
 }
 
@@ -740,12 +740,12 @@ pub fn DataTable::from_rows(raw_rows : Array[Array[String]]) -> DataTable {
 }
 
 ///|
-pub fn DataTable::row_count(self : DataTable) -> Int {
+pub fn DataTable::row_count(self : DataTable) -> Int32 {
   self.rows.length()
 }
 
 ///|
-pub fn DataTable::col_count(self : DataTable) -> Int {
+pub fn DataTable::col_count(self : DataTable) -> Int32 {
   self.columns.length()
 }
 

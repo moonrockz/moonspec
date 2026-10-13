@@ -1,6 +1,6 @@
 ///|
 struct TestWorld {
-  mut value : Int
+  mut value : Int32
 }
 
 ///|

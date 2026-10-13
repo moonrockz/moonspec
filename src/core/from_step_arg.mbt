@@ -7,7 +7,7 @@ pub(open) trait FromStepArg {
 }
 
 ///|
-pub impl FromStepArg for Int with fn from_step_arg(arg) {
+pub impl FromStepArg for Int32 with fn from_step_arg(arg) {
   match arg.value {
     IntVal(v) => v
     other => raise Failure::Failure("expected IntVal, got \{other}")
