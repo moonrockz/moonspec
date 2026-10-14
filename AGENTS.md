@@ -53,7 +53,7 @@ moonrockz/moonspec
 │   │   ├── junit.mbt        # JUnit XML for CI integration
 │   │   └── lib.mbt          # Package entry point
 │   ├── codegen/         # Test file generation
-│   │   ├── codegen.mbt      # .feature → _test.mbt generator
+│   │   ├── codegen.mbt      # .feature → _wbtest.mbt / _test.mbt generator
 │   │   └── moon.pkg         # Package config
 │   ├── cli/             # CLI implementation (argument parsing, commands)
 │   │   ├── run.mbt          # cli.run(args) entry point

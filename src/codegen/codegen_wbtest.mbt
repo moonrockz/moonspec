@@ -18,11 +18,23 @@ test "generate_test_file includes hash for staleness detection" {
 test "feature_to_test_filename converts paths" {
   assert_eq(
     feature_to_test_filename("features/login.feature"),
-    "login_feature_test.mbt",
+    "login_feature_wbtest.mbt",
   )
   assert_eq(
     feature_to_test_filename("features/admin/users.feature"),
-    "admin_users_feature_test.mbt",
+    "admin_users_feature_wbtest.mbt",
+  )
+}
+
+///|
+test "feature_to_test_filename names black-box tests on request" {
+  assert_eq(
+    feature_to_test_filename("features/login.feature", kind=BlackBox),
+    "login_feature_test.mbt",
+  )
+  assert_eq(
+    feature_to_test_filename("features/login.feature", kind=WhiteBox),
+    "login_feature_wbtest.mbt",
   )
 }
 
@@ -30,11 +42,11 @@ test "feature_to_test_filename converts paths" {
 test "feature_to_test_filename converts Markdown with Gherkin paths" {
   assert_eq(
     feature_to_test_filename("features/login.feature.md"),
-    "login_feature_test.mbt",
+    "login_feature_wbtest.mbt",
   )
   assert_eq(
     feature_to_test_filename("features/admin/users.feature.md"),
-    "admin_users_feature_test.mbt",
+    "admin_users_feature_wbtest.mbt",
   )
 }
 

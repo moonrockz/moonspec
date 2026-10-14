@@ -186,11 +186,36 @@ fn load_config_file_optional(path : String) -> @config.MoonspecConfig? {
 ///
 /// An `output` ending in `.mbt` is the exact file path (for example
 /// `-o $output` in a moon pre-build). Any other `output` is a directory.
-fn test_output_path(output : String?, feature_file : String) -> String {
+fn test_output_path(
+  output : String?,
+  feature_file : String,
+  kind : @config.TestKind,
+) -> String {
   match output {
     Some(path) if str_ends_with(path, ".mbt") => path
-    Some(dir) => dir + "/" + @codegen.feature_to_test_filename(feature_file)
-    None => @codegen.feature_to_test_filename(feature_file)
+    Some(dir) =>
+      dir + "/" + @codegen.feature_to_test_filename(feature_file, kind~)
+    None => @codegen.feature_to_test_filename(feature_file, kind~)
+  }
+}
+
+///|
+/// The kind of test file to write: `--test-kind`, then `test_kind` in the
+/// config, then white-box. An unknown `--test-kind` value is an error.
+fn resolve_test_kind(
+  cli_value : String?,
+  config : @config.MoonspecConfig,
+) -> Result[@config.TestKind, String] {
+  match cli_value {
+    Some(value) =>
+      match @config.TestKind::parse(value) {
+        Some(kind) => Ok(kind)
+        None =>
+          Err(
+            "Error: --test-kind must be \"wbtest\" or \"test\", got \"\{value}\"",
+          )
+      }
+    None => Ok(config.test_kind.unwrap_or(WhiteBox))
   }
 }
 

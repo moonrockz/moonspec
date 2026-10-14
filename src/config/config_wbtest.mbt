@@ -57,6 +57,7 @@ test "merge: package config overrides module config" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
   let package_config = MoonspecConfig::{
     world: None,
@@ -65,6 +66,7 @@ test "merge: package config overrides module config" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
   let merged = module_config.merge(package_config)
   assert_eq(merged.world, Some("ModuleWorld"))
@@ -87,6 +89,7 @@ test "resolve_mode with simple mode" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
   assert_eq(config.resolve_mode("any/file.feature"), "per-feature")
 }
@@ -103,6 +106,7 @@ test "resolve_mode with per-file map" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
   assert_eq(config.resolve_mode("features/checkout.feature"), "per-feature")
   assert_eq(config.resolve_mode("features/other.feature"), "per-scenario")
@@ -152,6 +156,7 @@ test "merge: skip_tags override takes precedence" {
     skip_tags: Some(["@skip", "@ignore"]),
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
   let package_config = MoonspecConfig::{
     world: None,
@@ -160,6 +165,7 @@ test "merge: skip_tags override takes precedence" {
     skip_tags: Some(["@wip"]),
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
   let merged = module_config.merge(package_config)
   assert_eq(merged.skip_tags, Some(["@wip"]))
@@ -174,6 +180,7 @@ test "merge: skip_tags falls back to base when override absent" {
     skip_tags: Some(["@skip", "@ignore"]),
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
   let package_config = MoonspecConfig::empty()
   let merged = module_config.merge(package_config)
@@ -239,6 +246,7 @@ test "merge: formatters override takes precedence" {
       FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false, },
     ]),
     no_color: None,
+    test_kind: None,
   }
   let override_ = MoonspecConfig::{
     world: None,
@@ -253,6 +261,7 @@ test "merge: formatters override takes precedence" {
       },
     ]),
     no_color: None,
+    test_kind: None,
   }
   let merged = base.merge(override_)
   match merged.formatters {
@@ -275,6 +284,7 @@ test "merge: formatters falls back to base when override absent" {
       FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false, },
     ]),
     no_color: None,
+    test_kind: None,
   }
   let override_ = MoonspecConfig::empty()
   let merged = base.merge(override_)
@@ -361,4 +371,28 @@ test "merge: no_color override takes precedence" {
   assert_eq(base.merge(MoonspecConfig::empty()).no_color, Some(true))
   let override_ = MoonspecConfig::from_json5("{ no_color: false }")
   assert_eq(base.merge(override_).no_color, Some(false))
+}
+
+///|
+test "TestKind parses the config and CLI values" {
+  assert_eq(TestKind::parse("wbtest"), Some(WhiteBox))
+  assert_eq(TestKind::parse("test"), Some(BlackBox))
+  assert_eq(TestKind::parse("blackbox"), None)
+}
+
+///|
+test "from_json5 reads test_kind" {
+  assert_eq(
+    MoonspecConfig::from_json5("{ test_kind: \"test\" }").test_kind,
+    Some(BlackBox),
+  )
+  assert_eq(MoonspecConfig::from_json5("{ world: \"W\" }").test_kind, None)
+}
+
+///|
+test "merge takes test_kind from the override" {
+  let base = MoonspecConfig::from_json5("{ test_kind: \"test\" }")
+  let override_ = MoonspecConfig::from_json5("{ test_kind: \"wbtest\" }")
+  assert_eq(base.merge(override_).test_kind, Some(WhiteBox))
+  assert_eq(base.merge(MoonspecConfig::empty()).test_kind, Some(BlackBox))
 }

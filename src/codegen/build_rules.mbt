@@ -40,7 +40,8 @@ pub fn CliCommand::prefix(self : CliCommand) -> String {
 /// nothing.
 ///
 /// `cli` selects how the rule runs the CLI (default: the installed
-/// `moonspec` binary).
+/// `moonspec` binary). `test_kind` selects white-box (default) or black-box
+/// test file names.
 ///
 /// Returns the new content and the number of entries added.
 pub fn render_build_rules(
@@ -49,6 +50,7 @@ pub fn render_build_rules(
   package_dir~ : String,
   world~ : String,
   cli~ : CliCommand = Installed,
+  test_kind~ : @config.TestKind = WhiteBox,
 ) -> (String, Int32) {
   let blocks : Array[String] = []
   if !existing.contains("name: \"" + build_rule_name + "\"") {
@@ -67,7 +69,7 @@ pub fn render_build_rules(
   }
   let outputs : Array[String] = []
   for feature in features {
-    let output = build_rules_test_filename(feature)
+    let output = build_rules_test_filename(feature, kind=test_kind)
     if existing.contains("output: \"" + output + "\"") ||
       outputs.contains(output) {
       continue
@@ -99,11 +101,13 @@ pub fn render_build_rules(
 }
 
 ///|
-/// Name of the generated test file for a feature, as a white-box test so the
-/// tests can use the package's private World type.
-pub fn build_rules_test_filename(feature : String) -> String {
-  let name = feature_to_test_filename(feature)
-  name[:name.length() - "_test.mbt".length()].to_owned() + "_wbtest.mbt"
+/// Name of the generated test file for a feature. White-box tests (the
+/// default) can use the package's private World type.
+pub fn build_rules_test_filename(
+  feature : String,
+  kind~ : @config.TestKind = WhiteBox,
+) -> String {
+  feature_to_test_filename(feature, kind~)
 }
 
 ///|

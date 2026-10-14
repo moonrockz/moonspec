@@ -146,12 +146,11 @@ Each generated test loads the `.feature` file at runtime and runs a single scena
 through the full runner pipeline (parsing, pickle compilation, step matching, and
 execution).
 
-To generate the file once without a build rule, run `gen tests` with the exact
-output file:
+To generate the file once without a build rule, run `gen tests`. It writes
+white-box tests (`src/calculator_feature_wbtest.mbt`) by default:
 
 ```bash
-moonspec gen tests features/calculator.feature -w CalcWorld \
-  -o src/calculator_feature_wbtest.mbt
+moonspec gen tests features/calculator.feature -w CalcWorld -o src
 ```
 
 ### 6. Define your World

@@ -44,7 +44,10 @@ moonspec gen tests --config path/to/custom.json5 features/*.feature
   },
 
   // Generate tests that print reports without ANSI colors
-  "no_color": false
+  "no_color": false,
+
+  // Test file kind for gen tests / gen build: "wbtest" (default) or "test"
+  "test_kind": "wbtest"
 }
 ```
 
@@ -94,6 +97,18 @@ When `true`, `moonspec gen tests` generates tests that call
 `options.no_color(true)` and create pretty formatters with `no_color=true`.
 Default: `false`. Environment variables can override it at runtime; see
 [Colors](#colors).
+
+#### `test_kind` (string)
+
+The kind of test file that `moonspec gen tests` and `moonspec gen build` write.
+
+- **`"wbtest"`** (default) -- white-box tests, `<name>_feature_wbtest.mbt`.
+  They can use private items of the package, such as the World impl that
+  `moonspec gen steps` generates.
+- **`"test"`** -- black-box tests, `<name>_feature_test.mbt`. They see only
+  the package's public API, so the World type and its impl must be `pub`.
+
+An `-o` value that ends in `.mbt` is the exact file name, whatever the kind.
 
 #### `steps` (object)
 
@@ -274,6 +289,7 @@ CLI flags override the corresponding config file fields for the current invocati
 | `--config`        | `-c`  | (all)            | Explicit config file path                     |
 | `--output-dir`    | `-o`  | --               | Output directory for generated test files     |
 | `--no-color`      |       | `no_color`       | Generate tests without ANSI colors            |
+| `--test-kind`     |       | `test_kind`      | `wbtest` (default) or `test`                  |
 
 When `--world` or `--mode` is provided, the CLI value takes precedence over the config file value. When `--config` is provided, auto-discovery is bypassed entirely and only the specified file is loaded.
 
@@ -294,6 +310,7 @@ Note: `--mode` on the CLI applies uniformly to all files in that invocation. To 
 | `--package`       | `-p`  | --               | Package directory that gets the tests (default: `src`) |
 | `--config`        | `-c`  | (all)            | Explicit config file path                          |
 | `--apply`         |       | --               | Write missing entries to `<package>/moon.pkg`      |
+| `--test-kind`     |       | `test_kind`      | `wbtest` (default) or `test`                       |
 | `--moonx`         |       | --               | Rule runs `moonx moonrockz/moonspec/cmd/moonspec@<CLI version>` instead of `moonspec` |
 
 ### `moonspec check`

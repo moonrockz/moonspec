@@ -37,6 +37,7 @@ pub(all) struct MoonspecConfig {
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
   no_color : Bool?
+  test_kind : TestKind?
 } derive(Eq, @debug.Debug)
 pub fn MoonspecConfig::empty() -> Self
 pub fn MoonspecConfig::equal(Self, Self) -> Bool
@@ -53,6 +54,15 @@ pub(all) struct StepsConfig {
 pub fn StepsConfig::equal(Self, Self) -> Bool
 pub fn StepsConfig::not_equal(Self, Self) -> Bool
 pub fn StepsConfig::to_repr(Self) -> @debug.Repr
+
+pub(all) enum TestKind {
+  WhiteBox
+  BlackBox
+} derive(Eq, @debug.Debug)
+pub fn TestKind::equal(Self, Self) -> Bool
+pub fn TestKind::not_equal(Self, Self) -> Bool
+pub fn TestKind::parse(String) -> Self?
+pub fn TestKind::to_repr(Self) -> @debug.Repr
 
 // Type aliases
 

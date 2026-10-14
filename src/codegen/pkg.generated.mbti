@@ -7,15 +7,15 @@ import {
 }
 
 // Values
-pub fn build_rules_test_filename(String) -> String
+pub fn build_rules_test_filename(String, kind? : @config.TestKind) -> String
 
-pub fn feature_to_test_filename(String) -> String
+pub fn feature_to_test_filename(String, kind? : @config.TestKind) -> String
 
 pub fn generate_test_file(String, String, config? : CodegenConfig) -> String
 
 pub fn relative_to_package(String, String) -> String
 
-pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String, cli? : CliCommand) -> (String, Int)
+pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String, cli? : CliCommand, test_kind? : @config.TestKind) -> (String, Int)
 
 // Errors
 

@@ -166,3 +166,19 @@ test "CliCommand renders the command prefix" {
     "moonx moonrockz/moonspec/cmd/moonspec@1.2.3",
   )
 }
+
+///|
+test "render_build_rules names black-box test files on request" {
+  let (content, _) = render_build_rules(
+    "",
+    ["features/add.feature"],
+    package_dir="src",
+    world="CalcWorld",
+    test_kind=BlackBox,
+  )
+  assert_true(content.contains("output: \"add_feature_test.mbt\""))
+  assert_eq(
+    build_rules_test_filename("features/add.feature", kind=BlackBox),
+    "add_feature_test.mbt",
+  )
+}

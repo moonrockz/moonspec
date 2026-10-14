@@ -25,6 +25,36 @@ pub extend StepsConfig with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend StepsConfig with Eq::{not_equal, equal}
 
 ///|
+/// Which kind of test file `gen tests` writes.
+///
+/// A white-box test (`*_wbtest.mbt`) can use private items of its package,
+/// such as the World impl that `gen steps` generates. A black-box test
+/// (`*_test.mbt`) sees only the public API.
+pub(all) enum TestKind {
+  /// `*_wbtest.mbt`, written `"wbtest"` (the default)
+  WhiteBox
+  /// `*_test.mbt`, written `"test"`
+  BlackBox
+} derive(Debug, Eq)
+
+///|
+pub extend TestKind with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend TestKind with Eq::{not_equal, equal}
+
+///|
+/// Parse a test kind as written in the config file or on the command line:
+/// `"wbtest"` or `"test"`.
+pub fn TestKind::parse(value : String) -> TestKind? {
+  match value {
+    "wbtest" => Some(WhiteBox)
+    "test" => Some(BlackBox)
+    _ => None
+  }
+}
+
+///|
 /// Configuration for a single output formatter.
 pub(all) struct FormatterConfig {
   type_ : String
@@ -47,6 +77,7 @@ pub(all) struct MoonspecConfig {
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
   no_color : Bool?
+  test_kind : TestKind?
 } derive(Debug, Eq)
 
 ///|
@@ -64,6 +95,7 @@ pub fn MoonspecConfig::empty() -> MoonspecConfig {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    test_kind: None,
   }
 }
 
@@ -77,6 +109,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
   let mut skip_tags : Array[String]? = None
   let mut formatters : Array[FormatterConfig]? = None
   let mut no_color : Bool? = None
+  let mut test_kind : TestKind? = None
   match json {
     Object(obj) => {
       match obj.get("world") {
@@ -100,6 +133,10 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
       match obj.get("no_color") {
         Some(True) => no_color = Some(true)
         Some(False) => no_color = Some(false)
+        _ => ()
+      }
+      match obj.get("test_kind") {
+        Some(String(s)) => test_kind = TestKind::parse(s)
         _ => ()
       }
       match obj.get("skip_tags") {
@@ -173,7 +210,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
     }
     _ => ()
   }
-  { world, mode, steps, skip_tags, formatters, no_color, }
+  { world, mode, steps, skip_tags, formatters, no_color, test_kind, }
 }
 
 ///|
@@ -209,6 +246,10 @@ pub fn MoonspecConfig::merge(
     no_color: match override_.no_color {
       Some(_) => override_.no_color
       None => self.no_color
+    },
+    test_kind: match override_.test_kind {
+      Some(_) => override_.test_kind
+      None => self.test_kind
     },
   }
 }
