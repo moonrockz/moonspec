@@ -1,0 +1,8 @@
+members = [
+  "..",
+  "./bank-account",
+  "./calculator",
+  "./ecommerce",
+  "./ecommerce-cli",
+  "./todolist",
+]

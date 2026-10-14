@@ -24,13 +24,11 @@ You will also need the `moonbitlang/async` package (required for async tests):
 moon add moonbitlang/async
 ```
 
-Then add `moonrockz/moonspec` to the `import` list in the `moon.pkg.json` file for the package where your tests will live:
+Then add `moonrockz/moonspec` to the `import` list in the `moon.pkg` file for the package where your tests will live:
 
-```json
-{
-  "import": [
-    "moonrockz/moonspec"
-  ]
+```
+import {
+  "moonrockz/moonspec",
 }
 ```
 
@@ -426,12 +424,12 @@ A typical project layout looks like this:
 
 ```
 my-project/
-  moon.mod.json
+  moon.mod
   moonspec.json5          # optional: codegen configuration
   features/
     calculator.feature    # Gherkin feature files
   src/
-    moon.pkg.json         # imports moonrockz/moonspec
+    moon.pkg              # imports moonrockz/moonspec
     world.mbt             # World struct + configure implementation
     calculator_wbtest.mbt # async test blocks (manual or generated)
 ```

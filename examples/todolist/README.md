@@ -20,7 +20,7 @@ annotations and `moonspec gen steps` code generation.
 
 ```
 todolist/
-├── moon.mod.json
+├── moon.mod
 ├── moonspec.json5                     # Codegen config: world, mode, steps output
 ├── features/
 │   └── todolist.feature               # 4 scenarios

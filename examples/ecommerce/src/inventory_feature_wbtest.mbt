@@ -2,14 +2,20 @@
 // Source: features/inventory.feature
 // moonspec:hash:00000000
 
+///|
 async test "Feature: Inventory / Scenario: Check stock availability" {
-  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/inventory.feature")])
+  let options = @moonspec.RunOptions::new([
+    @moonspec.FeatureSource::File("features/inventory.feature"),
+  ])
   options.scenario_name("Check stock availability")
   @moonspec.run_or_fail(EcomWorld::default, options)
 }
 
+///|
 async test "Feature: Inventory / Scenario: Stock decreases after purchase" {
-  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/inventory.feature")])
+  let options = @moonspec.RunOptions::new([
+    @moonspec.FeatureSource::File("features/inventory.feature"),
+  ])
   options.scenario_name("Stock decreases after purchase")
   @moonspec.run_or_fail(EcomWorld::default, options)
 }

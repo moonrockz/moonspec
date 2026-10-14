@@ -1,4 +1,7 @@
 import {
   "moonrockz/moonspec",
-  "moonbitlang/async",
 }
+
+import {
+  "moonbitlang/async",
+} for "wbtest"

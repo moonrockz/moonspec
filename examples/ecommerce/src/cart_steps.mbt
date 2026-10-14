@@ -10,14 +10,14 @@ fn CartSteps::new(world : EcomWorld) -> CartSteps {
 }
 
 ///|
-impl @moonspec.StepLibrary for CartSteps with steps(self) {
+impl @moonspec.StepLibrary for CartSteps with fn steps(self) {
   let defs : Array[@moonspec.StepDef] = [
     @moonspec.StepDef::given0("an empty shopping cart", fn() {
       self.world.cart.clear()
     }),
     @moonspec.StepDef::when3(
       "I add {string} with quantity {int} at price {int}",
-      fn(name : String, qty : Int, price : Int) {
+      fn(name : String, qty : Int32, price : Int32) {
         // Check if item already in cart; if so, increase quantity
         let mut found = false
         for item in self.world.cart {
@@ -27,44 +27,45 @@ impl @moonspec.StepLibrary for CartSteps with steps(self) {
             break
           }
         }
-        if not(found) {
-          self.world.cart.push({ name, quantity: qty, price })
+        if !found {
+          self.world.cart.push({ name, quantity: qty, price, })
         }
       },
     ),
-    @moonspec.StepDef::when1(
-      "I remove {string} from the cart",
-      fn(name : String) {
-        let mut idx = -1
-        for i, item in self.world.cart {
-          if item.name == name {
-            idx = i
-            break
-          }
-        }
-        if idx >= 0 {
-          self.world.cart.remove(idx) |> ignore
-        }
-      },
-    ),
-    @moonspec.StepDef::then1(
-      "the cart should contain {int} item",
-      fn(expected : Int) { assert_eq(self.world.cart.length(), expected) },
-    ),
-    @moonspec.StepDef::then1(
-      "the cart should contain {int} items",
-      fn(expected : Int) { assert_eq(self.world.cart.length(), expected) },
-    ),
-    @moonspec.StepDef::then1("the cart total should be {int}", fn(
-      expected : Int,
+    @moonspec.StepDef::when1("I remove {string} from the cart", fn(
+      name : String,
     ) {
+      let mut idx = -1
+      for i, item in self.world.cart {
+        if item.name == name {
+          idx = i
+          break
+        }
+      }
+      if idx >= 0 {
+        self.world.cart.remove(idx) |> ignore
+      }
+    }),
+    @moonspec.StepDef::then1("the cart should contain {int} item", fn(
+      expected : Int32,
+    ) raise {
+      assert_eq(self.world.cart.length(), expected)
+    }),
+    @moonspec.StepDef::then1("the cart should contain {int} items", fn(
+      expected : Int32,
+    ) raise {
+      assert_eq(self.world.cart.length(), expected)
+    }),
+    @moonspec.StepDef::then1("the cart total should be {int}", fn(
+      expected : Int32,
+    ) raise {
       let mut total = 0
       for item in self.world.cart {
         total = total + item.quantity * item.price
       }
       assert_eq(total, expected)
     }),
-    @moonspec.StepDef::then0("the cart should be empty", fn() {
+    @moonspec.StepDef::then0("the cart should be empty", fn() raise {
       assert_eq(self.world.cart.length(), 0)
     }),
   ]

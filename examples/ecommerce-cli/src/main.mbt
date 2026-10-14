@@ -1,9 +1,7 @@
 ///|
 /// Default feature file paths when no CLI arguments are given.
 let default_features : Array[String] = [
-  "features/cart.feature",
-  "features/checkout.feature",
-  "features/inventory.feature",
+  "features/cart.feature", "features/checkout.feature", "features/inventory.feature",
 ]
 
 ///|
@@ -24,7 +22,10 @@ async fn main {
   }
   // Run all features, printing results with PrettyFormatter
   let options = @moonspec.RunOptions(features)
-  options.add_formatter(@format.PrettyFormatter::new(), @moonspec.OutputDest::Stdout)
+  options.add_formatter(
+    @format.PrettyFormatter::new(),
+    @moonspec.OutputDest::Stdout,
+  )
   let result = @moonspec.run(EcomWorld::default, options)
   // Exit with non-zero code on failures or undefined steps
   if result.summary.failed > 0 || result.summary.undefined > 0 {

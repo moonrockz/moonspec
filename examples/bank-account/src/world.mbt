@@ -1,7 +1,7 @@
 ///|
 /// World struct holding per-scenario state for bank account tests.
 struct BankWorld {
-  mut balance : Int
+  mut balance : Int32
   mut last_declined : Bool
 } derive(Default)
 
@@ -12,7 +12,7 @@ pub extend BankWorld with Default::{default}
 
 ///|
 /// Step library for account setup and balance assertions.
-struct AccountSteps {
+priv struct AccountSteps {
   world : BankWorld
 }
 
@@ -22,36 +22,31 @@ fn AccountSteps::new(world : BankWorld) -> AccountSteps {
 }
 
 ///|
-impl @moonspec.StepLibrary for AccountSteps with steps(self) {
+impl @moonspec.StepLibrary for AccountSteps with fn steps(self) {
   let defs : Array[@moonspec.StepDef] = [
-    @moonspec.StepDef::given(
-      "a bank account with balance {int}",
-      fn(args) {
-        match args[0] {
-          { value: @moonspec.StepValue::IntVal(amount), .. } => {
-            self.world.balance = amount
-            self.world.last_declined = false
-          }
-          _ => ()
+    @moonspec.StepDef::given("a bank account with balance {int}", fn(args) {
+      match args[0] {
+        { value: @moonspec.StepValue::IntVal(amount), .. } => {
+          self.world.balance = amount
+          self.world.last_declined = false
         }
-      },
-    ),
-    @moonspec.StepDef::then(
-      "the balance should be {int}",
-      fn(args) raise {
-        match args[0] {
-          { value: @moonspec.StepValue::IntVal(expected), .. } => assert_eq(self.world.balance, expected)
-          _ => ()
-        }
-      },
-    ),
+        _ => ()
+      }
+    }),
+    @moonspec.StepDef::then("the balance should be {int}", fn(args) raise {
+      match args[0] {
+        { value: @moonspec.StepValue::IntVal(expected), .. } =>
+          assert_eq(self.world.balance, expected)
+        _ => ()
+      }
+    }),
   ]
   defs[:]
 }
 
 ///|
 /// Step library for deposit and withdrawal transactions.
-struct TransactionSteps {
+priv struct TransactionSteps {
   world : BankWorld
 }
 
@@ -61,44 +56,40 @@ fn TransactionSteps::new(world : BankWorld) -> TransactionSteps {
 }
 
 ///|
-impl @moonspec.StepLibrary for TransactionSteps with steps(self) {
+impl @moonspec.StepLibrary for TransactionSteps with fn steps(self) {
   let defs : Array[@moonspec.StepDef] = [
-    @moonspec.StepDef::when(
-      "I deposit {int}",
-      fn(args) {
-        match args[0] {
-          { value: @moonspec.StepValue::IntVal(amount), .. } => self.world.balance = self.world.balance + amount
-          _ => ()
-        }
-      },
-    ),
-    @moonspec.StepDef::when(
-      "I withdraw {int}",
-      fn(args) {
-        match args[0] {
-          { value: @moonspec.StepValue::IntVal(amount), .. } =>
-            if amount > self.world.balance {
-              self.world.last_declined = true
-            } else {
-              self.world.balance = self.world.balance - amount
-            }
-          _ => ()
-        }
-      },
-    ),
-    @moonspec.StepDef::then(
-      "the withdrawal should be declined",
-      fn(_args) raise {
-        assert_true(self.world.last_declined)
-      },
-    ),
+    @moonspec.StepDef::when("I deposit {int}", fn(args) {
+      match args[0] {
+        { value: @moonspec.StepValue::IntVal(amount), .. } =>
+          self.world.balance = self.world.balance + amount
+        _ => ()
+      }
+    }),
+    @moonspec.StepDef::when("I withdraw {int}", fn(args) {
+      match args[0] {
+        { value: @moonspec.StepValue::IntVal(amount), .. } =>
+          if amount > self.world.balance {
+            self.world.last_declined = true
+          } else {
+            self.world.balance = self.world.balance - amount
+          }
+        _ => ()
+      }
+    }),
+    @moonspec.StepDef::then("the withdrawal should be declined", fn(
+      _args,
+    ) raise {
+      assert_true(self.world.last_declined)
+    }),
   ]
   defs[:]
 }
 
 ///|
 /// Compose step libraries into the world.
-impl @moonspec.World for BankWorld with configure(self, setup) {
+/// Only the generated tests use this impl, so it is unused in non-test code.
+#warnings("-unused_value")
+impl @moonspec.World for BankWorld with fn configure(self, setup) {
   setup.use_library(AccountSteps::new(self))
   setup.use_library(TransactionSteps::new(self))
 }

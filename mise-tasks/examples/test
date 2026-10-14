@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 #MISE description="Run tests for all example projects"
+#MISE depends=["build:cli"]
 set -euo pipefail
 
-for mod in examples/*/moon.mod.json; do
-  dir=$(dirname "$mod")
-  echo "==> Testing $dir"
-  (cd "$dir" && moon test --target js)
-done
+# examples/moon.work makes the examples use the local moonspec module.
+# The todolist build rules call the moonspec CLI.
+export PATH="$PWD/_build/bin:$PATH"
+cd examples
+moon test --target js
