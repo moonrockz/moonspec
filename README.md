@@ -1246,6 +1246,12 @@ Users should import `moonrockz/moonspec` and reference types via `@moonspec.Worl
 | [moonbitlang/async](https://mooncakes.io/docs/#/moonbitlang/async/) | Async execution primitives |
 | [moonbitlang/regexp](https://mooncakes.io/docs/#/moonbitlang/regexp/) | Regular expressions |
 
+## Migration Guides
+
+- [0.10.x to 0.11.0](docs/migrations/v0.11.0.md): CLI package `cmd/moonspec`,
+  white-box test files by default, `gen steps` output location, tag
+  expression validation, new struct fields.
+
 ## Development
 
 ```bash
