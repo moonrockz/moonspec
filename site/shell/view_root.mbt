@@ -64,7 +64,7 @@ pub fn view(m : Model, emit : @rabbita.Emit[Msg], site_json : String) -> Html {
 fn content_view(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
   match (m.route, m.manifest.find(m.route)) {
     (Landing, _) => landing_view(m, emit)
-    (_, Some(page)) => docs_view(m, page)
+    (_, Some(page)) => docs_view(m, page, emit)
     (_, None) => not_found_view(m)
   }
 }

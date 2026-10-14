@@ -46,6 +46,26 @@ async test "unknown pages render the not-found view" {
 }
 
 ///|
+#cfg(not(target="js"))
+async test "the menu button appears only where there is a sidebar" {
+  assert_true(!render_route(Landing, None).contains("ms-menu"))
+  assert_true(!render_route(Doc("nope"), None).contains("ms-menu"))
+  assert_true(
+    render_route(Doc("configuration"), Some("# C\n")).contains("ms-menu"),
+  )
+}
+
+///|
+#cfg(not(target="js"))
+async test "an open phone menu renders a backdrop" {
+  let m = Model::init(site_data(Doc("configuration"), Some("# C\n")))
+  assert_true(!render_model(m).contains("ms-sidebar-backdrop"))
+  assert_true(
+    render_model({ ..m, menu_open: true, }).contains("ms-sidebar-backdrop"),
+  )
+}
+
+///|
 test "target_href" {
   assert_eq(
     target_href("/moonspec/", Internal(Doc("x"), Some("a"))),

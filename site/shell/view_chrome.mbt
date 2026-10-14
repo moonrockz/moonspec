@@ -43,15 +43,28 @@ fn version_picker(m : Model) -> Html {
 }
 
 ///|
+/// Only documentation pages have a sidebar for the phone menu to open.
+fn has_sidebar(m : Model) -> Bool {
+  match (m.route, m.manifest.find(m.route)) {
+    (Landing, _) | (_, None) => false
+    (_, Some(_)) => true
+  }
+}
+
+///|
 fn nav_bar(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
   let base = m.config.base
   @html.header(class="ms-nav", [
-    @html.button(
-      class="ms-menu",
-      title="Menu",
-      on_click=emit(ToggleMenu),
-      "☰",
-    ),
+    if has_sidebar(m) {
+      @html.button(
+        class="ms-menu",
+        title="Menu",
+        on_click=emit(ToggleMenu),
+        "☰",
+      )
+    } else {
+      @html.nothing
+    },
     @html.a(class="ms-brand", href=base, [
       @html.img(
         class="ms-avatar",
