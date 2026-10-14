@@ -336,3 +336,20 @@ test "a same-route fragment change keeps the page ready" {
   assert_eq(m2.page, m.page)
   assert_eq(m2.route, m.route)
 }
+
+///|
+test "Escape closes the phone menu when search is closed" {
+  let m = { ..Model::init(site_data(Landing, None)), menu_open: true, }
+  assert_false(step(m, key("Escape")).menu_open)
+  // Other keys leave the menu alone.
+  assert_true(step(m, key("x")).menu_open)
+}
+
+///|
+test "opening search closes the phone menu" {
+  let m = { ..Model::init(site_data(Landing, None)), menu_open: true, }
+  let s = step(m, OpenSearch)
+  assert_true(s.search.open)
+  assert_false(s.menu_open)
+  assert_false(step(m, key("/")).menu_open)
+}

@@ -76,12 +76,21 @@ fn open_search(m : Model, emit : @rabbita.Emit[Msg]) -> (Model, @rabbita.Cmd) {
   match m.search.index {
     NotLoaded | IndexFailed => {
       let search = { ..m.search, open: true, selected: 0, index: LoadingIndex, }
+      let m = { ..m, menu_open: false, }
       let load = @http.get(m.config.base + "search-index.json").expect_text(
         emit.map(r => IndexLoaded(r)),
       )
       ({ ..m, search, }, @rabbita.batch([load, focus_cmd]))
     }
-    _ => ({ ..m, search: { ..m.search, open: true, selected: 0, }, }, focus_cmd)
+    _ =>
+      (
+        {
+          ..m,
+          search: { ..m.search, open: true, selected: 0, },
+          menu_open: false,
+        },
+        focus_cmd,
+      )
   }
 }
 
@@ -217,6 +226,9 @@ fn on_key(
     if ((k == "k" || k == "K") && (key.meta_key() || key.ctrl_key())) ||
       k == "/" {
       return open_search(m, emit)
+    }
+    if k == "Escape" && m.menu_open {
+      return update(m, ToggleMenu, emit)
     }
     return (m, @rabbita.none)
   }
