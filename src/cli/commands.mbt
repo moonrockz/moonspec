@@ -34,12 +34,20 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
   }
   // CLI --mode flag (applies to all files if set)
   let cli_mode : String? = option_value(value, "mode")
+  let test_kind = match
+    resolve_test_kind(option_value(value, "test-kind"), moonspec_config) {
+    Ok(kind) => kind
+    Err(msg) => {
+      die(msg)
+      return
+    }
+  }
   let no_color = resolve_no_color(
     value.flags.get_or_default("no-color", false),
     moonspec_config,
   )
   for file in files {
-    let output_path = test_output_path(output_dir, file)
+    let output_path = test_output_path(output_dir, file, test_kind)
     if !write_test_file(
         file,
         output_path,
@@ -91,6 +99,7 @@ fn write_test_file(
     }
   }
   let test_code = @codegen.generate_test_file(content, file, config~)
+  ensure_parent_dir(output_path)
   @fs.write_string_to_file(output_path, test_code) catch {
     @fs.IOError(msg) => {
       die("Error writing \{output_path}: \{msg}")
@@ -124,6 +133,14 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
   let apply = value.flags.get_or_default("apply", false)
   // --moonx: the rule runs this CLI version through moonx, so the project
   // needs no installed `moonspec` binary.
+  let test_kind = match
+    resolve_test_kind(option_value(value, "test-kind"), moonspec_config) {
+    Ok(kind) => kind
+    Err(msg) => {
+      die(msg)
+      return
+    }
+  }
   let cli : @codegen.CliCommand = if value.flags.get_or_default("moonx", false) {
     Moonx(version=get_version())
   } else {
@@ -136,6 +153,7 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
       package_dir~,
       world~,
       cli~,
+      test_kind~,
     )
     println(snippet.trim_end(chars="\n"))
     return
@@ -156,6 +174,7 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
     package_dir~,
     world~,
     cli~,
+    test_kind~,
   )
   if added == 0 {
     println("\{pkg_path} is up to date")
@@ -174,7 +193,7 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
   for file in files {
     let output_path = package_dir +
       "/" +
-      @codegen.build_rules_test_filename(file)
+      @codegen.build_rules_test_filename(file, kind=test_kind)
     if @fs.path_exists(output_path) {
       continue
     }

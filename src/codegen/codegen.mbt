@@ -89,13 +89,17 @@ fn substring_from(s : String, start : Int32) -> String {
 }
 
 ///|
-/// Convert a .feature (or .feature.md) file path to a _test.mbt filename.
+/// Convert a .feature (or .feature.md) file path to a test filename.
 ///
 /// - Strip "features/" prefix
 /// - Strip the ".md" of a Markdown with Gherkin ".feature.md" path
 /// - Replace "/" with "_"
-/// - Replace ".feature" with "_feature_test.mbt"
-pub fn feature_to_test_filename(path : String) -> String {
+/// - Replace ".feature" with "_feature_wbtest.mbt" (`kind=WhiteBox`, the
+///   default) or "_feature_test.mbt" (`kind=BlackBox`)
+pub fn feature_to_test_filename(
+  path : String,
+  kind~ : @config.TestKind = WhiteBox,
+) -> String {
   let mut result = path
   if starts_with(result, "features/") {
     result = substring_from(result, 9) // len("features/") == 9
@@ -104,7 +108,11 @@ pub fn feature_to_test_filename(path : String) -> String {
     result = result[:result.length() - 3].to_owned()
   }
   result = string_replace(result, "/", "_")
-  result = string_replace(result, ".feature", "_feature_test.mbt")
+  let suffix = match kind {
+    WhiteBox => "_feature_wbtest.mbt"
+    BlackBox => "_feature_test.mbt"
+  }
+  result = string_replace(result, ".feature", suffix)
   result
 }
 

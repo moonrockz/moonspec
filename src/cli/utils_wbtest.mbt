@@ -1,15 +1,15 @@
 ///|
 test "test_output_path writes into the current directory by default" {
   assert_eq(
-    test_output_path(None, "features/login.feature"),
-    "login_feature_test.mbt",
+    test_output_path(None, "features/login.feature", WhiteBox),
+    "login_feature_wbtest.mbt",
   )
 }
 
 ///|
 test "test_output_path joins an output directory" {
   assert_eq(
-    test_output_path(Some("src"), "features/login.feature"),
+    test_output_path(Some("src"), "features/login.feature", BlackBox),
     "src/login_feature_test.mbt",
   )
 }
@@ -21,6 +21,7 @@ test "test_output_path uses an .mbt output as the exact file path" {
     test_output_path(
       Some("./src/todolist_feature_wbtest.mbt"),
       "./features/todolist.feature",
+      BlackBox,
     ),
     "./src/todolist_feature_wbtest.mbt",
   )
@@ -52,4 +53,14 @@ test "steps_output_mode uses the configured output" {
     steps_output_mode(Some({ output: Some("per-package"), exclude: None, })),
     "per-package",
   )
+}
+
+///|
+test "resolve_test_kind: the CLI value, then the config, then wbtest" {
+  let empty = @config.MoonspecConfig::empty()
+  let config_bb = @config.MoonspecConfig::from_json5("{ test_kind: \"test\" }")
+  assert_eq(resolve_test_kind(None, empty), Ok(WhiteBox))
+  assert_eq(resolve_test_kind(None, config_bb), Ok(BlackBox))
+  assert_eq(resolve_test_kind(Some("wbtest"), config_bb), Ok(WhiteBox))
+  assert_true(resolve_test_kind(Some("black"), empty) is Err(_))
 }
