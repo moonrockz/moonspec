@@ -68,6 +68,22 @@ test "url changes inside the base switch routes" {
 }
 
 ///|
+test "url changes with a trailing slash switch routes" {
+  let m = Model::init(site_data(Landing, None))
+  let m2 = step(
+    m,
+    UrlChanged(@url.parse("http://localhost/moonspec/docs/configuration/")),
+  )
+  assert_eq(m2.route, Doc("configuration"))
+  let config = m.config
+  assert_eq(
+    site_path(config, "/moonspec/docs/configuration/"),
+    Some("docs/configuration/"),
+  )
+  assert_eq(site_path(config, "/moonspec/next/docs/x/"), None)
+}
+
+///|
 test "url changes outside the base are ignored" {
   let m = Model::init(site_data(Landing, None))
   let m2 = step(
@@ -156,10 +172,10 @@ test "entry_href builds route and anchor" {
     path: [],
     text: "",
   }
-  assert_eq(entry_href(config, e), "/moonspec/docs/configuration#a-b")
+  assert_eq(entry_href(config, e), "/moonspec/docs/configuration/#a-b")
   assert_eq(
     entry_href(config, { ..e, anchor: "", }),
-    "/moonspec/docs/configuration",
+    "/moonspec/docs/configuration/",
   )
 }
 
@@ -203,4 +219,137 @@ test "a same-page fragment scrolls at once and stays unpended" {
   )
   assert_eq(m2.pending_anchor, None)
   assert_eq(m2.page, m.page)
+}
+
+///|
+fn key(k : String, meta~ : Bool = false) -> Msg {
+  KeyDown(
+    @common.Keyboard::new(
+      key=k,
+      code="",
+      alt_key=false,
+      ctrl_key=false,
+      shift_key=false,
+      meta_key=meta,
+      is_composing=false,
+      repeat=false,
+      location=0,
+    ),
+  )
+}
+
+///|
+fn three_entries() -> Array[@search.Entry] {
+  ["one", "two", "three"].map(a => {
+    route: Doc("configuration"),
+    anchor: a,
+    page: "Configuration",
+    path: [a],
+    text: "needle in " + a,
+  })
+}
+
+///|
+/// A model with the search open, the index ready and three results for "needle".
+fn searching() -> Model {
+  let m = step(Model::init(site_data(Landing, None)), OpenSearch)
+  let ready = step(m, IndexLoaded(Ok(Json(three_entries()).stringify())))
+  step(ready, SearchInput("needle"))
+}
+
+///|
+test "internal link requests inside the base keep the model" {
+  let m = Model::init(site_data(Landing, None))
+  let req = UrlRequested(
+    Internal(@url.parse("http://localhost/moonspec/docs/configuration/")),
+  )
+  assert_eq(step(m, req), m)
+}
+
+///|
+test "link requests into the other channel keep the model" {
+  let m = Model::init(site_data(Landing, None))
+  let req = UrlRequested(
+    Internal(@url.parse("http://localhost/moonspec/next/docs/configuration/")),
+  )
+  assert_eq(step(m, req), m)
+  assert_eq(step(m, req).route, Landing)
+}
+
+///|
+test "ctrl or meta K and slash open search" {
+  let m = Model::init(site_data(Landing, None))
+  assert_true(step(m, key("k", meta=true)).search.open)
+  assert_true(step(m, key("/")).search.open)
+  assert_false(step(m, key("k")).search.open)
+}
+
+///|
+test "Escape closes search" {
+  let opened = step(Model::init(site_data(Landing, None)), key("/"))
+  assert_true(opened.search.open)
+  assert_false(step(opened, key("Escape")).search.open)
+}
+
+///|
+test "MoveSelection wraps around the results" {
+  let m = searching()
+  assert_eq(flat_results(m).length(), 3)
+  assert_eq(m.search.selected, 0)
+  assert_eq(step(m, MoveSelection(-1)).search.selected, 2)
+  assert_eq(
+    step(step(m, MoveSelection(-1)), MoveSelection(1)).search.selected,
+    0,
+  )
+  assert_eq(step(m, MoveSelection(1)).search.selected, 1)
+}
+
+///|
+test "OpenSelected closes search" {
+  let m = searching()
+  assert_true(m.search.open)
+  assert_false(step(m, OpenSelected).search.open)
+}
+
+///|
+test "failed loads set the failure states" {
+  let m = Model::init(site_data(Doc("configuration"), None))
+  assert_eq(m.page, Loading)
+  assert_eq(
+    step(m, ContentLoaded(Doc("configuration"), Err(Failure("x")))).page,
+    PageFailed,
+  )
+  let s = step(m, OpenSearch)
+  assert_eq(step(s, IndexLoaded(Err(Failure("x")))).search.index, IndexFailed)
+}
+
+///|
+test "a same-route fragment change keeps the page ready" {
+  let m = Model::init(
+    site_data(Doc("configuration"), Some("# Configuration\n\n## A\n")),
+  )
+  let m2 = step(
+    m,
+    UrlChanged(@url.parse("http://localhost/moonspec/docs/configuration/#a")),
+  )
+  assert_true(m2.page is Ready(_))
+  assert_eq(m2.page, m.page)
+  assert_eq(m2.route, m.route)
+}
+
+///|
+test "Escape closes the phone menu when search is closed" {
+  let m = { ..Model::init(site_data(Landing, None)), menu_open: true, }
+  assert_false(step(m, key("Escape")).menu_open)
+  // Other keys leave the menu alone.
+  assert_true(step(m, key("x")).menu_open)
+}
+
+///|
+test "opening search closes the phone menu" {
+  let m = { ..Model::init(site_data(Landing, None)), menu_open: true, }
+  let s = step(m, OpenSearch)
+  assert_true(s.search.open)
+  assert_false(s.menu_open)
+  assert_false(step(m, key("/")).menu_open)
 }

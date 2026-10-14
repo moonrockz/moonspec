@@ -83,3 +83,42 @@ test "find, find_source and neighbors" {
   let (_, last_next) = m.neighbors(Migration("v0.9.0"))
   assert_eq(last_next, None)
 }
+
+///|
+test "Page round-trips through JSON" {
+  let page : Page = {
+    route: Doc("configuration"),
+    title: "Configuration Reference",
+    source: "docs/guide/configuration.md",
+    group: Guides,
+  }
+  let back : Page = @json.from_json(Json(page))
+  assert_eq(back, page)
+}
+
+///|
+test "neighbors of an unknown route are empty" {
+  let m = Manifest::build(sample_files())
+  let (prev, next) = m.neighbors(Doc("nope"))
+  assert_eq(prev, None)
+  assert_eq(next, None)
+}
+
+///|
+test "compare_versions: invalid versions sort first, then lexically" {
+  assert_true(compare_versions("latest", "v0.1.0") < 0)
+  assert_true(compare_versions("v0.1.0", "latest") > 0)
+  assert_true(compare_versions("abc", "abd") < 0)
+  assert_true(compare_versions("abd", "abc") > 0)
+  assert_eq(compare_versions("abc", "abc"), 0)
+  assert_true(compare_versions("v1.0", "v0.0.1") < 0)
+}
+
+///|
+test "classify: a migration with a non-version name is not published" {
+  assert_eq(classify("docs/migrations/notes.md"), None)
+  let m = Manifest::build([
+    { path: "docs/migrations/notes.md", title: "Notes", },
+  ])
+  assert_eq(m.pages.length(), 0)
+}

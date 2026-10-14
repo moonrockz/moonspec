@@ -83,7 +83,10 @@ fn search_view(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
     ),
     @html.div(
       class="ms-search",
-      attrs=@html.Attrs::build().role("dialog").aria_label("Search docs"),
+      attrs=@html.Attrs::build()
+        .role("dialog")
+        .aria_modal("true")
+        .aria_label("Search docs"),
       [
         @html.input(
           id="ms-search-input",

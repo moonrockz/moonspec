@@ -15,6 +15,11 @@ extern "js" fn js_focus(id : String) -> Unit =
 
 ///|
 #cfg(target="js")
+extern "js" fn js_scroll_selected() -> Unit =
+  #|() => { setTimeout(() => document.querySelector('.ms-search-selected')?.scrollIntoView({ block: 'nearest' }), 0) }
+
+///|
+#cfg(target="js")
 pub fn read_theme() -> Theme {
   Theme::parse(js_get_theme())
 }
@@ -46,6 +51,18 @@ fn focus(id : String) -> Unit {
 ///|
 #cfg(not(target="js"))
 fn focus(_id : String) -> Unit {
+  ()
+}
+
+///|
+#cfg(target="js")
+fn scroll_selected() -> Unit {
+  js_scroll_selected()
+}
+
+///|
+#cfg(not(target="js"))
+fn scroll_selected() -> Unit {
   ()
 }
 

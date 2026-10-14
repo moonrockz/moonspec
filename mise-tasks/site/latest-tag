@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Print the newest stable release tag (prereleases ignored); prints nothing when there is none"
+#MISE hide=true
+set -euo pipefail
+
+git tag --list 'v*' --sort=-v:refname | { grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' || true; } | head -1

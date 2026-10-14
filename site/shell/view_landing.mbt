@@ -55,6 +55,13 @@ let tiles : Array[(String, String)] = [
 ]
 
 ///|
+fn tab_attrs(selected : Bool) -> @html.Attrs {
+  @html.Attrs::build()
+  .role("tab")
+  .aria_selected(if selected { "true" } else { "false" })
+}
+
+///|
 fn landing_view(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
   let base = m.config.base
   let tab = m.install_tab
@@ -96,14 +103,16 @@ fn landing_view(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
     ]),
     @html.section(class="ms-start", [
       @html.p(class="ms-eyebrow", "Get started in 3 steps"),
-      @html.div(class="ms-tabs", [
+      @html.div(class="ms-tabs", attrs=@html.Attrs::build().role("tablist"), [
         @html.button(
           class=class_if("ms-tab", "ms-tab-active", tab == Installed),
+          attrs=tab_attrs(tab == Installed),
           on_click=emit(SelectTab(Installed)),
           "Installed CLI",
         ),
         @html.button(
           class=class_if("ms-tab", "ms-tab-active", tab == Moonx),
+          attrs=tab_attrs(tab == Moonx),
           on_click=emit(SelectTab(Moonx)),
           "moonx (no install)",
         ),

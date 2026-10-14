@@ -33,7 +33,10 @@ fn main {
   install_key_guard()
   let json = read_site_data()
   match @data.SiteData::decode(json) {
-    Some(data) => @rabbita.new(() => @shell.component(data, json)).hydrate()
+    Some(data) =>
+      @rabbita.new(() => {
+        @shell.component(data, json, initial_theme=@shell.read_theme())
+      }).hydrate()
     None => abort("moonspec site: invalid ms-data")
   }
 }

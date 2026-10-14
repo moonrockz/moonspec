@@ -113,7 +113,7 @@ test "check accepts a consistent dist" {
     "ok",
     ["", "docs/x"],
     ["docs/x/index.html"],
-    "<a href=\"/b/docs/x\">x</a>",
+    "<a href=\"/b/docs/x/\">x</a>",
   )
   let problems = check(root, "/b/", [])
   rm_rf(root)
@@ -126,11 +126,11 @@ test "check reports a broken internal link" {
     "link",
     ["", "docs/x"],
     ["docs/x/index.html"],
-    "<a href=\"/b/docs/missing\">x</a>",
+    "<a href=\"/b/docs/missing/\">x</a>",
   )
   let problems = check(root, "/b/", [])
   rm_rf(root)
-  assert_eq(problems, ["index.html: broken link /b/docs/missing"])
+  assert_eq(problems, ["index.html: broken link /b/docs/missing/"])
 }
 
 ///|
@@ -174,4 +174,50 @@ test "check reports a missing docs alias file" {
   let problems = check(root, "/b/", [])
   rm_rf(root)
   assert_eq(problems, ["route docs has no HTML file"])
+}
+
+///|
+fn heading_fixture(name : String, page_html : String) -> String raise {
+  let root = fixture(name, ["", "docs/x"], ["docs/x/index.html"], "<p></p>")
+  put(root, "docs/x/index.html", page_html)
+  put(
+    root,
+    "search-index.json",
+    Json([
+      entry_for(Doc("x")),
+      { ..entry_for(Doc("x")), anchor: "intro", },
+      { ..entry_for(Doc("x")), anchor: "deep", },
+    ]).stringify(),
+  )
+  root
+}
+
+///|
+test "check accepts headings that are all in the search index" {
+  let root = heading_fixture(
+    "headings_ok", "<h1 id=\"t\">T</h1><h2 id=\"intro\">Intro</h2><h3 id=\"deep\">Deep</h3>",
+  )
+  let problems = check(root, "/b/", [])
+  rm_rf(root)
+  assert_eq(problems, [])
+}
+
+///|
+test "check reports a heading missing from the search index" {
+  let root = heading_fixture(
+    "headings_missing", "<h2 id=\"intro\">Intro</h2><h2 id=\"gone\">Gone</h2><h3 id=\"deep\">D</h3>",
+  )
+  let problems = check(root, "/b/", [])
+  rm_rf(root)
+  assert_eq(problems, ["heading docs/x#gone is not in the search index"])
+}
+
+///|
+test "heading_ids finds h2 and h3 ids only" {
+  assert_eq(
+    heading_ids(
+      "<h1 id=\"a\">x</h1><h2 id=\"b\">x</h2><p>h2 id=\"n\"</p><h3 id=\"c\">",
+    ),
+    ["b", "c"],
+  )
 }

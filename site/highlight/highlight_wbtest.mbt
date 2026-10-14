@@ -62,3 +62,20 @@ test "unterminated strings run to the end of the line" {
   assert_eq(joined(tokens), src)
   inspect(kinds(tokens), content="kw:let str:\"open")
 }
+
+///|
+test "every language reproduces its source exactly" {
+  let langs = [
+    "moonbit", "mbt", "gherkin", "feature", "cucumber", "bash", "sh", "shell", "console",
+    "zsh", "json", "json5", "jsonc", "text",
+  ]
+  let samples = [
+    "", "\n", "\r\n", "\"", "a \"b\" # c // d", "@t\nFeature: X\n  Given 1 and \"s\"\n  | a | b |\n",
+    "@t\nFeature: X\n  Given 1 and \"s\"\n  | a | b |",
+  ]
+  for lang in langs {
+    for src in samples {
+      assert_eq(joined(highlight(lang, src)), src)
+    }
+  }
+}

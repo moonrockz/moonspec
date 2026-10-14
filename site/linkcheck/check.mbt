@@ -80,6 +80,33 @@ pub fn target_file(path : String) -> String {
 }
 
 ///|
+/// Ids of the `<h2 id="...">` and `<h3 id="...">` elements, in document order.
+pub fn heading_ids(html : String) -> Array[String] {
+  let out : Array[String] = []
+  let mut rest = html
+  while true {
+    let i2 = rest.find("<h2 id=\"")
+    let i3 = rest.find("<h3 id=\"")
+    let i = match (i2, i3) {
+      (Some(a), Some(b)) => if a < b { a } else { b }
+      (Some(a), None) => a
+      (None, Some(b)) => b
+      (None, None) => break
+    }
+    let start = i + 8
+    let tail = rest[start:].to_owned()
+    match tail.find("\"") {
+      Some(k) => {
+        out.push(tail[:k].to_owned())
+        rest = tail[k:].to_owned()
+      }
+      None => break
+    }
+  }
+  out
+}
+
+///|
 fn html_files(dir : String, rel : String, out : Array[String]) -> Unit raise {
   for name in @fs.read_dir(dir) {
     let full = dir + "/" + name
@@ -130,6 +157,18 @@ pub fn check(
       route != "docs" &&
       !entries.iter().any(e => e.route.to_path() == route) {
       problems.push("route \{route} is not in the search index")
+    }
+    if route != "" &&
+      route != "docs" &&
+      @fs.path_exists(dist + "/" + target_file(route)) {
+      let html = @fs.read_file_to_string(dist + "/" + target_file(route))
+      for id in heading_ids(html) {
+        if !entries
+          .iter()
+          .any(e => e.route.to_path() == route && e.anchor == id) {
+          problems.push("heading \{route}#\{id} is not in the search index")
+        }
+      }
     }
   }
   if !@fs.path_exists(dist + "/404.html") {

@@ -87,7 +87,11 @@ fn prev_next(m : Model, page : @content.Page) -> Html {
 }
 
 ///|
-fn docs_view(m : Model, page : @content.Page) -> Html {
+fn docs_view(
+  m : Model,
+  page : @content.Page,
+  emit : @rabbita.Emit[Msg],
+) -> Html {
   let base = m.config.base
   let source_url = @data.github_repo +
     "/blob/" +
@@ -109,6 +113,15 @@ fn docs_view(m : Model, page : @content.Page) -> Html {
   }
   @html.div(class="ms-docs", [
     sidebar(m),
+    if m.menu_open {
+      @html.div(
+        class="ms-sidebar-backdrop",
+        on_click=emit(ToggleMenu),
+        ([] : Array[Html]),
+      )
+    } else {
+      @html.nothing
+    },
     @html.article(class="ms-article", [
       next_banner(m),
       @html.div(class="ms-crumbs", [

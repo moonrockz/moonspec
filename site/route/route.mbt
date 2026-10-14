@@ -64,9 +64,13 @@ pub fn Route::to_path(self : Route) -> String {
 }
 
 ///|
-/// The URL path of `route` under `base` (which ends with `/`).
+/// The URL path of `route` under `base` (which ends with `/`). Pages other than
+/// the landing page end with `/`: GitHub Pages redirects the other form.
 pub fn href(base : String, route : Route) -> String {
-  base + route.to_path()
+  match route {
+    Landing => base
+    _ => base + route.to_path() + "/"
+  }
 }
 
 ///|

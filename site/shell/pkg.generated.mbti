@@ -18,7 +18,7 @@ import {
 // Values
 pub fn code_view(String, String) -> @html.Html
 
-pub fn component(@data.SiteData, String) -> @rabbita.Val[@html.Html]
+pub fn component(@data.SiteData, String, initial_theme? : Theme) -> @rabbita.Val[@html.Html]
 
 pub fn current_results(Model) -> Array[(String, Array[@search.Match])]
 
@@ -75,7 +75,6 @@ pub(all) enum Msg {
   UrlChanged(@url.Url)
   UrlRequested(@url.UrlRequest)
   ContentLoaded(@route.Route, Result[String, Error])
-  ThemeLoaded(Theme)
   ToggleTheme
   OpenSearch
   CloseSearch

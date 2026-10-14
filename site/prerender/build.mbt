@@ -54,6 +54,19 @@ async fn render_page(data : @data.SiteData) -> String {
 }
 
 ///|
+/// A build without guide pages is a wrong `--content` path, not a site.
+fn check_manifest(
+  manifest : @content.Manifest,
+  content : String,
+) -> Result[Unit, String] {
+  if manifest.pages.iter().any(p => p.group is Guides) {
+    Ok(())
+  } else {
+    Err("no guide pages found under \{content}/docs/guide")
+  }
+}
+
+///|
 /// Builds one version of the site into `args.out`.
 pub async fn build_site(args : Args) -> Unit {
   let config = config_of(args)
@@ -64,6 +77,13 @@ pub async fn build_site(args : Args) -> Unit {
   let manifest = @content.Manifest::build(
     files.map(f => { path: f.0, title: @markdown.title_of(f.1), }),
   )
+  match check_manifest(manifest, args.content) {
+    Ok(_) => ()
+    Err(message) => {
+      println("prerender: " + message)
+      @sys.exit(1)
+    }
+  }
   let texts : Map[String, String] = Map([])
   for f in files {
     texts.set(f.0, f.1)

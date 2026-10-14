@@ -43,15 +43,28 @@ fn version_picker(m : Model) -> Html {
 }
 
 ///|
+/// Only documentation pages have a sidebar for the phone menu to open.
+fn has_sidebar(m : Model) -> Bool {
+  match (m.route, m.manifest.find(m.route)) {
+    (Landing, _) | (_, None) => false
+    (_, Some(_)) => true
+  }
+}
+
+///|
 fn nav_bar(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
   let base = m.config.base
   @html.header(class="ms-nav", [
-    @html.button(
-      class="ms-menu",
-      title="Menu",
-      on_click=emit(ToggleMenu),
-      "☰",
-    ),
+    if has_sidebar(m) {
+      @html.button(
+        class="ms-menu",
+        title="Menu",
+        on_click=emit(ToggleMenu),
+        "☰",
+      )
+    } else {
+      @html.nothing
+    },
     @html.a(class="ms-brand", href=base, [
       @html.img(
         class="ms-avatar",
@@ -70,10 +83,12 @@ fn nav_bar(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
       @html.a(href=@data.api_docs_url, "API ↗"),
       @html.a(href=@data.github_repo, "GitHub ↗"),
     ]),
-    @html.button(class="ms-search-btn", on_click=emit(OpenSearch), [
-      @html.span("Search docs"),
-      @html.kbd("⌘K"),
-    ]),
+    @html.button(
+      id="ms-search-btn",
+      class="ms-search-btn",
+      on_click=emit(OpenSearch),
+      [@html.span("Search docs"), @html.kbd("⌘K")],
+    ),
     version_picker(m),
     @html.button(
       class="ms-theme",
@@ -96,15 +111,23 @@ fn footer_view(m : Model) -> Html {
 }
 
 ///|
+/// The one `404.html` is served for every missing path, whichever version
+/// it is under, so this view names no version.
 fn not_found_view(m : Model) -> Html {
-  let base = m.config.base
+  let c = m.config
+  let docs = @route.Doc(@route.default_doc_slug)
   @html.section(class="ms-notfound", [
     @html.h1("Page not found"),
-    @html.p("This page does not exist in the \{m.config.version} docs."),
+    @html.p("This page does not exist."),
     @html.p([
-      @html.a(href=base, "Home"),
+      @html.a(href=c.base, "Home"),
       @html.text(" · "),
-      @html.a(href=@route.href(base, Doc(@route.default_doc_slug)), "Docs"),
+      @html.a(
+        href=@route.href(c.release_base, docs),
+        "Docs (\{c.release_version})",
+      ),
+      @html.text(" · "),
+      @html.a(href=@route.href(c.next_base, docs), "Docs (next)"),
     ]),
   ])
 }

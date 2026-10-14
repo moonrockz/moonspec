@@ -31,7 +31,11 @@ test "to_path and href" {
   assert_eq(href("/moonspec/", Landing), "/moonspec/")
   assert_eq(
     href("/moonspec/next/", Doc("configuration")),
-    "/moonspec/next/docs/configuration",
+    "/moonspec/next/docs/configuration/",
+  )
+  assert_eq(
+    href("/moonspec/", Migration("v0.11.0")),
+    "/moonspec/migrations/v0.11.0/",
   )
 }
 
@@ -44,6 +48,8 @@ test "strip_base: paths inside and outside the base" {
   assert_eq(strip_base("/moonspec/next/", "/moonspec/docs/x"), None)
   assert_eq(strip_base("/moonspec/", "/other/docs/x"), None)
   assert_eq(strip_base("/", "/docs/x"), Some("docs/x"))
+  assert_eq(strip_base("/moonspec/", "/moonspec/docs/x/"), Some("docs/x/"))
+  assert_eq(Route::parse("docs/x/"), Doc("x"))
 }
 
 ///|
@@ -52,4 +58,14 @@ test "routes round-trip through JSON" {
     let back : Route = @json.from_json(r.to_json())
     assert_eq(back, r)
   }
+}
+
+///|
+test "strip_base: a sibling prefix is not under the base" {
+  assert_eq(strip_base("/moonspec/", "/moonspecx/docs/x"), None)
+}
+
+///|
+test "NotFound path round-trips through parse" {
+  assert_eq(Route::parse(NotFound("docs/a/b").to_path()), NotFound("docs/a/b"))
 }

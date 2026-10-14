@@ -114,3 +114,64 @@ test "non-ASCII punctuation and symbols separate words" {
   assert_eq(tokenize("a b"), ["a", "b"])
   assert_eq(search(index(), "—"), [])
 }
+
+///|
+fn entry(page : String, anchor : String, text : String) -> Entry {
+  { route: Doc("p"), anchor, page, path: [], text, }
+}
+
+///|
+test "non-ASCII queries match non-ASCII documents" {
+  let idx = Index::new([entry("Page", "", "Ünïcode text")])
+  let hits = search(idx, "ünï")
+  assert_eq(hits.length(), 1)
+  assert_eq(hits[0].excerpt, [Hit("Ünï"), Plain("code text")])
+}
+
+///|
+test "excerpt on non-ASCII text marks the right characters" {
+  assert_eq(excerpt("Ça va très bien", ["très"]), [
+    Plain("Ça va "),
+    Hit("très"),
+    Plain(" bien"),
+  ])
+}
+
+///|
+test "an entry matching all terms outranks one matching some" {
+  let idx = Index::new([
+    entry("P", "one", "alpha only"),
+    entry("P", "both", "alpha beta"),
+  ])
+  let hits = search(idx, "alpha beta")
+  assert_eq(hits.map(h => h.entry.anchor), ["both", "one"])
+  assert_true(hits[0].score > hits[1].score)
+}
+
+///|
+test "Index::size counts entries" {
+  assert_eq(Index::new([]).size(), 0)
+  assert_eq(Index::new([entry("P", "a", "x"), entry("P", "b", "y")]).size(), 2)
+}
+
+///|
+test "group_by_page keeps the page order of the ranking" {
+  let idx = Index::new([
+    entry("Second", "a", "word"),
+    entry("First", "b", "word word"),
+    entry("Second", "c", "word"),
+    entry("Third", "d", "other"),
+  ])
+  let hits = search(idx, "word")
+  let groups = group_by_page(hits)
+  assert_eq(groups.map(g => g.0), ["Second", "First"])
+  assert_eq(groups[0].1.map(m => m.entry.anchor), ["a", "c"])
+}
+
+///|
+test "duplicate query terms keep the ranking order" {
+  let idx = index()
+  let once = search(idx, "test").map(h => (h.entry.page, h.entry.anchor))
+  let twice = search(idx, "test test").map(h => (h.entry.page, h.entry.anchor))
+  assert_eq(twice, once)
+}
