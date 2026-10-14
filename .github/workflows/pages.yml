@@ -8,6 +8,10 @@ on:
       - "site/**"
       - "mise-tasks/site/**"
       - ".github/workflows/pages.yml"
+    # The release workflow publishes with GITHUB_TOKEN, which does not fire
+    # `release: published`; the tag push does the redeploy. Path filters do
+    # not apply to tag pushes.
+    tags: ["v*"]
   release:
     types: [published]
   workflow_dispatch:
@@ -53,15 +57,19 @@ jobs:
           git worktree add ../release "$tag"
 
       - name: Build the release docs
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: >
           mise run site:build -- --content ../release --channel release
-          --site-root /moonspec/ --release-version ${{ steps.release.outputs.tag }}
-          --ref ${{ steps.release.outputs.tag }} --out _site
+          --site-root /moonspec/ --release-version "$RELEASE_TAG"
+          --ref "$RELEASE_TAG" --out _site
 
       - name: Build the main docs
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
         run: |
           mise run site:build -- --content . --channel next \
-            --site-root /moonspec/ --release-version ${{ steps.release.outputs.tag }} \
+            --site-root /moonspec/ --release-version "$RELEASE_TAG" \
             --ref "$(git rev-parse HEAD)" --out _site/next
 
       - name: Check links
