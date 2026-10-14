@@ -52,9 +52,13 @@ jobs:
       - name: Check out the latest release
         id: release
         run: |
-          tag=$(git tag --list 'v*' --sort=-v:refname | head -1)
+          tag=$(mise run site:latest-tag)
+          if [ -z "$tag" ]; then
+            echo "::error::No stable release tag (vX.Y.Z) found; cannot build the release docs."
+            exit 1
+          fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          git worktree add ../release "$tag"
+          git worktree add --detach ../release "$tag"
 
       - name: Build the release docs
         env:

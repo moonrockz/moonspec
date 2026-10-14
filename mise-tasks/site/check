@@ -6,7 +6,7 @@ set -euo pipefail
 
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
-release=$(git tag --list 'v*' --sort=-v:refname | head -1)
+release=$(mise run site:latest-tag)
 release=${release:-v0.0.0}
 
 mise run site:build -- --content . --channel release --site-root /moonspec/ \
