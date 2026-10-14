@@ -27,7 +27,7 @@ async test "docs page renders sidebar, article, toc and edit link" {
   let html = render_route(Doc("configuration"), Some(md))
   assert_true(html.contains("Getting Started"))
   assert_true(html.contains("id=\"config-file\""))
-  assert_true(html.contains("href=\"/moonspec/docs/getting-started\""))
+  assert_true(html.contains("href=\"/moonspec/docs/getting-started/\""))
   assert_true(html.contains("On this page"))
   assert_true(html.contains("edit/main/docs/guide/configuration.md"))
   assert_true(html.contains("tk-kw"))
@@ -44,7 +44,7 @@ async test "unknown pages render the not-found view" {
 test "target_href" {
   assert_eq(
     target_href("/moonspec/", Internal(Doc("x"), Some("a"))),
-    "/moonspec/docs/x#a",
+    "/moonspec/docs/x/#a",
   )
   assert_eq(target_href("/moonspec/", Anchor("a")), "#a")
   assert_eq(

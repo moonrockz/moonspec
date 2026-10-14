@@ -68,6 +68,22 @@ test "url changes inside the base switch routes" {
 }
 
 ///|
+test "url changes with a trailing slash switch routes" {
+  let m = Model::init(site_data(Landing, None))
+  let m2 = step(
+    m,
+    UrlChanged(@url.parse("http://localhost/moonspec/docs/configuration/")),
+  )
+  assert_eq(m2.route, Doc("configuration"))
+  let config = m.config
+  assert_eq(
+    site_path(config, "/moonspec/docs/configuration/"),
+    Some("docs/configuration/"),
+  )
+  assert_eq(site_path(config, "/moonspec/next/docs/x/"), None)
+}
+
+///|
 test "url changes outside the base are ignored" {
   let m = Model::init(site_data(Landing, None))
   let m2 = step(
@@ -156,10 +172,10 @@ test "entry_href builds route and anchor" {
     path: [],
     text: "",
   }
-  assert_eq(entry_href(config, e), "/moonspec/docs/configuration#a-b")
+  assert_eq(entry_href(config, e), "/moonspec/docs/configuration/#a-b")
   assert_eq(
     entry_href(config, { ..e, anchor: "", }),
-    "/moonspec/docs/configuration",
+    "/moonspec/docs/configuration/",
   )
 }
 

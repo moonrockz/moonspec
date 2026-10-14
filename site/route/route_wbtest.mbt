@@ -31,7 +31,11 @@ test "to_path and href" {
   assert_eq(href("/moonspec/", Landing), "/moonspec/")
   assert_eq(
     href("/moonspec/next/", Doc("configuration")),
-    "/moonspec/next/docs/configuration",
+    "/moonspec/next/docs/configuration/",
+  )
+  assert_eq(
+    href("/moonspec/", Migration("v0.11.0")),
+    "/moonspec/migrations/v0.11.0/",
   )
 }
 
@@ -44,6 +48,8 @@ test "strip_base: paths inside and outside the base" {
   assert_eq(strip_base("/moonspec/next/", "/moonspec/docs/x"), None)
   assert_eq(strip_base("/moonspec/", "/other/docs/x"), None)
   assert_eq(strip_base("/", "/docs/x"), Some("docs/x"))
+  assert_eq(strip_base("/moonspec/", "/moonspec/docs/x/"), Some("docs/x/"))
+  assert_eq(Route::parse("docs/x/"), Doc("x"))
 }
 
 ///|
