@@ -78,3 +78,36 @@ async test "initial_theme sets the theme attribute on the first render" {
   }).render(url="http://localhost/moonspec/")
   assert_true(html.contains("data-theme=\"dark\""))
 }
+
+///|
+#cfg(not(target="js"))
+async test "search dialog, install tabs and heading anchors carry ARIA" {
+  let landing = render_route(Landing, None)
+  assert_true(landing.contains("role=\"tablist\""))
+  assert_true(landing.contains("aria-selected=\"true\""))
+  assert_true(landing.contains("aria-selected=\"false\""))
+  assert_true(landing.contains("id=\"ms-search-btn\""))
+  let docs = render_route(Doc("configuration"), Some("# Configuration\n"))
+  assert_true(docs.contains("aria-hidden=\"true\""))
+  assert_true(docs.contains("tabindex=\"-1\""))
+}
+
+///|
+/// Renders the page with the model's state fixed to `m`.
+#cfg(not(target="js"))
+async fn render_model(m : Model) -> String {
+  let json = site_data(m.route, None).encode()
+  @rabbita.new(() => {
+    let (model, emit) = @rabbita.create_state(m, update~)
+    model.map(m => view(m, emit, json))
+  }).render(url="http://localhost/moonspec/")
+}
+
+///|
+#cfg(not(target="js"))
+async test "the open search dialog is modal and marks the selection" {
+  let m = Model::init(site_data(Landing, None))
+  let html = render_model({ ..m, search: { ..m.search, open: true, }, })
+  assert_true(html.contains("role=\"dialog\""))
+  assert_true(html.contains("aria-modal=\"true\""))
+}

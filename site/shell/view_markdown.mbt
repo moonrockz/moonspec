@@ -55,7 +55,12 @@ fn md_block(base : String, b : @markdown.Block) -> Html {
       let attrs = @html.Attrs::build().id(id)
       let kids = [
         ..md_inlines(base, xs),
-        @html.a(class="ms-anchor", href="#" + id, "#"),
+        @html.a(
+          class="ms-anchor",
+          href="#" + id,
+          attrs=@html.Attrs::build().aria_hidden("true").tabindex(-1),
+          "#",
+        ),
       ]
       match level {
         1 => @html.h1(attrs~, kids)

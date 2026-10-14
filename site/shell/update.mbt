@@ -158,7 +158,10 @@ pub fn update(
     }
     OpenSearch => open_search(m, emit)
     CloseSearch =>
-      ({ ..m, search: { ..m.search, open: false, }, }, @rabbita.none)
+      (
+        { ..m, search: { ..m.search, open: false, }, },
+        run_effect(fn() { focus("ms-search-btn") }),
+      )
     SearchInput(query) =>
       ({ ..m, search: { ..m.search, query, selected: 0, }, }, @rabbita.none)
     IndexLoaded(Ok(text)) => {
@@ -177,7 +180,7 @@ pub fn update(
       } else {
         (m.search.selected + delta + count) % count
       }
-      ({ ..m, search: { ..m.search, selected, }, }, @rabbita.none)
+      ({ ..m, search: { ..m.search, selected, }, }, run_effect(scroll_selected))
     }
     OpenSelected =>
       match flat_results(m).get(m.search.selected) {

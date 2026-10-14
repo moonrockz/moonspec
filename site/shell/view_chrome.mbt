@@ -70,10 +70,12 @@ fn nav_bar(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
       @html.a(href=@data.api_docs_url, "API ↗"),
       @html.a(href=@data.github_repo, "GitHub ↗"),
     ]),
-    @html.button(class="ms-search-btn", on_click=emit(OpenSearch), [
-      @html.span("Search docs"),
-      @html.kbd("⌘K"),
-    ]),
+    @html.button(
+      id="ms-search-btn",
+      class="ms-search-btn",
+      on_click=emit(OpenSearch),
+      [@html.span("Search docs"), @html.kbd("⌘K")],
+    ),
     version_picker(m),
     @html.button(
       class="ms-theme",
