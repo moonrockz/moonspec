@@ -96,3 +96,93 @@ test "inline_text and block_text flatten content" {
   assert_eq(title_of("intro\n\n# Real Title\n"), "Real Title")
   assert_eq(title_of("no heading"), "")
 }
+
+///|
+fn para(src : String) -> Array[Inline] {
+  let doc = parse(src, site_ctx("docs/guide/getting-started.md"))
+  match doc.blocks {
+    [Paragraph(inlines)] => inlines
+    _ => []
+  }
+}
+
+///|
+test "autolinks" {
+  assert_eq(para("<https://e.com>"), [
+    Link(External("https://e.com"), [Text("https://e.com")]),
+  ])
+  assert_eq(para("<a@b.c>"), [Link(External("mailto:a@b.c"), [Text("a@b.c")])])
+}
+
+///|
+test "two trailing spaces make a hard break" {
+  assert_eq(para("a  \nb"), [Text("a"), LineBreak, Text("b")])
+}
+
+///|
+test "images use the raw GitHub URL" {
+  assert_eq(para("![alt](img/a.png)"), [
+    Image(
+      "https://raw.githubusercontent.com/moonrockz/moonspec/v0.11.0/docs/guide/img/a.png",
+      "alt",
+    ),
+  ])
+}
+
+///|
+test "reference links resolve to site routes" {
+  let doc = parse(
+    "[x][r]\n\n[r]: step-definitions.md\n",
+    site_ctx("docs/guide/getting-started.md"),
+  )
+  assert_eq(doc.blocks, [
+    Paragraph([Link(Internal(Doc("step-definitions"), None), [Text("x")])]),
+  ])
+}
+
+///|
+test "strikethrough" {
+  assert_eq(para("~~a~~"), [Strike([Text("a")])])
+}
+
+///|
+test "nested lists" {
+  let doc = parse("- a\n  - b\n", site_ctx("docs/guide/getting-started.md"))
+  assert_eq(doc.blocks, [
+    BulletList([
+      [Paragraph([Text("a")]), BulletList([[Paragraph([Text("b")])]])],
+    ]),
+  ])
+}
+
+///|
+test "the first of two h1 headings is the title" {
+  let doc = parse("# One\n\n# Two\n", site_ctx("docs/guide/getting-started.md"))
+  assert_eq(doc.title, "One")
+}
+
+///|
+test "rewrite_link: empty and bare-hash destinations" {
+  let ctx = site_ctx("docs/guide/getting-started.md")
+  assert_eq(
+    rewrite_link("", ctx),
+    External("https://github.com/moonrockz/moonspec/tree/v0.11.0/docs/guide"),
+  )
+  assert_eq(rewrite_link("#", ctx), Anchor(""))
+}
+
+///|
+test "rewrite_link: tel and protocol-relative links (current behavior)" {
+  let ctx = site_ctx("docs/guide/getting-started.md")
+  // Pinned, not endorsed: both become broken repository links.
+  assert_eq(
+    rewrite_link("tel:+123", ctx),
+    External(
+      "https://github.com/moonrockz/moonspec/tree/v0.11.0/docs/guide/tel:+123",
+    ),
+  )
+  assert_eq(
+    rewrite_link("//host/x", ctx),
+    External("https://github.com/moonrockz/moonspec/tree/v0.11.0/host/x"),
+  )
+}
