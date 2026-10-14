@@ -1,0 +1,66 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec-site/search"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "moonrockz/moonspec-site/markdown",
+  "moonrockz/moonspec-site/route",
+}
+
+// Values
+pub fn entries_for(String, @route.Route, @markdown.Document) -> Array[Entry]
+
+pub fn excerpt(String, Array[String]) -> Array[Segment]
+
+pub fn group_by_page(Array[Match]) -> Array[(String, Array[Match])]
+
+pub fn search(Index, String, limit? : Int) -> Array[Match]
+
+pub fn tokenize(String) -> Array[String]
+
+// Errors
+
+// Types and methods
+pub(all) struct Entry {
+  route : @route.Route
+  anchor : String
+  page : String
+  path : Array[String]
+  text : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Entry::equal(Self, Self) -> Bool
+pub fn Entry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Entry::not_equal(Self, Self) -> Bool
+pub fn Entry::to_json(Self) -> Json
+pub fn Entry::to_repr(Self) -> @debug.Repr
+
+pub struct Index {
+  // private fields
+} derive(Eq, @debug.Debug)
+pub fn Index::equal(Self, Self) -> Bool
+pub fn Index::new(Array[Entry]) -> Self
+pub fn Index::not_equal(Self, Self) -> Bool
+pub fn Index::size(Self) -> Int
+pub fn Index::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Match {
+  entry : Entry
+  score : Int
+  excerpt : Array[Segment]
+} derive(Eq, @debug.Debug)
+pub fn Match::equal(Self, Self) -> Bool
+pub fn Match::not_equal(Self, Self) -> Bool
+pub fn Match::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Segment {
+  Plain(String)
+  Hit(String)
+} derive(Eq, @debug.Debug)
+pub fn Segment::equal(Self, Self) -> Bool
+pub fn Segment::not_equal(Self, Self) -> Bool
+pub fn Segment::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits

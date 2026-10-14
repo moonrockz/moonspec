@@ -1,0 +1,124 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec-site/shell"
+
+import {
+  "moonbit-community/rabbita",
+  "moonbit-community/rabbita/cmd",
+  "moonbit-community/rabbita/common",
+  "moonbit-community/rabbita/html",
+  "moonbit-community/rabbita/url",
+  "moonbitlang/core/debug",
+  "moonrockz/moonspec-site/content",
+  "moonrockz/moonspec-site/data",
+  "moonrockz/moonspec-site/markdown",
+  "moonrockz/moonspec-site/route",
+  "moonrockz/moonspec-site/search",
+}
+
+// Values
+pub fn code_view(String, String) -> @html.Html
+
+pub fn component(@data.SiteData, String) -> @rabbita.Val[@html.Html]
+
+pub fn current_results(Model) -> Array[(String, Array[@search.Match])]
+
+pub fn entry_href(@data.SiteConfig, @search.Entry) -> String
+
+pub fn md_view(String, Array[@markdown.Block]) -> @html.Html
+
+pub fn read_theme() -> Theme
+
+pub fn target_href(String, @markdown.Target) -> String
+
+pub fn update(Model, Msg, @cmd.Emit[Msg]) -> (Model, @cmd.Cmd)
+
+pub fn view(Model, @cmd.Emit[Msg], String) -> @html.Html
+
+// Errors
+
+// Types and methods
+pub(all) enum IndexState {
+  NotLoaded
+  LoadingIndex
+  IndexReady(@search.Index)
+  IndexFailed
+} derive(Eq, @debug.Debug)
+pub fn IndexState::equal(Self, Self) -> Bool
+pub fn IndexState::not_equal(Self, Self) -> Bool
+pub fn IndexState::to_repr(Self) -> @debug.Repr
+
+pub(all) enum InstallTab {
+  Installed
+  Moonx
+} derive(Eq, @debug.Debug)
+pub fn InstallTab::equal(Self, Self) -> Bool
+pub fn InstallTab::not_equal(Self, Self) -> Bool
+pub fn InstallTab::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Model {
+  config : @data.SiteConfig
+  manifest : @content.Manifest
+  route : @route.Route
+  page : PageState
+  theme : Theme
+  search : SearchState
+  install_tab : InstallTab
+  menu_open : Bool
+  pending_anchor : String?
+} derive(Eq, @debug.Debug)
+pub fn Model::equal(Self, Self) -> Bool
+pub fn Model::init(@data.SiteData) -> Self
+pub fn Model::not_equal(Self, Self) -> Bool
+pub fn Model::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Msg {
+  UrlChanged(@url.Url)
+  UrlRequested(@url.UrlRequest)
+  ContentLoaded(@route.Route, Result[String, Error])
+  ThemeLoaded(Theme)
+  ToggleTheme
+  OpenSearch
+  CloseSearch
+  SearchInput(String)
+  IndexLoaded(Result[String, Error])
+  MoveSelection(Int)
+  OpenSelected
+  KeyDown(@common.Keyboard)
+  SelectTab(InstallTab)
+  ToggleMenu
+}
+
+pub(all) enum PageState {
+  NoContent
+  Loading
+  Ready(@markdown.Document)
+  PageFailed
+} derive(Eq, @debug.Debug)
+pub fn PageState::equal(Self, Self) -> Bool
+pub fn PageState::not_equal(Self, Self) -> Bool
+pub fn PageState::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SearchState {
+  open : Bool
+  query : String
+  selected : Int
+  index : IndexState
+} derive(Eq, @debug.Debug)
+pub fn SearchState::equal(Self, Self) -> Bool
+pub fn SearchState::not_equal(Self, Self) -> Bool
+pub fn SearchState::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Theme {
+  Auto
+  Light
+  Dark
+} derive(Eq, @debug.Debug)
+pub fn Theme::equal(Self, Self) -> Bool
+pub fn Theme::not_equal(Self, Self) -> Bool
+pub fn Theme::parse(String) -> Self
+pub fn Theme::to_repr(Self) -> @debug.Repr
+pub fn Theme::to_string(Self) -> String
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+#MISE description="Build one version of the site: warren bundle + pre-rendered pages"
+set -euo pipefail
+
+out=site/dist
+args=("$@")
+for ((i = 0; i < ${#args[@]}; i++)); do
+  if [ "${args[$i]}" = "--out" ]; then
+    out=${args[$((i + 1))]}
+  fi
+done
+mkdir -p "$out"
+out_abs=$(cd "$out" && pwd)
+
+# Make every path argument absolute, because the build runs inside site/.
+abs_args=()
+for ((i = 0; i < ${#args[@]}; i++)); do
+  case "${args[$i]}" in
+    --out) abs_args+=(--out "$out_abs"); i=$((i + 1)) ;;
+    --content) abs_args+=(--content "$(cd "${args[$((i + 1))]}" && pwd)"); i=$((i + 1)) ;;
+    *) abs_args+=("${args[$i]}") ;;
+  esac
+done
+
+cd site
+# warren only accepts a dist directory inside site/, so bundle there and copy.
+rm -rf .bundle
+warren build --browser-entry app --dist .bundle
+cp -R .bundle/. "$out_abs"/
+rm -rf .bundle
+moon run --target native prerender -- "${abs_args[@]}"

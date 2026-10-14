@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Build the site at base / and serve it on http://localhost:8080"
+set -euo pipefail
+
+release=$(git tag --list 'v*' --sort=-v:refname | head -1)
+mise run site:build -- --content . --channel release --site-root / \
+  --release-version "${release:-v0.0.0}" --ref main --out site/dist
+python3 -m http.server 8080 --directory site/dist

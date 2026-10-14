@@ -11,3 +11,12 @@ examples/*/target/
 examples/*/.mooncakes/
 examples/*/src/*_feature_test.mbt
 .beads.gate.lock
+
+# Brainstorming companion files
+.superpowers/
+
+# Site build output
+site/dist/
+site/.bundle/
+site/_build/
+site/.mooncakes/

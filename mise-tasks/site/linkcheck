@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#MISE description="Check links, routes and the search index of a built site"
+set -euo pipefail
+
+args=()
+for ((i = 1; i <= $#; i++)); do
+  a=${!i}
+  if [ "$a" = "--dist" ]; then
+    j=$((i + 1))
+    args+=(--dist "$(cd "${!j}" && pwd)")
+    i=$j
+  else
+    args+=("$a")
+  fi
+done
+cd site
+moon run --target native linkcheck -- "${args[@]}"
