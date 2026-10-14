@@ -4,5 +4,4 @@ import {
   "moonbitlang/parser",
   "moonbitlang/parser/syntax",
   "moonbitlang/parser/attribute",
-  "moonbitlang/lexer/basic",
 }

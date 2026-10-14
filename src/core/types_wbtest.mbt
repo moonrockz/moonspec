@@ -2,7 +2,7 @@
 test "StepArg struct destructuring" {
   let arg = StepArg::{ value: IntVal(42), raw: "42", }
   match arg {
-    { value: IntVal(n), raw, .. } => {
+    { value: IntVal(n), raw, } => {
       assert_eq(n, 42)
       assert_eq(raw, "42")
     }
@@ -461,4 +461,9 @@ test "StepHookCtx scenario and step accessors and attach" {
   assert_eq(ctx.step().keyword, "When ")
   ctx.attach_bytes(b"data", "application/octet-stream")
   assert_eq(ctx.pending_attachments().length(), 1)
+}
+
+///|
+fn DocString::DocString(content~ : String, media_type? : String) -> DocString {
+  { content, media_type, }
 }

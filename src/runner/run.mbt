@@ -36,14 +36,11 @@ fn write_formatter_output(entry : FormatterEntry) -> Unit {
 fn make_meta_envelope() -> @cucumber_messages.Envelope {
   let json : Json = {
     "meta": {
-      "protocolVersion": "25.0.1".to_json(),
-      "implementation": {
-        "name": "moonspec".to_json(),
-        "version": "0.4.0".to_json(),
-      },
-      "runtime": { "name": "moonbit".to_json() },
-      "os": { "name": "unknown".to_json() },
-      "cpu": { "name": "unknown".to_json() },
+      "protocolVersion": Json("25.0.1"),
+      "implementation": { "name": Json("moonspec"), "version": Json("0.4.0") },
+      "runtime": { "name": Json("moonbit") },
+      "os": { "name": Json("unknown") },
+      "cpu": { "name": Json("unknown") },
     },
   }
   @json.from_json(json) catch {
@@ -68,9 +65,9 @@ fn make_source_envelope(
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "source": {
-      "uri": uri.to_json(),
-      "data": data.to_json(),
-      "mediaType": gherkin_media_type(uri).to_json(),
+      "uri": Json(uri),
+      "data": Json(data),
+      "mediaType": Json(gherkin_media_type(uri)),
     },
   }
   @json.from_json(json) catch {
@@ -82,11 +79,8 @@ fn make_source_envelope(
 fn make_test_run_started_envelope(id : String) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testRunStarted": {
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
-      "id": id.to_json(),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
+      "id": Json(id),
     },
   }
   @json.from_json(json) catch {
@@ -101,12 +95,9 @@ fn make_test_run_finished_envelope(
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testRunFinished": {
-      "success": success.to_json(),
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
-      "testRunStartedId": run_id.to_json(),
+      "success": Json(success),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
+      "testRunStartedId": Json(run_id),
     },
   }
   @json.from_json(json) catch {
@@ -122,13 +113,10 @@ fn make_test_case_started_envelope(
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseStarted": {
-      "attempt": attempt.to_json(),
-      "id": id.to_json(),
-      "testCaseId": test_case_id.to_json(),
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
+      "attempt": Json(attempt),
+      "id": Json(id),
+      "testCaseId": Json(test_case_id),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
     },
   }
   @json.from_json(json) catch {
@@ -143,12 +131,9 @@ fn make_test_case_finished_envelope(
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testCaseFinished": {
-      "testCaseStartedId": test_case_started_id.to_json(),
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
-      "willBeRetried": will_be_retried.to_json(),
+      "testCaseStartedId": Json(test_case_started_id),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
+      "willBeRetried": Json(will_be_retried),
     },
   }
   @json.from_json(json) catch {
@@ -163,12 +148,9 @@ fn make_test_step_started_envelope(
 ) -> @cucumber_messages.Envelope {
   let json : Json = {
     "testStepStarted": {
-      "testCaseStartedId": test_case_started_id.to_json(),
-      "testStepId": test_step_id.to_json(),
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
+      "testCaseStartedId": Json(test_case_started_id),
+      "testStepId": Json(test_step_id),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
     },
   }
   @json.from_json(json) catch {
@@ -185,23 +167,20 @@ fn make_test_step_finished_envelope(
 ) -> @cucumber_messages.Envelope {
   let result_json : Map[String, Json] = Map([])
   result_json["duration"] = {
-    "seconds": (0 : Int32).to_json(),
-    "nanos": (0 : Int32).to_json(),
+    "seconds": Json((0 : Int32)),
+    "nanos": Json((0 : Int32)),
   }
-  result_json["status"] = status.to_json()
+  result_json["status"] = Json(status)
   match message {
-    Some(msg) => result_json["message"] = msg.to_json()
+    Some(msg) => result_json["message"] = Json(msg)
     None => ()
   }
   let json : Json = {
     "testStepFinished": {
-      "testCaseStartedId": test_case_started_id.to_json(),
-      "testStepId": test_step_id.to_json(),
-      "testStepResult": result_json.to_json(),
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
+      "testCaseStartedId": Json(test_case_started_id),
+      "testStepId": Json(test_step_id),
+      "testStepResult": Json(result_json),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
     },
   }
   @json.from_json(json) catch {
@@ -219,24 +198,24 @@ fn make_attachment_envelope(
   test_step_id : String?,
 ) -> @cucumber_messages.Envelope {
   let json_map : Map[String, Json] = Map([])
-  json_map["body"] = body.to_json()
-  json_map["contentEncoding"] = content_encoding.to_json()
-  json_map["mediaType"] = media_type.to_json()
+  json_map["body"] = Json(body)
+  json_map["contentEncoding"] = Json(content_encoding)
+  json_map["mediaType"] = Json(media_type)
   match file_name {
-    Some(f) => json_map["fileName"] = f.to_json()
+    Some(f) => json_map["fileName"] = Json(f)
     None => ()
   }
   match test_case_started_id {
-    Some(id) => json_map["testCaseStartedId"] = id.to_json()
+    Some(id) => json_map["testCaseStartedId"] = Json(id)
     None => ()
   }
   match test_step_id {
-    Some(id) => json_map["testStepId"] = id.to_json()
+    Some(id) => json_map["testStepId"] = Json(id)
     None => ()
   }
   json_map["timestamp"] = (
-    { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } : Json)
-  let json : Json = { "attachment": json_map.to_json() }
+    { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) } : Json)
+  let json : Json = { "attachment": Json(json_map) }
   @json.from_json(json) catch {
     _ => panic()
   }
@@ -250,19 +229,19 @@ fn make_external_attachment_envelope(
   test_step_id : String?,
 ) -> @cucumber_messages.Envelope {
   let json_map : Map[String, Json] = Map([])
-  json_map["url"] = url.to_json()
-  json_map["mediaType"] = media_type.to_json()
+  json_map["url"] = Json(url)
+  json_map["mediaType"] = Json(media_type)
   match test_case_started_id {
-    Some(id) => json_map["testCaseStartedId"] = id.to_json()
+    Some(id) => json_map["testCaseStartedId"] = Json(id)
     None => ()
   }
   match test_step_id {
-    Some(id) => json_map["testStepId"] = id.to_json()
+    Some(id) => json_map["testStepId"] = Json(id)
     None => ()
   }
   json_map["timestamp"] = (
-    { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } : Json)
-  let json : Json = { "externalAttachment": json_map.to_json() }
+    { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) } : Json)
+  let json : Json = { "externalAttachment": Json(json_map) }
   @json.from_json(json) catch {
     _ => panic()
   }
@@ -286,18 +265,17 @@ fn emit_run_hook_attachments(
         let enc_str = encoding.to_json().stringify()
         let enc_clean = enc_str[1:enc_str.length() - 1].to_owned()
         let json_map : Map[String, Json] = Map([])
-        json_map["body"] = body.to_json()
-        json_map["contentEncoding"] = enc_clean.to_json()
-        json_map["mediaType"] = media_type.to_json()
+        json_map["body"] = Json(body)
+        json_map["contentEncoding"] = Json(enc_clean)
+        json_map["mediaType"] = Json(media_type)
         match file_name {
-          Some(f) => json_map["fileName"] = f.to_json()
+          Some(f) => json_map["fileName"] = Json(f)
           None => ()
         }
-        json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
+        json_map["testRunHookStartedId"] = Json(test_run_hook_started_id)
         json_map["timestamp"] = (
-          { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } :
-          Json)
-        let json : Json = { "attachment": json_map.to_json() }
+          { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) } : Json)
+        let json : Json = { "attachment": Json(json_map) }
         let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
           _ => continue
         }
@@ -305,13 +283,12 @@ fn emit_run_hook_attachments(
       }
       @core.PendingAttachment::External(url~, media_type~) => {
         let json_map : Map[String, Json] = Map([])
-        json_map["url"] = url.to_json()
-        json_map["mediaType"] = media_type.to_json()
-        json_map["testRunHookStartedId"] = test_run_hook_started_id.to_json()
+        json_map["url"] = Json(url)
+        json_map["mediaType"] = Json(media_type)
+        json_map["testRunHookStartedId"] = Json(test_run_hook_started_id)
         json_map["timestamp"] = (
-          { "seconds": (0 : Int32).to_json(), "nanos": (0 : Int32).to_json() } :
-          Json)
-        let json : Json = { "externalAttachment": json_map.to_json() }
+          { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) } : Json)
+        let json : Json = { "externalAttachment": Json(json_map) }
         let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
           _ => continue
         }
@@ -456,8 +433,8 @@ async fn[W : @core.World] run_detailed(
       let uri = entry.0
       let json : Json = {
         "gherkinDocument": {
-          "uri": uri.to_json(),
-          "comments": ([] : Array[Int32]).to_json(),
+          "uri": Json(uri),
+          "comments": Json(([] : Array[Int32])),
         },
       }
       let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -470,15 +447,15 @@ async fn[W : @core.World] run_detailed(
   if sinks.length() > 0 {
     for pe in all_parse_errors {
       let source_ref : Map[String, Json] = Map([])
-      source_ref["uri"] = pe.uri.to_json()
+      source_ref["uri"] = Json(pe.uri)
       match pe.line {
-        Some(line) => source_ref["location"] = { "line": line.to_json() }
+        Some(line) => source_ref["location"] = { "line": Json(line) }
         None => ()
       }
       let json : Json = {
         "parseError": {
-          "source": source_ref.to_json(),
-          "message": pe.message.to_json(),
+          "source": Json(source_ref),
+          "message": Json(pe.message),
         },
       }
       let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -529,14 +506,14 @@ async fn[W : @core.World] run_detailed(
   // Emit ParameterType envelopes for custom parameter types
   if sinks.length() > 0 {
     for cpt in custom_param_types {
-      let regex_json : Array[Json] = cpt.patterns.map(fn(p) { p.to_json() })
+      let regex_json : Array[Json] = cpt.patterns.map(fn(p) { Json(p) })
       let json : Json = {
         "parameterType": {
-          "id": id_gen.next_param_type_id().to_json(),
-          "name": cpt.name.to_json(),
-          "regularExpressions": regex_json.to_json(),
-          "preferForRegularExpressionMatch": false.to_json(),
-          "useForSnippets": true.to_json(),
+          "id": Json(id_gen.next_param_type_id()),
+          "name": Json(cpt.name),
+          "regularExpressions": Json(regex_json),
+          "preferForRegularExpressionMatch": Json(false),
+          "useForSnippets": Json(true),
         },
       }
       let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -553,11 +530,11 @@ async fn[W : @core.World] run_detailed(
       match hook.source {
         Some(src) => {
           match src.uri {
-            Some(uri) => source_ref["uri"] = uri.to_json()
+            Some(uri) => source_ref["uri"] = Json(uri)
             None => ()
           }
           match src.line {
-            Some(line) => source_ref["location"] = { "line": line.to_json() }
+            Some(line) => source_ref["location"] = { "line": Json(line) }
             None => ()
           }
         }
@@ -573,9 +550,9 @@ async fn[W : @core.World] run_detailed(
       }
       let json : Json = {
         "hook": {
-          "id": hook.id.to_json(),
-          "sourceReference": source_ref.to_json(),
-          "type": hook_type_str.to_json(),
+          "id": Json(hook.id),
+          "sourceReference": Json(source_ref),
+          "type": Json(hook_type_str),
         },
       }
       let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -613,12 +590,12 @@ async fn[W : @core.World] run_detailed(
     if sinks.length() > 0 {
       let json : Json = {
         "testRunHookStarted": {
-          "id": trhs_id.to_json(),
-          "testRunStartedId": run_id.to_json(),
-          "hookId": hook.id.to_json(),
+          "id": Json(trhs_id),
+          "testRunStartedId": Json(run_id),
+          "hookId": Json(hook.id),
           "timestamp": {
-            "seconds": (0 : Int32).to_json(),
-            "nanos": (0 : Int32).to_json(),
+            "seconds": Json((0 : Int32)),
+            "nanos": Json((0 : Int32)),
           },
         },
       }
@@ -644,17 +621,17 @@ async fn[W : @core.World] run_detailed(
     if sinks.length() > 0 {
       let json : Json = {
         "testRunHookFinished": {
-          "testRunHookStartedId": trhs_id.to_json(),
+          "testRunHookStartedId": Json(trhs_id),
           "result": {
             "duration": {
-              "seconds": (0 : Int32).to_json(),
-              "nanos": (0 : Int32).to_json(),
+              "seconds": Json((0 : Int32)),
+              "nanos": Json((0 : Int32)),
             },
-            "status": result_status.to_json(),
+            "status": Json(result_status),
           },
           "timestamp": {
-            "seconds": (0 : Int32).to_json(),
-            "nanos": (0 : Int32).to_json(),
+            "seconds": Json((0 : Int32)),
+            "nanos": Json((0 : Int32)),
           },
         },
       }
@@ -737,12 +714,12 @@ async fn[W : @core.World] run_detailed(
     if sinks.length() > 0 {
       let json : Json = {
         "testRunHookStarted": {
-          "id": trhs_id.to_json(),
-          "testRunStartedId": run_id.to_json(),
-          "hookId": hook.id.to_json(),
+          "id": Json(trhs_id),
+          "testRunStartedId": Json(run_id),
+          "hookId": Json(hook.id),
           "timestamp": {
-            "seconds": (0 : Int32).to_json(),
-            "nanos": (0 : Int32).to_json(),
+            "seconds": Json((0 : Int32)),
+            "nanos": Json((0 : Int32)),
           },
         },
       }
@@ -768,17 +745,17 @@ async fn[W : @core.World] run_detailed(
     if sinks.length() > 0 {
       let json : Json = {
         "testRunHookFinished": {
-          "testRunHookStartedId": trhs_id.to_json(),
+          "testRunHookStartedId": Json(trhs_id),
           "result": {
             "duration": {
-              "seconds": (0 : Int32).to_json(),
-              "nanos": (0 : Int32).to_json(),
+              "seconds": Json((0 : Int32)),
+              "nanos": Json((0 : Int32)),
             },
-            "status": result_status.to_json(),
+            "status": Json(result_status),
           },
           "timestamp": {
-            "seconds": (0 : Int32).to_json(),
-            "nanos": (0 : Int32).to_json(),
+            "seconds": Json((0 : Int32)),
+            "nanos": Json((0 : Int32)),
           },
         },
       }

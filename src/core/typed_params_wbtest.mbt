@@ -5,6 +5,12 @@ struct Shade {
 } derive(Eq, Debug)
 
 ///|
+pub extend Shade with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend Shade with Eq::{not_equal, equal}
+
+///|
 test "typed parameter handles preserve domain values and raw text" {
   let setup = Setup::new()
   let shade = setup.define_param_type_with(

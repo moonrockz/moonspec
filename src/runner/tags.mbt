@@ -18,6 +18,10 @@ pub extend TagExpression with Eq::{not_equal, equal}
 ///|
 /// Parse a tag expression string into a TagExpression AST.
 /// An empty string yields `Always` which matches any set of tags.
+///
+/// The parser does not yet reject malformed input; the `raise` stays so that
+/// validation can be added without changing the public signature.
+#warnings("-unused_error_type")
 pub fn TagExpression::parse(input : String) -> TagExpression raise Error {
   let trimmed = trim_string(input)
   if trimmed.is_empty() {
