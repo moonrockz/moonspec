@@ -41,7 +41,7 @@ pub fn build_test_cases(
     // Prepend before_test_case hook steps
     for hook in before_case_hooks {
       let step_id = id_gen.next("ts")
-      test_steps.push({ "id": step_id.to_json(), "hookId": hook.id.to_json() })
+      test_steps.push({ "id": Json(step_id), "hookId": Json(hook.id) })
     }
     for step in pickle.steps {
       let keyword = match step.type_ {
@@ -54,7 +54,7 @@ pub fn build_test_cases(
         match registry.find_match(step.text, keyword~) {
           Matched(def, _) =>
             match def.id {
-              Some(id) => [id.to_string().to_json()]
+              Some(id) => [Json(id.to_string())]
               None => []
             }
           Undefined(..) => []
@@ -65,22 +65,22 @@ pub fn build_test_cases(
       }
       let step_id = id_gen.next("ts")
       test_steps.push({
-        "id": step_id.to_json(),
-        "pickleStepId": step.id.to_json(),
-        "stepDefinitionIds": step_def_ids.to_json(),
+        "id": Json(step_id),
+        "pickleStepId": Json(step.id),
+        "stepDefinitionIds": Json(step_def_ids),
       })
     }
     // Append after_test_case hook steps
     for hook in after_case_hooks {
       let step_id = id_gen.next("ts")
-      test_steps.push({ "id": step_id.to_json(), "hookId": hook.id.to_json() })
+      test_steps.push({ "id": Json(step_id), "hookId": Json(hook.id) })
     }
     let tc_id = id_gen.next("tc")
     let json : Json = {
       "testCase": {
-        "id": tc_id.to_json(),
-        "pickleId": pickle.id.to_json(),
-        "testSteps": test_steps.to_json(),
+        "id": Json(tc_id),
+        "pickleId": Json(pickle.id),
+        "testSteps": Json(test_steps),
       },
     }
     let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -106,11 +106,11 @@ pub fn build_step_definition_envelopes(
     match step_def.source {
       Some(src) => {
         match src.uri {
-          Some(uri) => source_ref["uri"] = uri.to_json()
+          Some(uri) => source_ref["uri"] = Json(uri)
           None => ()
         }
         match src.line {
-          Some(line) => source_ref["location"] = { "line": line.to_json() }
+          Some(line) => source_ref["location"] = { "line": Json(line) }
           None => ()
         }
       }
@@ -118,12 +118,12 @@ pub fn build_step_definition_envelopes(
     }
     let json : Json = {
       "stepDefinition": {
-        "id": id.to_json(),
+        "id": Json(id),
         "pattern": {
-          "source": step_def.pattern.to_json(),
-          "type": "CUCUMBER_EXPRESSION".to_json(),
+          "source": Json(step_def.pattern),
+          "type": Json("CUCUMBER_EXPRESSION"),
         },
-        "sourceReference": source_ref.to_json(),
+        "sourceReference": Json(source_ref),
       },
     }
     let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {

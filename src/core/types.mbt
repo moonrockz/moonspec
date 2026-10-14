@@ -100,8 +100,12 @@ pub impl Show for PendingAttachment with fn output(self, logger) {
   match self {
     Embedded(body~, encoding~, media_type~, file_name~) => {
       let enc_str = encoding.to_json().stringify()
+      let file_str = match file_name {
+        Some(name) => "Some(\{name.escape()})"
+        None => "None"
+      }
       logger.write_string(
-        "Embedded(body=\{body}, encoding=\{enc_str}, media_type=\{media_type}, file_name=\{file_name})",
+        "Embedded(body=\{body}, encoding=\{enc_str}, media_type=\{media_type}, file_name=\{file_str})",
       )
     }
     External(url~, media_type~) =>
@@ -779,8 +783,3 @@ pub extend DocString with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 pub extend DocString with Eq::{not_equal, equal}
-
-///|
-fn DocString::DocString(content~ : String, media_type? : String) -> DocString {
-  { content, media_type, }
-}

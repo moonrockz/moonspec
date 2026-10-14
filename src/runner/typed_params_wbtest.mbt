@@ -4,6 +4,12 @@ enum LightColor {
 } derive(Eq, Debug)
 
 ///|
+pub extend LightColor with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend LightColor with Eq::{not_equal, equal}
+
+///|
 struct TypedColorWorld {} derive(Default)
 
 ///|
@@ -59,7 +65,7 @@ async test "typed decoder failures report diagnostics in normal and dry-run exec
       _ => fail("expected failed decoding")
     }
     assert_true(steps[0].diagnostic is Some(_))
-    assert_true(steps[1].status is Skipped)
+    assert_true(steps[1].status is Skipped(_))
   }
 }
 

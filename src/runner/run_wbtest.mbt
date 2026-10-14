@@ -122,7 +122,7 @@ async test "run emits Meta envelope first" {
   opts.add_sink(collector)
   let _ = run(RunWorld::default, opts)
   assert_true(collector.envelopes.length() > 0)
-  guard collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_)
+  assert_true(collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_))
 }
 
 ///|
@@ -342,9 +342,11 @@ async test "full envelope sequence for two-scenario feature" {
   ]
   assert_eq(types, expected)
   // Verify first is Meta, last is TestRunFinished
-  guard collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_)
-  guard collector.envelopes[collector.envelopes.length() - 1]
-    is @cucumber_messages.Envelope::TestRunFinished(_)
+  assert_true(collector.envelopes[0] is @cucumber_messages.Envelope::Meta(_))
+  assert_true(
+    collector.envelopes[collector.envelopes.length() - 1]
+    is @cucumber_messages.Envelope::TestRunFinished(_),
+  )
 }
 
 ///|

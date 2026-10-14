@@ -116,7 +116,7 @@ test "StepRegistry find_match returns Undefined with snippet" {
   match setup.step_registry().find_match("I have many bananas") {
     Undefined(step_text~, snippet~, ..) => {
       assert_eq(step_text, "I have many bananas")
-      assert_true(contains(snippet, "s.step"))
+      assert_true(snippet.contains("s.step"))
     }
     _ => fail("expected Undefined")
   }

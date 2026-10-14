@@ -1,30 +1,4 @@
 ///|
-/// Check if haystack contains needle substring.
-fn contains(haystack : String, needle : String) -> Bool {
-  let h_len = haystack.length()
-  let n_len = needle.length()
-  if n_len == 0 {
-    return true
-  }
-  if n_len > h_len {
-    return false
-  }
-  for i = 0; i <= h_len - n_len; i = i + 1 {
-    let mut found = true
-    for j = 0; j < n_len; j = j + 1 {
-      if haystack[i + j] != needle[j] {
-        found = false
-        break
-      }
-    }
-    if found {
-      return true
-    }
-  }
-  false
-}
-
-///|
 /// Strip trailing spaces from a string.
 fn strip_trailing_space(s : String) -> String {
   let len = s.length()
@@ -48,7 +22,7 @@ fn strip_trailing_space(s : String) -> String {
 /// Detects potential cucumber expression parameters in the step text:
 /// integers become {int}, quoted strings become {string}, decimals become {float}.
 fn generate_snippet(step_text : String, keyword : String) -> String {
-  let method = match keyword {
+  let registrar = match keyword {
     "Given " => "given"
     "When " => "when"
     "Then " => "then"
@@ -58,7 +32,7 @@ fn generate_snippet(step_text : String, keyword : String) -> String {
   let kw = strip_trailing_space(keyword)
   let buf = StringBuilder()
   buf.write_string("s.")
-  buf.write_string(method)
+  buf.write_string(registrar)
   buf.write_string("(\"")
   buf.write_string(pattern)
   buf.write_string("\", fn(ctx) raise {\n")

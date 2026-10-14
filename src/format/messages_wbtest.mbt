@@ -3,10 +3,7 @@ test "MessagesFormatter serializes TestRunStarted envelope" {
   let fmt = MessagesFormatter::new()
   let json : Json = {
     "testRunStarted": {
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
     },
   }
   let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -22,11 +19,8 @@ test "MessagesFormatter serializes TestRunFinished envelope" {
   let fmt = MessagesFormatter::new()
   let json : Json = {
     "testRunFinished": {
-      "success": true.to_json(),
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
+      "success": Json(true),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
     },
   }
   let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
@@ -43,19 +37,13 @@ test "MessagesFormatter emits NDJSON with multiple envelopes" {
   let fmt = MessagesFormatter::new()
   let json1 : Json = {
     "testRunStarted": {
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
     },
   }
   let json2 : Json = {
     "testRunFinished": {
-      "success": true.to_json(),
-      "timestamp": {
-        "seconds": (0 : Int32).to_json(),
-        "nanos": (0 : Int32).to_json(),
-      },
+      "success": Json(true),
+      "timestamp": { "seconds": Json((0 : Int32)), "nanos": Json((0 : Int32)) },
     },
   }
   let env1 : @cucumber_messages.Envelope = @json.from_json(json1) catch {

@@ -1,12 +1,11 @@
 import {
   "moonrockz/moonspec/core",
-  "moonrockz/moonspec/runner",
   "moonrockz/cucumber-messages" @cucumber_messages,
   "moonbitlang/core/debug",
-  "moonbitlang/core/json",
   "Milky2018/xml",
 }
 
 import {
   "moonbitlang/core/env",
+  "moonbitlang/core/json",
 } for "wbtest"

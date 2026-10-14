@@ -53,7 +53,7 @@ fn make_pickle_envelope(
       "uri": uri,
       "name": name,
       "language": "en",
-      "steps": step_arr.to_json(),
+      "steps": Json(step_arr),
       "tags": [],
       "astNodeIds": ["sc1"],
     },
@@ -73,18 +73,18 @@ fn make_test_case_envelope(
   let steps_arr : Array[Json] = []
   for step in test_steps {
     let (step_id, pickle_step_id) = step
-    let step_json : Map[String, Json] = { "id": step_id.to_json() }
+    let step_json : Map[String, Json] = { "id": Json(step_id) }
     match pickle_step_id {
-      Some(psid) => step_json["pickleStepId"] = psid.to_json()
+      Some(psid) => step_json["pickleStepId"] = Json(psid)
       None => ()
     }
-    steps_arr.push(step_json.to_json())
+    steps_arr.push(Json(step_json))
   }
   let json : Json = {
     "testCase": {
       "id": id,
       "pickleId": pickle_id,
-      "testSteps": steps_arr.to_json(),
+      "testSteps": Json(steps_arr),
     },
   }
   @json.from_json(json) catch {
