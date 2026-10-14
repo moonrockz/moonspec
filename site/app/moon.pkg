@@ -1,0 +1,11 @@
+import {
+  "moonbit-community/rabbita",
+  "moonrockz/moonspec-site/shell",
+  "moonbitlang/core/json",
+}
+
+warnings = "-alert_experimental"
+
+supported_targets = "js"
+
+pkgtype(kind: "executable")

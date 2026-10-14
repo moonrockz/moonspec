@@ -1,0 +1,12 @@
+import {
+  "moonbit-community/rabbita",
+  "moonrockz/moonspec-site/shell",
+  "moonbitlang/async",
+  "moonbitlang/x/fs",
+}
+
+warnings = "-alert_experimental"
+
+supported_targets = "native"
+
+pkgtype(kind: "executable")

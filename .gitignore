@@ -14,3 +14,8 @@ examples/*/src/*_feature_test.mbt
 
 # Brainstorming companion files
 .superpowers/
+
+# Site build output
+site/dist/
+site/_build/
+site/.mooncakes/
