@@ -86,7 +86,7 @@ fn Conv::inlines(self : Conv, inline : @cmark.Inline) -> Array[Inline] {
       ]
     Autolink({ v: { link, is_email, }, .. }) => {
       let url = if is_email { "mailto:" + link.v } else { link.v }
-      [Link(External(url), [Text(link.v)])]
+      [Link(rewrite_link(url, self.ctx), [Text(link.v)])]
     }
     Break({ v: { ty: Hard, .. }, .. }) => [LineBreak]
     Break({ v: { ty: Soft, .. }, .. }) => [Text(" ")]

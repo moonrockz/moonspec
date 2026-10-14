@@ -68,6 +68,68 @@ fn is_absolute_url(dest : String) -> Bool {
 }
 
 ///|
+fn ascii_lower(s : String) -> String {
+  let cs : Array[Char] = []
+  for c in s {
+    cs.push(c.to_ascii_lowercase())
+  }
+  String::from_array(cs)
+}
+
+///|
+/// The only schemes a link may keep. Any other scheme becomes a dead link.
+fn is_safe_link_scheme(scheme : String) -> Bool {
+  match scheme {
+    "http" | "https" | "mailto" | "tel" => true
+    _ => false
+  }
+}
+
+///|
+/// Whether a `data:` image has a MIME type that cannot run script.
+fn is_safe_image_data(dest : String) -> Bool {
+  // The scheme is the four ASCII letters `data` and a colon, so the MIME type
+  // starts at byte 5 and ends at the first `;` or `,`.
+  let mime : Array[Char] = []
+  for c in dest[5:].to_owned() {
+    if c == ';' || c == ',' {
+      break
+    }
+    mime.push(c)
+  }
+  match ascii_lower(String::from_array(mime)) {
+    "image/png" | "image/jpeg" | "image/gif" | "image/webp" | "image/svg+xml" =>
+      true
+    _ => false
+  }
+}
+
+///|
+/// The safe href for a link destination that is absolute. Schemes outside
+/// the allowlist become `#`, so the text stays but the link is dead.
+fn sanitize_link_url(dest : String) -> String {
+  match uri_scheme(dest) {
+    Some(scheme) => if is_safe_link_scheme(scheme) { dest } else { "#" }
+    None => dest
+  }
+}
+
+///|
+/// The safe source for an image destination that is absolute. Anything but
+/// http(s) and raster or SVG `data:` images becomes the empty source.
+fn sanitize_image_url(dest : String) -> String {
+  match uri_scheme(dest) {
+    Some(scheme) =>
+      match scheme {
+        "http" | "https" => dest
+        "data" => if is_safe_image_data(dest) { dest } else { "" }
+        _ => ""
+      }
+    None => dest
+  }
+}
+
+///|
 fn split_anchor(dest : String) -> (String, String?) {
   match dest.find("#") {
     Some(i) => (dest[:i].to_owned(), Some(dest[i + 1:].to_owned()))
@@ -106,11 +168,8 @@ pub fn rewrite_link(dest : String, ctx : LinkContext) -> Target {
   if dest.has_prefix("#") {
     return Anchor(dest[1:].to_owned())
   }
-  if uri_scheme(dest) == Some("javascript") {
-    return External("#")
-  }
   if is_absolute_url(dest) {
-    return External(dest)
+    return External(sanitize_link_url(dest))
   }
   let (path, anchor) = split_anchor(dest)
   let target = repo_path(path, ctx)
@@ -126,11 +185,8 @@ pub fn rewrite_link(dest : String, ctx : LinkContext) -> Target {
 ///|
 /// The URL of an image: absolute URLs stay; repository paths load from raw GitHub.
 pub fn image_src(dest : String, ctx : LinkContext) -> String {
-  if uri_scheme(dest) == Some("javascript") {
-    return ""
-  }
   if is_absolute_url(dest) {
-    return dest
+    return sanitize_image_url(dest)
   }
   let raw_root = if ctx.repo_url.has_prefix("https://github.com/") {
     "https://raw.githubusercontent.com/" +
