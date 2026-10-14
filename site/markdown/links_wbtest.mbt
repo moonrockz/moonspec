@@ -102,6 +102,11 @@ test "relative images load from raw GitHub" {
     image_src("https://example.com/a.png", ctx),
     "https://example.com/a.png",
   )
+  assert_eq(
+    image_src("data:image/png;base64,AAA", ctx),
+    "data:image/png;base64,AAA",
+  )
+  assert_eq(image_src("javascript:alert(1)", ctx), "")
 }
 
 ///|

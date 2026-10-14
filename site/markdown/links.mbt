@@ -25,8 +25,46 @@ pub fn resolve_path(from_file : String, rel : String) -> String {
 }
 
 ///|
+/// The lowercase URI scheme of `dest`, if it has one. A scheme is an ASCII
+/// letter, then letters, digits, `+`, `-` or `.`, then `:`, all before the
+/// first `/`, `?` or `#`.
+fn uri_scheme(dest : String) -> String? {
+  let head : Array[Char] = []
+  for c in dest {
+    if c == '/' || c == '?' || c == '#' {
+      break
+    }
+    head.push(c)
+  }
+  let scheme : Array[Char] = []
+  for c in head {
+    if c == ':' {
+      if scheme.is_empty() {
+        return None
+      }
+      return Some(String::from_array(scheme))
+    }
+    let ok = if scheme.is_empty() {
+      c.is_ascii_alphabetic()
+    } else {
+      c.is_ascii_alphabetic() ||
+      c.is_ascii_digit() ||
+      c == '+' ||
+      c == '-' ||
+      c == '.'
+    }
+    if !ok {
+      return None
+    }
+    scheme.push(c.to_ascii_lowercase())
+  }
+  None
+}
+
+///|
+/// A destination that leaves the site: protocol-relative or with a URI scheme.
 fn is_absolute_url(dest : String) -> Bool {
-  dest.contains("://") || dest.has_prefix("mailto:")
+  dest.has_prefix("//") || uri_scheme(dest) is Some(_)
 }
 
 ///|
@@ -68,6 +106,9 @@ pub fn rewrite_link(dest : String, ctx : LinkContext) -> Target {
   if dest.has_prefix("#") {
     return Anchor(dest[1:].to_owned())
   }
+  if uri_scheme(dest) == Some("javascript") {
+    return External("#")
+  }
   if is_absolute_url(dest) {
     return External(dest)
   }
@@ -85,6 +126,9 @@ pub fn rewrite_link(dest : String, ctx : LinkContext) -> Target {
 ///|
 /// The URL of an image: absolute URLs stay; repository paths load from raw GitHub.
 pub fn image_src(dest : String, ctx : LinkContext) -> String {
+  if uri_scheme(dest) == Some("javascript") {
+    return ""
+  }
   if is_absolute_url(dest) {
     return dest
   }
