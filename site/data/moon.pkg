@@ -1,0 +1,7 @@
+import {
+  "moonrockz/moonspec-site/route",
+  "moonrockz/moonspec-site/content",
+  "moonrockz/moonspec-site/markdown",
+  "moonbitlang/core/json",
+  "moonbitlang/core/debug",
+}

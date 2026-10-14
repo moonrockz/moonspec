@@ -1,0 +1,64 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec-site/data"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "moonrockz/moonspec-site/content",
+  "moonrockz/moonspec-site/markdown",
+  "moonrockz/moonspec-site/route",
+}
+
+// Values
+pub let api_docs_url : String
+
+pub let github_repo : String
+
+pub fn link_context(SiteConfig, @content.Manifest, String) -> @markdown.LinkContext
+
+// Errors
+
+// Types and methods
+pub(all) enum Channel {
+  Release
+  Next
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Channel::equal(Self, Self) -> Bool
+pub fn Channel::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Channel::not_equal(Self, Self) -> Bool
+pub fn Channel::to_json(Self) -> Json
+pub fn Channel::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SiteConfig {
+  base : String
+  version : String
+  channel : Channel
+  git_ref : String
+  release_base : String
+  next_base : String
+  release_version : String
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn SiteConfig::equal(Self, Self) -> Bool
+pub fn SiteConfig::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SiteConfig::not_equal(Self, Self) -> Bool
+pub fn SiteConfig::to_json(Self) -> Json
+pub fn SiteConfig::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SiteData {
+  config : SiteConfig
+  pages : Array[@content.Page]
+  route : @route.Route
+  markdown : String?
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn SiteData::decode(String) -> Self?
+pub fn SiteData::encode(Self) -> String
+pub fn SiteData::equal(Self, Self) -> Bool
+pub fn SiteData::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SiteData::manifest(Self) -> @content.Manifest
+pub fn SiteData::not_equal(Self, Self) -> Bool
+pub fn SiteData::to_json(Self) -> Json
+pub fn SiteData::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
