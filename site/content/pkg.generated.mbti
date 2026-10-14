@@ -1,0 +1,65 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec-site/content"
+
+import {
+  "moonbitlang/core/debug",
+  "moonbitlang/core/json",
+  "moonrockz/moonspec-site/route",
+}
+
+// Values
+pub fn classify(String) -> (@route.Route, Group)?
+
+pub fn compare_versions(String, String) -> Int
+
+pub let guide_order : Array[String]
+
+pub fn normalize_path(String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Group {
+  Guides
+  Migrations
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Group::equal(Self, Self) -> Bool
+pub fn Group::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Group::not_equal(Self, Self) -> Bool
+pub fn Group::to_json(Self) -> Json
+pub fn Group::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Manifest {
+  pages : Array[Page]
+} derive(Eq, @debug.Debug)
+pub fn Manifest::build(Array[SourceFile]) -> Self
+pub fn Manifest::equal(Self, Self) -> Bool
+pub fn Manifest::find(Self, @route.Route) -> Page?
+pub fn Manifest::find_source(Self, String) -> Page?
+pub fn Manifest::neighbors(Self, @route.Route) -> (Page?, Page?)
+pub fn Manifest::not_equal(Self, Self) -> Bool
+pub fn Manifest::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Page {
+  route : @route.Route
+  title : String
+  source : String
+  group : Group
+} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+pub fn Page::equal(Self, Self) -> Bool
+pub fn Page::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Page::not_equal(Self, Self) -> Bool
+pub fn Page::to_json(Self) -> Json
+pub fn Page::to_repr(Self) -> @debug.Repr
+
+pub(all) struct SourceFile {
+  path : String
+  title : String
+} derive(Eq, @debug.Debug)
+pub fn SourceFile::equal(Self, Self) -> Bool
+pub fn SourceFile::not_equal(Self, Self) -> Bool
+pub fn SourceFile::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
