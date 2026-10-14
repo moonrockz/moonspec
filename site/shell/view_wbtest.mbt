@@ -131,3 +131,84 @@ async test "the open search dialog is modal and marks the selection" {
   assert_true(html.contains("role=\"dialog\""))
   assert_true(html.contains("aria-modal=\"true\""))
 }
+
+///|
+#cfg(not(target="js"))
+async test "the search modal marks the selected result and the hits" {
+  let m = step(searching(), MoveSelection(1))
+  let html = render_model(m)
+  // One selected item, and it is the second result.
+  let first = html.find("ms-search-selected").unwrap()
+  assert_true(!html[first + 1:].to_owned().contains("ms-search-selected"))
+  assert_true(
+    html.contains(
+      "href=\"/moonspec/docs/configuration/#two\" target=\"_self\" class=\"ms-search-item ms-search-selected\"",
+    ),
+  )
+  assert_true(html.contains("<mark>needle</mark>"))
+  assert_true(html.contains("ms-search-item"))
+}
+
+///|
+#cfg(not(target="js"))
+async test "the next banner appears only on the next channel" {
+  let m = Model::init(site_data(Doc("configuration"), Some("# C\n")))
+  assert_true(!render_model(m).contains("ms-banner"))
+  let next : Model = {
+    ..m,
+    config: {
+      ..m.config,
+      channel: Next,
+      base: "/moonspec/next/",
+      version: "next",
+    },
+  }
+  let html = render_model(next)
+  assert_true(html.contains("ms-banner"))
+  assert_true(html.contains("docs for main (unreleased)"))
+  assert_true(html.contains("Go to the v0.11.0 docs."))
+}
+
+///|
+#cfg(not(target="js"))
+async test "the version picker marks the current version" {
+  let m = Model::init(site_data(Doc("configuration"), Some("# C\n")))
+  let release = render_model(m)
+  assert_true(release.contains("ms-version-link ms-version-current"))
+  assert_true(
+    release.contains("class=\"ms-version-link ms-version-current\">v0.11.0</a>"),
+  )
+  assert_true(!release.contains("ms-version-current\">next"))
+  let next = render_model({
+    ..m,
+    config: { ..m.config, channel: Next, base: "/moonspec/next/", },
+  })
+  assert_true(
+    next.contains(
+      "href=\"/moonspec/next/docs/configuration/\" target=\"_self\" class=\"ms-version-link ms-version-current\">next</a>",
+    ),
+  )
+}
+
+///|
+#cfg(not(target="js"))
+async test "loading and failed pages render their texts" {
+  let m = Model::init(site_data(Doc("configuration"), None))
+  assert_true(render_model(m).contains("Loading…"))
+  let failed = render_model({ ..m, page: PageFailed, })
+  assert_true(failed.contains("This page could not be loaded."))
+  assert_true(failed.contains("Read it on GitHub"))
+}
+
+///|
+#cfg(not(target="js"))
+async test "the moonx install tab shows the moonx commands" {
+  let m = Model::init(site_data(Landing, None))
+  assert_true(
+    !render_model(m).contains("moonx moonrockz/moonspec/cmd/moonspec@latest"),
+  )
+  let html = render_model({ ..m, install_tab: Moonx, })
+  assert_true(
+    html.contains("moonx moonrockz/moonspec/cmd/moonspec@latest gen steps"),
+  )
+}
