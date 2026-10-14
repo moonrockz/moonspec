@@ -149,3 +149,29 @@ test "check reports a dotted migration route directory without index.html" {
   rm_rf(root)
   assert_eq(problems, ["route migrations/v0.11.0 has no HTML file"])
 }
+
+///|
+test "check accepts the docs alias route and its HTML file" {
+  let root = fixture(
+    "alias",
+    ["", "docs", "docs/x"],
+    ["docs/x/index.html", "docs/index.html"],
+    "<a href=\"/b/docs/\">d</a>",
+  )
+  let problems = check(root, "/b/", [])
+  rm_rf(root)
+  assert_eq(problems, [])
+}
+
+///|
+test "check reports a missing docs alias file" {
+  let root = fixture(
+    "noalias",
+    ["", "docs", "docs/x"],
+    ["docs/x/index.html"],
+    "<p></p>",
+  )
+  let problems = check(root, "/b/", [])
+  rm_rf(root)
+  assert_eq(problems, ["route docs has no HTML file"])
+}

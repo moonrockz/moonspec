@@ -100,6 +100,23 @@ pub async fn build_site(args : Args) -> Unit {
     }
     routes.push(page.route.to_path())
   }
+  // `/docs/` shows the default page; GitHub Pages needs a real file for it.
+  let default_route : @route.Route = Doc(@route.default_doc_slug)
+  match manifest.find(default_route) {
+    Some(page) => {
+      write_file(
+        args.out + "/docs/index.html",
+        render_page({
+          config,
+          pages: manifest.pages,
+          route: default_route,
+          markdown: Some(texts.get(page.source).unwrap_or("")),
+        }),
+      )
+      routes.push("docs")
+    }
+    None => ()
+  }
   write_file(
     args.out + "/404.html",
     render_page({

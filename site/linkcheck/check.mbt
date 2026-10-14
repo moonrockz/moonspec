@@ -124,7 +124,11 @@ pub fn check(
     if !@fs.path_exists(dist + "/" + target_file(route)) {
       problems.push("route \{route} has no HTML file")
     }
-    if route != "" && !entries.iter().any(e => e.route.to_path() == route) {
+    // "" is the landing page and "docs" an alias of the default page; neither
+    // has a search entry of its own.
+    if route != "" &&
+      route != "docs" &&
+      !entries.iter().any(e => e.route.to_path() == route) {
       problems.push("route \{route} is not in the search index")
     }
   }
