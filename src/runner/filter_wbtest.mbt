@@ -28,3 +28,17 @@ async test "no tag filter runs all" {
   )
   assert_eq(result.summary.total_scenarios, 2)
 }
+
+///|
+async test "malformed tag expression fails the run" {
+  let content = "Feature: Tagged\n\n  @smoke\n  Scenario: Tagged\n    Given a step\n"
+  let opts = RunOptions([FeatureSource::Text("test://bad-tags", content)])
+  opts.tag_expr("@smoke and")
+  let outcome = try run(FilterWorld::default, opts) catch {
+    TagExpressionError::UnexpectedEnd(expression~) => "rejected: \{expression}"
+    e => "other error: \{e}"
+  } noraise {
+    _ => "ran"
+  }
+  assert_eq(outcome, "rejected: @smoke and")
+}

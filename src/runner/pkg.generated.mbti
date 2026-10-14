@@ -22,6 +22,17 @@ pub async fn[W : @core.World] run(() -> W, RunOptions) -> RunResult
 pub async fn[W : @core.World] run_or_fail(() -> W, RunOptions) -> Unit
 
 // Errors
+pub(all) suberror TagExpressionError {
+  UnexpectedEnd(expression~ : String)
+  UnexpectedToken(expression~ : String, token~ : String)
+  UnclosedParen(expression~ : String)
+} derive(Eq, @debug.Debug)
+pub fn TagExpressionError::equal(Self, Self) -> Bool
+pub fn TagExpressionError::not_equal(Self, Self) -> Bool
+pub fn TagExpressionError::output(Self, &Logger) -> Unit
+pub fn TagExpressionError::to_repr(Self) -> @debug.Repr
+pub fn TagExpressionError::to_string(Self) -> String
+pub impl Show for TagExpressionError
 
 // Types and methods
 pub(all) struct CollectorSink {
@@ -204,7 +215,7 @@ pub(all) enum TagExpression {
 pub fn TagExpression::equal(Self, Self) -> Bool
 pub fn TagExpression::matches(Self, Array[String]) -> Bool
 pub fn TagExpression::not_equal(Self, Self) -> Bool
-pub fn TagExpression::parse(String) -> Self raise
+pub fn TagExpression::parse(String) -> Self raise TagExpressionError
 pub fn TagExpression::to_repr(Self) -> @debug.Repr
 
 // Type aliases
