@@ -59,3 +59,13 @@ test "routes round-trip through JSON" {
     assert_eq(back, r)
   }
 }
+
+///|
+test "strip_base: a sibling prefix is not under the base" {
+  assert_eq(strip_base("/moonspec/", "/moonspecx/docs/x"), None)
+}
+
+///|
+test "NotFound path round-trips through parse" {
+  assert_eq(Route::parse(NotFound("docs/a/b").to_path()), NotFound("docs/a/b"))
+}
