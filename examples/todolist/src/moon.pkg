@@ -1,8 +1,11 @@
 import {
   "moonrockz/moonspec",
+}
+
+import {
   "moonrockz/moonspec/format",
   "moonbitlang/async",
-}
+} for "wbtest"
 
 rule(
   name: "moonspec-tests",

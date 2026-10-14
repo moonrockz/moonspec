@@ -10,7 +10,7 @@ fn CheckoutSteps::new(world : EcomWorld) -> CheckoutSteps {
 }
 
 ///|
-impl @moonspec.StepLibrary for CheckoutSteps with steps(self) {
+impl @moonspec.StepLibrary for CheckoutSteps with fn steps(self) {
   let defs : Array[@moonspec.StepDef] = [
     @moonspec.StepDef::when0("I proceed to checkout", fn() {
       if self.world.cart.length() == 0 {
@@ -33,9 +33,11 @@ impl @moonspec.StepLibrary for CheckoutSteps with steps(self) {
       }
     }),
     @moonspec.StepDef::then1("the order total should be {int}", fn(
-      expected : Int,
-    ) { assert_eq(self.world.order_total, expected) }),
-    @moonspec.StepDef::then0("the checkout should be rejected", fn() {
+      expected : Int32,
+    ) raise {
+      assert_eq(self.world.order_total, expected)
+    }),
+    @moonspec.StepDef::then0("the checkout should be rejected", fn() raise {
       assert_true(self.world.checkout_rejected)
     }),
   ]

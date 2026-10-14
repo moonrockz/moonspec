@@ -20,7 +20,7 @@ cross-feature tag filtering in moonspec.
 
 ```
 ecommerce/
-├── moon.mod.json
+├── moon.mod
 ├── moonspec.json5                    # Codegen config: world=EcomWorld, mode=per-scenario
 ├── features/
 │   ├── cart.feature                  # 3 scenarios (@cart, @smoke on one)

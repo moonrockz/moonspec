@@ -1,0 +1,11 @@
+name = "example/ecommerce-cli"
+
+version = "0.0.1"
+
+import {
+  "moonrockz/moonspec@0.10.1",
+  "moonbitlang/async@0.22.4",
+  "moonbitlang/x@0.5.5",
+}
+
+source = "src"

@@ -18,7 +18,7 @@ own application binary and wire `PrettyFormatter` output manually.
 
 ```
 ecommerce-cli/
-├── moon.mod.json
+├── moon.mod
 ├── features/
 │   ├── cart.feature
 │   ├── checkout.feature

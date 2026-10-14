@@ -12,11 +12,11 @@ End-to-end example of using moonspec to BDD-test a calculator in MoonBit.
 
 ```
 calculator/
-├── moon.mod.json              # Project config with moonspec dependency
+├── moon.mod                   # Project config with moonspec dependency
 ├── features/
 │   └── calculator.feature     # Gherkin feature specification
 ├── src/
-│   ├── moon.pkg.json          # Package imports
+│   ├── moon.pkg               # Package imports
 │   ├── world.mbt              # World struct + step definitions
 │   ├── calculator_feature_wbtest.mbt  # Generated tests (moonspec gen)
 │   └── calculator_wbtest.mbt  # Tests using the Runner API
@@ -38,7 +38,7 @@ moon new
 moon add moonrockz/moonspec
 ```
 
-This adds moonspec to your `moon.mod.json`. You also need `moonbitlang/async` for
+This adds moonspec to your `moon.mod`. You also need `moonbitlang/async` for
 async test support:
 
 ```bash
