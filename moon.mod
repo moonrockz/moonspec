@@ -7,7 +7,7 @@ import {
   "moonbitlang/async@0.22.4",
   "moonbitlang/regexp@0.3.6",
   "moonrockz/gherkin@0.5.1",
-  "moonrockz/cucumber-expressions@0.6.0",
+  "moonrockz/cucumber-expressions@0.6.1",
   "moonrockz/cucumber-messages@0.3.0",
   "moonbitlang/parser@0.4.4",
   "moonbitlang/lexer@0.4.0",
