@@ -12,6 +12,23 @@ properties:
       World type name used for test generation (e.g. "CalcWorld").
       Must match a MoonBit struct that implements the World trait.
 
+  test_kind:
+    type: string
+    enum: ["wbtest", "test"]
+    default: "wbtest"
+    description: >
+      Kind of test file that `moonspec gen tests` and `gen build` write.
+      "wbtest": white-box *_wbtest.mbt files, which can use private items
+      such as the World impl from `gen steps`. "test": black-box *_test.mbt
+      files, which see only the public API.
+
+  no_color:
+    type: boolean
+    default: false
+    description: >
+      Generate tests that print the failure report and pretty output without
+      ANSI colors.
+
   mode:
     description: >
       Codegen mode for feature-to-test generation. Either a single mode
@@ -77,12 +94,15 @@ properties:
       output:
         type: string
         description: >
-          Where to write generated register_steps code.
-          Built-in modes: "generated" (_generated/ directory),
-          "alongside" (next to source files), "per-package" (one file per package).
-          Any other value is treated as a custom output directory path.
-        default: "generated"
-        examples: ["generated", "alongside", "per-package", "my_gen/"]
+          Where to write the generated configure impl.
+          Built-in modes: "alongside" (default; <world>_steps_gen.mbt next to
+          the step functions), "per-package" (moonspec_gen.mbt per package),
+          "generated" (_generated/ at the module root; does not compile,
+          because the impl must be in the World type's package).
+          Any other value is treated as a custom output directory path in the
+          World type's package.
+        default: "alongside"
+        examples: ["alongside", "per-package", "my_gen/"]
       exclude:
         type: array
         description: >

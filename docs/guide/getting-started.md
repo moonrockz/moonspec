@@ -422,12 +422,13 @@ async test "Feature: Calculator / Scenario: Addition" {
 
 Each scenario becomes its own test, so `moon test` reports pass/fail at the scenario level.
 
-You can also run `gen tests` by hand, without build rules. Name the white-box output file exactly, because a black-box `*_test.mbt` file (the name `-o <dir>` gives) cannot see the private World impl that `gen steps` generates:
+You can also run `gen tests` by hand, without build rules:
 
 ```sh
-moonspec gen tests features/calculator.feature -w CalcWorld \
-  -o src/calculator_feature_wbtest.mbt
+moonspec gen tests features/calculator.feature -w CalcWorld -o src
 ```
+
+It writes white-box tests (`*_wbtest.mbt`) by default, so they can use the private World impl that `gen steps` generates. `--test-kind test` (or `test_kind: "test"` in `moonspec.json5`) writes black-box `*_test.mbt` files, which see only the public API.
 
 ### Running Scenarios with moon test
 

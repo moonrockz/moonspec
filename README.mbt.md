@@ -193,15 +193,18 @@ a dependency of another module.
 | Command | Purpose |
 |---|---|
 | `gen steps [-d <dir>]` | Generate the World `configure` impl from `#moonspec.*` attributes |
-| `gen build <features...> -w <World> [--apply] [--moonx] [-p <pkg>]` | Print or apply `moon.pkg` build rules; with `--apply`, also generate missing test files |
-| `gen tests <features...> -w <World> -o <dir or file.mbt>` | Generate test files once, without build rules |
+| `gen build <features...> -w <World> [--apply] [--moonx] [-p <pkg>] [--test-kind <kind>]` | Print or apply `moon.pkg` build rules; with `--apply`, also generate missing test files |
+| `gen tests <features...> -w <World> -o <dir or file.mbt> [--test-kind <kind>]` | Generate test files once, without build rules |
 | `check <features...>` | Parse feature files and report errors |
 | `version` | Print the CLI version |
 
-`gen tests -o <dir>` writes black-box `*_test.mbt` files, which cannot see a
-private World impl. For generated steps, pass the exact white-box file:
-`-o src/calculator_feature_wbtest.mbt`. A `moonspec.json5` file can set
-`world`, the codegen `mode` and other defaults; see [Config File](#config-file).
+Generated test files are white-box tests (`*_wbtest.mbt`) by default, so they
+can use a private World impl, such as the one `gen steps` generates. Pass
+`--test-kind test` (or set `test_kind: "test"` in `moonspec.json5`) for
+black-box `*_test.mbt` files; these see only the package's public API. An
+`-o` value that ends in `.mbt` is the exact file name. A `moonspec.json5`
+file can set `world`, the codegen `mode` and other defaults; see
+[Config File](#config-file).
 
 ## Features
 
@@ -219,7 +222,7 @@ private World impl. For generated steps, pass the exact white-box file:
 - **Parallel execution** -- bounded concurrency via `@async.all()`
 - **Attachments** -- text, binary, or URL on steps and hooks
 - **Structured errors** -- `run_or_fail` with snippets and suggestions
-- **Codegen** -- generate `_test.mbt` runners from `.feature` and `.feature.md` files
+- **Codegen** -- generate `moon test` runners from `.feature` and `.feature.md` files
 - **Formatters** -- Pretty, Cucumber Messages (NDJSON), JUnit XML
 
 ## Cucumber Expression Parameters

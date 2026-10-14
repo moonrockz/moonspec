@@ -153,7 +153,7 @@ tables for data tables and examples, and fenced code blocks for doc strings.
 `.feature.md` files work everywhere `.feature` files do: `FeatureSource::File`,
 `FeatureSource::Text` (the path selects the format), `moonspec gen tests` and
 `moonspec check`. `moonspec gen tests features/cart.feature.md` writes
-`cart_feature_test.mbt`. Cucumber Messages `source` envelopes use the media type
+`cart_feature_wbtest.mbt`. Cucumber Messages `source` envelopes use the media type
 `text/x.cucumber.gherkin+markdown`.
 
 ## World and Step Definitions
@@ -759,14 +759,15 @@ moonspec gen build features/*.feature -w CalcWorld --apply --moonx
 - `--package` / `-p`: package directory that gets the tests (default: `src`)
 - `--config` / `-c`: path to a `moonspec.json5` config file
 - `--apply`: write to `<package>/moon.pkg` instead of printing
+- `--test-kind`: `wbtest` (default) or `test`; see [`gen tests`](#gen-tests----generate-test-files)
 - `--moonx`: the rule runs `moonx moonrockz/moonspec/cmd/moonspec@<this CLI's version>` instead of `moonspec`
 
 `--apply` adds only entries that are missing (the rule by name, a `dev_build`
 by its output file), so running it again changes nothing. It also writes test
 files that do not exist yet: moon does not compile a `dev_build` output that
 did not exist when the build started, so without this the first `moon test`
-would find no tests. Test files are white-box tests (`*_wbtest.mbt`), so they
-can use a private World impl. `moon.pkg.json` does not support build rules;
+would find no tests. Test files are white-box tests (`*_wbtest.mbt`) by
+default, so they can use a private World impl. `moon.pkg.json` does not support build rules;
 run `moon fmt` to migrate it to `moon.pkg` first.
 
 ### `gen tests` -- Generate Test Files
@@ -788,17 +789,16 @@ by hand.
 - `--mode` / `-m`: `per-scenario` (default) or `per-feature`
 - `--config` / `-c`: path to a `moonspec.json5` config file
 - `--no-color`: generate tests whose failure report and pretty output have no ANSI colors
+- `--test-kind`: `wbtest` (default) or `test` (or `test_kind` in the config file)
 
-With `-o <dir>`, files are named as black-box tests:
-`features/calculator.feature` becomes `calculator_feature_test.mbt`, and
-`features/auth/login.feature` becomes `auth_login_feature_test.mbt`. A
-black-box test cannot see a private World impl, such as the one `gen steps`
-generates. In that case, name the white-box file exactly:
+**Test kind.** With `-o <dir>`, `--test-kind` selects the file name:
 
-```bash
-moonspec gen tests features/calculator.feature -w CalcWorld \
-  -o src/calculator_feature_wbtest.mbt
-```
+| `--test-kind` | `features/auth/login.feature` becomes | The test can use |
+|---|---|---|
+| `wbtest` (default) | `auth_login_feature_wbtest.mbt` | private items, such as the World impl from `gen steps` |
+| `test` | `auth_login_feature_test.mbt` | only the package's public API, so the World impl must be `pub` |
+
+An `-o` value that ends in `.mbt` is the exact file name, whatever the kind.
 
 **Config file** (`moonspec.json5`):
 
@@ -1228,7 +1228,7 @@ See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) -- standalone CLI runne
 | `moonrockz/moonspec/core` | World, Hooks, StepLibrary traits, Setup, StepRegistry, ParamTypeRegistry, StepDef, Ctx, MoonspecError |
 | `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
-| `moonrockz/moonspec/codegen` | Generate `_test.mbt` runner tests from Gherkin features |
+| `moonrockz/moonspec/codegen` | Generate `moon test` runner tests from Gherkin features |
 
 Users should import `moonrockz/moonspec` and reference types via `@moonspec.World`,
 `@moonspec.run_or_fail`, etc. The sub-packages are implementation details.
