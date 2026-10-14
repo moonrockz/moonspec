@@ -1,6 +1,14 @@
 import {
   "moonbit-community/rabbita",
-  "moonbit-community/rabbita/html",
+  "moonbit-community/rabbita/nav",
+  "moonbit-community/rabbita/url",
+  "moonbit-community/rabbita/http",
+  "moonbit-community/rabbita/common",
+  "moonrockz/moonspec-site/route",
+  "moonrockz/moonspec-site/content",
+  "moonrockz/moonspec-site/markdown",
+  "moonrockz/moonspec-site/search",
+  "moonrockz/moonspec-site/data",
   "moonbitlang/core/json",
   "moonbitlang/core/debug",
 }
@@ -8,3 +16,7 @@ import {
 warnings = "-alert_experimental"
 
 supported_targets = "js+native"
+
+import {
+  "moonbit-community/rabbita/cmd",
+} for "wbtest"
