@@ -55,6 +55,11 @@ Operator precedence from lowest to highest: `or`, `and`, `not`. Use parentheses 
 
 An empty expression matches all scenarios.
 
+A malformed expression stops the run with a `TagExpressionError`, before any
+scenario runs. Examples are `@smoke and` (missing operand), `and @smoke`
+(operator in operand position), `@smoke @fast` (missing operator) and
+`(@smoke or @fast` (missing `)`).
+
 ### Example: Cross-Feature Filtering
 
 Tag expressions work across multiple feature files:

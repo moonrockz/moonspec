@@ -16,20 +16,59 @@ pub extend TagExpression with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend TagExpression with Eq::{not_equal, equal}
 
 ///|
-/// Parse a tag expression string into a TagExpression AST.
-/// An empty string yields `Always` which matches any set of tags.
+/// A syntax error in a tag expression.
 ///
-/// The parser does not yet reject malformed input; the `raise` stays so that
-/// validation can be added without changing the public signature.
-#warnings("-unused_error_type")
-pub fn TagExpression::parse(input : String) -> TagExpression raise Error {
+/// Every variant carries the whole expression, so the message can show it.
+pub(all) suberror TagExpressionError {
+  /// The expression ended where a tag, `not` or `(` was expected.
+  UnexpectedEnd(expression~ : String)
+  /// A token appeared where it is not allowed, for example `and @a`,
+  /// `@a @b` or `@a)`.
+  UnexpectedToken(expression~ : String, token~ : String)
+  /// A `(` has no matching `)`.
+  UnclosedParen(expression~ : String)
+} derive(Eq, Debug)
+
+///|
+pub extend TagExpressionError with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend TagExpressionError with Eq::{not_equal, equal}
+
+///|
+pub extend TagExpressionError with Show::{to_string, output}
+
+///|
+pub impl Show for TagExpressionError with fn output(self, logger) {
+  let detail = match self {
+    UnexpectedEnd(expression~) =>
+      (expression, "expected a tag, `not` or `(` but the expression ended")
+    UnexpectedToken(expression~, token~) =>
+      (expression, "unexpected \"\{token}\"")
+    UnclosedParen(expression~) => (expression, "missing `)`")
+  }
+  logger.write_string(
+    "invalid tag expression \{detail.0.escape()}: \{detail.1}",
+  )
+}
+
+///|
+/// Parse a tag expression string into a TagExpression AST.
+/// An empty or whitespace-only string yields `Always` which matches any set
+/// of tags. Malformed input raises a `TagExpressionError`.
+pub fn TagExpression::parse(
+  input : String,
+) -> TagExpression raise TagExpressionError {
   let trimmed = trim_string(input)
   if trimmed.is_empty() {
     return Always
   }
-  let tokens = tokenize_tags(trimmed)
-  let result = parse_or(tokens, 0)
-  result.0
+  let parser = TagParser::{ expression: input, tokens: tokenize_tags(trimmed), }
+  let (expr, pos) = parser.parse_or(0)
+  if pos < parser.tokens.length() {
+    raise UnexpectedToken(expression=input, token=parser.tokens[pos])
+  }
+  expr
 }
 
 ///|
@@ -137,58 +176,80 @@ fn tokenize_tags(input : String) -> Array[String] {
 // ---------------------------------------------------------------------------
 
 ///|
-fn parse_or(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
-  let result = parse_and(tokens, pos)
-  let mut left = result.0
-  let mut p = result.1
-  while p < tokens.length() && tokens[p] == "or" {
-    let next_result = parse_and(tokens, p + 1)
-    left = Or(left, next_result.0)
-    p = next_result.1
+priv struct TagParser {
+  expression : String
+  tokens : Array[String]
+}
+
+///|
+fn TagParser::parse_or(
+  self : TagParser,
+  pos : Int32,
+) -> (TagExpression, Int32) raise TagExpressionError {
+  let (first, next) = self.parse_and(pos)
+  let mut left = first
+  let mut p = next
+  while p < self.tokens.length() && self.tokens[p] == "or" {
+    let (right, after) = self.parse_and(p + 1)
+    left = Or(left, right)
+    p = after
   }
   (left, p)
 }
 
 ///|
-fn parse_and(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
-  let result = parse_not(tokens, pos)
-  let mut left = result.0
-  let mut p = result.1
-  while p < tokens.length() && tokens[p] == "and" {
-    let next_result = parse_not(tokens, p + 1)
-    left = And(left, next_result.0)
-    p = next_result.1
+fn TagParser::parse_and(
+  self : TagParser,
+  pos : Int32,
+) -> (TagExpression, Int32) raise TagExpressionError {
+  let (first, next) = self.parse_not(pos)
+  let mut left = first
+  let mut p = next
+  while p < self.tokens.length() && self.tokens[p] == "and" {
+    let (right, after) = self.parse_not(p + 1)
+    left = And(left, right)
+    p = after
   }
   (left, p)
 }
 
 ///|
-fn parse_not(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
-  if pos < tokens.length() && tokens[pos] == "not" {
-    let result = parse_not(tokens, pos + 1)
-    (Not(result.0), result.1)
+fn TagParser::parse_not(
+  self : TagParser,
+  pos : Int32,
+) -> (TagExpression, Int32) raise TagExpressionError {
+  if pos < self.tokens.length() && self.tokens[pos] == "not" {
+    let (inner, next) = self.parse_not(pos + 1)
+    (Not(inner), next)
   } else {
-    parse_atom(tokens, pos)
+    self.parse_atom(pos)
   }
 }
 
 ///|
-fn parse_atom(tokens : Array[String], pos : Int32) -> (TagExpression, Int32) {
-  if pos >= tokens.length() {
-    // Unexpected end; return Always as a safe fallback
-    return (Always, pos)
+fn TagParser::parse_atom(
+  self : TagParser,
+  pos : Int32,
+) -> (TagExpression, Int32) raise TagExpressionError {
+  guard pos < self.tokens.length() else {
+    raise UnexpectedEnd(expression=self.expression)
   }
-  let token = tokens[pos]
-  if token == "(" {
-    let result = parse_or(tokens, pos + 1)
-    // Consume closing ')'
-    let close = if result.1 < tokens.length() && tokens[result.1] == ")" {
-      result.1 + 1
-    } else {
-      result.1
+  match self.tokens[pos] {
+    "(" => {
+      let (inner, next) = self.parse_or(pos + 1)
+      guard next < self.tokens.length() else {
+        raise UnclosedParen(expression=self.expression)
+      }
+      guard self.tokens[next] == ")" else {
+        raise UnexpectedToken(
+          expression=self.expression,
+          token=self.tokens[next],
+        )
+      }
+      (inner, next + 1)
     }
-    (result.0, close)
-  } else {
-    (TagLiteral(token), pos + 1)
+    ")" | "and" | "or" as token =>
+      raise UnexpectedToken(expression=self.expression, token~)
+    tag => (TagLiteral(tag), pos + 1)
   }
 }
