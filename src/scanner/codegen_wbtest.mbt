@@ -9,6 +9,7 @@ test "generate_configure produces valid impl block" {
       params: [{ name: "count", type_name: "Int", }],
       is_method: true,
       raises: false,
+      handler: false,
       source_file: "src/steps.mbt",
       line: 2,
     },
@@ -51,6 +52,7 @@ test "generate_configure handles multiple params" {
       ],
       is_method: true,
       raises: false,
+      handler: false,
       source_file: "src/steps.mbt",
       line: 5,
     },
@@ -76,6 +78,7 @@ test "generate_configure handles no-param steps" {
       params: [],
       is_method: true,
       raises: false,
+      handler: false,
       source_file: "src/steps.mbt",
       line: 3,
     },
@@ -104,6 +107,7 @@ test "generate_configure falls back to ctx-based for arity > 22" {
       params,
       is_method: true,
       raises: false,
+      handler: false,
       source_file: "src/steps.mbt",
       line: 1,
     },
@@ -132,6 +136,7 @@ test "generate_configure annotates raise only for raising steps" {
       params: [{ name: "count", type_name: "Int", }],
       is_method: true,
       raises: true,
+      handler: false,
       source_file: "src/steps.mbt",
       line: 1,
     },
@@ -143,6 +148,7 @@ test "generate_configure annotates raise only for raising steps" {
       params: [],
       is_method: true,
       raises: false,
+      handler: false,
       source_file: "src/steps.mbt",
       line: 5,
     },
@@ -170,6 +176,7 @@ fn ctx_step(
     params,
     is_method: false,
     raises,
+    handler: false,
     source_file: "src/steps.mbt",
     line: 1,
   }
@@ -257,4 +264,57 @@ test "more than 22 typed parameters with Ctx fall back to a handler" {
   assert_true(str_contains(output, "setup.then(\"many\", fn(ctx) raise {"))
   assert_true(str_contains(output, "_arg21, _arg22, ctx)"))
   assert_true(!str_contains(output, "then23_ctx"))
+}
+
+///|
+test "handler=true registers typed parameters as a handler without an arity check" {
+  let step = {
+    ..ctx_step(
+      "given",
+      "the users",
+      "given_users",
+      [
+        { name: "group", type_name: "String", },
+        { name: "table", type_name: "@moonspec.DataTable?", },
+        { name: "ctx", type_name: "@moonspec.Ctx", },
+      ],
+      raises=false,
+    ),
+    handler: true,
+  }
+  let output = generate_configure("W", [step], source_hash="00000000")
+  inspect(
+    output
+    .split("\n")
+    .drop(5)
+    .take(7)
+    .collect()
+    .map(fn(l) { l.to_owned() })
+    .join("\n"),
+    content=(
+      #|  setup.given("the users", fn(ctx) raise {
+      #|    let _arg0 : String = @moonspec.FromStepArg::from_step_arg(ctx[0])
+      #|    let _arg1 : @moonspec.DataTable? = if ctx.args().length() > 1 {
+      #|      Some(@moonspec.FromStepArg::from_step_arg(ctx[1]))
+      #|    } else {
+      #|      None
+      #|    }
+    ),
+  )
+  assert_true(str_contains(output, "given_users(self, _arg0, _arg1, ctx)"))
+  assert_true(!str_contains(output, "given2_ctx"))
+}
+
+///|
+test "handler=true without parameters ignores the context" {
+  let step = {
+    ..ctx_step("when", "they wait", "when_wait", [], raises=false),
+    handler: true,
+  }
+  let output = generate_configure("W", [step], source_hash="00000000")
+  assert_true(
+    str_contains(
+      output, "setup.when(\"they wait\", fn(_ctx) {\n    when_wait(self)\n  })",
+    ),
+  )
 }

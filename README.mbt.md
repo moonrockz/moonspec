@@ -158,6 +158,7 @@ world select the registration:
 | `(world)` or `(world, a : A, ...)` | `given0`, `given2`, ... (typed, up to 22) |
 | `(world, a : A, ..., ctx : @moonspec.Ctx)` | `given1_ctx`, ... (typed plus `Ctx`, up to 22) |
 | `(world, ctx : @moonspec.Ctx)` | `given("...", fn(ctx) ...)`, a handler that reads its own arguments |
+| any of the above with `handler=true` in the attribute | `given("...", fn(ctx) ...)`, decoding typed values with no arity check; `T?` is `None` for a missing argument |
 
 Typed values are decoded with `FromStepArg` (`Int`, `String`,
 `@moonspec.DataTable`, ...). The attributes are `#moonspec.given`, `when`,

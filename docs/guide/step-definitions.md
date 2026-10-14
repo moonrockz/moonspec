@@ -942,7 +942,7 @@ The parameters after it select how the step is registered:
 | Typed values, up to 22 | `setup.given2("…", fn(_arg0 : A, _arg1 : B) { f(self, _arg0, _arg1) })` |
 | Typed values (up to 22), then `ctx : @moonspec.Ctx` | `setup.given1_ctx("…", fn(_arg0 : A, ctx : @moonspec.Ctx) { f(self, _arg0, ctx) })` |
 | Only `ctx : @moonspec.Ctx` | `setup.given("…", fn(ctx) { f(self, ctx) })` -- a handler |
-| More than 22 typed values, with or without `Ctx` | `setup.given("…", fn(ctx) raise { let _arg0 : A = @moonspec.FromStepArg::from_step_arg(ctx[0]) ... })` |
+| Typed values (and an optional `Ctx`) with `handler=true`, or more than 22 typed values | `setup.given("…", fn(ctx) raise { let _arg0 : A = @moonspec.FromStepArg::from_step_arg(ctx[0]) ... })` |
 
 The keyword (`given`, `when`, `then` or `step`) comes from the attribute.
 
@@ -956,9 +956,10 @@ text has exactly that many arguments.
 **`Ctx`** must be the last parameter. Use it for scenario and step metadata
 (`ctx.scenario()`, `ctx.step()`) and for attachments.
 
-A **handler** takes only `Ctx` and reads its arguments itself, so no arity is
-checked. Use it when a step has optional arguments or needs a `StepArg`
-directly:
+A **handler** is registered with the plain `setup.given` form, so no arity is
+checked. A step function that takes only `Ctx` is always a handler: it reads
+its arguments itself, for any number of arguments in the step. Use it when a
+step needs a `StepArg` directly:
 
 ```moonbit
 #moonspec.given("these todos")
@@ -988,6 +989,47 @@ fn when_add_scenario_todo(
   })
 }
 ```
+
+**`handler=true`** gives the same plain handler form to a step function with
+typed parameters. The generated handler decodes each typed parameter with
+`FromStepArg` and does not check the arity. A parameter of option type `T?`
+is `None` when the step has no argument at its position, so a data table or
+doc string can be optional:
+
+```moonbit
+#moonspec.given("a todo list named {string}", handler=true)
+fn given_named_list(
+  world : TodoWorld,
+  name : String,
+  todos : @moonspec.DataTable?,
+) -> Unit {
+  world.todos.clear()
+  guard todos is Some(table) else { return }
+  for row in table.as_maps() {
+    world.todos.push(TodoItem::{
+      title: name + ": " + row.get_or_default("title", ""),
+      completed: false,
+    })
+  }
+}
+```
+
+generates:
+
+```moonbit
+setup.given("a todo list named {string}", fn(ctx) raise {
+  let _arg0 : String = @moonspec.FromStepArg::from_step_arg(ctx[0])
+  let _arg1 : @moonspec.DataTable? = if ctx.args().length() > 1 {
+    Some(@moonspec.FromStepArg::from_step_arg(ctx[1]))
+  } else {
+    None
+  }
+  given_named_list(self, _arg0, _arg1)
+})
+```
+
+Option parameters work only in this handler form; the typed `given1`
+.. `given22` methods need a `FromStepArg` type for every parameter.
 
 ### When to Use Each Approach
 

@@ -44,8 +44,9 @@ priv enum Registration {
   TypedCtx(Array[ParamInfo])
   /// Only `Ctx`: a handler that reads the arguments from `ctx` itself.
   Handler
-  /// Too many typed parameters for a typed method. The arguments are
-  /// decoded from `ctx` with `FromStepArg`; `takes_ctx` passes `ctx` on.
+  /// A raw handler that decodes the typed parameters from `ctx` with
+  /// `FromStepArg`, with no arity check: for `handler=true`, or for more
+  /// typed parameters than a typed method takes. `takes_ctx` passes `ctx` on.
   Decoded(Array[ParamInfo], takes_ctx~ : Bool)
 }
 
@@ -70,6 +71,7 @@ fn registration(step : StepFnInfo) -> Registration {
   }
   match (typed.length(), takes_ctx) {
     (0, true) => Handler
+    _ if step.handler => Decoded(typed, takes_ctx~)
     (n, true) if n <= max_typed_arity => TypedCtx(typed)
     (n, false) if n <= max_typed_arity => Typed(typed)
     _ => Decoded(typed, takes_ctx~)
@@ -170,32 +172,49 @@ fn generate_handler_step(buf : StringBuilder, step : StepFnInfo) -> Unit {
 }
 
 ///|
-/// Generate a handler registration that decodes each argument with
-/// `FromStepArg`, for more typed parameters than a typed method takes.
+/// Generate a handler registration that decodes each typed argument with
+/// `FromStepArg`. No arity is checked. A parameter of option type `T?` is
+/// `None` when the step has no argument at its position, for example an
+/// optional data table.
 fn generate_decoded_step(
   buf : StringBuilder,
   step : StepFnInfo,
   typed : Array[ParamInfo],
   takes_ctx~ : Bool,
 ) -> Unit {
+  // Decoding raises, so the lambda raises when it decodes anything.
+  let effect = if typed.is_empty() { lambda_effect(step) } else { " raise" }
+  let ctx_name = if typed.is_empty() && !takes_ctx { "_ctx" } else { "ctx" }
   buf.write_string(
     "  setup." +
     step.keyword +
     "(\"" +
     escape_pattern(step.pattern) +
-    "\", fn(ctx) raise {\n",
+    "\", fn(" +
+    ctx_name +
+    ")" +
+    effect +
+    " {\n",
   )
   for i, param in typed {
     let idx = i.to_string()
-    buf.write_string(
-      "    let _arg" +
-      idx +
-      " : " +
-      param.type_name +
-      " = @moonspec.FromStepArg::from_step_arg(ctx[" +
-      idx +
-      "])\n",
-    )
+    let decode = "@moonspec.FromStepArg::from_step_arg(ctx[" + idx + "])"
+    buf.write_string("    let _arg" + idx + " : " + param.type_name + " = ")
+    if param.type_name.has_suffix("?") {
+      buf.write_string(
+        "if ctx.args().length() > " +
+        idx +
+        " {\n" +
+        "      Some(" +
+        decode +
+        ")\n" +
+        "    } else {\n" +
+        "      None\n" +
+        "    }\n",
+      )
+    } else {
+      buf.write_string(decode + "\n")
+    }
   }
   write_step_call(buf, step, typed.length(), takes_ctx~)
 }

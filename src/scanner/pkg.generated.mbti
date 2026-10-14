@@ -39,6 +39,7 @@ pub(all) struct StepFnInfo {
   params : Array[ParamInfo]
   is_method : Bool
   raises : Bool
+  handler : Bool
   source_file : String
   line : Int
 } derive(Eq, @debug.Debug)
