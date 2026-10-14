@@ -62,6 +62,7 @@ moonrockz/moonspec
 │       ├── moonspec/        # CLI executable; installs as `moonspec`
 │       └── main/            # Deprecated alias; installs as `main`
 ├── docs/plans/          # Design and implementation plans
+├── site/                # rabbita landing page and docs site (separate module; see site/README.md)
 ├── .beads/              # Issue tracking database
 └── mise-tasks/          # File-based mise tasks
 ```
@@ -229,6 +230,7 @@ Breaking changes: add `!` after type (e.g., `feat(runner)!: change return type`)
 | `codegen` | `src/codegen/`       |
 | `cli`     | `src/cli/`           |
 | `cmd`     | `src/cmd/`           |
+| `site`    | `site/`              |
 
 ## Mise Tasks
 
@@ -239,6 +241,10 @@ All build, test, and release operations are **file-based mise tasks** in
 |-----------------------|------------------------------------------------|
 | `test:unit`           | Run MoonBit unit tests (`moon test`)           |
 | `hooks:install`       | Install the git hooks (lefthook; they call `bd hooks run`) |
+| `site:build`          | Build one version of the docs site (`site/`)   |
+| `site:dev`            | Build at `/` and serve on localhost:8080       |
+| `site:linkcheck`      | Check links, routes and search index of a build |
+| `site:check`          | Site unit tests, release + next build, link check |
 | `release:version`     | Compute next version from conventional commits |
 | `release:credentials` | Set up mooncakes.io credentials (CI only)      |
 | `release:publish`     | Publish package to mooncakes.io                |

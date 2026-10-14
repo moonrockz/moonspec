@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/moonrockz/moonspec/actions/workflows/ci.yml/badge.svg)](https://github.com/moonrockz/moonspec/actions/workflows/ci.yml)
 
+**Docs:** <https://moonrockz.github.io/moonspec/>
+
 **BDD test framework for MoonBit** with Gherkin and Cucumber Expressions.
 
 moonspec brings Behavior-Driven Development to [MoonBit](https://www.moonbitlang.com/).

@@ -474,6 +474,7 @@ opts.skip_tags(["@skip", "@ignore", "@wip"])
 ## Documentation
 
 Full docs, CLI reference, architecture, and examples:
+<https://moonrockz.github.io/moonspec/>, or
 [github.com/moonrockz/moonspec](https://github.com/moonrockz/moonspec)
 
 Upgrading from 0.10.x? See the
