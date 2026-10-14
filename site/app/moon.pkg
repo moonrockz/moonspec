@@ -1,7 +1,7 @@
 import {
   "moonbit-community/rabbita",
   "moonrockz/moonspec-site/shell",
-  "moonbitlang/core/json",
+  "moonrockz/moonspec-site/data",
 }
 
 warnings = "-alert_experimental"

@@ -2,8 +2,10 @@
 package "moonrockz/moonspec-site/shell"
 
 import {
+  "moonbit-community/rabbita",
   "moonbit-community/rabbita/cmd",
   "moonbit-community/rabbita/common",
+  "moonbit-community/rabbita/html",
   "moonbit-community/rabbita/url",
   "moonbitlang/core/debug",
   "moonrockz/moonspec-site/content",
@@ -14,13 +16,23 @@ import {
 }
 
 // Values
+pub fn code_view(String, String) -> @html.Html
+
+pub fn component(@data.SiteData, String) -> @rabbita.Val[@html.Html]
+
 pub fn current_results(Model) -> Array[(String, Array[@search.Match])]
 
 pub fn entry_href(@data.SiteConfig, @search.Entry) -> String
 
+pub fn md_view(String, Array[@markdown.Block]) -> @html.Html
+
 pub fn read_theme() -> Theme
 
+pub fn target_href(String, @markdown.Target) -> String
+
 pub fn update(Model, Msg, @cmd.Emit[Msg]) -> (Model, @cmd.Cmd)
+
+pub fn view(Model, @cmd.Emit[Msg], String) -> @html.Html
 
 // Errors
 

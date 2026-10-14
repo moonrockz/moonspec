@@ -1,5 +1,7 @@
 import {
   "moonbit-community/rabbita",
+  "moonbit-community/rabbita/html",
+  "moonbit-community/rabbita/sub",
   "moonbit-community/rabbita/nav",
   "moonbit-community/rabbita/url",
   "moonbit-community/rabbita/http",
@@ -8,15 +10,17 @@ import {
   "moonrockz/moonspec-site/content",
   "moonrockz/moonspec-site/markdown",
   "moonrockz/moonspec-site/search",
+  "moonrockz/moonspec-site/highlight",
   "moonrockz/moonspec-site/data",
   "moonbitlang/core/json",
   "moonbitlang/core/debug",
 }
 
-warnings = "-alert_experimental"
+warnings = "-alert_experimental-unused_package"
 
 supported_targets = "js+native"
 
 import {
   "moonbit-community/rabbita/cmd",
+  "moonbitlang/async",
 } for "wbtest"

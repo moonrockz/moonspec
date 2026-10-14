@@ -5,8 +5,8 @@ extern "js" fn read_site_data() -> String =
 ///|
 fn main {
   let json = read_site_data()
-  let data : @shell.SpikeData = @json.from_json(@json.parse(json)) catch {
-    _ => abort("moonspec site: invalid ms-data")
+  match @data.SiteData::decode(json) {
+    Some(data) => @rabbita.new(() => @shell.component(data, json)).hydrate()
+    None => abort("moonspec site: invalid ms-data")
   }
-  @rabbita.new(() => @shell.spike_component(data, json)).hydrate()
 }
