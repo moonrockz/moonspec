@@ -96,15 +96,23 @@ fn footer_view(m : Model) -> Html {
 }
 
 ///|
+/// The one `404.html` is served for every missing path, whichever version
+/// it is under, so this view names no version.
 fn not_found_view(m : Model) -> Html {
-  let base = m.config.base
+  let c = m.config
+  let docs = @route.Doc(@route.default_doc_slug)
   @html.section(class="ms-notfound", [
     @html.h1("Page not found"),
-    @html.p("This page does not exist in the \{m.config.version} docs."),
+    @html.p("This page does not exist."),
     @html.p([
-      @html.a(href=base, "Home"),
+      @html.a(href=c.base, "Home"),
       @html.text(" · "),
-      @html.a(href=@route.href(base, Doc(@route.default_doc_slug)), "Docs"),
+      @html.a(
+        href=@route.href(c.release_base, docs),
+        "Docs (\{c.release_version})",
+      ),
+      @html.text(" · "),
+      @html.a(href=@route.href(c.next_base, docs), "Docs (next)"),
     ]),
   ])
 }

@@ -38,6 +38,11 @@ async test "docs page renders sidebar, article, toc and edit link" {
 async test "unknown pages render the not-found view" {
   let html = render_route(Doc("nope"), None)
   assert_true(html.contains("Page not found"))
+  assert_true(html.contains("This page does not exist."))
+  assert_true(html.contains("Docs (next)"))
+  assert_true(html.contains("href=\"/moonspec/next/docs/"))
+  assert_true(html.contains("href=\"/moonspec/docs/"))
+  assert_true(!html.contains("does not exist in"))
 }
 
 ///|
