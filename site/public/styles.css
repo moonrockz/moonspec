@@ -1,20 +1,20 @@
 :root {
   --bg: #f9fafb; --surface: #ffffff; --fg: #111827; --muted: #6b7280;
   --border: #e5e7eb; --accent: #4f46e5; --accent-2: #a5b4fc;
-  --code-bg: #0d1117; --code-fg: #e6edf3; --soft: #eef2ff;
+  --code-bg: #0d1117; --code-fg: #e6edf3; --soft: #eef2ff; --on-accent: #ffffff;
   --font: Manrope, "Avenir Next", "Trebuchet MS", sans-serif;
   --mono: Menlo, Consolas, Monaco, monospace;
 }
 :root[data-theme="dark"] {
   --bg: #0f1014; --surface: #17181f; --fg: #e5e7eb; --muted: #8b93a8;
   --border: #26283a; --accent: #a5b4fc; --accent-2: #c7d2fe;
-  --code-bg: #0d0e12; --soft: #1e1b4b;
+  --code-bg: #0d0e12; --soft: #1e1b4b; --on-accent: #1e1b4b;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #0f1014; --surface: #17181f; --fg: #e5e7eb; --muted: #8b93a8;
     --border: #26283a; --accent: #a5b4fc; --accent-2: #c7d2fe;
-    --code-bg: #0d0e12; --soft: #1e1b4b;
+    --code-bg: #0d0e12; --soft: #1e1b4b; --on-accent: #1e1b4b;
   }
 }
 * { box-sizing: border-box; }
@@ -49,8 +49,7 @@ code, pre, kbd { font-family: var(--mono); }
 .ms-btn { display: inline-block; padding: 8px 14px; border-radius: 8px; border: 1px solid var(--border);
   color: var(--fg); font-weight: 600; }
 .ms-btn:hover { text-decoration: none; }
-.ms-btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-:root[data-theme="dark"] .ms-btn-primary { color: #1e1b4b; }
+.ms-btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 .ms-code { background: var(--code-bg); color: var(--code-fg); padding: 14px 16px; border-radius: 10px;
   overflow-x: auto; font-size: 13.5px; line-height: 1.55; }
 .ms-code code { background: none; padding: 0; color: inherit; }
