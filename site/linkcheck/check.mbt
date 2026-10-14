@@ -69,13 +69,10 @@ pub fn target_file(path : String) -> String {
   if path.has_suffix("/") {
     return path + "index.html"
   }
-  let last = path
-    .split("/")
-    .map(s => s.to_owned())
-    .collect()
-    .last()
-    .unwrap_or("")
-  if last.contains(".") {
+  let exts = [
+    ".html", ".css", ".js", ".json", ".md", ".png", ".ico", ".svg", ".txt",
+  ]
+  if exts.iter().any(e => path.has_suffix(e)) {
     path
   } else {
     path + "/index.html"

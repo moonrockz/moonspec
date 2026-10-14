@@ -6,6 +6,10 @@ import {
   "moonbitlang/core/json",
 }
 
+import {
+  "moonrockz/moonspec-site/route",
+} for "wbtest"
+
 supported_targets = "native"
 
 pkgtype(kind: "executable")
