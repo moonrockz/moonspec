@@ -58,8 +58,14 @@ fn walk_attrs_for_step(
   match attrs {
     More(attr, tail~) => {
       match extract_step_attr(attr) {
-        Some((keyword, pattern)) => {
-          let info = build_step_fn_info(keyword, pattern, fun_decl, file_name)
+        Some((keyword, pattern, handler)) => {
+          let info = build_step_fn_info(
+            keyword,
+            pattern,
+            fun_decl,
+            file_name,
+            handler~,
+          )
           step_fns.push(info)
         }
         None => ()
@@ -71,10 +77,11 @@ fn walk_attrs_for_step(
 }
 
 ///|
-/// Extract step keyword and pattern from a moonspec step attribute.
-/// Returns Some((keyword, pattern)) for #moonspec.given/when/then("pattern"),
-/// or None if not a moonspec step attribute.
-fn extract_step_attr(attr : @attribute.Attribute) -> (String, String)? {
+/// Extract step keyword, pattern and `handler` flag from a moonspec step
+/// attribute. Returns Some((keyword, pattern, handler)) for
+/// #moonspec.given/when/then/step("pattern"[, handler=true]), or None if
+/// not a moonspec step attribute.
+fn extract_step_attr(attr : @attribute.Attribute) -> (String, String, Bool)? {
   match attr.parsed {
     Some(Apply(id, props)) => {
       guard id.qual == Some("moonspec") else { return None }
@@ -82,7 +89,7 @@ fn extract_step_attr(attr : @attribute.Attribute) -> (String, String)? {
       guard keyword is ("given" | "when" | "then" | "step") else { return None }
       let pattern = extract_string_from_props(props)
       match pattern {
-        Some(p) => Some((keyword, p))
+        Some(p) => Some((keyword, p, extract_handler_from_props(props)))
         None => None
       }
     }
@@ -103,11 +110,22 @@ fn extract_string_from_props(props : @list.List[@attribute.Prop]) -> String? {
 }
 
 ///|
+/// Whether the attribute properties include `handler=true`.
+fn extract_handler_from_props(props : @list.List[@attribute.Prop]) -> Bool {
+  match props {
+    More(Labeled("handler", Bool(value)), ..) => value
+    More(_, tail~) => extract_handler_from_props(tail)
+    Empty => false
+  }
+}
+
+///|
 fn build_step_fn_info(
   keyword : String,
   pattern : String,
   fun_decl : @syntax.FunDecl,
   file_name : String,
+  handler~ : Bool,
 ) -> StepFnInfo {
   let fn_name = fun_decl.name.name
   let line = fun_decl.name.loc.start.lnum
@@ -122,6 +140,7 @@ fn build_step_fn_info(
     params,
     is_method,
     raises,
+    handler,
     source_file: file_name,
     line,
   }

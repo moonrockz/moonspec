@@ -19,6 +19,9 @@ pub(all) struct StepFnInfo {
   params : Array[ParamInfo]
   is_method : Bool
   raises : Bool
+  /// `handler=true` in the attribute: register as a raw handler that decodes
+  /// the typed parameters itself, with no arity check.
+  handler : Bool
   source_file : String
   line : Int32
 } derive(Debug, Eq)

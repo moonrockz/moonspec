@@ -123,3 +123,94 @@ test "StepDef::given9 creates nine-arg step def" {
   (sd.handler.0)(ctx)
   assert_eq(result[0], 45)
 }
+
+///|
+test "StepDef::then22_ctx passes 22 typed args and Ctx" {
+  let captured : Array[String] = []
+  let sd = StepDef::then22_ctx(
+    "{int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int} {int}",
+    fn(
+      x0 : Int32,
+      x1 : Int32,
+      x2 : Int32,
+      x3 : Int32,
+      x4 : Int32,
+      x5 : Int32,
+      x6 : Int32,
+      x7 : Int32,
+      x8 : Int32,
+      x9 : Int32,
+      x10 : Int32,
+      x11 : Int32,
+      x12 : Int32,
+      x13 : Int32,
+      x14 : Int32,
+      x15 : Int32,
+      x16 : Int32,
+      x17 : Int32,
+      x18 : Int32,
+      x19 : Int32,
+      x20 : Int32,
+      x21 : Int32,
+      ctx : Ctx,
+    ) {
+      captured.push(
+        (x0 +
+        x1 +
+        x2 +
+        x3 +
+        x4 +
+        x5 +
+        x6 +
+        x7 +
+        x8 +
+        x9 +
+        x10 +
+        x11 +
+        x12 +
+        x13 +
+        x14 +
+        x15 +
+        x16 +
+        x17 +
+        x18 +
+        x19 +
+        x20 +
+        x21).to_string() +
+        " " +
+        ctx.scenario().scenario_name,
+      )
+    },
+  )
+  assert_eq(sd.keyword, StepKeyword::Then)
+  let ctx = Ctx::new(
+    [
+      { value: IntVal(0), raw: "0", },
+      { value: IntVal(1), raw: "1", },
+      { value: IntVal(2), raw: "2", },
+      { value: IntVal(3), raw: "3", },
+      { value: IntVal(4), raw: "4", },
+      { value: IntVal(5), raw: "5", },
+      { value: IntVal(6), raw: "6", },
+      { value: IntVal(7), raw: "7", },
+      { value: IntVal(8), raw: "8", },
+      { value: IntVal(9), raw: "9", },
+      { value: IntVal(10), raw: "10", },
+      { value: IntVal(11), raw: "11", },
+      { value: IntVal(12), raw: "12", },
+      { value: IntVal(13), raw: "13", },
+      { value: IntVal(14), raw: "14", },
+      { value: IntVal(15), raw: "15", },
+      { value: IntVal(16), raw: "16", },
+      { value: IntVal(17), raw: "17", },
+      { value: IntVal(18), raw: "18", },
+      { value: IntVal(19), raw: "19", },
+      { value: IntVal(20), raw: "20", },
+      { value: IntVal(21), raw: "21", },
+    ],
+    { feature_name: "f", scenario_name: "s22", tags: [], },
+    { keyword: "Then ", text: "t", },
+  )
+  (sd.handler.0)(ctx)
+  assert_eq(captured, ["231 s22"])
+}

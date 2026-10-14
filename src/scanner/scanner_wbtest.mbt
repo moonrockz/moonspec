@@ -132,3 +132,22 @@ test "the step attribute registers a keyword-independent step" {
   assert_eq(result.step_fns.length(), 1)
   assert_eq(result.step_fns[0].keyword, "step")
 }
+
+///|
+test "handler=true marks the step for handler registration" {
+  let source =
+    #|#moonspec.given("the users", handler=true)
+    #|fn given_users(world : W, table : @moonspec.DataTable?) -> Unit {
+    #|  ()
+    #|}
+    #|
+    #|#moonspec.when("they log in")
+    #|fn when_login(world : W) -> Unit {
+    #|  ()
+    #|}
+  let result = scan_source(source, "steps.mbt")
+  assert_eq(result.step_fns[0].pattern, "the users")
+  assert_true(result.step_fns[0].handler)
+  assert_false(result.step_fns[1].handler)
+  assert_eq(result.step_fns[0].params[0].type_name, "@moonspec.DataTable?")
+}

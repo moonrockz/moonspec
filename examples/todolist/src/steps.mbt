@@ -119,3 +119,22 @@ fn when_add_scenario_todo(
 fn then_todo_exists(world : TodoWorld, title : String) -> Unit raise Error {
   assert_true(world.todos.iter().any(fn(t) { t.title == title }))
 }
+
+///|
+/// `handler=true` registers a raw handler: the typed parameters are decoded
+/// without an arity check, so `todos` is `None` when the step has no table.
+#moonspec.given("a todo list named {string}", handler=true)
+fn given_named_list(
+  world : TodoWorld,
+  name : String,
+  todos : @moonspec.DataTable?,
+) -> Unit {
+  world.todos.clear()
+  guard todos is Some(table) else { return }
+  for row in table.as_maps() {
+    world.todos.push(TodoItem::{
+      title: name + ": " + row.get_or_default("title", ""),
+      completed: false,
+    })
+  }
+}

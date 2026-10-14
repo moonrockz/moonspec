@@ -34,3 +34,15 @@ Feature: Todo List
     Given a todo list
     When I add a todo "Plan" for this scenario
     Then todo "Plan (Name a todo after the scenario)" should exist
+
+  Scenario: Named list with todos
+    Given a todo list named "Home"
+      | title |
+      | Shop  |
+      | Cook  |
+    Then I should have 2 todos
+    And todo "Home: Cook" should exist
+
+  Scenario: Named list without todos
+    Given a todo list named "Work"
+    Then I should have 0 todos
