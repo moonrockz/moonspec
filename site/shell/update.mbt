@@ -148,7 +148,6 @@ pub fn update(
       }
       ({ ..m, page, pending_anchor: None, }, scroll_cmd(m.pending_anchor))
     }
-    ThemeLoaded(theme) => ({ ..m, theme, }, @rabbita.none)
     ToggleTheme => {
       let theme = match m.theme {
         Auto => Dark

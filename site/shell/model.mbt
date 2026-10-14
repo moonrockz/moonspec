@@ -109,7 +109,6 @@ pub(all) enum Msg {
   UrlChanged(@url.Url)
   UrlRequested(@url.UrlRequest)
   ContentLoaded(@route.Route, Result[String, Error])
-  ThemeLoaded(Theme)
   ToggleTheme
   OpenSearch
   CloseSearch

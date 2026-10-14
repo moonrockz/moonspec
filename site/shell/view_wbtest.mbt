@@ -52,3 +52,24 @@ test "target_href" {
     "https://e.com",
   )
 }
+
+///|
+#cfg(not(target="js"))
+async test "head starts with the stored-theme script" {
+  let html = render_route(Landing, None)
+  let head = html.find("<head>").unwrap()
+  let script = html.find("localStorage.getItem('moonspec-theme')").unwrap()
+  let css = html.find("styles.css").unwrap()
+  assert_true(head < script && script < css)
+  assert_true(html.contains("dataset.theme"))
+}
+
+///|
+#cfg(not(target="js"))
+async test "initial_theme sets the theme attribute on the first render" {
+  let data = site_data(Landing, None)
+  let html = @rabbita.new(() => {
+    component(data, data.encode(), initial_theme=Dark)
+  }).render(url="http://localhost/moonspec/")
+  assert_true(html.contains("data-theme=\"dark\""))
+}

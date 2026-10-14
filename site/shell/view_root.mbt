@@ -11,6 +11,13 @@ fn theme_attrs(theme : Theme) -> @html.Attrs {
 }
 
 ///|
+/// Runs before the first paint: applies the stored theme so a reader who
+/// chose one never sees the other. Static text, so the pre-rendered and the
+/// hydrated head are identical.
+let theme_script : String =
+  #|try{var t=localStorage.getItem('moonspec-theme');if(t==='light'||t==='dark'){document.documentElement.dataset.theme=t}}catch(e){}
+
+///|
 fn page_title(m : Model) -> String {
   match (m.route, m.manifest.find(m.route)) {
     (Landing, _) => "moonspec — BDD test framework for MoonBit"
@@ -26,6 +33,7 @@ pub fn view(m : Model, emit : @rabbita.Emit[Msg], site_json : String) -> Html {
   let base = m.config.base
   html(lang="en", attrs=theme_attrs(m.theme), [
     head([
+      script(theme_script),
       meta(charset="utf-8"),
       meta(name="viewport", content="width=device-width, initial-scale=1"),
       title(page_title(m)),
@@ -63,12 +71,15 @@ fn content_view(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
 
 ///|
 /// The site component: one state, one view of the whole document.
+/// `initial_theme` is the theme the head script already applied; the
+/// pre-render uses `Auto`.
 pub fn component(
   data : @data.SiteData,
   site_json : String,
+  initial_theme~ : Theme = Auto,
 ) -> @rabbita.Val[Html] {
-  let (model, emit) = @rabbita.create_state_with_init(
-    init=emit => (Model::init(data), load_theme(emit)),
+  let (model, emit) = @rabbita.create_state(
+    { ..Model::init(data), theme: initial_theme, },
     update~,
     subscriptions=(_m, emit) => {
       @sub.batch([
@@ -79,20 +90,4 @@ pub fn component(
     },
   )
   model.map(m => view(m, emit, site_json))
-}
-
-///|
-/// Reads the stored theme. `perform` exists only on the JS target, so native
-/// builds (used for tests) skip it.
-#cfg(target="js")
-fn load_theme(emit : @rabbita.Emit[Msg]) -> @rabbita.Cmd {
-  @rabbita.perform(theme => emit(ThemeLoaded(theme)), fn() noraise {
-    read_theme()
-  })
-}
-
-///|
-#cfg(not(target="js"))
-fn load_theme(_emit : @rabbita.Emit[Msg]) -> @rabbita.Cmd {
-  @rabbita.none
 }
