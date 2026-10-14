@@ -6,8 +6,8 @@ set -euo pipefail
 
 tmp=$(mktemp -d)
 cleanup() {
-  git worktree remove --force "$tmp/release" 2>/dev/null || true
-  git worktree prune
+  git -c core.hooksPath=/dev/null worktree remove --force "$tmp/release" 2>/dev/null || true
+  git -c core.hooksPath=/dev/null worktree prune
   rm -rf "$tmp"
 }
 trap cleanup EXIT
@@ -18,7 +18,7 @@ release=${tag:-v0.0.0}
 # The release channel is built from the latest stable tag, as CI does.
 release_content=.
 if [ -n "$tag" ]; then
-  git worktree add --detach "$tmp/release" "$tag"
+  git -c core.hooksPath=/dev/null worktree add --detach "$tmp/release" "$tag"
   release_content="$tmp/release"
 else
   echo "site:check: no stable release tag found; building the release channel from the working tree"
