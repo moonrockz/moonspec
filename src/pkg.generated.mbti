@@ -123,6 +123,8 @@ pub using @core {type StepValue}
 
 pub using @core {trait Attachable}
 
+pub using @core {trait FromStepArg}
+
 pub using @core {trait StepLibrary}
 
 pub using @core {trait World}

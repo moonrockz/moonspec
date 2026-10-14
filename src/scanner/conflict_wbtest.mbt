@@ -29,3 +29,11 @@ test "detect_manual_registration returns false for unrelated code" {
 test "detect_manual_registration returns false for empty string" {
   assert_true(!has_manual_registration("", "MyWorld"))
 }
+
+///|
+test "has_manual_registration ignores the gen steps output" {
+  // gen steps writes its output next to the step functions, so the next
+  // scan reads it. Its impl is not a manual registration.
+  let generated = generate_configure("MyWorld", [], source_hash="00000000")
+  assert_false(has_manual_registration(generated, "MyWorld"))
+}

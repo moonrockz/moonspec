@@ -78,3 +78,44 @@ fn then_pending_count(world : TodoWorld, count : Int32) -> Unit raise Error {
     .length()
   assert_eq(pending, count)
 }
+
+///|
+/// A step function that takes only `Ctx` is registered as a handler. It
+/// reads its own arguments, here the data table under the step.
+#moonspec.given("these todos")
+fn given_these_todos(
+  world : TodoWorld,
+  ctx : @moonspec.Ctx,
+) -> Unit raise Error {
+  let table = match ctx[0] {
+    { value: DataTableVal(table), .. } => table
+    _ => fail("expected a data table")
+  }
+  world.todos.clear()
+  for row in table.as_maps() {
+    world.todos.push(TodoItem::{
+      title: row.get_or_default("title", ""),
+      completed: row.get_or_default("done", "no") == "yes",
+    })
+  }
+}
+
+///|
+/// Typed parameters followed by `Ctx` use the `_ctx` variant (`when1_ctx`).
+#moonspec.when("I add a todo {string} for this scenario")
+fn when_add_scenario_todo(
+  world : TodoWorld,
+  title : String,
+  ctx : @moonspec.Ctx,
+) -> Unit {
+  world.todos.push(TodoItem::{
+    title: title + " (" + ctx.scenario().scenario_name + ")",
+    completed: false,
+  })
+}
+
+///|
+#moonspec.then("todo {string} should exist")
+fn then_todo_exists(world : TodoWorld, title : String) -> Unit raise Error {
+  assert_true(world.todos.iter().any(fn(t) { t.title == title }))
+}

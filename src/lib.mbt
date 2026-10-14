@@ -6,6 +6,7 @@
 pub using @core {
   trait World,
   trait StepLibrary,
+  trait FromStepArg,
   type StepRegistry,
   type StepDef,
   type StepArg,

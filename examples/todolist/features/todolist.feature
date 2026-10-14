@@ -21,3 +21,16 @@ Feature: Todo List
   Scenario: Count pending todos
     Given I have 2 completed and 3 pending todos
     Then the pending count should be 3
+
+  Scenario: Start from a table of todos
+    Given these todos
+      | title     | done |
+      | Shop      | yes  |
+      | Cook      | no   |
+      | Clean     | no   |
+    Then the pending count should be 2
+
+  Scenario: Name a todo after the scenario
+    Given a todo list
+    When I add a todo "Plan" for this scenario
+    Then todo "Plan (Name a todo after the scenario)" should exist

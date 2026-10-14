@@ -112,7 +112,11 @@ test "generate_configure falls back to ctx-based for arity > 22" {
   // Should use ctx-based fallback, not typed arity method
   assert_true(str_contains(output, "setup.given(\"many params\""))
   assert_true(str_contains(output, "fn(ctx) raise"))
-  assert_true(str_contains(output, "IntVal(v)"))
+  assert_true(
+    str_contains(
+      output, "let _arg0 : Int = @moonspec.FromStepArg::from_step_arg(ctx[0])",
+    ),
+  )
   // Should NOT use arity-suffixed method
   assert_true(!str_contains(output, "setup.given23("))
 }
@@ -148,4 +152,97 @@ test "generate_configure annotates raise only for raising steps" {
   assert_true(str_contains(output, "fn(_arg0 : Int) raise {"))
   assert_true(str_contains(output, "fn() {"))
   assert_true(!str_contains(output, "fn() raise {"))
+}
+
+///|
+fn ctx_step(
+  keyword : String,
+  pattern : String,
+  fn_name : String,
+  params : Array[ParamInfo],
+  raises~ : Bool,
+) -> StepFnInfo {
+  {
+    keyword,
+    pattern,
+    fn_name,
+    world_type: "W",
+    params,
+    is_method: false,
+    raises,
+    source_file: "src/steps.mbt",
+    line: 1,
+  }
+}
+
+///|
+test "a step function that takes only Ctx registers as a handler" {
+  let steps = [
+    ctx_step(
+      "given",
+      "the users",
+      "given_users",
+      [{ name: "ctx", type_name: "@moonspec.Ctx", }],
+      raises=true,
+    ),
+    ctx_step(
+      "when",
+      "they log in",
+      "when_login",
+      [{ name: "ctx", type_name: "Ctx", }],
+      raises=false,
+    ),
+  ]
+  let output = generate_configure("W", steps, source_hash="00000000")
+  // The handler reads its arguments from ctx, so no arity is checked
+  assert_true(
+    str_contains(
+      output, "setup.given(\"the users\", fn(ctx) raise {\n    given_users(self, ctx)\n  })",
+    ),
+  )
+  assert_true(
+    str_contains(
+      output, "setup.when(\"they log in\", fn(ctx) {\n    when_login(self, ctx)\n  })",
+    ),
+  )
+}
+
+///|
+test "typed parameters followed by Ctx use the _ctx variant" {
+  let steps = [
+    ctx_step(
+      "when",
+      "I log {string}",
+      "when_log",
+      [
+        { name: "msg", type_name: "String", },
+        { name: "ctx", type_name: "@moonspec.Ctx", },
+      ],
+      raises=false,
+    ),
+  ]
+  let output = generate_configure("W", steps, source_hash="00000000")
+  assert_true(
+    str_contains(
+      output, "setup.when1_ctx(\"I log {string}\", fn(_arg0 : String, ctx : @moonspec.Ctx) {\n    when_log(self, _arg0, ctx)\n  })",
+    ),
+  )
+}
+
+///|
+test "more than four typed parameters with Ctx fall back to a handler" {
+  let params : Array[ParamInfo] = []
+  for i = 0; i < 5; i = i + 1 {
+    params.push({ name: "p" + i.to_string(), type_name: "Int", })
+  }
+  params.push({ name: "ctx", type_name: "@moonspec.Ctx", })
+  let steps = [ctx_step("then", "five", "then_five", params, raises=false)]
+  let output = generate_configure("W", steps, source_hash="00000000")
+  assert_true(str_contains(output, "setup.then(\"five\", fn(ctx) raise {"))
+  assert_true(
+    str_contains(
+      output, "then_five(self, _arg0, _arg1, _arg2, _arg3, _arg4, ctx)",
+    ),
+  )
+  assert_true(!str_contains(output, "then5_ctx"))
 }

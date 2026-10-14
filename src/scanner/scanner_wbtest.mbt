@@ -107,3 +107,28 @@ test "ignore functions without moonspec attributes" {
   assert_eq(result.step_fns[0].fn_name, "actual_step")
   assert_eq(result.world_configs.length(), 0)
 }
+
+///|
+test "qualified parameter types keep the package prefix" {
+  let source =
+    #|#moonspec.given("the users")
+    #|fn given_users(world : W, table : @moonspec.DataTable, ctx : @moonspec.Ctx) -> Unit {
+    #|  ()
+    #|}
+  let result = scan_source(source, "steps.mbt")
+  let step = result.step_fns[0]
+  assert_eq(step.params[0].type_name, "@moonspec.DataTable")
+  assert_eq(step.params[1].type_name, "@moonspec.Ctx")
+}
+
+///|
+test "the step attribute registers a keyword-independent step" {
+  let source =
+    #|#moonspec.step("I wait {int} seconds")
+    #|fn wait(world : W, seconds : Int) -> Unit {
+    #|  ()
+    #|}
+  let result = scan_source(source, "steps.mbt")
+  assert_eq(result.step_fns.length(), 1)
+  assert_eq(result.step_fns[0].keyword, "step")
+}

@@ -79,9 +79,7 @@ fn extract_step_attr(attr : @attribute.Attribute) -> (String, String)? {
     Some(Apply(id, props)) => {
       guard id.qual == Some("moonspec") else { return None }
       let keyword = id.name
-      guard keyword == "given" || keyword == "when" || keyword == "then" else {
-        return None
-      }
+      guard keyword is ("given" | "when" | "then" | "step") else { return None }
       let pattern = extract_string_from_props(props)
       match pattern {
         Some(p) => Some((keyword, p))
@@ -193,7 +191,7 @@ fn type_to_string(ty : @syntax.Type?) -> String {
     Some(Name(constr_id~, ..)) =>
       match constr_id.id {
         Ident(name~) => name
-        Dot(pkg~, id~) => pkg + "." + id
+        Dot(pkg~, id~) => "@" + pkg + "." + id
       }
     Some(Option(ty~, ..)) => type_to_string(Some(ty)) + "?"
     Some(Tuple(..)) => "Tuple"
@@ -202,7 +200,7 @@ fn type_to_string(ty : @syntax.Type?) -> String {
     Some(Object(constr_id)) =>
       match constr_id.id {
         Ident(name~) => name
-        Dot(pkg~, id~) => pkg + "." + id
+        Dot(pkg~, id~) => "@" + pkg + "." + id
       }
     None => "Unknown"
   }
