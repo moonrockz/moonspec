@@ -17,5 +17,6 @@ examples/*/src/*_feature_test.mbt
 
 # Site build output
 site/dist/
+site/.bundle/
 site/_build/
 site/.mooncakes/

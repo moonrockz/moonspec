@@ -1,8 +1,15 @@
 import {
   "moonbit-community/rabbita",
+  "moonrockz/moonspec-site/route",
+  "moonrockz/moonspec-site/content",
+  "moonrockz/moonspec-site/markdown",
+  "moonrockz/moonspec-site/search",
+  "moonrockz/moonspec-site/data",
   "moonrockz/moonspec-site/shell",
   "moonbitlang/async",
   "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
+  "moonbitlang/core/env",
 }
 
 warnings = "-alert_experimental"

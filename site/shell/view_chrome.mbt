@@ -19,6 +19,11 @@ fn theme_icon(theme : Theme) -> String {
 ///|
 fn version_picker(m : Model) -> Html {
   let c = m.config
+  // A missing page has no counterpart in the other version: link to its home.
+  let route = match m.route {
+    NotFound(_) => @route.Landing
+    r => r
+  }
   @html.div(class="ms-version", [
     @html.a(
       class=class_if(
@@ -26,12 +31,12 @@ fn version_picker(m : Model) -> Html {
         "ms-version-current",
         c.channel == Release,
       ),
-      href=@route.href(c.release_base, m.route),
+      href=@route.href(c.release_base, route),
       c.release_version,
     ),
     @html.a(
       class=class_if("ms-version-link", "ms-version-current", c.channel == Next),
-      href=@route.href(c.next_base, m.route),
+      href=@route.href(c.next_base, route),
       "next",
     ),
   ])
