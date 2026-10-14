@@ -230,19 +230,31 @@ test "typed parameters followed by Ctx use the _ctx variant" {
 }
 
 ///|
-test "more than four typed parameters with Ctx fall back to a handler" {
+test "up to 22 typed parameters with Ctx use the _ctx variant" {
   let params : Array[ParamInfo] = []
-  for i = 0; i < 5; i = i + 1 {
+  for i = 0; i < 22; i = i + 1 {
     params.push({ name: "p" + i.to_string(), type_name: "Int", })
   }
   params.push({ name: "ctx", type_name: "@moonspec.Ctx", })
-  let steps = [ctx_step("then", "five", "then_five", params, raises=false)]
+  let steps = [ctx_step("then", "many", "then_many", params, raises=false)]
   let output = generate_configure("W", steps, source_hash="00000000")
-  assert_true(str_contains(output, "setup.then(\"five\", fn(ctx) raise {"))
   assert_true(
-    str_contains(
-      output, "then_five(self, _arg0, _arg1, _arg2, _arg3, _arg4, ctx)",
-    ),
+    str_contains(output, "setup.then22_ctx(\"many\", fn(_arg0 : Int,"),
   )
-  assert_true(!str_contains(output, "then5_ctx"))
+  assert_true(str_contains(output, "_arg21 : Int, ctx : @moonspec.Ctx) {"))
+  assert_true(str_contains(output, "then_many(self, _arg0,"))
+}
+
+///|
+test "more than 22 typed parameters with Ctx fall back to a handler" {
+  let params : Array[ParamInfo] = []
+  for i = 0; i < 23; i = i + 1 {
+    params.push({ name: "p" + i.to_string(), type_name: "Int", })
+  }
+  params.push({ name: "ctx", type_name: "@moonspec.Ctx", })
+  let steps = [ctx_step("then", "many", "then_many", params, raises=false)]
+  let output = generate_configure("W", steps, source_hash="00000000")
+  assert_true(str_contains(output, "setup.then(\"many\", fn(ctx) raise {"))
+  assert_true(str_contains(output, "_arg21, _arg22, ctx)"))
+  assert_true(!str_contains(output, "then23_ctx"))
 }

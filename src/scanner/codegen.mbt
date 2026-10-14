@@ -29,13 +29,9 @@ pub fn generate_configure(
 }
 
 ///|
-/// Highest arity of the typed `Setup` methods (`given0` .. `given22`).
+/// Highest arity of the typed `Setup` methods, with and without `Ctx`
+/// (`given0` .. `given22`, `given0_ctx` .. `given22_ctx`).
 let max_typed_arity = 22
-
-///|
-/// Highest arity of the typed `Setup` methods that also pass `Ctx`
-/// (`given0_ctx` .. `given4_ctx`).
-let max_typed_ctx_arity = 4
 
 ///|
 /// How a step function is registered, from the shape of its parameters
@@ -43,7 +39,8 @@ let max_typed_ctx_arity = 4
 priv enum Registration {
   /// Typed parameters only: `setup.given2("...", fn(a : A, b : B) { ... })`.
   Typed(Array[ParamInfo])
-  /// Typed parameters, then `Ctx`: `setup.given1_ctx("...", fn(a : A, ctx) { ... })`.
+  /// Typed parameters (up to 22), then `Ctx`:
+  /// `setup.given1_ctx("...", fn(a : A, ctx) { ... })`.
   TypedCtx(Array[ParamInfo])
   /// Only `Ctx`: a handler that reads the arguments from `ctx` itself.
   Handler
@@ -73,7 +70,7 @@ fn registration(step : StepFnInfo) -> Registration {
   }
   match (typed.length(), takes_ctx) {
     (0, true) => Handler
-    (n, true) if n <= max_typed_ctx_arity => TypedCtx(typed)
+    (n, true) if n <= max_typed_arity => TypedCtx(typed)
     (n, false) if n <= max_typed_arity => Typed(typed)
     _ => Decoded(typed, takes_ctx~)
   }

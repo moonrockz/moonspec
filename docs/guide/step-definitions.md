@@ -138,7 +138,9 @@ setup.then0("the cart should be empty", fn() {
 #### Accessing Ctx with `_ctx` Variants
 
 When you need the full `Ctx` (for scenario metadata, step info, or
-attachments), use the `_ctx` variant. `Ctx` is always the **last** parameter:
+attachments), use the `_ctx` variant. Every arity from 0 to 22 has one
+(`given0_ctx` .. `given22_ctx`, and the same for `when`, `then` and `step`).
+`Ctx` is always the **last** parameter:
 
 ```moonbit
 setup.given1_ctx("a user named {string}", fn(name : String, ctx : Ctx) {
@@ -938,9 +940,9 @@ The parameters after it select how the step is registered:
 |---|---|
 | None | `setup.given0("…", fn() { f(self) })` |
 | Typed values, up to 22 | `setup.given2("…", fn(_arg0 : A, _arg1 : B) { f(self, _arg0, _arg1) })` |
-| Typed values (up to 4), then `ctx : @moonspec.Ctx` | `setup.given1_ctx("…", fn(_arg0 : A, ctx : @moonspec.Ctx) { f(self, _arg0, ctx) })` |
+| Typed values (up to 22), then `ctx : @moonspec.Ctx` | `setup.given1_ctx("…", fn(_arg0 : A, ctx : @moonspec.Ctx) { f(self, _arg0, ctx) })` |
 | Only `ctx : @moonspec.Ctx` | `setup.given("…", fn(ctx) { f(self, ctx) })` -- a handler |
-| More typed values than the rows above allow | `setup.given("…", fn(ctx) raise { let _arg0 : A = @moonspec.FromStepArg::from_step_arg(ctx[0]) ... })` |
+| More than 22 typed values, with or without `Ctx` | `setup.given("…", fn(ctx) raise { let _arg0 : A = @moonspec.FromStepArg::from_step_arg(ctx[0]) ... })` |
 
 The keyword (`given`, `when`, `then` or `step`) comes from the attribute.
 

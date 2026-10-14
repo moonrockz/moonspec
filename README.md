@@ -728,7 +728,7 @@ parameters after the world select it:
 | Step function parameters | Registration |
 |---|---|
 | `(world)` or `(world, a : A, ...)` | `given0`, `given2`, ... (typed, up to 22) |
-| `(world, a : A, ..., ctx : @moonspec.Ctx)` | `given1_ctx`, ... (typed plus `Ctx`, up to 4) |
+| `(world, a : A, ..., ctx : @moonspec.Ctx)` | `given1_ctx`, ... (typed plus `Ctx`, up to 22) |
 | `(world, ctx : @moonspec.Ctx)` | `given("...", fn(ctx) ...)`, a handler that reads its own arguments |
 
 Typed values are decoded with `FromStepArg`. A lambda that calls a raising
