@@ -105,12 +105,17 @@ fn is_safe_image_data(dest : String) -> Bool {
 }
 
 ///|
-/// The safe href for a link destination that is absolute. Schemes outside
-/// the allowlist become `#`, so the text stays but the link is dead.
-fn sanitize_link_url(dest : String) -> String {
+/// The target for a link destination that is absolute. Schemes outside the
+/// allowlist are blocked, so the text stays but the link goes.
+fn sanitize_link_url(dest : String) -> Target {
   match uri_scheme(dest) {
-    Some(scheme) => if is_safe_link_scheme(scheme) { dest } else { "#" }
-    None => dest
+    Some(scheme) =>
+      if is_safe_link_scheme(scheme) {
+        External(dest)
+      } else {
+        Blocked
+      }
+    None => External(dest)
   }
 }
 
@@ -169,7 +174,7 @@ pub fn rewrite_link(dest : String, ctx : LinkContext) -> Target {
     return Anchor(dest[1:].to_owned())
   }
   if is_absolute_url(dest) {
-    return External(sanitize_link_url(dest))
+    return sanitize_link_url(dest)
   }
   let (path, anchor) = split_anchor(dest)
   let target = repo_path(path, ctx)
@@ -184,6 +189,7 @@ pub fn rewrite_link(dest : String, ctx : LinkContext) -> Target {
 
 ///|
 /// The URL of an image: absolute URLs stay; repository paths load from raw GitHub.
+/// A blocked source gives the empty string; a safe source is never empty.
 pub fn image_src(dest : String, ctx : LinkContext) -> String {
   if is_absolute_url(dest) {
     return sanitize_image_url(dest)

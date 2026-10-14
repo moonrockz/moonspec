@@ -7,6 +7,8 @@ pub(all) enum Target {
   Anchor(String)
   /// Any other URL (including GitHub links for unpublished repository files).
   External(String)
+  /// A destination that is not safe to link. The link text stays, the link goes.
+  Blocked
 } derive(Eq, Debug)
 
 ///|

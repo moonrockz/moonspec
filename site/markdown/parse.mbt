@@ -76,17 +76,23 @@ fn Conv::inlines(self : Conv, inline : @cmark.Inline) -> Array[Inline] {
     ExtStrikethrough({ v: st, .. }) => [Strike(self.inlines(st.0))]
     ExtMathSpan({ v: ms, .. }) => [Code(ms.tex())]
     Link({ v: lnk, .. }) =>
-      [Link(rewrite_link(self.dest(lnk), self.ctx), self.inlines(lnk.text))]
-    Image({ v: lnk, .. }) =>
-      [
-        Image(
-          image_src(self.dest(lnk), self.ctx),
-          inline_text(self.inlines(lnk.text)),
-        ),
-      ]
+      match rewrite_link(self.dest(lnk), self.ctx) {
+        Blocked => self.inlines(lnk.text)
+        target => [Link(target, self.inlines(lnk.text))]
+      }
+    Image({ v: lnk, .. }) => {
+      let alt = inline_text(self.inlines(lnk.text))
+      match image_src(self.dest(lnk), self.ctx) {
+        "" => [Text(alt)]
+        src => [Image(src, alt)]
+      }
+    }
     Autolink({ v: { link, is_email, }, .. }) => {
       let url = if is_email { "mailto:" + link.v } else { link.v }
-      [Link(rewrite_link(url, self.ctx), [Text(link.v)])]
+      match rewrite_link(url, self.ctx) {
+        Blocked => [Text(link.v)]
+        target => [Link(target, [Text(link.v)])]
+      }
     }
     Break({ v: { ty: Hard, .. }, .. }) => [LineBreak]
     Break({ v: { ty: Soft, .. }, .. }) => [Text(" ")]

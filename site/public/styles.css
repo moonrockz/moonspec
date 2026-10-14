@@ -149,6 +149,8 @@ code, pre, kbd { font-family: var(--mono); }
   color: var(--muted); font-size: 0.75rem; }
 .ms-search-scope { margin-left: auto; }
 
+.ms-sidebar-backdrop { display: none; }
+
 /* Medium: sidebar and article, TOC folds into the article */
 @media (max-width: 1399px) {
   .ms-docs { grid-template-columns: minmax(12rem, 13rem) minmax(0, 1fr); }
@@ -170,7 +172,7 @@ code, pre, kbd { font-family: var(--mono); }
   .ms-sidebar { display: none; }
   .ms-sidebar-open { display: flex; position: fixed; top: 0; left: 0; bottom: 0; width: 260px; z-index: 50;
     background: var(--surface); border-right: 1px solid var(--border); padding: 12px 16px; overflow-y: auto; align-content: flex-start; }
-  .ms-sidebar-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.4); }
+  .ms-sidebar-backdrop { display: block; position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.4); }
   .ms-footer { flex-wrap: wrap; }
 }
 

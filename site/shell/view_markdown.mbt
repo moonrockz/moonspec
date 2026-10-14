@@ -5,6 +5,8 @@ pub fn target_href(base : String, target : @markdown.Target) -> String {
     Internal(route, Some(anchor)) => @route.href(base, route) + "#" + anchor
     Anchor(anchor) => "#" + anchor
     External(url) => url
+    // The parser unwraps blocked links, so no view renders this href.
+    Blocked => "#"
   }
 }
 

@@ -176,33 +176,28 @@ test "rewrite_link: tel and protocol-relative links are external, data links are
   let ctx = site_ctx("docs/guide/getting-started.md")
   assert_eq(rewrite_link("tel:+123", ctx), External("tel:+123"))
   assert_eq(rewrite_link("//host/x", ctx), External("//host/x"))
-  assert_eq(rewrite_link("data:image/png;base64,AAA", ctx), External("#"))
+  assert_eq(rewrite_link("data:image/png;base64,AAA", ctx), Blocked)
 }
 
 ///|
 test "rewrite_link: javascript links are never clickable" {
   let ctx = site_ctx("docs/guide/getting-started.md")
-  assert_eq(rewrite_link("javascript:alert(1)", ctx), External("#"))
-  assert_eq(rewrite_link("JavaScript:alert(1)", ctx), External("#"))
-  assert_eq(rewrite_link("vbscript:x", ctx), External("#"))
-  assert_eq(rewrite_link("data:text/html,hi", ctx), External("#"))
-  assert_eq(rewrite_link("file:///etc/passwd", ctx), External("#"))
+  assert_eq(rewrite_link("javascript:alert(1)", ctx), Blocked)
+  assert_eq(rewrite_link("JavaScript:alert(1)", ctx), Blocked)
+  assert_eq(rewrite_link("vbscript:x", ctx), Blocked)
+  assert_eq(rewrite_link("data:text/html,hi", ctx), Blocked)
+  assert_eq(rewrite_link("file:///etc/passwd", ctx), Blocked)
   assert_eq(rewrite_link("HTTPS://e.com", ctx), External("HTTPS://e.com"))
 }
 
 ///|
 test "autolinks and inline links never emit a script href" {
-  assert_eq(para("<javascript:alert(1)>"), [
-    Link(External("#"), [Text("javascript:alert(1)")]),
-  ])
-  assert_eq(para("<JavaScript:alert(1)>"), [
-    Link(External("#"), [Text("JavaScript:alert(1)")]),
-  ])
-  assert_eq(para("[x](vbscript:x)"), [Link(External("#"), [Text("x")])])
-  assert_eq(para("[x](data:text/html,hi)"), [Link(External("#"), [Text("x")])])
-  assert_eq(para("[x]( javascript:alert(1))"), [
-    Link(External("#"), [Text("x")]),
-  ])
+  assert_eq(para("<javascript:alert(1)>"), [Text("javascript:alert(1)")])
+  assert_eq(para("<JavaScript:alert(1)>"), [Text("JavaScript:alert(1)")])
+  assert_eq(para("[x](vbscript:x)"), [Text("x")])
+  assert_eq(para("[x](data:text/html,hi)"), [Text("x")])
+  assert_eq(para("[x]( javascript:alert(1))"), [Text("x")])
+  assert_eq(para("[**x**](vbscript:x)"), [Strong([Text("x")])])
 }
 
 ///|
@@ -231,4 +226,10 @@ test "rewrite_link: paths and anchors that only look like schemes stay relative"
       "https://github.com/moonrockz/moonspec/blob/v0.11.0/docs/guide/a.md",
     ),
   )
+}
+
+///|
+test "an image with a blocked source becomes its alt text" {
+  assert_eq(para("![pic](javascript:alert(1))"), [Text("pic")])
+  assert_eq(para("![pic](data:text/html,x)"), [Text("pic")])
 }
