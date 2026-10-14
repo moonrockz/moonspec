@@ -23,6 +23,12 @@ test "generate_configure produces valid impl block" {
       output, "impl @moonspec.World for MyWorld with configure(self, setup)",
     ),
   )
+  // Only tests use the impl; silence the unused warning in non-test code
+  assert_true(
+    str_contains(
+      output, "#warnings(\"-unused_value\")\nimpl @moonspec.World for MyWorld",
+    ),
+  )
   // Check typed step registration
   assert_true(str_contains(output, "setup.given1(\"I have {int} cucumbers\""))
   // Check typed lambda parameter
@@ -109,4 +115,37 @@ test "generate_configure falls back to ctx-based for arity > 22" {
   assert_true(str_contains(output, "IntVal(v)"))
   // Should NOT use arity-suffixed method
   assert_true(!str_contains(output, "setup.given23("))
+}
+
+///|
+test "generate_configure annotates raise only for raising steps" {
+  let steps : Array[StepFnInfo] = [
+    {
+      keyword: "then",
+      pattern: "I should have {int} todos",
+      fn_name: "then_todo_count",
+      world_type: "W",
+      params: [{ name: "count", type_name: "Int", }],
+      is_method: true,
+      raises: true,
+      source_file: "src/steps.mbt",
+      line: 1,
+    },
+    {
+      keyword: "given",
+      pattern: "a todo list",
+      fn_name: "given_todo_list",
+      world_type: "W",
+      params: [],
+      is_method: true,
+      raises: false,
+      source_file: "src/steps.mbt",
+      line: 5,
+    },
+  ]
+  let output = generate_configure("W", steps, source_hash="00000000")
+  // A step function that raises needs an explicit `raise` on its lambda
+  assert_true(str_contains(output, "fn(_arg0 : Int) raise {"))
+  assert_true(str_contains(output, "fn() {"))
+  assert_true(!str_contains(output, "fn() raise {"))
 }
