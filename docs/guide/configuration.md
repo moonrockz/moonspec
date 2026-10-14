@@ -39,7 +39,7 @@ moonspec gen tests --config path/to/custom.json5 features/*.feature
 
   // Steps codegen configuration for `moonspec gen steps`
   "steps": {
-    "output": "generated",
+    "output": "alongside",
     "exclude": ["lib/*", "vendor/*"]
   },
 
@@ -101,15 +101,15 @@ Configuration for the `moonspec gen steps` command.
 
 | Field     | Type            | Default       | Description                                           |
 |-----------|-----------------|---------------|-------------------------------------------------------|
-| `output`  | string          | `"generated"` | Output strategy for generated step registration files |
+| `output`  | string          | `"alongside"` | Output strategy for generated step registration files |
 | `exclude` | array of string | (none)        | Glob patterns for files to exclude from scanning      |
 
 The `output` field accepts:
 
-- **`"generated"`** -- writes generated files to a `generated/` directory.
-- **`"alongside"`** -- writes generated files next to the source files.
-- **`"per-package"`** -- writes one file per MoonBit package.
-- **Custom path** -- any other string is treated as a directory path.
+- **`"alongside"`** (default) -- writes `<world>_steps_gen.mbt` next to the step functions.
+- **`"per-package"`** -- writes one `moonspec_gen.mbt` per MoonBit package.
+- **`"generated"`** -- writes to `_generated/<world>_steps.mbt` at the module root. That directory is not part of the World type's package, and MoonBit allows the World impl only there, so this output does not compile. `gen steps` prints a warning.
+- **Custom path** -- any other string is treated as a directory path. It must be the directory of the World type's package.
 
 #### `formatters` (array of objects)
 
@@ -294,6 +294,7 @@ Note: `--mode` on the CLI applies uniformly to all files in that invocation. To 
 | `--package`       | `-p`  | --               | Package directory that gets the tests (default: `src`) |
 | `--config`        | `-c`  | (all)            | Explicit config file path                          |
 | `--apply`         |       | --               | Write missing entries to `<package>/moon.pkg`      |
+| `--moonx`         |       | --               | Rule runs `moonx moonrockz/moonspec/cmd/moonspec@<CLI version>` instead of `moonspec` |
 
 ### `moonspec check`
 

@@ -570,7 +570,7 @@ Builder methods (use `..` cascade syntax):
 
 ### Mode 2: Build-Rule Codegen
 
-Use `moonspec gen` as a [`rule` / `dev_build`](https://docs.moonbitlang.com/en/latest/toolchain/moon/package.html)
+Use `moonspec gen tests` as a [`rule` / `dev_build`](https://docs.moonbitlang.com/en/latest/toolchain/moon/package.html)
 step so that test files are regenerated automatically from `.feature` files on
 every `moon check`, `moon build`, or `moon test`:
 
@@ -616,7 +616,7 @@ Commit the generated test files. moon does not run `dev_build` steps when your
 package is used as a dependency, and a fresh clone then builds without the
 moonspec CLI installed. The `.feature` files stay the single source of truth.
 
-See [CLI: `gen` command](#gen----generate-test-files) and the
+See [CLI: `gen tests`](#gen-tests----generate-test-files) and the
 [calculator example](examples/calculator/) for a full walkthrough.
 
 ### Multiple Feature Files
@@ -665,45 +665,140 @@ See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) for a complete CLI runn
 
 ## CLI
 
-### Installing the CLI
+The moonspec CLI generates the World `configure` impl from annotated step
+functions, generates one test per scenario from `.feature` files, and writes
+the `moon.pkg` build rules that keep the tests up to date.
 
-Install the moonspec CLI globally with `moon install`:
+### Installed CLI or moonx
 
-```bash
-moon install moonrockz/moonspec/src/cmd/main
+You can use the CLI in two ways. Both run the same commands.
+
+| | Installed CLI | moonx (no install) |
+|---|---|---|
+| Set up | `moon install moonrockz/moonspec/cmd/moonspec` | None. `moonx` comes with the MoonBit toolchain |
+| Run a command | `moonspec <command>` | `moonx moonrockz/moonspec/cmd/moonspec@latest <command>` |
+| Build rules | `moonspec gen build ... --apply` | `... gen build ... --apply --moonx` |
+
+`moon install` puts `moonspec` in `~/.moon/bin`. `moonx` downloads and runs a
+registry package without installing it. With `gen build --moonx`, the build
+rule runs a pinned CLI version through `moonx`, so contributors and CI need no
+installed CLI:
+
+```moonbit
+rule(
+  name: "moonspec-tests",
+  command: "moonx moonrockz/moonspec/cmd/moonspec@<version> gen tests $input -w CalcWorld -o $output",
+)
 ```
 
-This makes `moonspec` available as a global command. You can then run:
+The examples below use `moonspec`. With moonx, replace `moonspec` with
+`moonx moonrockz/moonspec/cmd/moonspec@latest`. In this repository,
+`mise run build:cli` builds the CLI from source as `_build/bin/moonspec`.
+
+`moonrockz/moonspec/cmd/main` is a deprecated alias. `moon install` names the
+binary after the package directory, so it installs as `main`.
+
+### Workflow
 
 ```bash
-moonspec gen features/*.feature -o src/
-moonspec check features/*.feature
-moonspec version
+moonspec gen steps                                                    # World impl from #moonspec.* attributes
+moonspec gen build features/calculator.feature -w CalcWorld --apply   # build rules + test files
+moon test                                                             # run the scenarios
 ```
 
-Alternatively, run the CLI directly from the project without installing:
+See [Getting Started: Codegen Mode](docs/guide/getting-started.md#codegen-mode)
+for the full walkthrough.
+
+### `gen steps` -- Generate the World Impl
 
 ```bash
-moon run src/cmd/main -- <command> [args...]
+moonspec gen steps [-d <dir>] [-c <config>]
 ```
 
-### `gen` -- Generate Test Files
+Scans `.mbt` files in `<dir>` (default: `src`) for `#moonspec.world` and
+`#moonspec.given` / `when` / `then` / `step` attributes, and writes a
+`configure` impl for each World type. By default the file goes next to the
+step functions, as `<world>_steps_gen.mbt`. `steps.output` in the config file
+selects another strategy; see the
+[configuration reference](docs/guide/configuration.md#steps-object).
+
+The generated impl has one registration per annotated function. The
+parameters after the world select it:
+
+| Step function parameters | Registration |
+|---|---|
+| `(world)` or `(world, a : A, ...)` | `given0`, `given2`, ... (typed, up to 22) |
+| `(world, a : A, ..., ctx : @moonspec.Ctx)` | `given1_ctx`, ... (typed plus `Ctx`, up to 4) |
+| `(world, ctx : @moonspec.Ctx)` | `given("...", fn(ctx) ...)`, a handler that reads its own arguments |
+
+Typed values are decoded with `FromStepArg`. A lambda that calls a raising
+step function is generated with `raise`. The generated impl has
+`#warnings("-unused_value")`, because only tests use it. See
+[Attribute-Based Step Registration](docs/guide/step-definitions.md#attribute-based-step-registration-experimental)
+for the generated file and all rules.
+
+### `gen build` -- Set Up Build Rules
+
+Writes the `rule` and `dev_build` entries that regenerate the tests of each
+feature file before every `moon check`, `moon build` or `moon test`:
 
 ```bash
-moon run src/cmd/main -- gen <feature-files...> -w <WorldType> [--output-dir <dir>]
+# Print the entries for src/moon.pkg
+moonspec gen build features/calculator.feature -w CalcWorld
+
+# Add the missing entries to src/moon.pkg and generate missing test files
+moonspec gen build features/*.feature -w CalcWorld --apply
+
+# The same, but the rule runs the CLI through moonx
+moonspec gen build features/*.feature -w CalcWorld --apply --moonx
 ```
 
-Reads `.feature` files and generates `_test.mbt` test files. Each scenario becomes
-an `async test` block that calls `@moonspec.run_or_fail` with `FeatureSource::File`
-to load the feature at runtime and execute it through the full runner pipeline.
+**Arguments:**
+- One or more `.feature` file paths, relative to the module root (required)
+- `--world` / `-w`: World type name (or `world` in the config file)
+- `--package` / `-p`: package directory that gets the tests (default: `src`)
+- `--config` / `-c`: path to a `moonspec.json5` config file
+- `--apply`: write to `<package>/moon.pkg` instead of printing
+- `--moonx`: the rule runs `moonx moonrockz/moonspec/cmd/moonspec@<this CLI's version>` instead of `moonspec`
+
+`--apply` adds only entries that are missing (the rule by name, a `dev_build`
+by its output file), so running it again changes nothing. It also writes test
+files that do not exist yet: moon does not compile a `dev_build` output that
+did not exist when the build started, so without this the first `moon test`
+would find no tests. Test files are white-box tests (`*_wbtest.mbt`), so they
+can use a private World impl. `moon.pkg.json` does not support build rules;
+run `moon fmt` to migrate it to `moon.pkg` first.
+
+### `gen tests` -- Generate Test Files
+
+```bash
+moonspec gen tests <feature-files...> -w <WorldType> [-o <dir or file.mbt>]
+```
+
+Reads `.feature` files and generates test files. Each scenario becomes an
+`async test` block that calls `@moonspec.run_or_fail` with
+`FeatureSource::File` to load the feature at runtime and execute it through
+the full runner pipeline. Build rules call this command; you can also run it
+by hand.
 
 **Arguments:**
 - One or more `.feature` file paths (required)
-- `--world` / `-w`: World type name, e.g. `CalcWorld` (required)
+- `--world` / `-w`: World type name, e.g. `CalcWorld` (required, or `world` in the config file)
 - `--output-dir` / `-o`: write generated files to this directory (default: current directory). A value ending in `.mbt` is the exact output file; use it with one feature file
 - `--mode` / `-m`: `per-scenario` (default) or `per-feature`
 - `--config` / `-c`: path to a `moonspec.json5` config file
 - `--no-color`: generate tests whose failure report and pretty output have no ANSI colors
+
+With `-o <dir>`, files are named as black-box tests:
+`features/calculator.feature` becomes `calculator_feature_test.mbt`, and
+`features/auth/login.feature` becomes `auth_login_feature_test.mbt`. A
+black-box test cannot see a private World impl, such as the one `gen steps`
+generates. In that case, name the white-box file exactly:
+
+```bash
+moonspec gen tests features/calculator.feature -w CalcWorld \
+  -o src/calculator_feature_wbtest.mbt
+```
 
 **Config file** (`moonspec.json5`):
 
@@ -717,22 +812,6 @@ to load the feature at runtime and execute it through the full runner pipeline.
 If a `moonspec.json5` file exists in the current directory, it is loaded
 automatically. CLI flags override config file values.
 
-**Examples:**
-
-```bash
-# Generate a single test file
-moon run src/cmd/main -- gen features/calculator.feature -w CalcWorld
-
-# Generate into a specific directory
-moon run src/cmd/main -- gen features/*.feature -w CalcWorld -o src/
-
-# Per-feature mode (single test per feature file)
-moon run src/cmd/main -- gen features/*.feature -w CalcWorld -m per-feature -o src/
-
-# Then run the generated tests (async tests require JS target)
-moon test --target js
-```
-
 **Generated output** for `features/calculator.feature` (per-scenario mode):
 
 ```moonbit
@@ -743,75 +822,34 @@ moon test --target js
 async test "Feature: Calculator / Scenario: Addition" {
   let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
   options.scenario_name("Addition")
-  @moonspec.run_or_fail(CalcWorld::default, options)
-}
-```
-
-**Filename mapping:**
-- `features/calculator.feature` → `calculator_feature_test.mbt`
-- `features/auth/login.feature` → `auth_login_feature_test.mbt`
-
-The `// moonspec:hash:...` comment enables future staleness detection -- regenerate
-only when the feature file changes.
-
-**Scenario Outlines** expand to one test per Examples row:
-
-```moonbit
-async test "Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)" {
-  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")])
-  options.scenario_name("Multiplication (a=2, b=3, result=6)")
-  @moonspec.run_or_fail(CalcWorld::default, options)
-}
-```
-
-**Per-feature mode** generates a single test that runs the entire feature file:
-
-```moonbit
-async test "Feature: Calculator" {
+  options.add_formatter(@format.PrettyFormatter::new(), @moonspec.OutputDest::Stdout)
   @moonspec.run_or_fail(
-    CalcWorld::default,
-    @moonspec.RunOptions::new([@moonspec.FeatureSource::File("features/calculator.feature")]),
+    CalcWorld::default, options,
   )
 }
 ```
 
-### `gen build` -- Set Up Build Rules
+Generated tests use `@format.PrettyFormatter` unless the config file sets
+other formatters, so the test imports need `moonrockz/moonspec/format` and
+`moonbitlang/async`.
 
-Writes the `rule` and `dev_build` entries that regenerate the tests of each
-feature file before every `moon check`, `moon build` or `moon test`:
+The `// moonspec:hash:...` comment records a hash of the feature file content.
 
-```bash
-# Print the entries for src/moon.pkg
-moonspec gen build features/calculator.feature -w CalcWorld
+**Scenario Outlines** expand to one test per Examples row, named
+`Feature: Calculator / Scenario: Multiplication (a=2, b=3, result=6)`.
 
-# Add the missing entries to src/moon.pkg and generate missing test files
-moonspec gen build features/*.feature -w CalcWorld --apply
-```
-
-**Arguments:**
-- One or more `.feature` file paths, relative to the module root (required)
-- `--world` / `-w`: World type name (or `world` in the config file)
-- `--package` / `-p`: package directory that gets the tests (default: `src`)
-- `--config` / `-c`: path to a `moonspec.json5` config file
-- `--apply`: write to `<package>/moon.pkg` instead of printing
-
-`--apply` adds only entries that are missing (the rule by name, a `dev_build`
-by its output file), so running it again changes nothing. It also writes test
-files that do not exist yet: moon does not compile a `dev_build` output that
-did not exist when the build started, so without this the first `moon test`
-would find no tests. `moon.pkg.json` does not support build rules; run
-`moon fmt` to migrate it to `moon.pkg` first.
+**Per-feature mode** generates a single test that runs the entire feature file.
 
 ### `check` -- Validate Feature Files
 
 ```bash
-moon run src/cmd/main -- check <feature-files...>
+moonspec check <feature-files...>
 ```
 
 Parses `.feature` files and reports their structure. Exits with code 1 on parse errors.
 
 ```bash
-$ moon run src/cmd/main -- check features/calculator.feature
+$ moonspec check features/calculator.feature
 features/calculator.feature:
   Feature: Calculator
   Scenarios: 3
@@ -822,7 +860,7 @@ features/calculator.feature:
 ### `version`
 
 ```bash
-moon run src/cmd/main -- version
+moonspec version
 ```
 
 Prints `moonspec <version>`.

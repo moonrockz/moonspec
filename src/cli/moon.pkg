@@ -1,0 +1,9 @@
+import {
+  "moonrockz/moonspec/codegen",
+  "moonrockz/moonspec/config",
+  "moonrockz/moonspec/scanner",
+  "moonrockz/gherkin",
+  "moonbitlang/core/argparse",
+  "moonbitlang/x/fs",
+  "moonbitlang/x/sys",
+}

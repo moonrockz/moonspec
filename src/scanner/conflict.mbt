@@ -1,7 +1,11 @@
 ///|
 /// Check if source contains a manual `impl World for <type> with configure` block.
-/// Uses simple substring matching — no AST parsing needed.
+/// Uses simple substring matching — no AST parsing needed. A file that
+/// `gen steps` generated is not a manual registration.
 pub fn has_manual_registration(source : String, world_type : String) -> Bool {
+  if source.has_prefix(generated_header) {
+    return false
+  }
   let needle = "impl @moonspec.World for " + world_type + " with configure"
   str_contains(source, needle)
 }
