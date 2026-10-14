@@ -722,8 +722,20 @@ step functions, as `<world>_steps_gen.mbt`. `steps.output` in the config file
 selects another strategy; see the
 [configuration reference](docs/guide/configuration.md#steps-object).
 
-A lambda that calls a raising step function is generated with `raise`. The
-generated impl has `#warnings("-unused_value")`, because only tests use it.
+The generated impl has one registration per annotated function. The
+parameters after the world select it:
+
+| Step function parameters | Registration |
+|---|---|
+| `(world)` or `(world, a : A, ...)` | `given0`, `given2`, ... (typed, up to 22) |
+| `(world, a : A, ..., ctx : @moonspec.Ctx)` | `given1_ctx`, ... (typed plus `Ctx`, up to 4) |
+| `(world, ctx : @moonspec.Ctx)` | `given("...", fn(ctx) ...)`, a handler that reads its own arguments |
+
+Typed values are decoded with `FromStepArg`. A lambda that calls a raising
+step function is generated with `raise`. The generated impl has
+`#warnings("-unused_value")`, because only tests use it. See
+[Attribute-Based Step Registration](docs/guide/step-definitions.md#attribute-based-step-registration-experimental)
+for the generated file and all rules.
 
 ### `gen build` -- Set Up Build Rules
 
