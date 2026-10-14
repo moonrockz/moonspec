@@ -5,11 +5,25 @@ set -euo pipefail
 (cd site && moon test --target native && moon test --target js && moon check --target native && moon check --target js)
 
 tmp=$(mktemp -d)
-trap 'rm -rf "$tmp"' EXIT
-release=$(mise run site:latest-tag)
-release=${release:-v0.0.0}
+cleanup() {
+  git worktree remove --force "$tmp/release" 2>/dev/null || true
+  rm -rf "$tmp"
+}
+trap cleanup EXIT
 
-mise run site:build -- --content . --channel release --site-root /moonspec/ \
+tag=$(mise run site:latest-tag)
+release=${tag:-v0.0.0}
+
+# The release channel is built from the latest stable tag, as CI does.
+release_content=.
+if [ -n "$tag" ]; then
+  git worktree add --detach "$tmp/release" "$tag"
+  release_content="$tmp/release"
+else
+  echo "site:check: no stable release tag found; building the release channel from the working tree"
+fi
+
+mise run site:build -- --content "$release_content" --channel release --site-root /moonspec/ \
   --release-version "$release" --ref "$release" --out "$tmp/site"
 mise run site:build -- --content . --channel next --site-root /moonspec/ \
   --release-version "$release" --ref main --out "$tmp/site/next"
