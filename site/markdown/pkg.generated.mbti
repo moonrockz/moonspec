@@ -1,0 +1,89 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec-site/markdown"
+
+import {
+  "moonbitlang/core/debug",
+  "moonrockz/moonspec-site/route",
+}
+
+// Values
+pub fn block_text(Block) -> String
+
+pub fn image_src(String, LinkContext) -> String
+
+pub fn inline_text(Array[Inline]) -> String
+
+pub fn parse(String, LinkContext) -> Document
+
+pub fn rewrite_link(String, LinkContext) -> Target
+
+pub fn title_of(String) -> String
+
+// Errors
+
+// Types and methods
+pub(all) enum Block {
+  Heading(Int, String, Array[Inline])
+  Paragraph(Array[Inline])
+  CodeBlock(String, String)
+  Quote(Array[Block])
+  BulletList(Array[Array[Block]])
+  OrderedList(Int, Array[Array[Block]])
+  Table(Array[Array[Inline]], Array[Array[Array[Inline]]])
+  Rule
+} derive(Eq, @debug.Debug)
+pub fn Block::equal(Self, Self) -> Bool
+pub fn Block::not_equal(Self, Self) -> Bool
+pub fn Block::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Document {
+  title : String
+  blocks : Array[Block]
+  toc : Array[TocEntry]
+} derive(Eq, @debug.Debug)
+pub fn Document::equal(Self, Self) -> Bool
+pub fn Document::not_equal(Self, Self) -> Bool
+pub fn Document::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Inline {
+  Text(String)
+  Code(String)
+  Emph(Array[Inline])
+  Strong(Array[Inline])
+  Strike(Array[Inline])
+  Link(Target, Array[Inline])
+  Image(String, String)
+  LineBreak
+} derive(Eq, @debug.Debug)
+pub fn Inline::equal(Self, Self) -> Bool
+pub fn Inline::not_equal(Self, Self) -> Bool
+pub fn Inline::to_repr(Self) -> @debug.Repr
+
+pub(all) struct LinkContext {
+  source : String
+  resolve : (String) -> @route.Route?
+  repo_url : String
+  git_ref : String
+}
+
+pub(all) enum Target {
+  Internal(@route.Route, String?)
+  Anchor(String)
+  External(String)
+} derive(Eq, @debug.Debug)
+pub fn Target::equal(Self, Self) -> Bool
+pub fn Target::not_equal(Self, Self) -> Bool
+pub fn Target::to_repr(Self) -> @debug.Repr
+
+pub(all) struct TocEntry {
+  level : Int
+  id : String
+  text : String
+} derive(Eq, @debug.Debug)
+pub fn TocEntry::equal(Self, Self) -> Bool
+pub fn TocEntry::not_equal(Self, Self) -> Bool
+pub fn TocEntry::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
