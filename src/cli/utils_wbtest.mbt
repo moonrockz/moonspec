@@ -34,3 +34,22 @@ test "resolve_no_color: the CLI flag or the config turns color off" {
   assert_true(resolve_no_color(true, empty))
   assert_true(resolve_no_color(false, config_on))
 }
+
+///|
+test "steps_output_mode defaults to alongside" {
+  // The World impl must live in the package of the world type, so the
+  // default writes the generated file next to the step definitions.
+  assert_eq(steps_output_mode(None), "alongside")
+  assert_eq(
+    steps_output_mode(Some({ output: None, exclude: None, })),
+    "alongside",
+  )
+}
+
+///|
+test "steps_output_mode uses the configured output" {
+  assert_eq(
+    steps_output_mode(Some({ output: Some("per-package"), exclude: None, })),
+    "per-package",
+  )
+}

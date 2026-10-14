@@ -96,6 +96,11 @@ fn build_parser() -> @argparse.Command {
         long="apply",
         about="Write the missing entries to <package>/moon.pkg instead of printing them",
       ),
+      @argparse.FlagArg(
+        "moonx",
+        long="moonx",
+        about="Make the rule run this CLI version through moonx instead of an installed `moonspec`",
+      ),
     ],
     about="Generate moon.pkg rule/dev_build entries that run `gen tests` before each build",
   )

@@ -130,3 +130,39 @@ test "build_rules_test_filename uses the white-box test suffix" {
     "guide_feature_wbtest.mbt",
   )
 }
+
+///|
+test "render_build_rules runs the CLI through moonx when asked" {
+  let (content, _) = render_build_rules(
+    "",
+    ["features/add.feature"],
+    package_dir="src",
+    world="CalcWorld",
+    cli=Moonx(version="0.10.2"),
+  )
+  inspect(
+    content,
+    content=(
+      #|rule(
+      #|  name: "moonspec-tests",
+      #|  command: "moonx moonrockz/moonspec/cmd/moonspec@0.10.2 gen tests $input -w CalcWorld -o $output",
+      #|)
+      #|
+      #|dev_build(
+      #|  rule: "moonspec-tests",
+      #|  input: "../features/add.feature",
+      #|  output: "add_feature_wbtest.mbt",
+      #|)
+      #|
+    ),
+  )
+}
+
+///|
+test "CliCommand renders the command prefix" {
+  assert_eq(Installed.prefix(), "moonspec")
+  assert_eq(
+    Moonx(version="1.2.3").prefix(),
+    "moonx moonrockz/moonspec/cmd/moonspec@1.2.3",
+  )
+}

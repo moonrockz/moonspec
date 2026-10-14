@@ -104,6 +104,17 @@ fn discover_mbt_files(dir : String, files : Array[String]) -> Unit {
 }
 
 ///|
+/// The `gen steps` output strategy: `steps.output` from the config, or
+/// `"alongside"`. The World impl must be in the package of the world type,
+/// so the default writes the generated file next to the step definitions.
+fn steps_output_mode(steps : @config.StepsConfig?) -> String {
+  match steps {
+    Some({ output: Some(mode), .. }) => mode
+    _ => "alongside"
+  }
+}
+
+///|
 fn resolve_output_path(
   mode : String,
   world_type : String,

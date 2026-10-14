@@ -3,6 +3,32 @@
 let build_rule_name = "moonspec-tests"
 
 ///|
+/// How a build rule runs the moonspec CLI.
+pub(all) enum CliCommand {
+  /// The `moonspec` binary on `PATH`, from
+  /// `moon install moonrockz/moonspec/cmd/moonspec`.
+  Installed
+  /// `moonx`, which runs the CLI from the registry without an install.
+  /// The version is pinned so that builds are reproducible.
+  Moonx(version~ : String)
+} derive(Eq, Debug)
+
+///|
+pub extend CliCommand with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend CliCommand with Eq::{not_equal, equal}
+
+///|
+/// The command that runs the moonspec CLI, without arguments.
+pub fn CliCommand::prefix(self : CliCommand) -> String {
+  match self {
+    Installed => "moonspec"
+    Moonx(version~) => "moonx moonrockz/moonspec/cmd/moonspec@" + version
+  }
+}
+
+///|
 /// Add the moon.pkg `rule` and `dev_build` entries that regenerate the tests
 /// of each feature file before `moon check`, `moon build` and `moon test`.
 ///
@@ -13,12 +39,16 @@ let build_rule_name = "moonspec-tests"
 /// `dev_build` by output file) are not added again, so a second run changes
 /// nothing.
 ///
+/// `cli` selects how the rule runs the CLI (default: the installed
+/// `moonspec` binary).
+///
 /// Returns the new content and the number of entries added.
 pub fn render_build_rules(
   existing : String,
   features : Array[String],
   package_dir~ : String,
   world~ : String,
+  cli~ : CliCommand = Installed,
 ) -> (String, Int32) {
   let blocks : Array[String] = []
   if !existing.contains("name: \"" + build_rule_name + "\"") {
@@ -27,7 +57,9 @@ pub fn render_build_rules(
       "  name: \"" +
       build_rule_name +
       "\",\n" +
-      "  command: \"moonspec gen tests $input -w " +
+      "  command: \"" +
+      cli.prefix() +
+      " gen tests $input -w " +
       world +
       " -o $output\",\n" +
       ")\n",

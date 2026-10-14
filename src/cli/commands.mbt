@@ -122,12 +122,20 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
     return
   }
   let apply = value.flags.get_or_default("apply", false)
+  // --moonx: the rule runs this CLI version through moonx, so the project
+  // needs no installed `moonspec` binary.
+  let cli : @codegen.CliCommand = if value.flags.get_or_default("moonx", false) {
+    Moonx(version=get_version())
+  } else {
+    Installed
+  }
   if !apply {
     let (snippet, _) = @codegen.render_build_rules(
       "",
       files,
       package_dir~,
       world~,
+      cli~,
     )
     println(snippet.trim_end(chars="\n"))
     return
@@ -147,6 +155,7 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
     files,
     package_dir~,
     world~,
+    cli~,
   )
   if added == 0 {
     println("\{pkg_path} is up to date")
@@ -192,13 +201,11 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
 fn cmd_gen_steps(value : @argparse.Matches) -> Unit {
   let scan_dir = option_value(value, "dir").unwrap_or("src")
   let config = load_config(option_value(value, "config"))
-  let output_mode = match config.steps {
-    Some(steps) =>
-      match steps.output {
-        Some(o) => o
-        None => "generated"
-      }
-    None => "generated"
+  let output_mode = steps_output_mode(config.steps)
+  if output_mode == "generated" {
+    eprintln(
+      "Warning: steps.output \"generated\" writes to _generated/, which is not part of any package, so the World impl does not compile there. Use \"alongside\" (the default) or \"per-package\".",
+    )
   }
   // Discover .mbt files
   let files : Array[String] = []

@@ -1,0 +1,6 @@
+import {
+  "moonrockz/moonspec/cli",
+  "moonbitlang/core/env",
+}
+
+pkgtype(kind: "executable")
