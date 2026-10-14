@@ -64,6 +64,7 @@ pub(all) struct Model {
   search : SearchState
   install_tab : InstallTab
   menu_open : Bool
+  pending_anchor : String?
 } derive(Eq, @debug.Debug)
 pub fn Model::equal(Self, Self) -> Bool
 pub fn Model::init(@data.SiteData) -> Self

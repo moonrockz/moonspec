@@ -94,6 +94,8 @@ pub(all) struct Model {
   search : SearchState
   install_tab : InstallTab
   menu_open : Bool
+  // Fragment to scroll to once the page being loaded is ready.
+  pending_anchor : String?
 } derive(Eq, Debug)
 
 ///|
@@ -160,5 +162,6 @@ pub fn Model::init(data : @data.SiteData) -> Model {
     search: closed_search,
     install_tab: Installed,
     menu_open: false,
+    pending_anchor: None,
   }
 }

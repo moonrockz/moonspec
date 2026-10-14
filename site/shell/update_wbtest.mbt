@@ -162,3 +162,45 @@ test "entry_href builds route and anchor" {
     "/moonspec/docs/configuration",
   )
 }
+
+///|
+test "a fragment waits for the content of another page" {
+  let m = Model::init(site_data(Landing, None))
+  let m2 = step(
+    m,
+    UrlChanged(
+      @url.parse("http://localhost/moonspec/docs/configuration#test_kind"),
+    ),
+  )
+  assert_eq(m2.page, Loading)
+  assert_eq(m2.pending_anchor, Some("test_kind"))
+  let m3 = step(
+    m2,
+    ContentLoaded(Doc("configuration"), Ok("# Configuration\n")),
+  )
+  assert_true(m3.page is Ready(_))
+  assert_eq(m3.pending_anchor, None)
+}
+
+///|
+test "no fragment leaves nothing pending" {
+  let m = Model::init(site_data(Landing, None))
+  let m2 = step(
+    m,
+    UrlChanged(@url.parse("http://localhost/moonspec/docs/configuration")),
+  )
+  assert_eq(m2.pending_anchor, None)
+}
+
+///|
+test "a same-page fragment scrolls at once and stays unpended" {
+  let m = Model::init(
+    site_data(Doc("configuration"), Some("# Configuration\n")),
+  )
+  let m2 = step(
+    m,
+    UrlChanged(@url.parse("http://localhost/moonspec/docs/configuration#a")),
+  )
+  assert_eq(m2.pending_anchor, None)
+  assert_eq(m2.page, m.page)
+}

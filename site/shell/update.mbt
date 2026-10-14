@@ -95,22 +95,32 @@ fn on_url_changed(
     return (m, @rabbita.none)
   }
   let route = @route.Route::parse(rest)
-  let scroll = match url.fragment {
-    Some(id) if id != "" => @nav.scroll_to(id)
-    _ => @nav.scroll_to_top()
+  let anchor = match url.fragment {
+    Some(id) if id != "" => Some(id)
+    _ => None
   }
   let closed = { ..m, search: { ..m.search, open: false, }, menu_open: false, }
   if route == m.route {
-    return (closed, scroll)
+    return (closed, scroll_cmd(anchor))
   }
   let next = { ..closed, route, }
   match m.manifest.find(route) {
     Some(page) =>
+      // The anchor is not in the DOM until the content is Ready.
       (
-        { ..next, page: Loading, },
-        @rabbita.batch([fetch_page(m.config, page, emit), scroll]),
+        { ..next, page: Loading, pending_anchor: anchor, },
+        fetch_page(m.config, page, emit),
       )
-    None => ({ ..next, page: NoContent, }, @nav.scroll_to_top())
+    None =>
+      ({ ..next, page: NoContent, pending_anchor: None, }, @nav.scroll_to_top())
+  }
+}
+
+///|
+fn scroll_cmd(anchor : String?) -> @rabbita.Cmd {
+  match anchor {
+    Some(id) => @nav.scroll_to(id)
+    None => @nav.scroll_to_top()
   }
 }
 
@@ -136,7 +146,7 @@ pub fn update(
         Ok(md) => Ready(parse_page(m.config, m.manifest, route, md))
         Err(_) => PageFailed
       }
-      ({ ..m, page, }, @rabbita.none)
+      ({ ..m, page, pending_anchor: None, }, scroll_cmd(m.pending_anchor))
     }
     ThemeLoaded(theme) => ({ ..m, theme, }, @rabbita.none)
     ToggleTheme => {
