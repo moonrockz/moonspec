@@ -55,9 +55,12 @@ moonrockz/moonspec
 │   ├── codegen/         # Test file generation
 │   │   ├── codegen.mbt      # .feature → _test.mbt generator
 │   │   └── moon.pkg         # Package config
-│   └── cmd/main/        # CLI entry point
-│       ├── main.mbt         # CLI binary
-│       └── moon.pkg         # Package config (is_main: true)
+│   ├── cli/             # CLI implementation (argument parsing, commands)
+│   │   ├── run.mbt          # cli.run(args) entry point
+│   │   └── moon.pkg         # Package config
+│   └── cmd/
+│       ├── moonspec/        # CLI executable; installs as `moonspec`
+│       └── main/            # Deprecated alias; installs as `main`
 ├── docs/plans/          # Design and implementation plans
 ├── .beads/              # Issue tracking database
 └── mise-tasks/          # File-based mise tasks
@@ -82,12 +85,14 @@ moonrockz/moonspec
 ### Package Dependency Graph
 
 ```
-core  ←─────  runner  ←─── cmd/main
+core  ←─────  runner
   │              │
   │              ↓
   │           format
   │
-  └──────────  codegen
+  └──────────  codegen  ←───  cli  ←───  cmd/moonspec, cmd/main
+                               │
+                               └──→  config, scanner
 ```
 
 External dependencies:
@@ -222,7 +227,8 @@ Breaking changes: add `!` after type (e.g., `feat(runner)!: change return type`)
 | `runner`  | `src/runner/`        |
 | `format`  | `src/format/`        |
 | `codegen` | `src/codegen/`       |
-| `cmd`     | `src/cmd/main/`      |
+| `cli`     | `src/cli/`           |
+| `cmd`     | `src/cmd/`           |
 
 ## Mise Tasks
 
