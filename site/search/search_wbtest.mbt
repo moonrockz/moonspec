@@ -106,3 +106,11 @@ test "entries round-trip through JSON" {
   let back : Array[Entry] = @json.from_json(Json(entries))
   assert_eq(back, entries)
 }
+
+///|
+test "non-ASCII punctuation and symbols separate words" {
+  assert_eq(tokenize("a — b"), ["a", "b"])
+  assert_eq(tokenize("“quoted” … ×"), ["quoted"])
+  assert_eq(tokenize("a b"), ["a", "b"])
+  assert_eq(search(index(), "—"), [])
+}

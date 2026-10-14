@@ -107,7 +107,20 @@ fn lower_char(c : Char) -> Char {
 
 ///|
 fn is_word_char(c : Char) -> Bool {
-  (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c.to_int() > 127
+  let n = c.to_int()
+  if n < 128 {
+    (n >= 97 && n <= 122) || (n >= 48 && n <= 57)
+  } else {
+    // Non-ASCII letters count; punctuation and symbols separate words.
+    !(n <= 0xBF ||
+    n == 0xD7 ||
+    n == 0xF7 ||
+    (n >= 0x2000 && n <= 0x206F) ||
+    (n >= 0x2190 && n <= 0x2BFF) ||
+    (n >= 0x3000 && n <= 0x303F) ||
+    (n >= 0xFE00 && n <= 0xFE0F) ||
+    (n >= 0xFF00 && n <= 0xFF0F))
+  }
 }
 
 ///|
