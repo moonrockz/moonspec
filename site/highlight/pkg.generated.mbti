@@ -1,0 +1,36 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonrockz/moonspec-site/highlight"
+
+import {
+  "moonbitlang/core/debug",
+}
+
+// Values
+pub fn highlight(String, String) -> Array[Token]
+
+// Errors
+
+// Types and methods
+pub(all) enum Kind {
+  Plain
+  Keyword
+  Str
+  Comment
+  Number
+  Tag
+} derive(Eq, @debug.Debug)
+pub fn Kind::equal(Self, Self) -> Bool
+pub fn Kind::not_equal(Self, Self) -> Bool
+pub fn Kind::to_repr(Self) -> @debug.Repr
+
+pub(all) struct Token {
+  kind : Kind
+  text : String
+} derive(Eq, @debug.Debug)
+pub fn Token::equal(Self, Self) -> Bool
+pub fn Token::not_equal(Self, Self) -> Bool
+pub fn Token::to_repr(Self) -> @debug.Repr
+
+// Type aliases
+
+// Traits
