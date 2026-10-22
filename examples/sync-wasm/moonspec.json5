@@ -1,0 +1,6 @@
+{
+  world: "CalculatorWorld",
+  execution: "sync",
+  mode: "per-scenario",
+  no_color: true,
+}
