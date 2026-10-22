@@ -33,6 +33,9 @@ moonspec gen tests --config path/to/custom.json5 features/*.feature
   // Codegen mode: "per-scenario" (default) or "per-feature"
   "mode": "per-scenario",
 
+  // Execution: "async" (default) or "sync"
+  "execution": "sync",
+
   // Skip tags: Gherkin tags that cause scenarios to be skipped
   // Default: ["@skip", "@ignore"] (handled by RunOptions at runtime)
   "skip_tags": ["@skip", "@ignore", "@wip"],
@@ -78,9 +81,31 @@ The `mode` field also accepts a per-file map for mixed-mode projects:
 
 The `"*"` key acts as a fallback. If a feature file path is not listed and no `"*"` key exists, the default `"per-scenario"` mode is used.
 
+#### `execution` (string)
+
+Select `"async"` or `"sync"` for `gen tests` and `gen build`. The default is
+`"async"`. CLI `--execution sync|async` wins over the merged config value,
+which wins over that default. This is independent of `mode` and `test_kind`;
+both execution choices support per-feature/per-scenario and white-box/black-box
+output. Invalid values are rejected.
+
+Sync output uses ordinary `test` blocks, `run_or_fail_sync` and the complete
+original source embedded as `FeatureSource::Text`. Import the root
+`moonrockz/moonspec` and the configured formatter package, without an async test
+driver. The source URI stays available for diagnostics without a runtime read.
+
+Async output preserves `async test`, `run_or_fail` and `FeatureSource::File`.
+Import `"moonrockz/moonspec/async" @moonspec` and retain `moonbitlang/async`
+for the test driver. Build rules pin the selected execution. Rerun
+`gen build --apply` after a config change to update existing rules.
+
+See [sync execution](testing-strategies.md#sync-execution-and-target-support) for the unreleased import migration,
+verified toolchain, target matrix and host limits.
+
 #### `skip_tags` (array of strings)
 
-Gherkin tags that cause scenarios to be skipped during execution. Scenarios tagged with any of these tags are skipped without executing steps or hooks.
+Gherkin tags that cause scenarios to be skipped during execution. Scenarios tagged with any of these tags are skipped without executing step handlers or case/step hooks. Run-level hooks
+still execute for the enclosing run.
 
 Tags may include a reason using the `@skip("reason")` syntax. The reason is extracted and attached to the skip status in results.
 
@@ -209,13 +234,15 @@ opts.dry_run(false)
 
 Enable or disable parallel scenario execution. Default: `false`.
 
-When enabled, scenarios run concurrently up to the `max_concurrent` limit. Each scenario still gets its own World instance.
+For async execution, scenarios run concurrently up to `max_concurrent`. Each
+gets its own World. Sync execution rejects `parallel(true)` with
+`SyncExecutionError::ParallelNotSupported` before factories, hooks or events.
 
 #### `max_concurrent(value : Int)`
 
 Set the maximum number of scenarios that can run concurrently during parallel execution. Default: `4`.
 
-Only takes effect when `parallel` is `true`.
+Only takes effect for async execution when `parallel` is `true`.
 
 #### `retries(value : Int)`
 
@@ -223,7 +250,9 @@ Set the global retry count for failed scenarios. Default: `0`.
 
 When a scenario fails, it is re-executed up to `value` additional times. A fresh World instance is created for each attempt. Only the final attempt's result counts toward the run summary.
 
-Per-scenario `@retry(N)` tags override this global setting. Negative values are clamped to `0`.
+Per-scenario `@retry(N)` tags override this global setting. Negative values are
+clamped to `0`. Sync and async share the same failed-only retry loop; Undefined,
+Pending and Skipped scenarios do not retry. Dry-run never retries.
 
 #### `tag_expr(value : String)`
 
@@ -247,13 +276,14 @@ Only scenarios whose name contains the given string will run.
 
 Enable or disable dry-run mode. Default: `false`.
 
-When enabled, steps are matched against definitions but handlers are not executed. All hooks are skipped. Matched steps report as `Skipped("dry run")` and undefined steps remain `Undefined`. Useful for validating step wiring without side effects.
+When enabled, steps are matched against definitions but handlers are not executed. Case/step hooks are skipped; before/after TestRun hooks still execute. Matched steps report as `Skipped("dry run")` and undefined steps remain `Undefined`. Use it to validate step wiring; run hooks can still have side effects.
 
 #### `skip_tags(tags : Array[String])`
 
 Set the tags that cause scenarios to be skipped. Default: `["@skip", "@ignore"]`.
 
-Replaces the entire skip tag list. Scenarios with any of these tags are skipped without executing steps or hooks.
+Replaces the entire skip tag list. Scenarios with any of these tags are skipped without executing step handlers or case/step hooks. Run-level hooks
+still execute for the enclosing run.
 
 #### `no_color(value : Bool)`
 
@@ -268,7 +298,12 @@ Add a message sink for envelope output. Sinks receive structured messages as the
 
 Register a formatter with an output destination. The formatter receives messages during the run, and its output is automatically written to the destination when the run completes.
 
-Destinations: `@moonspec.Stdout`, `@moonspec.Stderr`, `@moonspec.File(path)`.
+Destinations: `@moonspec.OutputDest::Stdout`, `@moonspec.OutputDest::Stderr`,
+`@moonspec.OutputDest::File(path)`. File/stderr writes require host support.
+Sync failures raise `SyncExecutionError::HostIoFailed(operation~, path~, message~)`;
+async retains best-effort output. `Text` and `Parsed` avoid source reads, while
+`File` input remains host-dependent. Raw Wasm/browser hosts must supply the
+standard MoonBit ABI; this does not promise a browser filesystem.
 
 #### `clear_sinks()`
 
@@ -289,9 +324,10 @@ CLI flags override the corresponding config file fields for the current invocati
 | `--config`        | `-c`  | (all)            | Explicit config file path                     |
 | `--output-dir`    | `-o`  | --               | Output directory for generated test files     |
 | `--no-color`      |       | `no_color`       | Generate tests without ANSI colors            |
+| `--execution`     |       | `execution`      | `async` (default) or `sync`, independent of mode/kind |
 | `--test-kind`     |       | `test_kind`      | `wbtest` (default) or `test`                  |
 
-When `--world` or `--mode` is provided, the CLI value takes precedence over the config file value. When `--config` is provided, auto-discovery is bypassed entirely and only the specified file is loaded.
+When `--world`, `--mode`, `--execution` or `--test-kind` is provided, the CLI value takes precedence over the config file value. When `--config` is provided, auto-discovery is bypassed entirely and only the specified file is loaded.
 
 Note: `--mode` on the CLI applies uniformly to all files in that invocation. To use per-file mode mapping, configure it in the config file instead.
 
@@ -310,6 +346,7 @@ Note: `--mode` on the CLI applies uniformly to all files in that invocation. To 
 | `--package`       | `-p`  | --               | Package directory that gets the tests (default: `src`) |
 | `--config`        | `-c`  | (all)            | Explicit config file path                          |
 | `--apply`         |       | --               | Write missing entries to `<package>/moon.pkg`      |
+| `--execution`     |       | `execution`      | `async` (default) or `sync`, independent of mode/kind |
 | `--test-kind`     |       | `test_kind`      | `wbtest` (default) or `test`                       |
 | `--moonx`         |       | --               | Rule runs `moonx moonrockz/moonspec/cmd/moonspec@<CLI version>` instead of `moonspec` |
 

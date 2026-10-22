@@ -2,7 +2,10 @@
 
 Step definitions connect Gherkin steps to MoonBit code. Each step in a `.feature`
 file is matched against registered patterns, and the corresponding handler
-function is executed.
+function is executed. The same synchronous handlers and World definitions work
+with root `run_sync` / `run_or_fail_sync` and the optional async facade.
+See [execution and migration](testing-strategies.md#sync-execution-and-target-support)
+for package imports and supported targets.
 
 This guide covers the World struct, step registration (both typed and
 context-based), Cucumber Expressions, expression tools, context and arguments,

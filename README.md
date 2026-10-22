@@ -10,6 +10,68 @@ moonspec brings Behavior-Driven Development to [MoonBit](https://www.moonbitlang
 Write specifications in Gherkin, match steps with Cucumber Expressions, and run
 them natively with `moon test` or via the programmatic Runner API.
 
+## Sync and async execution
+
+The sync APIs and async import migration below are unreleased pre-1.0 changes.
+Use this checkout for them; published 0.11.0 does not contain these APIs.
+The tested toolchain is moon/moonrun 0.1.20261012 with moonc and core
+0.10.15+943464bfa, and `moonbitlang/async` 0.22.4.
+
+| Execution | Package imported as `@moonspec` | Executed targets |
+|---|---|---|
+| Sync | `moonrockz/moonspec` | `wasm-gc`, `wasm`, `js`, `native` |
+| Async | `moonrockz/moonspec/async` | `wasm`, `js`, `native` |
+
+`wasm-gc` uses WebAssembly GC; `wasm` is the separate linear-memory backend.
+Wasm-GC is sync-only until upstream async support is verified. LLVM remains
+experimental and is outside this support matrix.
+
+The root exports `run_sync` and `run_or_fail_sync` for ordinary `test` blocks.
+`run_sync(factory, options)` returns `RunResult`; `run_or_fail_sync` raises a
+structured failure report. Existing async callers change one package import:
+
+```moonbit
+import {
+  "moonrockz/moonspec/async" @moonspec,
+}
+```
+
+Keep existing `run` / `run_or_fail` calls, their async effects and test bodies.
+The optional facade re-exports the shared types and sync APIs. Retain the
+`moonbitlang/async` test-driver import for async tests. Root and runner no
+longer export async aliases. Step handlers and all six hook handlers keep
+their synchronous APIs.
+
+Separate packages keep the root dependency graph free of the async runtime.
+A virtual package cannot change a function's effect from sync to async, so
+no virtual packages or implementation overrides are required.
+
+`run_sync` rejects `parallel(true)` with
+`SyncExecutionError::ParallelNotSupported` before factories, hooks or events.
+`max_concurrent` applies only to async parallel execution. Both execution modes
+share failed-only retries and fresh Worlds per attempt. Dry-run suppresses
+step handlers and case/step hooks, but before/after TestRun hooks still execute.
+
+For generated sync tests, select `--execution sync` or config
+`execution: "sync"`. CLI selection wins over merged config, then the `async`
+default. Execution is independent of `mode` and `test_kind`. Sync generation
+embeds the complete original source in `FeatureSource::Text` and emits ordinary
+tests calling `run_or_fail_sync`. Async defaults retain `FeatureSource::File`,
+`async test` and `run_or_fail`.
+
+`Text` and `Parsed` do not read source files. File input and file/stderr output
+depend on the host. Sync output write failures raise
+`SyncExecutionError::HostIoFailed`; async output retains best-effort writes.
+Raw Wasm and browser hosts must supply the standard MoonBit host ABI used by
+the program. Embedding feature text does not provide a browser filesystem.
+
+Run the real generated example from this repository root:
+
+```sh
+mise run examples:sync-wasm -- wasm-gc
+mise run examples:sync-wasm  # all four sync targets
+```
+
 ## Quick Start
 
 ### Installation
@@ -45,16 +107,16 @@ impl @moonspec.World for CalcWorld with configure(self, setup) {
   setup.when2("I add {int} and {int}", fn(a : Int, b : Int) {
     self.result = a + b
   })
-  setup.then1("the result should be {int}", fn(expected : Int) {
+  setup.then1("the result should be {int}", fn(expected : Int) raise {
     assert_eq(self.result, expected)
   })
 }
 ```
 
-3. Run the feature:
+3. Import `moonrockz/moonspec` as `@moonspec`, then run the feature:
 
 ```moonbit
-async test "calculator" {
+test "calculator" {
   let feature =
     #|Feature: Calculator
     #|
@@ -62,7 +124,7 @@ async test "calculator" {
     #|    Given a calculator
     #|    When I add 2 and 3
     #|    Then the result should be 5
-  @moonspec.run_or_fail(
+  @moonspec.run_or_fail_sync(
     CalcWorld::default,
     @moonspec.RunOptions::new([@moonspec.FeatureSource::Text("test://calculator", feature)]),
   )
@@ -368,11 +430,11 @@ moonspec uses a structured error hierarchy (`MoonspecError`) for test failures:
 - `ScenarioFailed` -- a failed scenario: its location, every step (`StepReport`) and its step errors
 - `RunFailed` -- aggregates parse errors and failed scenarios for a run
 
-Use `run_or_fail` to raise on any failure instead of inspecting results manually:
+Use root `run_or_fail_sync` to raise on failure instead of inspecting results manually:
 
 ```moonbit
-async test "my feature" {
-  @moonspec.run_or_fail(MyWorld::default, @moonspec.RunOptions::new(features))
+test "my feature" {
+  @moonspec.run_or_fail_sync(MyWorld::default, @moonspec.RunOptions::new(features))
 }
 ```
 
@@ -403,7 +465,7 @@ moon add moonrockz/expect
 ```
 
 ```moonbit
-setup.then1("the result should be {int}", fn(expected : Int) {
+setup.then1("the result should be {int}", fn(expected : Int) raise {
   @expect.expect(self.result).to_equal(expected)
 })
 
@@ -443,7 +505,7 @@ Step 'the result should be 5' (Then): assertion failed: 3 != 5
 For inspecting test run outcomes, import `moonrockz/moonspec/expect`:
 
 ```moonbit
-let result = @moonspec.run(MyWorld::default, opts)
+let result = @moonspec.run_sync(MyWorld::default, opts)
 @expect.assert_passed(result)
 @expect.assert_no_parse_errors(result)
 @expect.assert_summary(result.summary, passed=3, failed=0)
@@ -529,7 +591,10 @@ Hook behavior:
 
 ### Mode 1: Runner API
 
-Use the Runner API directly in your test files for full programmatic control:
+Use root `run_sync` / `run_or_fail_sync` for synchronous execution.
+The async examples in this section import `"moonrockz/moonspec/async" @moonspec`
+and keep the `moonbitlang/async` test-driver import. They run on `wasm`, `js`
+and `native`:
 
 ```moonbit
 async test "calculator features" {
@@ -579,7 +644,7 @@ every `moon check`, `moon build`, or `moon test`:
 ```moonbit
 // src/moon.pkg
 import {
-  "moonrockz/moonspec",
+  "moonrockz/moonspec/async" @moonspec,
   "moonrockz/moonspec/format",
   "moonbitlang/async",
 }
@@ -611,8 +676,9 @@ exact file path. Generated tests use `@format.PrettyFormatter` unless a config
 file sets other formatters, so import `moonrockz/moonspec/format`.
 
 The `--world` (`-w`) flag tells codegen which World type to use. Generated tests
-call `@moonspec.run_or_fail` with `FeatureSource::File` to load the `.feature`
-file at runtime and execute each scenario through the full runner pipeline.
+call `@moonspec.run_or_fail` with `FeatureSource::File` by default.
+With `--execution sync`, they call `@moonspec.run_or_fail_sync` using the root
+import, embed the complete original source and need no runtime feature file.
 
 Commit the generated test files. moon does not run `dev_build` steps when your
 package is used as a dependency, and a fresh clone then builds without the
@@ -762,11 +828,12 @@ moonspec gen build features/*.feature -w CalcWorld --apply --moonx
 - `--package` / `-p`: package directory that gets the tests (default: `src`)
 - `--config` / `-c`: path to a `moonspec.json5` config file
 - `--apply`: write to `<package>/moon.pkg` instead of printing
+- `--execution`: `async` (default) or `sync`; CLI overrides merged config
 - `--test-kind`: `wbtest` (default) or `test`; see [`gen tests`](#gen-tests----generate-test-files)
 - `--moonx`: the rule runs `moonx moonrockz/moonspec/cmd/moonspec@<this CLI's version>` instead of `moonspec`
 
-`--apply` adds only entries that are missing (the rule by name, a `dev_build`
-by its output file), so running it again changes nothing. It also writes test
+`--apply` adds missing entries and updates an existing rule when the selected
+execution changes. Repeating it with the same selection is idempotent. It also writes test
 files that do not exist yet: moon does not compile a `dev_build` output that
 did not exist when the build started, so without this the first `moon test`
 would find no tests. Test files are white-box tests (`*_wbtest.mbt`) by
@@ -779,7 +846,7 @@ run `moon fmt` to migrate it to `moon.pkg` first.
 moonspec gen tests <feature-files...> -w <WorldType> [-o <dir or file.mbt>]
 ```
 
-Reads `.feature` files and generates test files. Each scenario becomes an
+Reads `.feature` files and generates test files. By default each scenario becomes an
 `async test` block that calls `@moonspec.run_or_fail` with
 `FeatureSource::File` to load the feature at runtime and execute it through
 the full runner pipeline. Build rules call this command; you can also run it
@@ -789,6 +856,7 @@ by hand.
 - One or more `.feature` file paths (required)
 - `--world` / `-w`: World type name, e.g. `CalcWorld` (required, or `world` in the config file)
 - `--output-dir` / `-o`: write generated files to this directory (default: current directory). A value ending in `.mbt` is the exact output file; use it with one feature file
+- `--execution`: `async` (default) or `sync`, independent of mode and test kind
 - `--mode` / `-m`: `per-scenario` (default) or `per-feature`
 - `--config` / `-c`: path to a `moonspec.json5` config file
 - `--no-color`: generate tests whose failure report and pretty output have no ANSI colors
@@ -833,8 +901,10 @@ async test "Feature: Calculator / Scenario: Addition" {
 ```
 
 Generated tests use `@format.PrettyFormatter` unless the config file sets
-other formatters, so the test imports need `moonrockz/moonspec/format` and
-`moonbitlang/async`.
+other formatters, so both modes need `moonrockz/moonspec/format`. Async tests
+also need `moonbitlang/async` and the `/async` facade. Sync tests use the root
+facade and ordinary test blocks. Build rules retain the selected execution.
+After changing it in config, rerun `gen build --apply` to update existing rules.
 
 The `// moonspec:hash:...` comment records a hash of the feature file content.
 
@@ -943,7 +1013,8 @@ Feature: Account Management
 
 ## Async and Parallel Execution
 
-The Runner API supports async execution and parallel feature processing:
+Import `"moonrockz/moonspec/async" @moonspec` for async execution and bounded
+parallel scenario processing:
 
 ```moonbit
 async test "parallel features" {
@@ -952,7 +1023,7 @@ async test "parallel features" {
     @moonspec.FeatureSource::File("features/cart.feature"),
     @moonspec.FeatureSource::File("features/checkout.feature"),
   ]
-  // Run up to 4 features concurrently
+  // Run up to 4 scenarios concurrently
   let opts = @moonspec.RunOptions::new(features)
   opts.parallel(true)
   opts.max_concurrent(4)
@@ -960,10 +1031,11 @@ async test "parallel features" {
 }
 ```
 
-- `parallel` controls max concurrent features (0 = sequential)
+- `parallel(true)` enables concurrent scenarios; `max_concurrent(4)` bounds them
 - Each scenario gets a fresh World instance, making parallel execution safe
 - Tests must use `async test` blocks
-- Requires JS target: `moon test --target js`
+- Supported on `wasm`, `js` and `native`, for example `moon test --target js`
+- Sync execution rejects parallel mode before any factory, hook or event runs
 
 ## Retrying Flaky Tests
 
@@ -1005,7 +1077,8 @@ count is set -- useful for opting specific scenarios out of retries.
 - Retries happen **immediately** after a failure (before moving to the next scenario)
 - Only the **final attempt's result** counts in the run summary
 - The `retried` field in `RunSummary` counts scenarios that needed more than one attempt
-- Retries use `@async.retry(Immediate)` from the `moonbitlang/async` library
+- Sync and async share the same immediate retry loop; no async runtime is needed for sync retries
+- Only Failed scenarios retry; Undefined, Pending and Skipped scenarios do not
 
 ### Cucumber Messages Protocol
 
@@ -1019,7 +1092,7 @@ the full history of all attempts.
 
 ## Dry-Run Mode
 
-Validate step definitions without executing handlers or hooks:
+Validate step definitions without executing step handlers or case/step hooks:
 
 ```moonbit nocheck
 let opts = RunOptions::new(features)
@@ -1029,7 +1102,7 @@ let result = run(MyWorld::default, opts)
 // result.summary.skipped shows matched-but-not-executed steps
 ```
 
-Matched steps report as `Skipped("dry run")`. Undefined steps remain `Undefined` with snippet suggestions. No hooks are called and no retries are attempted.
+Matched steps report as `Skipped("dry run")`. Undefined steps remain `Undefined` with snippet suggestions. Before/after TestRun hooks still execute; case/step hooks and handlers do not. No retries are attempted.
 
 ## Skipping Scenarios
 
@@ -1145,6 +1218,12 @@ pub(open) trait Formatter {
 
 ## Example Projects
 
+### Sync Wasm-GC calculator
+
+See [`examples/sync-wasm/`](examples/sync-wasm/) for actual CLI-generated
+ordinary tests importing the public root package. Run
+`mise run examples:sync-wasm -- wasm-gc` from this checkout.
+
 ### Calculator (PerScenario mode)
 
 See [`examples/calculator/`](examples/calculator/) -- one test per scenario:
@@ -1227,14 +1306,17 @@ See [`examples/ecommerce-cli/`](examples/ecommerce-cli/) -- standalone CLI runne
 
 | Package | Description |
 |---------|-------------|
-| `moonrockz/moonspec` | Top-level facade -- re-exports `World`, `Hooks`, `StepLibrary`, `StepDef`, `Ctx`, `MoonspecError`, `run`, `run_or_fail` |
-| `moonrockz/moonspec/core` | World, Hooks, StepLibrary traits, Setup, StepRegistry, ParamTypeRegistry, StepDef, Ctx, MoonspecError |
-| `moonrockz/moonspec/runner` | Feature/scenario executor with tag filtering and parallel support |
+| `moonrockz/moonspec` | Sync facade: shared types, `run_sync`, `run_or_fail_sync`, `SyncExecutionError` |
+| `moonrockz/moonspec/async` | Optional async facade: shared exports plus `run`, `run_or_fail` and parallel scheduling |
+| `moonrockz/moonspec/core` | World and StepLibrary traits, Setup, HookRegistry, StepRegistry, ParamTypeRegistry, StepDef, Ctx, MoonspecError |
+| `moonrockz/moonspec/runner` | Shared sync executor, filtering, retries, hooks and results |
 | `moonrockz/moonspec/format` | Formatter trait + Pretty, Messages, JUnit implementations |
 | `moonrockz/moonspec/codegen` | Generate `moon test` runner tests from Gherkin features |
 
-Users should import `moonrockz/moonspec` and reference types via `@moonspec.World`,
-`@moonspec.run_or_fail`, etc. The sub-packages are implementation details.
+Use `moonrockz/moonspec` for sync or `moonrockz/moonspec/async` as `@moonspec`
+for async. Both expose `World`, `Setup`, options, results and message sinks.
+See the [sync execution guide](docs/guide/testing-strategies.md#sync-execution-and-target-support) for exact APIs,
+host limits and migration, and [sync-wasm](examples/sync-wasm/) for a generated example.
 
 ## Dependencies
 
@@ -1250,6 +1332,9 @@ Users should import `moonrockz/moonspec` and reference types via `@moonspec.Worl
 
 ## Migration Guides
 
+- [Unreleased sync and async migration](docs/guide/testing-strategies.md#async-migration):
+  root sync APIs and the single async import change.
+
 - [0.10.x to 0.11.0](docs/migrations/v0.11.0.md): CLI package `cmd/moonspec`,
   white-box test files by default, `gen steps` output location, tag
   expression validation, new struct fields.
@@ -1257,14 +1342,14 @@ Users should import `moonrockz/moonspec` and reference types via `@moonspec.Worl
 ## Development
 
 ```bash
-moon check          # Type-check the project
-moon test           # Run all tests
-moon test --target js  # Run tests (required for async/parallel)
-moon fmt            # Format code
-moon info           # Update .mbti interface files
-mise run test:unit  # Run tests via mise
+mise run test:unit                 # project tests on JavaScript
+mise run test:compat-generated     # actual CLI-generated consumer tests
+mise run examples:sync-wasm        # generated sync example on four targets
+mise run examples:test             # shared example workspace on JavaScript
+mise run site:check                # site tests, both builds and link checks
+mise run check:interfaces          # moon info, then moon fmt
 ```
 
 ## License
 
-Apache-2.0 -- see [LICENSE](LICENSE) for details.
+Apache-2.0.
