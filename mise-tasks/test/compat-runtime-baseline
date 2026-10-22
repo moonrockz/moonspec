@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Execute downstream public async consumer baseline on JS"
+set -euo pipefail
+cd tests/compat/runtime
+mkdir -p _build
+moon run src --target js > _build/baseline.jsonl
+python3 -B verify.py < _build/baseline.jsonl
+python3 -B -m unittest discover -p '*_test.py'

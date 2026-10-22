@@ -1,0 +1,629 @@
+{
+  "passing": {
+    "source": "fixtures/passing.feature",
+    "summary": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "undefined": 0,
+      "pending": 0,
+      "skipped": 0,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Passing",
+        "Passed",
+        [
+          "Passed"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0
+  },
+  "outcomes": {
+    "source": "fixtures/outcomes.feature",
+    "summary": {
+      "total": 4,
+      "passed": 0,
+      "failed": 1,
+      "undefined": 1,
+      "pending": 1,
+      "skipped": 1,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Failed",
+        "Failed",
+        [
+          "Failed",
+          "Skipped"
+        ]
+      ],
+      [
+        "Undefined",
+        "Undefined",
+        [
+          "Undefined",
+          "Skipped"
+        ]
+      ],
+      [
+        "Pending",
+        "Pending",
+        [
+          "Pending",
+          "Skipped"
+        ]
+      ],
+      [
+        "Skipped",
+        "Skipped",
+        [
+          "Skipped"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0,
+    "diagnostics": [
+      [
+        "Failed",
+        0,
+        [
+          "Given fail",
+          "Step 'fail' (Given)",
+          "expected failure"
+        ]
+      ],
+      [
+        "Undefined",
+        0,
+        [
+          "Given missing definition",
+          "Undefined step. Implement it with:",
+          "s.given(\"missing definition\""
+        ]
+      ],
+      [
+        "Pending",
+        0,
+        [
+          "Given pending",
+          "Pending: not implemented"
+        ]
+      ]
+    ],
+    "skip_reasons": {
+      "Skipped": "skip"
+    }
+  },
+  "retries-isolation": {
+    "source": "fixtures/retries-isolation.feature",
+    "summary": {
+      "total": 5,
+      "passed": 4,
+      "failed": 1,
+      "undefined": 0,
+      "pending": 0,
+      "skipped": 0,
+      "retried": 3
+    },
+    "scenarios": [
+      [
+        "Tag retry",
+        "Passed",
+        [
+          "Passed"
+        ]
+      ],
+      [
+        "Global retry",
+        "Passed",
+        [
+          "Passed"
+        ]
+      ],
+      [
+        "Exhausted",
+        "Failed",
+        [
+          "Failed"
+        ]
+      ],
+      [
+        "Mutate world",
+        "Passed",
+        [
+          "Passed",
+          "Passed",
+          "Passed"
+        ]
+      ],
+      [
+        "Fresh world",
+        "Passed",
+        [
+          "Passed"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        true
+      ],
+      [
+        1,
+        false
+      ],
+      [
+        0,
+        true
+      ],
+      [
+        1,
+        false
+      ],
+      [
+        0,
+        true
+      ],
+      [
+        1,
+        false
+      ],
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0
+  },
+  "tag-filter": {
+    "source": "fixtures/filtering.feature",
+    "summary": {
+      "total": 4,
+      "passed": 3,
+      "failed": 0,
+      "undefined": 0,
+      "pending": 0,
+      "skipped": 1,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Selected",
+        "Passed",
+        [
+          "Passed",
+          "Passed"
+        ]
+      ],
+      [
+        "Skip selected",
+        "Skipped",
+        [
+          "Skipped",
+          "Skipped"
+        ]
+      ],
+      [
+        "Row (n=1)",
+        "Passed",
+        [
+          "Passed",
+          "Passed",
+          "Passed"
+        ]
+      ],
+      [
+        "Row (n=2)",
+        "Passed",
+        [
+          "Passed",
+          "Passed",
+          "Passed"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0,
+    "skip_reasons": {
+      "Skip selected": "skip"
+    }
+  },
+  "name-filter": {
+    "source": "fixtures/filtering.feature",
+    "summary": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "undefined": 0,
+      "pending": 0,
+      "skipped": 0,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Selected",
+        "Passed",
+        [
+          "Passed",
+          "Passed"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0
+  },
+  "dry-run": {
+    "source": "fixtures/outcomes.feature",
+    "summary": {
+      "total": 4,
+      "passed": 0,
+      "failed": 0,
+      "undefined": 1,
+      "pending": 0,
+      "skipped": 3,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Failed",
+        "Skipped",
+        [
+          "Skipped",
+          "Skipped"
+        ]
+      ],
+      [
+        "Undefined",
+        "Undefined",
+        [
+          "Undefined",
+          "Skipped"
+        ]
+      ],
+      [
+        "Pending",
+        "Skipped",
+        [
+          "Skipped",
+          "Skipped"
+        ]
+      ],
+      [
+        "Skipped",
+        "Skipped",
+        [
+          "Skipped"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0,
+    "dry_run": true,
+    "skip_reasons": {
+      "Failed": "dry run",
+      "Pending": "dry run",
+      "Skipped": "skip"
+    }
+  },
+  "parse-error": {
+    "source": "fixtures/invalid.feature",
+    "summary": {
+      "total": 1,
+      "passed": 1,
+      "failed": 0,
+      "undefined": 0,
+      "pending": 0,
+      "skipped": 0,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Passing",
+        "Passed",
+        [
+          "Passed"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 1,
+    "sources": [
+      "fixtures/invalid.feature",
+      "fixtures/passing.feature"
+    ]
+  },
+  "hooks": {
+    "source": "fixtures/hooks.feature",
+    "summary": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "undefined": 0,
+      "pending": 0,
+      "skipped": 0,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Attached",
+        "Passed",
+        [
+          "Passed",
+          "Passed"
+        ]
+      ],
+      [
+        "Hook failure",
+        "Failed",
+        [
+          "Failed",
+          "Skipped"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0,
+    "hook_log": [
+      "before_run",
+      "before_case:Attached",
+      "before_step:Attached:attach evidence",
+      "handler:Attached:attach evidence",
+      "after_step:Attached:attach evidence:Passed",
+      "before_step:Attached:pass",
+      "after_step:Attached:pass:Passed",
+      "after_case:Attached:Passed",
+      "before_case:Hook failure",
+      "before_step:Hook failure:fail",
+      "after_step:Hook failure:fail:Failed",
+      "after_case:Hook failure:Failed",
+      "after_run:Failed"
+    ],
+    "attachments": 14,
+    "external_attachments": 1,
+    "attachment_links": [
+      [
+        "BEFORE_TEST_RUN",
+        "",
+        "",
+        "before run"
+      ],
+      [
+        "AFTER_TEST_RUN",
+        "",
+        "",
+        "after run"
+      ],
+      [
+        "BEFORE_TEST_CASE",
+        "Attached",
+        "",
+        "before case:Attached"
+      ],
+      [
+        "STEP",
+        "Attached",
+        "attach evidence",
+        "before step:Attached:attach evidence"
+      ],
+      [
+        "STEP",
+        "Attached",
+        "attach evidence",
+        "step evidence"
+      ],
+      [
+        "STEP",
+        "Attached",
+        "attach evidence",
+        "YWJj"
+      ],
+      [
+        "STEP",
+        "Attached",
+        "attach evidence",
+        "https://example.test/evidence"
+      ],
+      [
+        "STEP",
+        "Attached",
+        "attach evidence",
+        "after step:Attached:attach evidence"
+      ],
+      [
+        "STEP",
+        "Attached",
+        "pass",
+        "before step:Attached:pass"
+      ],
+      [
+        "STEP",
+        "Attached",
+        "pass",
+        "after step:Attached:pass"
+      ],
+      [
+        "AFTER_TEST_CASE",
+        "Attached",
+        "",
+        "after case:Attached"
+      ],
+      [
+        "BEFORE_TEST_CASE",
+        "Hook failure",
+        "",
+        "before case:Hook failure"
+      ],
+      [
+        "STEP",
+        "Hook failure",
+        "fail",
+        "before step:Hook failure:fail"
+      ],
+      [
+        "STEP",
+        "Hook failure",
+        "fail",
+        "after step:Hook failure:fail"
+      ],
+      [
+        "AFTER_TEST_CASE",
+        "Hook failure",
+        "",
+        "after case:Hook failure"
+      ]
+    ]
+  },
+  "hooks-dry-run": {
+    "source": "fixtures/hooks.feature",
+    "summary": {
+      "total": 2,
+      "passed": 0,
+      "failed": 0,
+      "undefined": 0,
+      "pending": 0,
+      "skipped": 2,
+      "retried": 0
+    },
+    "scenarios": [
+      [
+        "Attached",
+        "Skipped",
+        [
+          "Skipped",
+          "Skipped"
+        ]
+      ],
+      [
+        "Hook failure",
+        "Skipped",
+        [
+          "Skipped",
+          "Skipped"
+        ]
+      ]
+    ],
+    "attempts": [
+      [
+        0,
+        false
+      ],
+      [
+        0,
+        false
+      ]
+    ],
+    "parse_errors": 0,
+    "hook_log": [
+      "before_run",
+      "after_run:Failed"
+    ],
+    "attachments": 2,
+    "external_attachments": 0,
+    "dry_run": true,
+    "baseline_dry_run_hook_offset": true,
+    "attachment_links": [
+      [
+        "BEFORE_TEST_RUN",
+        "",
+        "",
+        "before run"
+      ],
+      [
+        "AFTER_TEST_RUN",
+        "",
+        "",
+        "after run"
+      ]
+    ],
+    "skip_reasons": {
+      "Attached": "dry run",
+      "Hook failure": "dry run"
+    }
+  }
+}
