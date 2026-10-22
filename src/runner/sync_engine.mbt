@@ -527,35 +527,6 @@ fn format_run_summary(
 }
 
 ///|
-/// Run pickles sequentially (the default path).
-fn[W : @core.World] run_pickles_sequential(
-  factory : () -> W,
-  pickles : Array[@cucumber_messages.Pickle],
-  sinks~ : Array[&@core.MessageSink] = [],
-  tc_mappings~ : Map[String, TestCaseMapping] = {},
-  id_gen~ : IdGenerator = IdGenerator::new(),
-  retries~ : Int32 = 0,
-  dry_run~ : Bool = false,
-  skip_tags~ : Array[String] = [],
-) -> Array[PickleResult] raise Error {
-  let results : Array[PickleResult] = []
-  for pickle in pickles {
-    let result = execute_pickle(
-      factory,
-      pickle,
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-      retries~,
-      dry_run~,
-      skip_tags~,
-    )
-    results.push(result)
-  }
-  results
-}
-
-///|
 /// Build a PickleResult for a scenario that should be skipped.
 ///
 /// Emits `TestCaseStarted`, per-step `TestStepStarted`/`TestStepFinished`,

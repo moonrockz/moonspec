@@ -35,7 +35,8 @@ async test "malformed tag expression fails the run" {
   let opts = RunOptions([FeatureSource::Text("test://bad-tags", content)])
   opts.tag_expr("@smoke and")
   let outcome = try run(FilterWorld::default, opts) catch {
-    TagExpressionError::UnexpectedEnd(expression~) => "rejected: \{expression}"
+    @runner.TagExpressionError::UnexpectedEnd(expression~) =>
+      "rejected: \{expression}"
     e => "other error: \{e}"
   } noraise {
     _ => "ran"

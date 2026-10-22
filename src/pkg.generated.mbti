@@ -10,10 +10,6 @@ import {
 // Values
 pub fn color_enabled(no_color? : Bool) -> Bool
 
-pub async fn[W : @core.World] run(() -> W, @runner.RunOptions) -> @runner.RunResult
-
-pub async fn[W : @core.World] run_or_fail(() -> W, @runner.RunOptions) -> Unit
-
 pub fn[W : @core.World] run_or_fail_sync(() -> W, @runner.RunOptions) -> Unit raise
 
 pub fn[W : @core.World] run_sync(() -> W, @runner.RunOptions) -> @runner.RunResult raise

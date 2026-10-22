@@ -442,7 +442,7 @@ async test "retry: undefined scenario is not retried" {
     #|  @retry(2)
     #|  Scenario: Missing steps
     #|    Given a step that does not exist
-  let collector = CollectorSink::new()
+  let collector = @runner.CollectorSink::new()
   let opts = RunOptions([FeatureSource::Text("test://undef-retry", content)])
   opts.add_sink(collector)
   let result = run(UndefinedRetryWorld::default, opts)
@@ -467,7 +467,7 @@ async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
     #|  @retry(1)
     #|  Scenario: Flaky
     #|    Given a step that fails once
-  let collector = CollectorSink::new()
+  let collector = @runner.CollectorSink::new()
   let opts = RunOptions([FeatureSource::Text("test://retry-env", content)])
   opts.add_sink(collector)
   let _ = run(fn() -> RetryWorld { { call_count: counter, } }, opts)
@@ -543,7 +543,7 @@ async test "dry-run: envelopes emitted with SKIPPED status" {
     #|
     #|  Scenario: Defined
     #|    Given a defined step
-  let collector = CollectorSink::new()
+  let collector = @runner.CollectorSink::new()
   let opts = RunOptions([FeatureSource::Text("test://dryrun-env", content)])
   opts.dry_run(true)
   opts.add_sink(collector)

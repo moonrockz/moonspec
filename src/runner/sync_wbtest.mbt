@@ -646,3 +646,41 @@ test "sync skipped tags emit regular planned IDs without scenario effects" {
   assert_eq(started, planned)
   assert_eq(finished, planned)
 }
+
+///|
+struct SnapshotOptionsWorld {
+  options : RunOptions
+  failures : Ref[Int32]
+}
+
+///|
+impl @core.World for SnapshotOptionsWorld with fn configure(self, setup) {
+  setup.given("execution options change", fn(_ctx) {
+    self.options.retries(2)
+    self.options.dry_run(true)
+    self.options.skip_tags(["@later"])
+  })
+  setup.given("the original policy still applies", fn(_ctx) raise {
+    self.failures.val += 1
+    raise Failure("one attempt under the original policy")
+  })
+}
+
+///|
+test "scenario task policies snapshot mutable execution options once per batch" {
+  let options = RunOptions([
+    FeatureSource::Text(
+      "snapshot.feature", "Feature: Snapshot\n  Scenario: Change\n    Given execution options change\n  @later\n  Scenario: Original policy\n    Given the original policy still applies\n",
+    ),
+  ])
+  let failures = Ref(0)
+  let result = run_sync(
+    fn() { SnapshotOptionsWorld::{ options, failures, } },
+    options,
+  )
+  assert_eq(result.summary.passed, 1)
+  assert_eq(result.summary.failed, 1)
+  assert_eq(result.summary.skipped, 0)
+  assert_eq(result.summary.retried, 0)
+  assert_eq(failures.val, 1)
+}

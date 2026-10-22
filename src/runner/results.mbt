@@ -163,9 +163,11 @@ pub extend ParseErrorInfo with Eq::{not_equal, equal}
 
 ///|
 /// Result of executing a pickle, including whether it was retried.
-priv struct PickleResult {
-  result : ScenarioResult
-  was_retried : Bool
+#internal(internal, "runner scheduling adapter; no stability guarantee")
+#doc(hidden)
+pub struct PickleResult {
+  priv result : ScenarioResult
+  priv was_retried : Bool
 }
 
 ///|

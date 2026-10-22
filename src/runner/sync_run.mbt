@@ -1,19 +1,23 @@
 ///|
 /// Prepared run metadata and lifecycle shared by both entry points.
-priv struct PreparedRun {
-  cache : FeatureCache
-  filtered : Array[@cucumber_messages.Pickle]
-  locations : Map[String, String]
-  sinks : Array[&@core.MessageSink]
-  tc_mappings : Map[String, TestCaseMapping]
-  setup : @core.Setup
-  id_gen : IdGenerator
-  run_id : String
-  all_parse_errors : Array[ParseErrorInfo]
+#internal(internal, "runner scheduling adapter; no stability guarantee")
+#doc(hidden)
+pub struct PreparedRun {
+  priv cache : FeatureCache
+  priv filtered : Array[@cucumber_messages.Pickle]
+  priv locations : Map[String, String]
+  priv sinks : Array[&@core.MessageSink]
+  priv tc_mappings : Map[String, TestCaseMapping]
+  priv setup : @core.Setup
+  priv id_gen : IdGenerator
+  priv run_id : String
+  priv all_parse_errors : Array[ParseErrorInfo]
 }
 
 ///|
-fn[W : @core.World] prepare_run(
+#internal(internal, "runner scheduling adapter; no stability guarantee")
+#doc(hidden)
+pub fn[W : @core.World] prepare_run(
   factory : () -> W,
   options : RunOptions,
 ) -> PreparedRun raise Error {
@@ -404,16 +408,58 @@ fn[W : @core.World] run_prepared_sync(
   prepared : PreparedRun,
   options : RunOptions,
 ) -> Array[PickleResult] raise Error {
-  run_pickles_sequential(
-    factory,
-    prepared.filtered,
-    sinks=prepared.sinks,
-    tc_mappings=prepared.tc_mappings,
-    id_gen=prepared.id_gen,
-    retries=options.get_retries(),
-    dry_run=options.is_dry_run(),
-    skip_tags=options.get_skip_tags(),
-  )
+  prepared.tasks(factory, options).map(fn(task) raise { task() })
+}
+
+///|
+/// Build scenario tasks using one snapshot of the execution options.
+#internal(internal, "runner scheduling adapter; no stability guarantee")
+#doc(hidden)
+pub fn[W : @core.World] PreparedRun::tasks(
+  self : PreparedRun,
+  factory : () -> W,
+  options : RunOptions,
+) -> Array[() -> PickleResult raise Error] {
+  let retries = options.get_retries()
+  let dry_run = options.is_dry_run()
+  let skip_tags = options.get_skip_tags().copy()
+  self.filtered.map(fn(pickle) {
+    fn() raise {
+      execute_pickle(
+        factory,
+        pickle,
+        sinks=self.sinks,
+        tc_mappings=self.tc_mappings,
+        id_gen=self.id_gen,
+        retries~,
+        dry_run~,
+        skip_tags~,
+      )
+    }
+  })
+}
+
+///|
+#internal(internal, "runner scheduling adapter; no stability guarantee")
+#doc(hidden)
+pub fn PreparedRun::finish(
+  self : PreparedRun,
+  options : RunOptions,
+  results : Array[PickleResult],
+  strict_output~ : Bool = false,
+) -> RunResult raise Error {
+  finish_run(self, options, results, strict_output~).0
+}
+
+///|
+#internal(internal, "runner scheduling adapter; no stability guarantee")
+#doc(hidden)
+pub fn PreparedRun::check(
+  self : PreparedRun,
+  result : RunResult,
+  options : RunOptions,
+) -> Unit raise Error {
+  check_run_result(result, self.locations, options)
 }
 
 ///|
