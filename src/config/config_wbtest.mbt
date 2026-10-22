@@ -57,6 +57,7 @@ test "merge: package config overrides module config" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let package_config = MoonspecConfig::{
@@ -66,6 +67,7 @@ test "merge: package config overrides module config" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let merged = module_config.merge(package_config)
@@ -89,6 +91,7 @@ test "resolve_mode with simple mode" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   assert_eq(config.resolve_mode("any/file.feature"), "per-feature")
@@ -106,6 +109,7 @@ test "resolve_mode with per-file map" {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   assert_eq(config.resolve_mode("features/checkout.feature"), "per-feature")
@@ -156,6 +160,7 @@ test "merge: skip_tags override takes precedence" {
     skip_tags: Some(["@skip", "@ignore"]),
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let package_config = MoonspecConfig::{
@@ -165,6 +170,7 @@ test "merge: skip_tags override takes precedence" {
     skip_tags: Some(["@wip"]),
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let merged = module_config.merge(package_config)
@@ -180,6 +186,7 @@ test "merge: skip_tags falls back to base when override absent" {
     skip_tags: Some(["@skip", "@ignore"]),
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let package_config = MoonspecConfig::empty()
@@ -246,6 +253,7 @@ test "merge: formatters override takes precedence" {
       FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false, },
     ]),
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let override_ = MoonspecConfig::{
@@ -261,6 +269,7 @@ test "merge: formatters override takes precedence" {
       },
     ]),
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let merged = base.merge(override_)
@@ -284,6 +293,7 @@ test "merge: formatters falls back to base when override absent" {
       FormatterConfig::{ type_: "pretty", output: "stdout", no_color: false, },
     ]),
     no_color: None,
+    execution: None,
     test_kind: None,
   }
   let override_ = MoonspecConfig::empty()
@@ -395,4 +405,46 @@ test "merge takes test_kind from the override" {
   let override_ = MoonspecConfig::from_json5("{ test_kind: \"wbtest\" }")
   assert_eq(base.merge(override_).test_kind, Some(WhiteBox))
   assert_eq(base.merge(MoonspecConfig::empty()).test_kind, Some(BlackBox))
+}
+
+///|
+test "execution parses independently of generation mode and test kind" {
+  let config = MoonspecConfig::from_json5(
+    "{ execution: 'sync', mode: 'per-feature', test_kind: 'test' }",
+  )
+  assert_eq(config.execution, Some(Sync))
+  assert_eq(config.resolve_mode("features/login.feature"), "per-feature")
+  assert_eq(config.test_kind, Some(BlackBox))
+  assert_eq(MoonspecConfig::empty().execution, None)
+  assert_eq(
+    MoonspecConfig::from_json5("{ execution: 'async' }").execution,
+    Some(Async),
+  )
+}
+
+///|
+test "invalid execution config is rejected with an actionable diagnostic" {
+  for
+    input in [
+      "{ execution: 'parallel' }", "{ execution: true }", "{ execution: null }",
+    ] {
+    let message = try {
+      ignore(MoonspecConfig::from_json5(input))
+      "accepted invalid execution"
+    } catch {
+      ConfigError::InvalidExecution(message) => message
+    }
+    assert_true(message.contains("execution"))
+    assert_true(message.contains("async"))
+    assert_true(message.contains("sync"))
+  }
+}
+
+///|
+test "execution merge retains a parent and lets a child override either mode" {
+  let sync = MoonspecConfig::from_json5("{ execution: 'sync' }")
+  let async_ = MoonspecConfig::from_json5("{ execution: 'async' }")
+  assert_eq(sync.merge(MoonspecConfig::empty()).execution, Some(Sync))
+  assert_eq(sync.merge(async_).execution, Some(Async))
+  assert_eq(async_.merge(sync).execution, Some(Sync))
 }

@@ -43,7 +43,8 @@ pub fn CliCommand::prefix(self : CliCommand) -> String {
 /// `moonspec` binary). `test_kind` selects white-box (default) or black-box
 /// test file names.
 ///
-/// Returns the new content and the number of entries added.
+/// Returns the new content and the number of entries added or updated.
+/// Existing generated rules are updated when their execution mode changes.
 pub fn render_build_rules(
   existing : String,
   features : Array[String],
@@ -51,7 +52,13 @@ pub fn render_build_rules(
   world~ : String,
   cli~ : CliCommand = Installed,
   test_kind~ : @config.TestKind = WhiteBox,
+  execution~ : @config.ExecutionMode = Async,
 ) -> (String, Int32) {
+  let execution_value = match execution {
+    Async => "async"
+    Sync => "sync"
+  }
+  let (existing, updated) = update_rule_execution(existing, execution_value)
   let blocks : Array[String] = []
   if !existing.contains("name: \"" + build_rule_name + "\"") {
     blocks.push(
@@ -63,6 +70,8 @@ pub fn render_build_rules(
       cli.prefix() +
       " gen tests $input -w " +
       world +
+      " --execution " +
+      execution_value +
       " -o $output\",\n" +
       ")\n",
     )
@@ -90,14 +99,14 @@ pub fn render_build_rules(
     )
   }
   if blocks.is_empty() {
-    return (existing, 0)
+    return (existing, updated)
   }
   let prefix = if existing.trim(chars="\n").is_empty() {
     ""
   } else {
     existing.trim_end(chars="\n").to_owned() + "\n\n"
   }
-  (prefix + blocks.join("\n"), blocks.length())
+  (prefix + blocks.join("\n"), blocks.length() + updated)
 }
 
 ///|
@@ -145,4 +154,34 @@ fn path_segments(path : String) -> Array[String] {
     }
   }
   segments
+}
+
+///|
+/// Update only the command of the canonical generated rule, preserving other rules.
+fn update_rule_execution(
+  existing : String,
+  execution : String,
+) -> (String, Int32) {
+  let marker = "rule(\n  name: \"" + build_rule_name + "\",\n  command: \""
+  guard existing.split_once(marker) is Some((before, after)) else {
+    return (existing, 0)
+  }
+  let suffix = "\",\n)"
+  guard after.split_once(suffix) is Some((command, rest)) else {
+    return (existing, 0)
+  }
+  guard command.contains(" gen tests $input ") else { return (existing, 0) }
+  let selected = " --execution " + execution
+  let updated = if command.contains(" --execution async") {
+    command.to_owned().replace(old=" --execution async", new=selected)
+  } else if command.contains(" --execution sync") {
+    command.to_owned().replace(old=" --execution sync", new=selected)
+  } else {
+    command.to_owned().replace(old=" -o $output", new=selected + " -o $output")
+  }
+  if updated == command.to_owned() {
+    (existing, 0)
+  } else {
+    (before.to_owned() + marker + updated + suffix + rest.to_owned(), 1)
+  }
 }

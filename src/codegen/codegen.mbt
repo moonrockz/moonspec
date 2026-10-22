@@ -129,6 +129,7 @@ pub fn generate_test_file(
 ) -> String {
   // moon passes `$input` as "./features/x.feature"; drop the "./" so the
   // output does not depend on how the path was written.
+  let original_uri = source_path
   let mut source_path = source_path
   while source_path.has_prefix("./") {
     source_path = source_path[2:].to_owned()
@@ -153,38 +154,57 @@ pub fn generate_test_file(
     Some(f) => f
     None => return buf.to_string()
   }
+  let source_expr = match config.execution {
+    Async =>
+      "@moonspec.FeatureSource::File(\"" + escape_string(source_path) + "\")"
+    Sync =>
+      "@moonspec.FeatureSource::Text(\"" +
+      escape_string(original_uri) +
+      "\", \"" +
+      escape_string(feature_content) +
+      "\")"
+  }
   match config.mode {
-    PerFeature => generate_per_feature(buf, feature, source_path, config)
-    PerScenario => generate_per_scenario(buf, feature, source_path, config)
+    PerFeature => generate_per_feature(buf, feature, source_expr, config)
+    PerScenario =>
+      generate_per_scenario(buf, feature, source_path, source_expr, config)
   }
   buf.to_string()
 }
 
 ///|
-/// PerFeature mode: single test that reads the feature file from disk.
+/// PerFeature mode: one test for the complete file or embedded source.
 fn generate_per_feature(
   buf : StringBuilder,
   feature : @gherkin.Feature,
-  source_path : String,
+  source_expr : String,
   config : CodegenConfig,
 ) -> Unit {
   let test_name = "Feature: " + feature.name
   let skip = skip_reason_for(config, [feature.tags])
   generate_skip_attribute(buf, skip, config)
-  buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
+  let test_keyword = match config.execution {
+    Async => "async test"
+    Sync => "test"
+  }
+  buf.write_string(test_keyword + " \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
-      "  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File(\"" +
-      escape_string(source_path) +
-      "\")])\n",
+      "  let options = @moonspec.RunOptions::new([" + source_expr + "])\n",
     )
     generate_skip_tags_line(buf, skip, config)
     if config.no_color {
       buf.write_string("  options.no_color(true)\n")
     }
     generate_formatter_lines(buf, config)
+    let runner = match config.execution {
+      Async => "run_or_fail"
+      Sync => "run_or_fail_sync"
+    }
     buf.write_string(
-      "  @moonspec.run_or_fail(\n    " +
+      "  @moonspec." +
+      runner +
+      "(\n    " +
       config.world +
       "::default, options,\n  )\n",
     )
@@ -195,11 +215,12 @@ fn generate_per_feature(
 }
 
 ///|
-/// PerScenario mode: one test per scenario, using File source with scenario_name filter.
+/// PerScenario mode: one test per expanded scenario, with a scenario_name filter.
 fn generate_per_scenario(
   buf : StringBuilder,
   feature : @gherkin.Feature,
   source_path : String,
+  source_expr : String,
   config : CodegenConfig,
 ) -> Unit {
   for child in feature.children {
@@ -211,6 +232,7 @@ fn generate_per_scenario(
             feature.name,
             scenario.name,
             source_path,
+            source_expr,
             skip_reason_for(config, [feature.tags, scenario.tags]),
             config,
           )
@@ -233,6 +255,7 @@ fn generate_per_scenario(
                 feature.name,
                 scenario_name,
                 source_path,
+                source_expr,
                 skip_reason_for(config, [
                   feature.tags,
                   scenario.tags,
@@ -250,23 +273,28 @@ fn generate_per_scenario(
 }
 
 ///|
-/// Generate a single async test that uses File source with scenario_name filter.
+/// Generate a single test with a scenario_name filter.
 fn generate_scenario_runner_test(
   buf : StringBuilder,
   feature_name : String,
   scenario_name : String,
   source_path : String,
+  source_expr : String,
   skip : String?,
   config : CodegenConfig,
 ) -> Unit {
   let test_name = "Feature: " + feature_name + " / Scenario: " + scenario_name
   generate_skip_attribute(buf, skip, config)
-  buf.write_string("async test \"" + escape_string(test_name) + "\" {\n")
+  let test_keyword = match config.execution {
+    Async => "async test"
+    Sync => "test"
+  }
+  buf.write_string(test_keyword + " \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
     buf.write_string(
-      "  let options = @moonspec.RunOptions::new([@moonspec.FeatureSource::File(\"" +
-      escape_string(source_path) +
-      "\")])\n  options.scenario_name(\"" +
+      "  let options = @moonspec.RunOptions::new([" +
+      source_expr +
+      "])\n  options.scenario_name(\"" +
       escape_string(scenario_name) +
       "\")\n",
     )
@@ -275,8 +303,14 @@ fn generate_scenario_runner_test(
       buf.write_string("  options.no_color(true)\n")
     }
     generate_formatter_lines(buf, config)
+    let runner = match config.execution {
+      Async => "run_or_fail"
+      Sync => "run_or_fail_sync"
+    }
     buf.write_string(
-      "  @moonspec.run_or_fail(\n    " +
+      "  @moonspec." +
+      runner +
+      "(\n    " +
       config.world +
       "::default, options,\n  )\n",
     )
@@ -392,5 +426,16 @@ fn generate_formatter_lines(
 
 ///|
 fn escape_string(s : String) -> String {
-  string_replace(s, "\"", "\\\"")
+  let buf = StringBuilder()
+  for c in s.iter() {
+    match c {
+      '\\' => buf.write_string("\\\\")
+      '"' => buf.write_string("\\\"")
+      '\n' => buf.write_string("\\n")
+      '\r' => buf.write_string("\\r")
+      '\t' => buf.write_string("\\t")
+      _ => buf.write_char(c)
+    }
+  }
+  buf.to_string()
 }

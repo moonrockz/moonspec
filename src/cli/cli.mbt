@@ -37,6 +37,11 @@ fn build_parser() -> @argparse.Command {
         about="Path to moonspec.json5 config file",
       ),
       @argparse.OptionArg(
+        "execution",
+        long="execution",
+        about="Test execution: async (default) or sync (embeds feature source)",
+      ),
+      @argparse.OptionArg(
         "test-kind",
         long="test-kind",
         about="Test file kind: wbtest (default, *_wbtest.mbt; can use private items) or test (*_test.mbt)",
@@ -93,6 +98,11 @@ fn build_parser() -> @argparse.Command {
         "config",
         short='c',
         about="Path to moonspec.json5 config file",
+      ),
+      @argparse.OptionArg(
+        "execution",
+        long="execution",
+        about="Test execution: async (default) or sync (embeds feature source)",
       ),
       @argparse.OptionArg(
         "test-kind",

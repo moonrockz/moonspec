@@ -12,7 +12,7 @@ test "render_build_rules adds a rule and one dev_build per feature" {
     content=(
       #|rule(
       #|  name: "moonspec-tests",
-      #|  command: "moonspec gen tests $input -w CalcWorld -o $output",
+      #|  command: "moonspec gen tests $input -w CalcWorld --execution async -o $output",
       #|)
       #|
       #|dev_build(
@@ -40,7 +40,7 @@ test "render_build_rules keeps existing content and adds only missing entries" {
     #|
     #|rule(
     #|  name: "moonspec-tests",
-    #|  command: "moonspec gen tests $input -w CalcWorld -o $output",
+    #|  command: "moonspec gen tests $input -w CalcWorld --execution async -o $output",
     #|)
     #|
     #|dev_build(
@@ -145,7 +145,7 @@ test "render_build_rules runs the CLI through moonx when asked" {
     content=(
       #|rule(
       #|  name: "moonspec-tests",
-      #|  command: "moonx moonrockz/moonspec/cmd/moonspec@0.10.2 gen tests $input -w CalcWorld -o $output",
+      #|  command: "moonx moonrockz/moonspec/cmd/moonspec@0.10.2 gen tests $input -w CalcWorld --execution async -o $output",
       #|)
       #|
       #|dev_build(
@@ -181,4 +181,83 @@ test "render_build_rules names black-box test files on request" {
     build_rules_test_filename("features/add.feature", kind=BlackBox),
     "add_feature_test.mbt",
   )
+}
+
+///|
+test "build rules pin sync execution for regeneration and keep file visibility independent" {
+  for kind in [@config.TestKind::WhiteBox, BlackBox] {
+    let (content, added) = render_build_rules(
+      "",
+      ["features/login.feature"],
+      package_dir="src",
+      world="MyWorld",
+      execution=Sync,
+      test_kind=kind,
+    )
+    assert_eq(added, 2)
+    assert_true(
+      content.contains(
+        "gen tests $input -w MyWorld --execution sync -o $output",
+      ),
+    )
+    assert_true(
+      content.contains(
+        build_rules_test_filename("features/login.feature", kind~),
+      ),
+    )
+    let (again, count) = render_build_rules(
+      content,
+      ["features/login.feature"],
+      package_dir="src",
+      world="MyWorld",
+      execution=Sync,
+      test_kind=kind,
+    )
+    assert_eq(again, content)
+    assert_eq(count, 0)
+  }
+}
+
+///|
+test "changing execution updates an existing generated rule before regeneration" {
+  let features = ["features/login.feature"]
+  let (async_rules, _) = render_build_rules(
+    "",
+    features,
+    package_dir="src",
+    world="MyWorld",
+  )
+  let (sync_rules, changed) = render_build_rules(
+    async_rules,
+    features,
+    package_dir="src",
+    world="MyWorld",
+    execution=Sync,
+  )
+  assert_eq(changed, 1)
+  assert_true(sync_rules.contains("--execution sync"))
+  assert_false(sync_rules.contains("--execution async"))
+  assert_eq(sync_rules.split("dev_build(").count(), 2)
+}
+
+///|
+test "legacy build rules gain an explicit execution choice" {
+  let legacy = "rule(\n  name: \"moonspec-tests\",\n  command: \"moonspec gen tests $input -w MyWorld -o $output\",\n)\n"
+  let (updated, count) = render_build_rules(
+    legacy,
+    [],
+    package_dir="src",
+    world="MyWorld",
+    execution=Sync,
+  )
+  assert_eq(count, 1)
+  assert_true(updated.contains("--execution sync"))
+  let (async_, _) = render_build_rules(
+    updated,
+    [],
+    package_dir="src",
+    world="MyWorld",
+    execution=Async,
+  )
+  assert_true(async_.contains("--execution async"))
 }
