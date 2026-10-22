@@ -1,0 +1,2 @@
+# Preserve the source bytes exercised by the embedded-source acceptance test.
+features/markdown.feature.md -text whitespace=cr-at-eol

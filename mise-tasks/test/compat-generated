@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Generate and execute downstream sync and default async consumers"
+set -euo pipefail
+mise run build:cli
+python3 -B tests/compat/generated/verify.py "$@"

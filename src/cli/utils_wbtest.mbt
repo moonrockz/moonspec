@@ -96,9 +96,26 @@ test "gen tests and gen build accept the execution option" {
 }
 
 ///|
+fn cli_temp_dir(label : String) -> String raise Error {
+  let entropy = match @env.rand(16) {
+    Some(bytes) => bytes
+    None => fail("host randomness is required for isolated CLI fixtures")
+  }
+  let nonce = StringBuilder()
+  for i = 0; i < entropy.length(); i = i + 1 {
+    nonce.write_string(entropy[i].to_int().to_string())
+    nonce.write_string("-")
+  }
+  let path = "/tmp/moonspec-codegen-" + label + "-" + nonce.to_string()
+  @fs.create_dir(path)
+  path
+}
+
+///|
 test "gen tests passes CLI sync execution through to emitted source" {
-  let feature = "/tmp/moonspec-f7v-codegen-cli.feature"
-  let output = "/tmp/moonspec-f7v-codegen-cli.mbt"
+  let temp_dir = cli_temp_dir("tests")
+  let feature = temp_dir + "/input.feature"
+  let output = temp_dir + "/generated.mbt"
   @fs.write_string_to_file(
     feature, "Feature: CLI\n  Scenario: A\n    Given a user\n",
   )
@@ -111,20 +128,18 @@ test "gen tests passes CLI sync execution through to emitted source" {
   let generated = @fs.read_file_to_string(output)
   @fs.remove_file(output)
   @fs.remove_file(feature)
+  @fs.remove_dir(temp_dir)
   assert_true(generated.contains("@moonspec.run_or_fail_sync("))
   assert_false(generated.contains("async test"))
 }
 
 ///|
 test "gen build apply carries sync execution to the rule and initial test file" {
-  let feature = "/tmp/moonspec-f7v-codegen-build.feature"
-  let package_dir = "/tmp/moonspec-f7v-codegen-build"
+  let package_dir = cli_temp_dir("build")
+  let feature = package_dir + "/input.feature"
   @fs.write_string_to_file(
     feature, "Feature: Build\n  Scenario: A\n    Given a user\n",
   )
-  if !@fs.path_exists(package_dir) {
-    @fs.create_dir(package_dir)
-  }
   let matches = build_parser().parse(argv=[
     "gen", "build", feature, "-w", "MyWorld", "--package", package_dir, "--execution",
     "sync", "--apply",
@@ -137,8 +152,8 @@ test "gen build apply carries sync execution to the rule and initial test file" 
   let generated = @fs.read_file_to_string(output)
   @fs.remove_file(output)
   @fs.remove_file(package_dir + "/moon.pkg")
-  @fs.remove_dir(package_dir)
   @fs.remove_file(feature)
+  @fs.remove_dir(package_dir)
   assert_true(rules.contains("--execution sync"))
   assert_true(generated.contains("@moonspec.run_or_fail_sync("))
 }

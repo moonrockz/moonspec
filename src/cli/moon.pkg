@@ -7,3 +7,7 @@ import {
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",
 }
+
+import {
+  "moonbitlang/core/env",
+} for "wbtest"
