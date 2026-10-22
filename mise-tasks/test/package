@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#MISE description="Run focused MoonBit tests on a selected target"
+set -euo pipefail
+target="${1:-js}"
+if (($#)); then
+  shift
+fi
+moon test --target "$target" "$@"

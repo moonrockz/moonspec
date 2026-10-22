@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Refresh MoonBit interfaces and format source"
+set -euo pipefail
+moon info --target js
+moon fmt
