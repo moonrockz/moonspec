@@ -10,6 +10,21 @@ impl @core.World for RunWorld with fn configure(_self, setup) {
 }
 
 ///|
+async test "async formatter output errors remain best effort" {
+  let options = RunOptions([
+    FeatureSource::Text(
+      "output.feature", "Feature: Output\n  Scenario: Pass\n    Given a step\n",
+    ),
+  ])
+  options.add_formatter(
+    @format.MessagesFormatter::new(),
+    File("/moonspec-missing-directory/async-output.ndjson"),
+  )
+  let result = run(RunWorld::default, options)
+  assert_eq(result.summary.passed, 1)
+}
+
+///|
 async test "run single feature and collect summary" {
   let features = [
     FeatureSource::Text(

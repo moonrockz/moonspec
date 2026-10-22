@@ -21,7 +21,17 @@ pub async fn[W : @core.World] run(() -> W, RunOptions) -> RunResult
 
 pub async fn[W : @core.World] run_or_fail(() -> W, RunOptions) -> Unit
 
+pub fn[W : @core.World] run_or_fail_sync(() -> W, RunOptions) -> Unit raise
+
+pub fn[W : @core.World] run_sync(() -> W, RunOptions) -> RunResult raise
+
 // Errors
+pub suberror SyncExecutionError {
+  ParallelNotSupported
+  HostIoFailed(operation~ : String, path~ : String, message~ : String)
+} derive(@debug.Debug)
+pub fn SyncExecutionError::to_repr(Self) -> @debug.Repr
+
 pub(all) suberror TagExpressionError {
   UnexpectedEnd(expression~ : String)
   UnexpectedToken(expression~ : String, token~ : String)

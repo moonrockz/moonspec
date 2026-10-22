@@ -54,13 +54,15 @@ pub fn RunOptions::RunOptions(features : Array[FeatureSource]) -> RunOptions {
 }
 
 ///|
-/// Enable or disable parallel execution.
+/// Enable or disable parallel execution for the async runner.
+/// Synchronous runners reject `true` before any run effects.
 pub fn RunOptions::parallel(self : RunOptions, value : Bool) -> Unit {
   self.parallel_ = value
 }
 
 ///|
-/// Set maximum concurrent scenarios for parallel execution.
+/// Set maximum concurrent scenarios for async parallel execution.
+/// Ignored when parallel execution is disabled.
 pub fn RunOptions::max_concurrent(self : RunOptions, value : Int32) -> Unit {
   self.max_concurrent_ = value
 }
@@ -174,7 +176,8 @@ pub fn RunOptions::get_retries(self : RunOptions) -> Int32 {
 /// Enable or disable dry-run mode.
 ///
 /// When enabled, steps are matched against definitions but handlers are not
-/// executed. All hooks are skipped. Matched steps report as
+/// executed. Case and step hooks are skipped; run hooks still execute.
+/// Matched steps report as
 /// `Skipped(Some("dry run"))` and undefined steps remain `Undefined`.
 ///
 /// ```moonbit nocheck

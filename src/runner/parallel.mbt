@@ -1,4 +1,6 @@
 ///|
+// The scheduler requires async callbacks even though scenario handlers are sync.
+#warnings("-unused_async")
 async fn[W : @core.World] run_pickles_parallel(
   factory : () -> W,
   pickles : Array[@cucumber_messages.Pickle],

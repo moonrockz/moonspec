@@ -64,6 +64,9 @@ pub using @runner {
   type StepStatus,
   type RunOptions,
   type OutputDest,
+  type SyncExecutionError,
+  run_sync,
+  run_or_fail_sync,
   run,
   run_or_fail,
 }

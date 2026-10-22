@@ -83,7 +83,8 @@ pub fn execute_scenario(
   // Dry-run: match steps but skip hooks and handler execution
   if dry_run {
     let step_results : Array[StepResult] = []
-    let mut step_idx = 0
+    // Case hooks remain in the plan even when dry-run suppresses their events.
+    let mut step_idx = before_case_hooks.length()
     for _i, step in steps {
       let keyword = match step.type_ {
         Some(@cucumber_messages.PickleStepType::Context) => "Given "
