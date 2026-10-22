@@ -3,7 +3,6 @@ import {
   "moonrockz/moonspec/config",
   "moonrockz/gherkin",
   "moonrockz/cucumber-messages" @cucumber_messages,
-  "moonbitlang/async",
   "moonbitlang/x/fs",
   "moonbitlang/core/debug",
   "moonbitlang/core/json",
@@ -12,6 +11,7 @@ import {
 
 import {
   "moonrockz/moonspec/format",
-  "moonrockz/cucumber-expressions" @cucumber_expressions,
   "moonbitlang/core/debug",
 } for "wbtest"
+
+supported_targets = "wasm+wasm-gc+js+native"

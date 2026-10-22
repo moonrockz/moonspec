@@ -5,4 +5,5 @@ members = [
   "./ecommerce",
   "./ecommerce-cli",
   "./todolist",
+  "./sync-wasm",
 ]

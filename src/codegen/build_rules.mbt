@@ -29,6 +29,16 @@ pub fn CliCommand::prefix(self : CliCommand) -> String {
 }
 
 ///|
+/// A registry CLI pin cannot honor the requested build-rule execution mode.
+pub suberror BuildRuleError {
+  UnsupportedExecution(version~ : String)
+  UnsupportedVersion(version~ : String)
+} derive(Debug)
+
+///|
+pub extend BuildRuleError with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
 /// Add the moon.pkg `rule` and `dev_build` entries that regenerate the tests
 /// of each feature file before `moon check`, `moon build` and `moon test`.
 ///
@@ -43,7 +53,13 @@ pub fn CliCommand::prefix(self : CliCommand) -> String {
 /// `moonspec` binary). `test_kind` selects white-box (default) or black-box
 /// test file names.
 ///
-/// Returns the new content and the number of entries added.
+/// Returns the new content and the number of entries added or updated.
+/// Existing canonical generated rules update their CLI prefix and execution flag.
+/// Stable registry pins below 0.12.0 omit the flag for legacy async generation.
+/// Sync with those pins raises `UnsupportedExecution`; unknown or prerelease
+/// pins raise `UnsupportedVersion` for either mode. Stable pins from 0.12.0
+/// follow the explicit-selection contract. Installed CLIs must support the
+/// selected execution mode.
 pub fn render_build_rules(
   existing : String,
   features : Array[String],
@@ -51,7 +67,29 @@ pub fn render_build_rules(
   world~ : String,
   cli~ : CliCommand = Installed,
   test_kind~ : @config.TestKind = WhiteBox,
-) -> (String, Int32) {
+  execution~ : @config.ExecutionMode = Async,
+) -> (String, Int32) raise BuildRuleError {
+  let execution_value = match execution {
+    Async => "async"
+    Sync => "sync"
+  }
+  let execution_flag = match cli {
+    Installed => " --execution " + execution_value
+    Moonx(version~) =>
+      if registry_supports_execution(version) {
+        " --execution " + execution_value
+      } else {
+        match execution {
+          Async => ""
+          Sync => raise UnsupportedExecution(version~)
+        }
+      }
+  }
+  let (existing, updated) = update_rule_command(
+    existing,
+    cli.prefix(),
+    execution_flag,
+  )
   let blocks : Array[String] = []
   if !existing.contains("name: \"" + build_rule_name + "\"") {
     blocks.push(
@@ -63,6 +101,7 @@ pub fn render_build_rules(
       cli.prefix() +
       " gen tests $input -w " +
       world +
+      execution_flag +
       " -o $output\",\n" +
       ")\n",
     )
@@ -90,14 +129,14 @@ pub fn render_build_rules(
     )
   }
   if blocks.is_empty() {
-    return (existing, 0)
+    return (existing, updated)
   }
   let prefix = if existing.trim(chars="\n").is_empty() {
     ""
   } else {
     existing.trim_end(chars="\n").to_owned() + "\n\n"
   }
-  (prefix + blocks.join("\n"), blocks.length())
+  (prefix + blocks.join("\n"), blocks.length() + updated)
 }
 
 ///|
@@ -145,4 +184,66 @@ fn path_segments(path : String) -> Array[String] {
     }
   }
   segments
+}
+
+///|
+/// Update only the command of the canonical generated rule, preserving other rules.
+fn update_rule_command(
+  existing : String,
+  prefix : String,
+  execution_flag : String,
+) -> (String, Int32) {
+  let marker = "rule(\n  name: \"" + build_rule_name + "\",\n  command: \""
+  guard existing.split_once(marker) is Some((before, after)) else {
+    return (existing, 0)
+  }
+  let suffix = "\",\n)"
+  guard after.split_once(suffix) is Some((command, rest)) else {
+    return (existing, 0)
+  }
+  guard command.split_once(" gen tests $input ") is Some((old_prefix, args)) else {
+    return (existing, 0)
+  }
+  guard old_prefix == "moonspec" ||
+    old_prefix.has_prefix("moonx moonrockz/moonspec/cmd/moonspec@") else {
+    return (existing, 0)
+  }
+  // Keep unrelated generation options, changing only the CLI and execution.
+  let args = " " + args.to_owned()
+  let updated_args = if args.contains(" --execution async") {
+    args.replace(old=" --execution async", new=execution_flag)
+  } else if args.contains(" --execution sync") {
+    args.replace(old=" --execution sync", new=execution_flag)
+  } else {
+    args.replace(old=" -o $output", new=execution_flag + " -o $output")
+  }
+  let updated = prefix + " gen tests $input" + updated_args
+  if updated == command.to_owned() {
+    (existing, 0)
+  } else {
+    (before.to_owned() + marker + updated + suffix + rest.to_owned(), 1)
+  }
+}
+
+///|
+/// Explicit execution selection starts with the stable 0.12.0 contract.
+/// Reject ambiguous pins rather than trusting a registry CLI's config default.
+fn registry_supports_execution(version : String) -> Bool raise BuildRuleError {
+  let parts = version.split(".").to_array()
+  if parts.length() != 3 {
+    raise UnsupportedVersion(version~)
+  }
+  for part in parts {
+    if part.is_empty() || (part.length() > 1 && part[0] == '0') {
+      raise UnsupportedVersion(version~)
+    }
+    for i in 0..<part.length() {
+      if part[i] < '0' || part[i] > '9' {
+        raise UnsupportedVersion(version~)
+      }
+    }
+  }
+  parts[0] != "0" ||
+  parts[1].length() > 2 ||
+  (parts[1].length() == 2 && parts[1] >= "12")
 }

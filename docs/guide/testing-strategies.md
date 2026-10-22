@@ -1,6 +1,254 @@
 # Testing Strategies
 
-This guide covers the runtime options and patterns that control how moonspec selects, executes, retries, and reports your scenarios.
+This guide covers scenario selection, execution, retries and reporting.
+Examples calling `run` or `run_or_fail` use `"moonrockz/moonspec/async" @moonspec`
+and retain the async test-driver import. For ordinary tests, import the root
+and use `run_sync` / `run_or_fail_sync`. These APIs are unreleased. The following
+section gives the tested toolchain and full matrix.
+
+## Sync execution and target support
+
+The sync APIs and async import migration on this page are unreleased pre-1.0
+changes. Use this repository checkout and a local `moon.work` to try them.
+Published 0.11.0 does not contain these APIs. Under the existing pre-1.0
+policy, `mise run release:version` computes `v0.12.0` for this breaking change.
+The module version remains unchanged until the normal release process.
+
+### Supported targets
+
+These targets execute scenarios and generated consumer tests. Compile-only
+checks do not establish support.
+
+| Backend | Root sync API | Optional async API | Test host |
+|---|---|---|---|
+| `wasm-gc` | Supported | Unavailable at compile time | moonrun |
+| `wasm` | Supported | Supported | moonrun |
+| `js` | Supported | Supported | Node.js |
+| `native` | Supported | Supported | Native process |
+
+`wasm-gc` uses WebAssembly GC. `wasm` is the separate linear-memory backend.
+Wasm-GC remains sync-only until upstream async integration is verified.
+LLVM is experimental and is not part of this support matrix.
+
+Verification uses moon and moonrun 0.1.20261012, moonc and its core distribution
+0.10.15+943464bfa, and `moonbitlang/async` 0.22.4. Use that tested toolchain for
+reproduction; a newer compiler and a mismatched core distribution are not the
+same environment.
+
+### Public packages and APIs
+
+Import the normal root package for synchronous execution:
+
+```moonbit
+import {
+  "moonrockz/moonspec",
+}
+```
+
+Root and `moonrockz/moonspec/runner` expose these signatures, with `World`,
+`RunOptions` and `RunResult` referring to their shared public types:
+
+```moonbit
+pub fn[W : World] run_sync(
+  factory : () -> W, options : RunOptions,
+) -> RunResult raise Error
+
+pub fn[W : World] run_or_fail_sync(
+  factory : () -> W, options : RunOptions,
+) -> Unit raise Error
+```
+
+Use ordinary `test` blocks and the same World, step and hook definitions:
+
+```moonbit
+test "calculator" {
+  let source =
+    #|Feature: Calculator
+    #|  Scenario: Addition
+    #|    Given a calculator
+    #|    When I add 2 and 3
+    #|    Then the result should be 5
+  let options = @moonspec.RunOptions::new([
+    @moonspec.FeatureSource::Text("calculator.feature", source),
+  ])
+  @moonspec.run_or_fail_sync(CalculatorWorld::default, options)
+}
+```
+
+The executable [sync-wasm example](../../examples/sync-wasm/) defines this
+calculator World and uses the actual CLI to generate its tests. `run_sync`
+returns results for inspection. `run_or_fail_sync` reports parse errors and
+failed, undefined or pending scenarios with the existing
+`MoonspecError::RunFailed` report. Configure/parse diagnostics retain their
+existing error types.
+
+### Async migration
+
+Existing async consumers change their package import to:
+
+```moonbit
+import {
+  "moonrockz/moonspec/async" @moonspec,
+}
+```
+
+Keep the existing test body and calls to `@moonspec.run` and
+`@moonspec.run_or_fail`. Their argument order, async effects and behavior are
+unchanged:
+
+```moonbit
+pub async fn[W : World] run(
+  factory : () -> W, options : RunOptions,
+) -> RunResult
+
+pub async fn[W : World] run_or_fail(
+  factory : () -> W, options : RunOptions,
+) -> Unit
+```
+
+Retain `moonbitlang/async` in the test imports for `async test` blocks.
+The optional facade re-exports the root types and sync APIs, so World and
+Setup definitions need no renaming. Root and runner no longer export async
+`run` or `run_or_fail` aliases on any backend. On Wasm-GC, importing `/async`
+fails target checking. It never substitutes a synchronous implementation.
+The [calculator example](../../examples/calculator/) retains executable async
+tests on the supported async targets.
+
+Steps and all six lifecycle hooks still use synchronous handlers. Selecting
+async execution adds scheduling, not a new async step or hook API.
+
+### Why separate packages
+
+The root and shared runner dependency graph excludes `moonbitlang/async`.
+Only the optional `/async` package imports the async runtime. A module-level
+async dependency may still be resolved for the module's other packages;
+resolution does not mean it is reachable from a root consumer.
+
+Separate packages make the effect and target boundary explicit. Conditional
+imports are not supported by the tested build system. Virtual packages require
+implementations to retain the interface's function effects, so they cannot
+make one function synchronous on one target and asynchronous on another.
+No virtual packages or consumer implementation overrides are required.
+
+### Shared execution policy
+
+`run_sync` and `run_or_fail_sync` reject `parallel(true)` with
+`SyncExecutionError::ParallelNotSupported` before calling the factory,
+dispatching hooks or emitting events. Leave `parallel` false for sync.
+`max_concurrent` is relevant only to async parallel execution.
+
+Both modes use the same failed-only retry loop. `retries(N)` sets the global
+limit and `@retry(N)` overrides it. Every attempt creates a fresh World and
+Setup. Undefined, Pending and Skipped scenarios do not retry. Summaries count
+the final attempt; message envelopes retain attempt numbers and whether another
+attempt will run.
+
+Dry-run performs matching without invoking step handlers or case/step hooks.
+Before/after TestRun hooks still run. Dry-run never retries, including decoder
+failures. Skip tags take precedence over dry-run. Filtering, backgrounds,
+outlines, typed parameters, attachments and failure reports share the same
+execution engine.
+
+### Generate sync tests
+
+For a clean consumer, use a `moon.mod` like the example:
+
+```moonbit
+name = "example/sync-wasm"
+version = "0.0.1"
+import { "moonrockz/moonspec@0.11.0" }
+source = "src"
+```
+
+Until release, add a consumer-local `moon.work` whose members are the path to
+this repository checkout and `"."`. This resolves the module above to local
+source instead of published 0.11.0. The committed sync-wasm example uses
+`members = ["../..", "."]`. In `src/moon.pkg`, use:
+
+```moonbit
+import { "moonrockz/moonspec" }
+import { "moonrockz/moonspec/format" } for "wbtest"
+supported_targets = "wasm+wasm-gc+js+native"
+```
+
+Define the World and features as in the example. Build this checkout's CLI with
+`mise run build:cli` from the repository root and add its `_build/bin` directory
+to your `PATH`. From the consumer root, generate once or add a build rule:
+
+```sh
+moonspec gen tests features/calculator.feature -w CalculatorWorld -o src --execution sync
+moonspec gen build features/calculator.feature -w CalculatorWorld --execution sync --apply
+```
+
+Set `execution: "sync"` or `execution: "async"` in `moonspec.json5` instead of
+repeating the flag. Precedence is CLI `--execution`, then merged configuration,
+then `async`. Execution is independent of `mode`, which selects per-scenario or
+per-feature tests, and `test_kind`, which selects white-box or black-box tests.
+Both execution choices work with all mode/kind combinations and Markdown
+features. The [configuration reference](configuration.md#execution-string)
+describes the flags and merge behavior.
+
+Sync output contains ordinary test blocks calling `run_or_fail_sync`, using
+`FeatureSource::Text(original_uri, complete_original_source)`. Embedding the
+whole source preserves outlines, backgrounds, locations and source envelopes.
+The original URI remains a diagnostic identifier, not a runtime read. No
+separate embedding flag is needed. Add `moonrockz/moonspec/format` to the test
+imports for generated formatters; no async test-driver import is needed.
+
+The unchanged async default emits `async test`, `run_or_fail` and
+`FeatureSource::File`. Use the `/async` facade and the async test-driver import
+for that output. Build-rule commands retain the selected execution; rerun
+`gen build --apply` after changing the config selection to update existing
+rules. In this checkout, `--moonx` pins published `0.11.0`, which supports
+async generation only. Its rules omit `--execution`; requesting sync fails
+before writes and directs you to the locally built CLI without `--moonx`.
+Regeneration updates both the canonical rule's CLI prefix and its execution
+selection, preserving unrelated options and rules. Commit generated source,
+since dependency builds do not run those rules.
+
+For direct codegen API callers, `render_build_rules` now raises the typed
+`BuildRuleError`. `UnsupportedExecution(version~)` rejects sync with a legacy
+stable pin below `0.12.0`; `UnsupportedVersion(version~)` rejects unknown or
+prerelease pins in either mode. Stable numeric pins from `0.12.0` use the
+explicit execution selection contract. No newer registry release is required
+to use this checkout's locally built CLI.
+
+### Host I/O
+
+`FeatureSource::Text` and `FeatureSource::Parsed` do not read source files.
+Use them with in-memory message sinks when the host has no filesystem.
+Generated sync tests remove the source-file dependency by embedding the source.
+Generating or regenerating them still needs a host that can read the feature.
+
+`FeatureSource::File` reads through host filesystem support. Read failures
+produce structured `ParseErrorInfo`; failure-reporting APIs aggregate them into
+`RunFailed`. File and stderr formatter destinations also depend on the host.
+Sync write failures raise
+`SyncExecutionError::HostIoFailed(operation~, path~, message~)`. Async output
+retains its existing best-effort write behavior. Stdout uses MoonBit's standard
+print facility.
+
+moonrun supplies host services for both Wasm backends; Wasm-GC does not mean
+I/O is unavailable. Raw Wasm and browser embedders must supply the standard
+MoonBit host ABI imports used by the compiled program. Embedding feature text
+does not remove every host import or promise a general browser filesystem.
+
+### Reproduce the example
+
+From the repository root, using the tested toolchain:
+
+```sh
+mise run examples:sync-wasm -- wasm-gc
+mise run examples:sync-wasm
+mise run test:compat-generated
+mise run examples:test
+```
+
+The first command builds the checkout CLI, generates the sync tests and runs
+exactly three passing ordinary tests on Wasm-GC. The second runs the same
+example on all four sync targets. The generated-consumer gate checks actual
+CLI output across mode and test-kind combinations. The shared example gate
+keeps the async examples executable on JavaScript.
 
 ## Tag Filtering
 
@@ -140,7 +388,10 @@ Step definitions match against the substituted text, so a step definition matchi
 
 ## Parallel Execution
 
-By default, moonspec runs scenarios sequentially. Enable parallel execution to run scenarios concurrently.
+Both execution modes default to sequential scenarios. Enable parallel mode
+only through the optional async facade. Sync rejects `parallel(true)` with
+`SyncExecutionError::ParallelNotSupported` before factories, hooks or events.
+`max_concurrent` applies only to async parallel execution.
 
 ### Configuration
 
@@ -164,7 +415,9 @@ Each scenario receives a fresh World instance created by the factory function. B
 
 ### Requirements
 
-Parallel execution relies on MoonBit's async runtime. Your test must be declared `async` and run with the JavaScript target:
+Parallel execution uses MoonBit's async runtime on `wasm`, `js` or `native`.
+Import `"moonrockz/moonspec/async" @moonspec`, retain the `moonbitlang/async`
+test-driver import and use an `async test`:
 
 ```moonbit
 async test "parallel ecommerce tests" {
@@ -182,11 +435,15 @@ async test "parallel ecommerce tests" {
 moon test --target js
 ```
 
-The `--target js` flag is required because MoonBit's async primitives currently require the JavaScript backend.
+JavaScript is one supported async target; `wasm` and `native` are also tested.
+`wasm-gc` supports the root synchronous APIs only.
 
 ---
 
 ## Retrying Flaky Tests
+
+Sync and async execution share the same retry loop. Sync retries require no
+async runtime.
 
 moonspec can automatically retry failed scenarios with a fresh World on each attempt.
 
@@ -242,7 +499,8 @@ When sinks are attached, each attempt emits its own `TestCaseStarted` / `TestCas
 
 ## Dry-Run Mode
 
-Dry-run mode validates that all steps have matching definitions without actually executing any step handlers or hooks.
+Dry-run mode validates that all steps have matching definitions without executing step handlers or case/step hooks. Before/after TestRun hooks
+still execute.
 
 ```moonbit
 let opts = @moonspec.RunOptions::new([
@@ -256,7 +514,7 @@ let result = @moonspec.run(MyWorld::default, opts)
 
 - **Matched steps** are reported as `Skipped("dry run")`.
 - **Undefined steps** are reported as `Undefined` with generated snippets suggesting step definitions.
-- **No hooks** are called (before/after test case, before/after step).
+- **Case and step hooks** do not run. Before/after TestRun hooks still execute.
 - **No retries** are attempted.
 
 ### Use Case: CI Validation
@@ -299,7 +557,8 @@ Feature: Payments
     Then transfer is queued
 ```
 
-Skipped scenarios do not execute any steps or hooks. The optional reason in parentheses (e.g., `@skip("not-ready")` or `@ignore("blocked")`) is propagated to results and Cucumber Messages output.
+Skipped scenarios do not execute step handlers or case/step hooks. The enclosing
+run still executes its before/after TestRun hooks. The optional reason in parentheses (e.g., `@skip("not-ready")` or `@ignore("blocked")`) is propagated to results and Cucumber Messages output.
 
 ### Custom Skip Tags
 
@@ -515,7 +774,8 @@ moonspec tests are standard MoonBit tests. Run them with the `moon test` command
 moon test --target js
 ```
 
-The `--target js` flag is required for async execution and parallel support.
+Async execution and parallel support work on `js`, `wasm` and `native`.
+Root sync tests also work on `wasm-gc`.
 
 ### Feature Sources
 
@@ -557,12 +817,12 @@ async test "all ecommerce features" {
 
 ### `run` vs `run_or_fail`
 
-moonspec provides two entry points:
+Both facades provide result-returning and failure-reporting entry points:
 
 | Function | Behavior on failure |
 |----------|-------------------|
-| `run` | Returns a `RunResult` with summary and per-scenario details |
-| `run_or_fail` | Raises a `MoonspecError` if any scenario fails, is undefined, or is pending |
+| `run_sync` or async `run` | Returns a `RunResult` with summary and per-scenario details |
+| `run_or_fail_sync` or async `run_or_fail` | Raises a `MoonspecError` if any scenario fails, is undefined, or is pending |
 
 Use `run_or_fail` in test functions where you want the test to fail on any non-passing scenario. Use `run` when you need to inspect results programmatically:
 

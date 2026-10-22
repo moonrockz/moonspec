@@ -34,6 +34,14 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
   }
   // CLI --mode flag (applies to all files if set)
   let cli_mode : String? = option_value(value, "mode")
+  let execution = match
+    resolve_execution(option_value(value, "execution"), moonspec_config) {
+    Ok(mode) => mode
+    Err(message) => {
+      die(message)
+      return
+    }
+  }
   let test_kind = match
     resolve_test_kind(option_value(value, "test-kind"), moonspec_config) {
     Ok(kind) => kind
@@ -52,6 +60,7 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
         file,
         output_path,
         world~,
+        execution~,
         cli_mode~,
         no_color~,
         moonspec_config~,
@@ -69,6 +78,7 @@ fn write_test_file(
   file : String,
   output_path : String,
   world~ : String,
+  execution~ : @config.ExecutionMode,
   cli_mode~ : String?,
   no_color~ : Bool,
   moonspec_config~ : @config.MoonspecConfig,
@@ -86,6 +96,7 @@ fn write_test_file(
     }
   }
   let config = @codegen.CodegenConfig::{
+    execution,
     mode,
     world,
     skip_tags: moonspec_config.skip_tags,
@@ -133,6 +144,14 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
   let apply = value.flags.get_or_default("apply", false)
   // --moonx: the rule runs this CLI version through moonx, so the project
   // needs no installed `moonspec` binary.
+  let execution = match
+    resolve_execution(option_value(value, "execution"), moonspec_config) {
+    Ok(mode) => mode
+    Err(message) => {
+      die(message)
+      return
+    }
+  }
   let test_kind = match
     resolve_test_kind(option_value(value, "test-kind"), moonspec_config) {
     Ok(kind) => kind
@@ -154,7 +173,13 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
       world~,
       cli~,
       test_kind~,
-    )
+      execution~,
+    ) catch {
+      error => {
+        die(build_rule_error_message(error))
+        return
+      }
+    }
     println(snippet.trim_end(chars="\n"))
     return
   }
@@ -175,7 +200,13 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
     world~,
     cli~,
     test_kind~,
-  )
+    execution~,
+  ) catch {
+    error => {
+      die(build_rule_error_message(error))
+      return
+    }
+  }
   if added == 0 {
     println("\{pkg_path} is up to date")
     return
@@ -201,6 +232,7 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
         file,
         output_path,
         world~,
+        execution~,
         cli_mode=None,
         no_color=resolve_no_color(false, moonspec_config),
         moonspec_config~,
@@ -361,4 +393,17 @@ fn cmd_check(value : @argparse.Matches) -> Unit {
   if has_errors {
     @sys.exit(1)
   }
+}
+
+///|
+fn build_rule_error_message(error : @codegen.BuildRuleError) -> String {
+  let reason = match error {
+    @codegen.UnsupportedExecution(version~) =>
+      "registry CLI pin " + version + " does not support sync execution"
+    @codegen.UnsupportedVersion(version~) =>
+      "registry CLI pin " + version + " has unknown execution support"
+  }
+  "Error: " +
+  reason +
+  ". Build the current checkout CLI with `mise run build:cli`, add its `_build/bin` to PATH, and rerun without --moonx."
 }

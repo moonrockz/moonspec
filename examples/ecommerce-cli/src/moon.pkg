@@ -1,5 +1,5 @@
 import {
-  "moonrockz/moonspec",
+  "moonrockz/moonspec/async" @moonspec,
   "moonrockz/moonspec/format",
   "moonbitlang/x/sys",
   "moonbitlang/core/env",

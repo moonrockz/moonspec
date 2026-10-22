@@ -38,13 +38,16 @@ moonrockz/moonspec
 │   │   ├── snippet.mbt      # Snippet generator for undefined steps
 │   │   ├── suggest.mbt      # "Did you mean?" suggestions for undefined steps
 │   │   └── lib.mbt          # Package entry point
-│   ├── runner/          # Scenario execution engine
+│   ├── lib.mbt          # Root sync facade: run_sync and run_or_fail_sync
+│   ├── async/           # Optional async facade, run/run_or_fail and bounded scheduling
+│   ├── runner/          # Portable shared scenario execution engine
 │   │   ├── results.mbt      # StepStatus, ScenarioStatus, *Result, RunSummary
 │   │   ├── executor.mbt     # Sequential step executor
-│   │   ├── feature.mbt      # Feature executor (Gherkin integration)
-│   │   ├── outline.mbt      # Scenario Outline expansion
+│   │   ├── cache.mbt        # File/Text/Parsed feature loading
+│   │   ├── compiler.mbt     # Scenario and outline compilation
 │   │   ├── tags.mbt         # Tag expression parser and evaluator
-│   │   ├── run.mbt          # Top-level run() orchestrator
+│   │   ├── sync_run.mbt     # Sync run entry points
+│   │   ├── sync_engine.mbt  # Shared preparation, attempts, retries and finalization
 │   │   └── lib.mbt          # Package entry point
 │   ├── format/          # Output formatters
 │   │   ├── formatter.mbt    # Formatter trait (event-driven)
@@ -79,22 +82,27 @@ moonrockz/moonspec
                  → execute handler → StepResult
                  → on undefined: generate snippet + "did you mean?" suggestions
              → aggregate → ScenarioResult → FeatureResult → RunResult
-             → run_or_fail: raise MoonspecError on failure
+             → run_or_fail_sync, or async facade run_or_fail: raise MoonspecError on failure
              → Formatter::on_*() events → output
 ```
 
 ### Package Dependency Graph
 
+```text
+root sync facade → runner → core, config, Gherkin, messages, host fs
+optional async facade → root + runner + moonbitlang/async
+format → core + runner
+codegen → core + config
+cli → codegen + config + scanner
+cmd/moonspec, cmd/main → cli
 ```
-core  ←─────  runner
-  │              │
-  │              ↓
-  │           format
-  │
-  └──────────  codegen  ←───  cli  ←───  cmd/moonspec, cmd/main
-                               │
-                               └──→  config, scanner
-```
+
+Root/runner support wasm-gc, wasm, js and native without reaching the async
+runtime. The optional `moonrockz/moonspec/async` facade supports wasm, js and
+native and re-exports root types and sync APIs. LLVM remains experimental.
+Sync codegen embeds complete source into ordinary tests; async codegen keeps
+its File/async-test defaults. See `docs/guide/testing-strategies.md#sync-execution-and-target-support` for the
+unreleased import migration, shared execution policy and host I/O limits.
 
 External dependencies:
 

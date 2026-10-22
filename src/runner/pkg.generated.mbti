@@ -17,11 +17,17 @@ pub fn compile_pickles(FeatureCache) -> Array[@cucumber-messages.Pickle]
 
 pub fn execute_scenario(@core.StepRegistry, feature_name~ : String, scenario_name~ : String, pickle_id~ : String, tags~ : Array[String], steps~ : Array[@cucumber-messages.PickleStep], hook_registry? : @core.HookRegistry, sinks? : Array[&@core.MessageSink], test_case_started_id? : String, test_step_ids? : Array[String], dry_run? : Bool) -> ScenarioResult
 
-pub async fn[W : @core.World] run(() -> W, RunOptions) -> RunResult
+pub fn[W : @core.World] run_or_fail_sync(() -> W, RunOptions) -> Unit raise
 
-pub async fn[W : @core.World] run_or_fail(() -> W, RunOptions) -> Unit
+pub fn[W : @core.World] run_sync(() -> W, RunOptions) -> RunResult raise
 
 // Errors
+pub suberror SyncExecutionError {
+  ParallelNotSupported
+  HostIoFailed(operation~ : String, path~ : String, message~ : String)
+} derive(@debug.Debug)
+pub fn SyncExecutionError::to_repr(Self) -> @debug.Repr
+
 pub(all) suberror TagExpressionError {
   UnexpectedEnd(expression~ : String)
   UnexpectedToken(expression~ : String, token~ : String)

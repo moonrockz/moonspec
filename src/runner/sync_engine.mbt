@@ -1,10 +1,4 @@
 ///|
-/// Error raised to signal a failed attempt that should be retried.
-priv suberror RetryableFailure {
-  RetryableFailure(ScenarioResult)
-}
-
-///|
 /// Broadcast an envelope to all sinks.
 fn emit(
   sinks : Array[&@core.MessageSink],
@@ -17,18 +11,36 @@ fn emit(
 
 ///|
 /// Write formatter output to the configured destination.
-fn write_formatter_output(entry : FormatterEntry) -> Unit {
+fn write_formatter_output(
+  entry : FormatterEntry,
+  strict~ : Bool = false,
+) -> Unit raise SyncExecutionError {
   let content = entry.sink.output()
   if content.length() == 0 {
     return
   }
   match entry.dest {
     Stdout => println(content)
-    Stderr =>
-      @fs.write_string_to_file("/dev/stderr", content + "\n") catch {
-        _ => ()
+    Stderr => write_host_output("/dev/stderr", content + "\n", strict~)
+    File(path) => write_host_output(path, content, strict~)
+  }
+}
+
+///|
+fn write_host_output(
+  path : String,
+  content : String,
+  strict~ : Bool,
+) -> Unit raise SyncExecutionError {
+  @fs.write_string_to_file(path, content) catch {
+    @fs.IOError(message) =>
+      if strict {
+        raise SyncExecutionError::HostIoFailed(
+          operation="write",
+          path~,
+          message~,
+        )
       }
-    File(path) => @fs.write_string_to_file(path, content) catch { _ => () }
   }
 }
 
@@ -325,6 +337,7 @@ fn step_status_message(status : StepStatus) -> String? {
 priv struct TestCaseMapping {
   test_case_id : String
   test_step_ids : Array[String]
+  regular_step_ids : Array[String]
 }
 
 ///|
@@ -337,12 +350,17 @@ fn extract_test_case_mappings(
     match env {
       @cucumber_messages.Envelope::TestCase(tc) => {
         let step_ids : Array[String] = []
+        let regular_step_ids : Array[String] = []
         for ts in tc.testSteps {
           step_ids.push(ts.id)
+          if ts.pickleStepId is Some(_) {
+            regular_step_ids.push(ts.id)
+          }
         }
         mappings[tc.pickleId] = {
           test_case_id: tc.id,
           test_step_ids: step_ids,
+          regular_step_ids,
         }
       }
       _ => ()
@@ -380,441 +398,6 @@ fn parse_retry_tag(tags : Array[String]) -> Int32? {
     return Some(n)
   }
   None
-}
-
-///|
-/// Run all features and collect results.
-///
-/// A fresh world is created per scenario via `factory()` for isolation.
-/// When `parallel` is greater than 0, pickles are executed concurrently using
-/// `@async.all()` with bounded concurrency. Otherwise, pickles run sequentially.
-/// Lifecycle hooks registered via `Setup` are called automatically when present.
-pub async fn[W : @core.World] run(
-  factory : () -> W,
-  options : RunOptions,
-) -> RunResult {
-  run_detailed(factory, options).0
-}
-
-///|
-/// Run all features. Also return the `path:line` location of each pickle, by
-/// pickle id, for the failure report of `run_or_fail`.
-async fn[W : @core.World] run_detailed(
-  factory : () -> W,
-  options : RunOptions,
-) -> (RunResult, Map[String, String]) {
-  let features = options.features()
-  let sinks = options.get_sinks()
-  let tag_expr = options.get_tag_expr()
-  let scenario_name = options.get_scenario_name()
-  let cache = FeatureCache::new()
-  if sinks.length() > 0 {
-    emit(sinks, make_meta_envelope())
-  }
-  let all_parse_errors : Array[ParseErrorInfo] = []
-  for source in features {
-    if sinks.length() > 0 {
-      let (uri, data) = match source {
-        FeatureSource::Text(path, content) => (path, content)
-        FeatureSource::File(path) => {
-          let content = @fs.read_file_to_string(path) catch { _ => "" }
-          (path, content)
-        }
-        FeatureSource::Parsed(path, _) => (path, "")
-      }
-      emit(sinks, make_source_envelope(uri, data))
-    }
-    let errors = cache.load_from_source(source)
-    all_parse_errors.append(errors)
-  }
-  // Emit GherkinDocument envelopes
-  if sinks.length() > 0 {
-    for entry in cache.features() {
-      let uri = entry.0
-      let json : Json = {
-        "gherkinDocument": {
-          "uri": Json(uri),
-          "comments": Json(([] : Array[Int32])),
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  // Emit ParseError envelopes
-  if sinks.length() > 0 {
-    for pe in all_parse_errors {
-      let source_ref : Map[String, Json] = Map([])
-      source_ref["uri"] = Json(pe.uri)
-      match pe.line {
-        Some(line) => source_ref["location"] = { "line": Json(line) }
-        None => ()
-      }
-      let json : Json = {
-        "parseError": {
-          "source": Json(source_ref),
-          "message": Json(pe.message),
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  let pickles = compile_pickles(cache)
-  let locations : Map[String, String] = Map([])
-  for pickle in pickles {
-    if pickle_line(cache, pickle) is Some(line) {
-      locations[pickle.id] = pickle.uri + ":" + line.to_string()
-    }
-  }
-  // Emit Pickle envelopes
-  if sinks.length() > 0 {
-    for pickle in pickles {
-      let json : Json = { "pickle": pickle.to_json() }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  let filter = PickleFilter::new()
-  let filter = if tag_expr != "" { filter.with_tags(tag_expr) } else { filter }
-  let filter = if scenario_name != "" {
-    filter.with_names([scenario_name])
-  } else {
-    filter
-  }
-  let filtered = filter.apply(pickles)
-  // Build shared registry for envelope metadata
-  let setup = @core.Setup::new()
-  let world0 = factory()
-  @core.World::configure(world0, setup)
-  let registry = setup.step_registry()
-  let custom_param_types = setup.custom_param_types()
-  // Emit StepDefinition envelopes
-  let id_gen = IdGenerator::new()
-  if sinks.length() > 0 {
-    let sd_envelopes = build_step_definition_envelopes(registry)
-    for env in sd_envelopes {
-      emit(sinks, env)
-    }
-  }
-  // Emit ParameterType envelopes for custom parameter types
-  if sinks.length() > 0 {
-    for cpt in custom_param_types {
-      let regex_json : Array[Json] = cpt.patterns.map(fn(p) { Json(p) })
-      let json : Json = {
-        "parameterType": {
-          "id": Json(id_gen.next_param_type_id()),
-          "name": Json(cpt.name),
-          "regularExpressions": Json(regex_json),
-          "preferForRegularExpressionMatch": Json(false),
-          "useForSnippets": Json(true),
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  // Emit Hook envelopes
-  if sinks.length() > 0 {
-    let hook_reg = setup.hook_registry()
-    for hook in hook_reg.hooks() {
-      let source_ref : Map[String, Json] = Map([])
-      match hook.source {
-        Some(src) => {
-          match src.uri {
-            Some(uri) => source_ref["uri"] = Json(uri)
-            None => ()
-          }
-          match src.line {
-            Some(line) => source_ref["location"] = { "line": Json(line) }
-            None => ()
-          }
-        }
-        None => ()
-      }
-      let hook_type_str = match hook.type_ {
-        @core.HookType::BeforeTestRun => "BEFORE_TEST_RUN"
-        @core.HookType::AfterTestRun => "AFTER_TEST_RUN"
-        @core.HookType::BeforeTestCase => "BEFORE_TEST_CASE"
-        @core.HookType::AfterTestCase => "AFTER_TEST_CASE"
-        @core.HookType::BeforeTestStep => "BEFORE_TEST_STEP"
-        @core.HookType::AfterTestStep => "AFTER_TEST_STEP"
-      }
-      let json : Json = {
-        "hook": {
-          "id": Json(hook.id),
-          "sourceReference": Json(source_ref),
-          "type": Json(hook_type_str),
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  // Test planning phase
-  let tc_mappings : Map[String, TestCaseMapping] = if sinks.length() > 0 {
-    let tc_envelopes = build_test_cases(
-      registry,
-      setup.hook_registry(),
-      filtered,
-      id_gen,
-    )
-    for env in tc_envelopes {
-      emit(sinks, env)
-    }
-    extract_test_case_mappings(tc_envelopes)
-  } else {
-    {}
-  }
-  // Emit TestRunStarted
-  let run_id = id_gen.next("tr")
-  if sinks.length() > 0 {
-    emit(sinks, make_test_run_started_envelope(run_id))
-  }
-  // Execute before_test_run hooks
-  let before_run_hooks = setup
-    .hook_registry()
-    .by_type(@core.HookType::BeforeTestRun)
-  for hook in before_run_hooks {
-    let trhs_id = id_gen.next("trhs")
-    if sinks.length() > 0 {
-      let json : Json = {
-        "testRunHookStarted": {
-          "id": Json(trhs_id),
-          "testRunStartedId": Json(run_id),
-          "hookId": Json(hook.id),
-          "timestamp": {
-            "seconds": Json((0 : Int32)),
-            "nanos": Json((0 : Int32)),
-          },
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-    let hook_ctx = @core.RunHookCtx::new()
-    let result_status = try {
-      match hook.handler {
-        @core.HookHandler::RunHandler(h) => h(hook_ctx)
-        _ => ()
-      }
-      "PASSED"
-    } catch {
-      _ => "FAILED"
-    }
-    if sinks.length() > 0 && hook_ctx.pending_attachments().length() > 0 {
-      emit_run_hook_attachments(sinks, hook_ctx.pending_attachments(), trhs_id)
-      hook_ctx.pending_attachments().clear()
-    }
-    if sinks.length() > 0 {
-      let json : Json = {
-        "testRunHookFinished": {
-          "testRunHookStartedId": Json(trhs_id),
-          "result": {
-            "duration": {
-              "seconds": Json((0 : Int32)),
-              "nanos": Json((0 : Int32)),
-            },
-            "status": Json(result_status),
-          },
-          "timestamp": {
-            "seconds": Json((0 : Int32)),
-            "nanos": Json((0 : Int32)),
-          },
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  let retries = options.get_retries()
-  let dry_run = options.is_dry_run()
-  let skip_tags = options.get_skip_tags()
-  let paired_results = if options.is_parallel() {
-    run_pickles_parallel(
-      factory,
-      filtered,
-      max_concurrent=options.get_max_concurrent(),
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-      retries~,
-      dry_run~,
-      skip_tags~,
-    )
-  } else {
-    run_pickles_sequential(
-      factory,
-      filtered,
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-      retries~,
-      dry_run~,
-      skip_tags~,
-    )
-  }
-  let results : Array[ScenarioResult] = paired_results.map(fn(pr) { pr.result })
-  let retried_count = paired_results
-    .iter()
-    .fold(init=0, fn(acc, pr) { if pr.was_retried { acc + 1 } else { acc } })
-  // Execute after_test_run hooks
-  let run_errors : Array[@core.HookError] = []
-  for r in results {
-    if r.status != ScenarioStatus::Passed {
-      let msg = match
-        r.steps
-        .iter()
-        .find_first(fn(s) {
-          match s.status {
-            StepStatus::Failed(_) => true
-            _ => false
-          }
-        }) {
-        Some(s) =>
-          match s.status {
-            StepStatus::Failed(m) => m
-            _ => "scenario failed"
-          }
-        None => "scenario failed"
-      }
-      run_errors.push(
-        @core.HookError::ScenarioFailed(
-          feature_name=r.feature_name,
-          scenario_name=r.scenario_name,
-          message=msg,
-        ),
-      )
-    }
-  }
-  let run_hook_result : @core.HookResult = if run_errors.length() > 0 {
-    @core.HookResult::Failed(run_errors)
-  } else {
-    @core.HookResult::Passed
-  }
-  let after_run_hooks = setup
-    .hook_registry()
-    .by_type(@core.HookType::AfterTestRun)
-  for hook in after_run_hooks {
-    let trhs_id = id_gen.next("trhs")
-    if sinks.length() > 0 {
-      let json : Json = {
-        "testRunHookStarted": {
-          "id": Json(trhs_id),
-          "testRunStartedId": Json(run_id),
-          "hookId": Json(hook.id),
-          "timestamp": {
-            "seconds": Json((0 : Int32)),
-            "nanos": Json((0 : Int32)),
-          },
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-    let hook_ctx = @core.RunHookCtx::new()
-    let result_status = try {
-      match hook.handler {
-        @core.HookHandler::RunAfterHandler(h) => h(hook_ctx, run_hook_result)
-        _ => ()
-      }
-      "PASSED"
-    } catch {
-      _ => "FAILED"
-    }
-    if sinks.length() > 0 && hook_ctx.pending_attachments().length() > 0 {
-      emit_run_hook_attachments(sinks, hook_ctx.pending_attachments(), trhs_id)
-      hook_ctx.pending_attachments().clear()
-    }
-    if sinks.length() > 0 {
-      let json : Json = {
-        "testRunHookFinished": {
-          "testRunHookStartedId": Json(trhs_id),
-          "result": {
-            "duration": {
-              "seconds": Json((0 : Int32)),
-              "nanos": Json((0 : Int32)),
-            },
-            "status": Json(result_status),
-          },
-          "timestamp": {
-            "seconds": Json((0 : Int32)),
-            "nanos": Json((0 : Int32)),
-          },
-        },
-      }
-      let envelope : @cucumber_messages.Envelope = @json.from_json(json) catch {
-        _ => continue
-      }
-      emit(sinks, envelope)
-    }
-  }
-  // Emit TestRunFinished
-  if sinks.length() > 0 {
-    let all_passed = results
-      .iter()
-      .all(fn(r) { r.status == ScenarioStatus::Passed })
-    emit(sinks, make_test_run_finished_envelope(all_passed, run_id))
-  }
-  let feature_results = group_by_feature(results, cache)
-  let summary = compute_summary(feature_results, retried=retried_count)
-  // Write formatter output to configured destinations
-  for entry in options.get_formatters() {
-    write_formatter_output(entry)
-  }
-  (
-    { features: feature_results, summary, parse_errors: all_parse_errors, },
-    locations,
-  )
-}
-
-///|
-/// Run all features, raising MoonspecError on any failure.
-///
-/// This is the ergonomic test API. Use in generated tests and manual tests
-/// where you want structured error output instead of manual result inspection.
-/// The raised `RunFailed` prints a cucumber-style report of every parse error
-/// and failed scenario. It uses ANSI colors unless `RunOptions::no_color` is
-/// set, or the environment overrides it (see `@core.color_enabled`).
-pub async fn[W : @core.World] run_or_fail(
-  factory : () -> W,
-  options : RunOptions,
-) -> Unit {
-  let (result, locations) = run_detailed(factory, options)
-  if result.parse_errors.length() > 0 ||
-    result.summary.failed > 0 ||
-    result.summary.undefined > 0 ||
-    result.summary.pending > 0 {
-    let errors : Array[@core.MoonspecError] = result.parse_errors.map(fn(pe) {
-      @core.parse_failed_error(uri=pe.uri, line=pe.line, message=pe.message)
-    })
-    errors.append(collect_scenario_errors(result, locations))
-    let summary = format_run_summary(
-      result.summary,
-      parse_errors=result.parse_errors.length(),
-    )
-    raise @core.run_failed_error(
-      summary~,
-      errors~,
-      color=@core.color_enabled(no_color=options.get_no_color()),
-    )
-  }
 }
 
 ///|
@@ -944,35 +527,6 @@ fn format_run_summary(
 }
 
 ///|
-/// Run pickles sequentially (the default path).
-async fn[W : @core.World] run_pickles_sequential(
-  factory : () -> W,
-  pickles : Array[@cucumber_messages.Pickle],
-  sinks~ : Array[&@core.MessageSink] = [],
-  tc_mappings~ : Map[String, TestCaseMapping] = {},
-  id_gen~ : IdGenerator = IdGenerator::new(),
-  retries~ : Int32 = 0,
-  dry_run~ : Bool = false,
-  skip_tags~ : Array[String] = [],
-) -> Array[PickleResult] {
-  let results : Array[PickleResult] = []
-  for pickle in pickles {
-    let result = execute_pickle(
-      factory,
-      pickle,
-      sinks~,
-      tc_mappings~,
-      id_gen~,
-      retries~,
-      dry_run~,
-      skip_tags~,
-    )
-    results.push(result)
-  }
-  results
-}
-
-///|
 /// Build a PickleResult for a scenario that should be skipped.
 ///
 /// Emits `TestCaseStarted`, per-step `TestStepStarted`/`TestStepFinished`,
@@ -1049,7 +603,7 @@ fn make_skipped_pickle_result(
 /// Execute a single pickle with a fresh world, with optional retry.
 ///
 /// When `retries > 0` or the pickle has a `@retry(N)` tag, failed scenarios are
-/// re-executed using `@async.retry(Immediate)`. Each attempt creates a fresh
+/// re-executed synchronously. Each attempt creates a fresh
 /// World instance via `factory()` and emits its own `TestCaseStarted`/
 /// `TestCaseFinished` envelope pair with the correct `attempt` number and
 /// `willBeRetried` flag.
@@ -1057,7 +611,7 @@ fn make_skipped_pickle_result(
 /// The `@retry(N)` tag takes priority over the global `retries` parameter.
 /// Returns a `PickleResult` containing the final attempt's `ScenarioResult` and
 /// a flag indicating whether the scenario was retried.
-async fn[W : @core.World] execute_pickle(
+fn[W : @core.World] execute_pickle(
   factory : () -> W,
   pickle : @cucumber_messages.Pickle,
   sinks~ : Array[&@core.MessageSink] = [],
@@ -1066,7 +620,7 @@ async fn[W : @core.World] execute_pickle(
   retries~ : Int32 = 0,
   dry_run~ : Bool = false,
   skip_tags~ : Array[String] = [],
-) -> PickleResult {
+) -> PickleResult raise Error {
   let tags = pickle.tags.map(fn(t) { t.name })
   let tag_retries = parse_retry_tag(tags)
   let max_retries = match tag_retries {
@@ -1085,14 +639,15 @@ async fn[W : @core.World] execute_pickle(
   // Check if scenario should be skipped via tags
   let skip_reason = @config.skip_reason(tags, skip_tags)
   if skip_reason is Some(reason) {
+    let regular_step_ids = match mapping {
+      Some(m) => m.regular_step_ids
+      None => []
+    }
     return make_skipped_pickle_result(
-      pickle, tags, reason, mapping, test_case_id, test_step_ids, sinks, id_gen,
+      pickle, tags, reason, mapping, test_case_id, regular_step_ids, sinks, id_gen,
     )
   }
-  let attempt : Ref[Int32] = { val: 0, }
-  let execute_attempt : async () -> ScenarioResult = () => {
-    let current_attempt = attempt.val
-    attempt.val += 1
+  for current_attempt = 0 {
     let world = factory()
     let setup = @core.Setup::new()
     @core.World::configure(world, setup)
@@ -1131,7 +686,7 @@ async fn[W : @core.World] execute_pickle(
     )
     // Only retry on actual failures — not Undefined, Pending, or Skipped
     let is_failed = result.status == ScenarioStatus::Failed
-    let has_retries_left = current_attempt < max_retries
+    let has_retries_left = !dry_run && current_attempt < max_retries
     // Emit TestCaseFinished
     match tcs_id {
       Some(id) =>
@@ -1146,32 +701,11 @@ async fn[W : @core.World] execute_pickle(
         }
       None => ()
     }
-    // If failed and retries remain, raise to trigger @async.retry
-    if is_failed && has_retries_left {
-      raise RetryableFailure(result)
+    if !is_failed || !has_retries_left {
+      break { result, was_retried: current_attempt > 0, }
     }
-    result
+    continue current_attempt + 1
   }
-  let result = if max_retries > 0 && !dry_run {
-    @async.retry(
-      @async.Immediate,
-      max_retry=max_retries,
-      fatal_error=fn(e) {
-        match e {
-          RetryableFailure(_) => false
-          _ => true
-        }
-      },
-      execute_attempt,
-    ) catch {
-      RetryableFailure(r) => r
-      _ => panic()
-    }
-  } else {
-    execute_attempt()
-  }
-  let was_retried = attempt.val > 1
-  { result, was_retried, }
 }
 
 ///|

@@ -12,6 +12,17 @@ properties:
       World type name used for test generation (e.g. "CalcWorld").
       Must match a MoonBit struct that implements the World trait.
 
+  execution:
+    type: string
+    enum: ["async", "sync"]
+    default: "async"
+    description: >
+      Execution mode for generated tests, independent of mode and test_kind.
+      "async" emits async tests using file sources. "sync" emits ordinary
+      tests with the complete feature source embedded for execution without
+      reading feature files at runtime. The CLI --execution option overrides
+      configuration.
+
   test_kind:
     type: string
     enum: ["wbtest", "test"]

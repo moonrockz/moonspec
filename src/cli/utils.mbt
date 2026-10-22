@@ -169,7 +169,7 @@ fn load_config_file(path : String) -> @config.MoonspecConfig {
       return @config.MoonspecConfig::empty()
     }
   }
-  @config.MoonspecConfig::from_json5(content)
+  parse_config_content(content, path)
 }
 
 ///|
@@ -178,7 +178,7 @@ fn load_config_file_optional(path : String) -> @config.MoonspecConfig? {
   if content.length() == 0 {
     return None
   }
-  Some(@config.MoonspecConfig::from_json5(content))
+  Some(parse_config_content(content, path))
 }
 
 ///|
@@ -223,4 +223,36 @@ fn resolve_test_kind(
 /// The `--no-color` flag or `"no_color": true` in the config turns color off.
 fn resolve_no_color(cli_flag : Bool, config : @config.MoonspecConfig) -> Bool {
   cli_flag || config.no_color.unwrap_or(false)
+}
+
+///|
+/// Resolve execution from the CLI, merged configuration, then the async default.
+fn resolve_execution(
+  cli_value : String?,
+  config : @config.MoonspecConfig,
+) -> Result[@config.ExecutionMode, String] {
+  match cli_value {
+    Some(value) =>
+      match @config.ExecutionMode::parse(value) {
+        Some(mode) => Ok(mode)
+        None =>
+          Err(
+            "Error: --execution must be \"async\" or \"sync\", got \"\{value}\"",
+          )
+      }
+    None => Ok(config.execution.unwrap_or(Async))
+  }
+}
+
+///|
+fn parse_config_content(
+  content : String,
+  path : String,
+) -> @config.MoonspecConfig {
+  @config.MoonspecConfig::from_json5(content) catch {
+    @config.ConfigError::InvalidExecution(message) => {
+      die("Error reading config \{path}: \{message}")
+      @config.MoonspecConfig::empty()
+    }
+  }
 }

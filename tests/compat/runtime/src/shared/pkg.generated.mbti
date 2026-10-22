@@ -1,0 +1,59 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonspec-compat/runtime/shared"
+
+import {
+  "moonrockz/moonspec/core",
+  "moonrockz/moonspec/format",
+  "moonrockz/moonspec/runner",
+}
+
+// Values
+pub fn configure_options() -> @runner.RunOptions
+
+pub fn configure_world(Int, Int) -> ConfigureWorld
+
+pub fn fixture(String, String) -> Fixture raise
+
+pub fn fixtures() -> Array[(String, String)]
+
+pub fn portable_options() -> @runner.RunOptions raise
+
+pub fn portable_world() -> CompatWorld
+
+pub fn verify_report(String, String) -> Unit raise
+
+// Errors
+pub suberror ConfigureFailure {
+  ConfigureFailure
+}
+
+// Types and methods
+pub struct CompatWorld {
+  mut counter : Int
+  attempts : Map[String, Int]
+  hook_log : Array[String]
+  with_hooks : Bool
+}
+pub fn CompatWorld::configure(Self, @core.Setup) -> Unit raise
+pub impl @core.World for CompatWorld
+
+pub struct ConfigureWorld {
+  ordinal : Int
+  fail_at : Int
+}
+pub fn ConfigureWorld::configure(Self, @core.Setup) -> Unit raise
+pub impl @core.World for ConfigureWorld
+
+pub struct Fixture {
+  options : @runner.RunOptions
+  attempts : Map[String, Int]
+  hook_log : Array[String]
+  with_hooks : Bool
+  messages : @format.MessagesFormatter
+}
+pub fn Fixture::emit(Self, String, @runner.RunResult) -> Unit
+pub fn Fixture::world(Self) -> CompatWorld
+
+// Type aliases
+
+// Traits

@@ -1,0 +1,9 @@
+import {
+  "moonrockz/moonspec",
+}
+
+import {
+  "moonrockz/moonspec/format",
+} for "wbtest"
+
+supported_targets = "wasm+wasm-gc+js+native"

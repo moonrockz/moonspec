@@ -11,8 +11,21 @@ pub fn default_skip_tags() -> Array[String]
 pub fn skip_reason(Array[String], Array[String]) -> String?
 
 // Errors
+pub suberror ConfigError {
+  InvalidExecution(String)
+} derive(@debug.Debug)
+pub fn ConfigError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+pub(all) enum ExecutionMode {
+  Async
+  Sync
+} derive(Eq, @debug.Debug)
+pub fn ExecutionMode::equal(Self, Self) -> Bool
+pub fn ExecutionMode::not_equal(Self, Self) -> Bool
+pub fn ExecutionMode::parse(String) -> Self?
+pub fn ExecutionMode::to_repr(Self) -> @debug.Repr
+
 pub(all) struct FormatterConfig {
   type_ : String
   output : String
@@ -37,11 +50,12 @@ pub(all) struct MoonspecConfig {
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
   no_color : Bool?
+  execution : ExecutionMode?
   test_kind : TestKind?
 } derive(Eq, @debug.Debug)
 pub fn MoonspecConfig::empty() -> Self
 pub fn MoonspecConfig::equal(Self, Self) -> Bool
-pub fn MoonspecConfig::from_json5(String) -> Self
+pub fn MoonspecConfig::from_json5(String) -> Self raise ConfigError
 pub fn MoonspecConfig::merge(Self, Self) -> Self
 pub fn MoonspecConfig::not_equal(Self, Self) -> Bool
 pub fn MoonspecConfig::resolve_mode(Self, String) -> String

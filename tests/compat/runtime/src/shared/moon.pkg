@@ -1,0 +1,9 @@
+import {
+  "moonrockz/moonspec",
+  "moonrockz/moonspec/format",
+  "moonrockz/moonspec/core",
+  "moonbitlang/x/fs",
+  "moonrockz/gherkin",
+}
+
+supported_targets = "wasm+wasm-gc+js+native"

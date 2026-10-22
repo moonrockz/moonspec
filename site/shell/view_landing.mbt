@@ -17,27 +17,29 @@ let hero_step : String =
 let install_cli : String =
   #|# 1. Add the library
   #|moon add moonrockz/moonspec
+  #|moon add moonbitlang/async
   #|# 2. Install the CLI
   #|moon install moonrockz/moonspec/cmd/moonspec
   #|# 3. Generate and run
   #|moonspec gen steps
   #|moonspec gen build features/*.feature -w CalcWorld --apply
-  #|moon test
+  #|moon test --target js
 
 ///|
 let install_moonx : String =
   #|# 1. Add the library
   #|moon add moonrockz/moonspec
+  #|moon add moonbitlang/async
   #|# 2. Nothing to install: moonx runs the CLI from mooncakes.io
   #|# 3. Generate and run
   #|moonx moonrockz/moonspec/cmd/moonspec@latest gen steps
   #|moonx moonrockz/moonspec/cmd/moonspec@latest gen build features/*.feature -w CalcWorld --apply --moonx
-  #|moon test
+  #|moon test --target js
 
 ///|
 let tiles : Array[(String, String)] = [
   (
-    "Native moon test", "One test per scenario: filter with -f, list with --outline, skip with tags.",
+    "Native moon test", "One test per scenario: filter with -f, list with --outline, skip with tags. Next adds sync tests on Wasm-GC.",
   ),
   (
     "Typed steps", "Cucumber Expressions decoded to Int, String, DataTable or your own types.",
@@ -78,7 +80,7 @@ fn landing_view(m : Model, emit : @rabbita.Emit[Msg]) -> Html {
         ]),
         @html.p(
           class="ms-lead",
-          "Parse .feature files, match steps with Cucumber Expressions, and run each scenario as a native moon test test.",
+          "Parse .feature files, match steps with Cucumber Expressions, and run each scenario as a native moon test test. The next docs describe unreleased root sync APIs and the optional async facade.",
         ),
         @html.div(class="ms-cta", [
           @html.a(

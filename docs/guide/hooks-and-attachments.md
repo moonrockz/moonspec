@@ -5,7 +5,12 @@ during test execution, plus an attachment API for embedding files, logs, and
 links into the Cucumber Messages output stream.
 
 Both features are registered inside your World's `configure` method through the
-`Setup` object.
+`Setup` object. The same synchronous handlers work with root `run_sync` and
+the optional async facade; there is no separate async step or hook API. See
+[sync execution](testing-strategies.md#sync-execution-and-target-support) for imports and target support.
+
+During dry-run, before/after TestRun hooks still execute. Step handlers and
+case/step hooks do not run, and no retries are attempted.
 
 ---
 
@@ -39,11 +44,11 @@ impl @moonspec.World for MyWorld with configure(self, setup) {
 
   // --- Step-level hooks ---
   setup.before_test_step(fn(ctx) {
-    let text = ctx.step().text
+    let text = ctx.step().step_text
     println("Running step: " + text)
   })
   setup.after_test_step(fn(ctx, result) {
-    let text = ctx.step().text
+    let text = ctx.step().step_text
     println("Completed step: " + text)
   })
 

@@ -1,0 +1,14 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "example/sync-wasm"
+
+// Values
+
+// Errors
+
+// Types and methods
+type CalculatorWorld derive(Default)
+pub fn CalculatorWorld::default() -> Self
+
+// Type aliases
+
+// Traits

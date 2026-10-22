@@ -14,6 +14,7 @@ pub extend CodegenMode with Eq::{not_equal, equal}
 ///|
 /// Configuration for code generation.
 pub(all) struct CodegenConfig {
+  execution : @config.ExecutionMode
   mode : CodegenMode
   world : String
   skip_tags : Array[String]?
@@ -32,6 +33,7 @@ pub extend CodegenConfig with Eq::{not_equal, equal}
 /// Create a default config (per-scenario mode, empty world name).
 pub fn CodegenConfig::default() -> CodegenConfig {
   {
+    execution: Async,
     mode: PerScenario,
     world: "",
     skip_tags: None,
@@ -52,6 +54,9 @@ pub fn CodegenConfig::default() -> CodegenConfig {
 /// ```
 pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
   let json = @json5.parse(input)
+  let execution = @config.MoonspecConfig::from_json5(input).execution.unwrap_or(
+    Async,
+  )
   let mut mode = PerScenario
   let mut world = ""
   match json {
@@ -67,5 +72,12 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
     }
     _ => ()
   }
-  { mode, world, skip_tags: None, formatters: None, no_color: false, }
+  {
+    execution,
+    mode,
+    world,
+    skip_tags: None,
+    formatters: None,
+    no_color: false,
+  }
 }

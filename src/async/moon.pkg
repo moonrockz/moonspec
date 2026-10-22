@@ -1,0 +1,15 @@
+import {
+  "moonrockz/moonspec",
+  "moonrockz/moonspec/runner",
+  "moonbitlang/async" @runtime,
+}
+
+import {
+  "moonrockz/moonspec/core",
+  "moonrockz/moonspec/format",
+  "moonrockz/cucumber-messages" @cucumber_messages,
+  "moonrockz/cucumber-expressions" @cucumber_expressions,
+  "moonbitlang/core/debug",
+} for "wbtest"
+
+supported_targets = "wasm+js+native"

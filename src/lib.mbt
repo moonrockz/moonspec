@@ -2,7 +2,7 @@
 /// moonspec — BDD test framework for MoonBit.
 ///
 /// Re-exports core types and runner functions so users import just
-/// `moonrockz/moonspec` and use `@moonspec.World`, `@moonspec.run`, etc.
+/// `moonrockz/moonspec` and use `@moonspec.World`, `@moonspec.run_sync`, etc.
 pub using @core {
   trait World,
   trait StepLibrary,
@@ -64,6 +64,7 @@ pub using @runner {
   type StepStatus,
   type RunOptions,
   type OutputDest,
-  run,
-  run_or_fail,
+  type SyncExecutionError,
+  run_sync,
+  run_or_fail_sync,
 }

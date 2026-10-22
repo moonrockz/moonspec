@@ -90,6 +90,7 @@ test "simple_hash produces consistent output" {
 test "per-scenario mode generates runner call with world" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n    When they log in\n    Then they see the dashboard\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -110,6 +111,7 @@ test "per-scenario mode generates runner call with world" {
 test "per-feature mode generates file-based runner call" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerFeature,
     world: "MyWorld",
     skip_tags: None,
@@ -130,6 +132,7 @@ test "per-feature mode generates file-based runner call" {
 test "per-scenario mode uses file source with scenario_name" {
   let content = "Feature: Auth\n\n  Background:\n    Given a logged in user\n\n  Scenario: View profile\n    When I visit my profile\n    Then I see my name\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "AuthWorld",
     skip_tags: None,
@@ -146,6 +149,7 @@ test "per-scenario mode uses file source with scenario_name" {
 test "per-scenario mode expands scenario outline" {
   let content = "Feature: Math\n\n  Scenario Outline: Add numbers\n    Given <a> and <b>\n    Then result is <sum>\n\n    Examples:\n      | a | b | sum |\n      | 1 | 2 | 3   |\n      | 4 | 5 | 9   |\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MathWorld",
     skip_tags: None,
@@ -197,6 +201,7 @@ test "config from_json5 defaults to per-scenario" {
 test "per-scenario mode omits skip_tags when None" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -212,6 +217,7 @@ test "per-scenario mode omits skip_tags when None" {
 test "per-scenario mode emits skip_tags when configured" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: Some(["@skip", "@wip"]),
@@ -226,6 +232,7 @@ test "per-scenario mode emits skip_tags when configured" {
 test "per-feature mode emits skip_tags when configured" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerFeature,
     world: "MyWorld",
     skip_tags: Some(["@ignore"]),
@@ -240,6 +247,7 @@ test "per-feature mode emits skip_tags when configured" {
 test "skip_tags not emitted for stub tests" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "",
     skip_tags: Some(["@skip"]),
@@ -255,6 +263,7 @@ test "skip_tags not emitted for stub tests" {
 test "empty skip_tags array emits empty array call" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: Some([]),
@@ -269,6 +278,7 @@ test "empty skip_tags array emits empty array call" {
 test "codegen emits default pretty formatter when formatters is None" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -287,6 +297,7 @@ test "codegen emits default pretty formatter when formatters is None" {
 test "codegen emits add_formatter for pretty on stdout" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -311,6 +322,7 @@ test "codegen emits add_formatter for pretty on stdout" {
 test "codegen emits add_formatter for junit to file" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -335,6 +347,7 @@ test "codegen emits add_formatter for junit to file" {
 test "codegen emits add_formatter with no_color for pretty" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -359,6 +372,7 @@ test "codegen emits add_formatter with no_color for pretty" {
 test "codegen emits no formatter lines for empty formatters array" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -372,6 +386,7 @@ test "codegen emits no formatter lines for empty formatters array" {
 ///|
 fn skip_config(mode : CodegenMode, skip_tags : Array[String]?) -> CodegenConfig {
   CodegenConfig::{
+    execution: Async,
     mode,
     world: "MyWorld",
     skip_tags,
@@ -504,6 +519,7 @@ test "per-feature mode emits #skip only for a feature-level skip tag" {
 test "stub tests emit no #skip" {
   let content = "Feature: Login\n\n  @skip\n  Scenario: A\n    Given a user\n"
   let config = CodegenConfig::{
+    execution: Async,
     mode: PerScenario,
     world: "",
     skip_tags: None,
@@ -520,6 +536,7 @@ fn no_color_config(
   formatters : Array[@config.FormatterConfig]?,
 ) -> CodegenConfig {
   CodegenConfig::{
+    execution: Async,
     mode,
     world: "MyWorld",
     skip_tags: None,
@@ -587,4 +604,130 @@ test "generate_test_file gives the same output with or without a leading ./" {
   let dotted = generate_test_file(content, "./features/login.feature", config~)
   assert_eq(dotted, plain)
   assert_false(plain.contains("./features"))
+}
+
+///|
+test "codegen config parses sync execution with async as the default" {
+  assert_eq(CodegenConfig::default().execution, Async)
+  assert_eq(CodegenConfig::from_json5("{}").execution, Async)
+  assert_eq(CodegenConfig::from_json5("{ execution: 'sync' }").execution, Sync)
+}
+
+///|
+test "codegen config rejects invalid execution values" {
+  for input in ["{ execution: 'parallel' }", "{ execution: 42 }"] {
+    let message = try {
+      ignore(CodegenConfig::from_json5(input))
+      "accepted invalid execution"
+    } catch {
+      @config.ConfigError::InvalidExecution(message) => message
+      _ => "unexpected error"
+    }
+    assert_true(message.contains("execution"))
+    assert_true(message.contains("async"))
+    assert_true(message.contains("sync"))
+  }
+}
+
+///|
+test "sync per-feature emits ordinary test and embeds the original source URI and text" {
+  let content = "Feature: Login\n\n  Scenario: A\n    Given a user\n"
+  let config = CodegenConfig::{
+    ..CodegenConfig::default(),
+    mode: PerFeature,
+    world: "MyWorld",
+    execution: Sync,
+  }
+  let output = generate_test_file(content, "./features/login.feature", config~)
+  assert_true(output.contains("test \"Feature: Login\" {"))
+  assert_false(output.contains("async test"))
+  assert_true(output.contains("@moonspec.run_or_fail_sync("))
+  assert_true(
+    output.contains(
+      "@moonspec.FeatureSource::Text(\"./features/login.feature\", \"Feature: Login\\n\\n  Scenario: A\\n    Given a user\\n\")",
+    ),
+  )
+  assert_false(output.contains("FeatureSource::File("))
+  assert_false(output.contains("options.scenario_name("))
+}
+
+///|
+test "sync per-scenario preserves outline row filtering with the full source" {
+  let content = "Feature: Counts\n  Scenario Outline: Count\n    Given <n> users\n    Examples:\n      | n |\n      | 1 |\n      | 2 |\n"
+  let config = CodegenConfig::{
+    ..CodegenConfig::default(),
+    world: "MyWorld",
+    execution: Sync,
+  }
+  let output = generate_test_file(content, "features/counts.feature", config~)
+  assert_false(output.contains("async test"))
+  assert_true(
+    output.contains("test \"Feature: Counts / Scenario: Count (n=1)\" {"),
+  )
+  assert_true(output.contains("options.scenario_name(\"Count (n=1)\")"))
+  assert_true(output.contains("options.scenario_name(\"Count (n=2)\")"))
+  assert_eq(output.split("@moonspec.run_or_fail_sync(").count(), 3)
+  assert_eq(output.split("FeatureSource::Text(").count(), 3)
+  assert_true(output.contains("Scenario Outline: Count\\n"))
+  assert_false(output.contains("FeatureSource::File("))
+}
+
+///|
+test "sync Markdown embeds prose and escaped source with formatter and skip settings" {
+  let content = "`@skip`\r\n# Feature: Login\r\n\r\nA path: C:\\tmp\\{literal}\t雪\r\n\r\n## Scenario: A\r\n\r\n- Given a user\r\n"
+  for mode in [CodegenMode::PerScenario, PerFeature] {
+    let config = CodegenConfig::{
+      ..CodegenConfig::default(),
+      mode,
+      world: "MyWorld",
+      execution: Sync,
+      no_color: true,
+    }
+    let output = generate_test_file(
+      content,
+      "features/login.feature.md",
+      config~,
+    )
+    assert_false(output.contains("async test"))
+    assert_true(output.contains("#skip(\"skip\")"))
+    assert_true(output.contains("options.skip_tags([])"))
+    assert_true(output.contains("options.no_color(true)"))
+    assert_true(output.contains("@format.PrettyFormatter::new(no_color=true)"))
+    assert_true(
+      output.contains(
+        "FeatureSource::Text(\"features/login.feature.md\", \"`@skip`\\r\\n",
+      ),
+    )
+    assert_true(output.contains("A path: C:\\\\tmp\\\\{literal}\\t雪\\r\\n"))
+  }
+}
+
+///|
+test "sync preserves configured formatter destinations and custom skip tags" {
+  let content = "Feature: Login\n  Scenario: A\n    Given a user\n"
+  for mode in [CodegenMode::PerScenario, PerFeature] {
+    let config = CodegenConfig::{
+      ..CodegenConfig::default(),
+      mode,
+      world: "MyWorld",
+      execution: Sync,
+      skip_tags: Some(["@wip"]),
+      formatters: Some([
+        { type_: "junit", output: "reports/results.xml", no_color: false, },
+        { type_: "messages", output: "stderr", no_color: false, },
+      ]),
+    }
+    let output = generate_test_file(content, "features/login.feature", config~)
+    assert_true(output.contains("options.skip_tags([\"@wip\"])"))
+    assert_true(
+      output.contains(
+        "@format.JUnitFormatter::new(), @moonspec.OutputDest::File(\"reports/results.xml\")",
+      ),
+    )
+    assert_true(
+      output.contains(
+        "@format.MessagesFormatter::new(), @moonspec.OutputDest::Stderr",
+      ),
+    )
+  }
 }

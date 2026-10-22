@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Execute four sync and three sequential/parallel async downstream targets"
+set -euo pipefail
+python3 -B tests/compat/runtime/matrix.py "$@"
+cd tests/compat/runtime
+python3 -B -m unittest discover -p '*_test.py'

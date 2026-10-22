@@ -4,6 +4,10 @@ The landing page and docs site at <https://moonrockz.github.io/moonspec/>,
 built with [rabbita](https://github.com/moonbit-community/rabbita).
 
 The docs pages are rendered from `docs/guide/*.md` and `docs/migrations/*.md`.
+The next channel includes the sync execution section of the testing-strategies
+guide, the root sync APIs,
+the `/async` import migration and the tested target/host matrix. These changes
+are unreleased; release-channel content still comes from its published tag.
 Nothing under `docs/plans/` is published. Design: `docs/plans/2026-10-13-site-design.md`.
 
 ## Commands

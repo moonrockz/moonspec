@@ -1,0 +1,6 @@
+import {
+  "moonrockz/moonspec",
+  "moonspec-compat/runtime/shared",
+} for "test"
+
+supported_targets = "wasm+wasm-gc"

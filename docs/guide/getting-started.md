@@ -2,13 +2,16 @@
 
 moonspec is a BDD (Behavior-Driven Development) test framework for [MoonBit](https://www.moonbitlang.com/). It brings Gherkin feature files and Cucumber Expressions to MoonBit, letting you describe application behavior in plain English and verify it with executable step definitions.
 
-This guide walks you through writing your first moonspec test from scratch.
+This guide starts with the root synchronous API. The later codegen walkthrough
+keeps the async generator default. These execution changes are unreleased;
+use a local checkout as described in [sync execution](testing-strategies.md#sync-execution-and-target-support).
 
 ## Prerequisites
 
 - [MoonBit toolchain](https://www.moonbitlang.com/download/) installed (`moon` CLI available)
 - An existing MoonBit project (create one with `moon new my-project` if needed)
-- Node.js runtime (moonspec tests require the `--target js` flag)
+- moon/moonrun 0.1.20261012 and moonc/core 0.10.15+943464bfa for the tested setup
+- Node.js only when running the JavaScript target
 
 ## Step 1: Install moonspec
 
@@ -18,11 +21,11 @@ Add moonspec as a dependency to your project:
 moon add moonrockz/moonspec
 ```
 
-You will also need the `moonbitlang/async` package (required for async tests):
-
-```sh
-moon add moonbitlang/async
-```
+Sync tests need no async test-driver import. For the optional async workflow,
+add `moonbitlang/async` and import `"moonrockz/moonspec/async" @moonspec` instead.
+For unreleased sync APIs, use the local `moon.work` from the
+[sync-wasm example](../../examples/sync-wasm/); `moon add` alone selects a
+published version.
 
 Then add `moonrockz/moonspec` to the `import` list in the `moon.pkg` file for the package where your tests will live:
 
@@ -178,7 +181,7 @@ Now create a test file (the filename must end in `_test.mbt` or `_wbtest.mbt`). 
 Use multi-line string literals to embed the feature directly in your test file:
 
 ```moonbit
-async test "calculator" {
+test "calculator" {
   let feature =
     #|Feature: Calculator
     #|
@@ -192,7 +195,7 @@ async test "calculator" {
     #|  Scenario: Subtraction
     #|    When I subtract 3 from 10
     #|    Then the result should be 7
-  @moonspec.run_or_fail(
+  @moonspec.run_or_fail_sync(
     CalcWorld::default,
     @moonspec.RunOptions::new(
       [@moonspec.FeatureSource::Text("test://calculator", feature)],
@@ -211,8 +214,8 @@ The `FeatureSource::Text(uri, content)` variant takes:
 Point to the `.feature` file you created earlier:
 
 ```moonbit
-async test "calculator" {
-  @moonspec.run_or_fail(
+test "calculator" {
+  @moonspec.run_or_fail_sync(
     CalcWorld::default,
     @moonspec.RunOptions::new(
       [@moonspec.FeatureSource::File("features/calculator.feature")],
@@ -222,17 +225,19 @@ async test "calculator" {
 }
 ```
 
-The path is relative to the package directory at runtime.
+File reads depend on the host filesystem. Paths are resolved by that host
+relative to its runtime working directory. Use inline text or generated sync
+embedding to avoid reading the feature file.
 
 In both cases:
 
-- Tests **must** be `async test` blocks.
-- `run_or_fail` runs the feature and raises a structured error if any scenario fails, is undefined, or is pending.
+- Root sync calls use ordinary `test` blocks.
+- `run_or_fail_sync` runs the feature and raises a structured error if any scenario fails, is undefined, or is pending.
 - `CalcWorld::default` is the factory function -- moonspec calls it to create a fresh World for each scenario.
 
 ## Step 7: Run the Test
 
-moonspec tests must be run with the JavaScript target:
+Root sync tests run on `wasm-gc`, `wasm`, `js` and `native`. For example:
 
 ```sh
 moon test --target js
@@ -266,11 +271,16 @@ listed too, with their line and the parser message. See
 
 ## Codegen Mode
 
-For larger projects, manually writing `async test` blocks and `configure` methods for every scenario gets tedious. The moonspec CLI generates this code from your feature files and step annotations.
+For larger projects, manually writing test blocks and `configure` methods for every scenario gets tedious. The moonspec CLI generates this code from your feature files and step annotations.
 
 ### Get the CLI
 
 You can use the CLI in two ways. Both run the same commands.
+
+The registry commands below describe the released installation route. Until
+these execution changes are released, build the checkout CLI with
+`mise run build:cli` and use `_build/bin/moonspec` from the repository root.
+The sync-wasm task uses that local binary.
 
 **Installed CLI.** Install it once; `moon install` puts `moonspec` in `~/.moon/bin`:
 
@@ -289,11 +299,13 @@ The commands below use `moonspec`. With moonx, replace `moonspec` with `moonx mo
 
 ### Imports for Generated Code
 
-Generated tests use `@format.PrettyFormatter` and `async test`. In the `moon.pkg` of the package that gets the tests, add these test imports next to `moonrockz/moonspec`:
+Async is the generator default. For that workflow, switch the package import
+to the optional facade and retain the async test driver. The generated body
+still uses `@moonspec.run_or_fail`:
 
 ```
 import {
-  "moonrockz/moonspec",
+  "moonrockz/moonspec/async" @moonspec,
 }
 
 import {
@@ -301,6 +313,11 @@ import {
   "moonbitlang/async",
 } for "wbtest"
 ```
+
+For generated sync tests, keep the root import, omit `moonbitlang/async` and
+pass `--execution sync` to `gen tests` or `gen build`. They are ordinary tests
+with complete embedded source and `run_or_fail_sync`. See the
+[generated sync example](../../examples/sync-wasm/).
 
 ### Generating Step Definitions with Annotations
 
@@ -367,12 +384,14 @@ Add `rule` and `dev_build` entries to `moon.pkg`. moon runs them before `moon ch
 moonspec gen build features/calculator.feature -w CalcWorld --apply
 ```
 
-It adds only the missing entries to `src/moon.pkg` (use `-p` for another package) and generates test files that do not exist yet:
+It adds missing entries to `src/moon.pkg`, updates the rule when execution
+changes and generates test files that do not exist yet. Use `-p` for another
+package:
 
 ```moonbit
 rule(
   name: "moonspec-tests",
-  command: "moonspec gen tests $input -w CalcWorld -o $output",
+  command: "moonspec gen tests $input -w CalcWorld -o $output --execution async",
 )
 
 dev_build(
@@ -392,7 +411,7 @@ moonx moonrockz/moonspec/cmd/moonspec@latest gen build \
 ```moonbit
 rule(
   name: "moonspec-tests",
-  command: "moonx moonrockz/moonspec/cmd/moonspec@<version> gen tests $input -w CalcWorld -o $output",
+  command: "moonx moonrockz/moonspec/cmd/moonspec@<version> gen tests $input -w CalcWorld -o $output --execution async",
 )
 ```
 
@@ -403,7 +422,9 @@ run `dev_build` steps when the package is used as a dependency. The older
 
 ### Generated Test Files
 
-The build rule runs `moonspec gen tests`, which generates one `async test` block per scenario. `src/calculator_feature_wbtest.mbt` looks like this:
+The build rule runs `moonspec gen tests`, which defaults to one `async test`
+block per scenario. A sync rule pins `--execution sync` instead, embedding the
+full source into ordinary tests. `src/calculator_feature_wbtest.mbt` looks like this:
 
 ```moonbit
 // Generated by moonspec codegen — DO NOT EDIT
@@ -470,6 +491,7 @@ You can create a `moonspec.json5` file in your project root to avoid repeating C
 Options:
 
 - `world` -- the World type name (required for `gen tests` and `gen build`)
+- `execution` -- `"async"` by default; `"sync"` emits ordinary tests with embedded source. CLI `--execution` overrides merged config, then the default; this choice is independent of `mode` and `test_kind`
 - `mode` -- `"per-scenario"` (default) generates one test per scenario; `"per-feature"` generates one test per feature file
 - `steps.output` -- `"alongside"` (default) writes `<world>_steps_gen.mbt` next to the step functions; see the [configuration reference](configuration.md#steps-object) for the other strategies
 
@@ -484,9 +506,9 @@ my-project/
   features/
     calculator.feature    # Gherkin feature files
   src/
-    moon.pkg              # imports moonrockz/moonspec
+    moon.pkg              # root for sync; /async @moonspec for async
     world.mbt             # World struct + configure implementation
-    calculator_wbtest.mbt # async test blocks (manual or generated)
+    calculator_wbtest.mbt # ordinary sync or async test blocks
 ```
 
 Feature files live in `features/` by convention. Step definitions and World structs live in your source directory alongside the test files.
@@ -519,6 +541,9 @@ Now that you have a working moonspec test, here are some things to explore:
 - **Tags** -- annotate scenarios with `@tagname` and filter with `options.tag_expr("@tagname")`
 - **Hooks** -- run setup/teardown code with `setup.before_test_case(...)` and `setup.after_test_case(...)`
 - **Custom Parameter Types** -- register your own types with `setup.add_param_type_strings(...)`
-- **Parallel Execution** -- run scenarios concurrently with `options.parallel(true)`
+- **Parallel Execution** -- use the optional async facade and `options.parallel(true)` on wasm, js or native; sync rejects parallel mode
 
-For a complete working example, see the `examples/calculator/` directory in the moonspec repository.
+Run `mise run examples:sync-wasm -- wasm-gc` from this checkout for the complete
+sync example. The [calculator example](../../examples/calculator/) keeps the
+async workflow executable. See [sync execution](testing-strategies.md#sync-execution-and-target-support) for the full
+target matrix, import migration and host ABI limits.

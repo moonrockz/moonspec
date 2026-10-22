@@ -1,0 +1,8 @@
+import {
+  "moonrockz/moonspec/async" @moonspec,
+  "moonspec-compat/runtime/shared",
+  "moonbitlang/async" @async_runtime,
+  "moonrockz/moonspec/core",
+} for "test"
+
+supported_targets = "wasm+js+native"

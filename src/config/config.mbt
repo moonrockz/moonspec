@@ -55,6 +55,36 @@ pub fn TestKind::parse(value : String) -> TestKind? {
 }
 
 ///|
+/// Execution effect of generated tests, independent of test grouping and visibility.
+pub(all) enum ExecutionMode {
+  Async
+  Sync
+} derive(Debug, Eq)
+
+///|
+pub extend ExecutionMode with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub extend ExecutionMode with Eq::{not_equal, equal}
+
+///|
+pub suberror ConfigError {
+  InvalidExecution(String)
+} derive(Debug)
+
+///|
+pub extend ConfigError with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+pub fn ExecutionMode::parse(value : String) -> ExecutionMode? {
+  match value {
+    "async" => Some(Async)
+    "sync" => Some(Sync)
+    _ => None
+  }
+}
+
+///|
 /// Configuration for a single output formatter.
 pub(all) struct FormatterConfig {
   type_ : String
@@ -77,6 +107,7 @@ pub(all) struct MoonspecConfig {
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
   no_color : Bool?
+  execution : ExecutionMode?
   test_kind : TestKind?
 } derive(Debug, Eq)
 
@@ -95,13 +126,16 @@ pub fn MoonspecConfig::empty() -> MoonspecConfig {
     skip_tags: None,
     formatters: None,
     no_color: None,
+    execution: None,
     test_kind: None,
   }
 }
 
 ///|
 /// Parse config from a JSON5 string.
-pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
+pub fn MoonspecConfig::from_json5(
+  input : String,
+) -> MoonspecConfig raise ConfigError {
   let json = @json5.parse(input) catch { _ => return MoonspecConfig::empty() }
   let mut world : String? = None
   let mut mode : ModeConfig? = None
@@ -109,6 +143,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
   let mut skip_tags : Array[String]? = None
   let mut formatters : Array[FormatterConfig]? = None
   let mut no_color : Bool? = None
+  let mut execution : ExecutionMode? = None
   let mut test_kind : TestKind? = None
   match json {
     Object(obj) => {
@@ -134,6 +169,19 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
         Some(True) => no_color = Some(true)
         Some(False) => no_color = Some(false)
         _ => ()
+      }
+      match obj.get("execution") {
+        None => ()
+        Some(String(s)) =>
+          match ExecutionMode::parse(s) {
+            Some(mode) => execution = Some(mode)
+            None =>
+              raise InvalidExecution(
+                "execution must be \"async\" or \"sync\", got \"\{s}\"",
+              )
+          }
+        Some(_) =>
+          raise InvalidExecution("execution must be \"async\" or \"sync\"")
       }
       match obj.get("test_kind") {
         Some(String(s)) => test_kind = TestKind::parse(s)
@@ -210,7 +258,7 @@ pub fn MoonspecConfig::from_json5(input : String) -> MoonspecConfig {
     }
     _ => ()
   }
-  { world, mode, steps, skip_tags, formatters, no_color, test_kind, }
+  { world, mode, steps, skip_tags, formatters, no_color, test_kind, execution, }
 }
 
 ///|
@@ -246,6 +294,10 @@ pub fn MoonspecConfig::merge(
     no_color: match override_.no_color {
       Some(_) => override_.no_color
       None => self.no_color
+    },
+    execution: match override_.execution {
+      Some(_) => override_.execution
+      None => self.execution
     },
     test_kind: match override_.test_kind {
       Some(_) => override_.test_kind

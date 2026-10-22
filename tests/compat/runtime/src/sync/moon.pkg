@@ -1,0 +1,8 @@
+import {
+  "moonrockz/moonspec",
+  "moonspec-compat/runtime/shared",
+  "moonrockz/moonspec/core",
+  "moonrockz/moonspec/format",
+} for "test"
+
+supported_targets = "wasm+wasm-gc+js+native"

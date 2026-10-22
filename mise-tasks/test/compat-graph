@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Audit sync public source/build/Wasm-GC output and reject optional async on wasm-gc"
+set -euo pipefail
+python3 -B tests/compat/runtime/graph.py

@@ -12,7 +12,7 @@ test "render_build_rules adds a rule and one dev_build per feature" {
     content=(
       #|rule(
       #|  name: "moonspec-tests",
-      #|  command: "moonspec gen tests $input -w CalcWorld -o $output",
+      #|  command: "moonspec gen tests $input -w CalcWorld --execution async -o $output",
       #|)
       #|
       #|dev_build(
@@ -40,7 +40,7 @@ test "render_build_rules keeps existing content and adds only missing entries" {
     #|
     #|rule(
     #|  name: "moonspec-tests",
-    #|  command: "moonspec gen tests $input -w CalcWorld -o $output",
+    #|  command: "moonspec gen tests $input -w CalcWorld --execution async -o $output",
     #|)
     #|
     #|dev_build(
@@ -181,4 +181,213 @@ test "render_build_rules names black-box test files on request" {
     build_rules_test_filename("features/add.feature", kind=BlackBox),
     "add_feature_test.mbt",
   )
+}
+
+///|
+test "build rules pin sync execution for regeneration and keep file visibility independent" {
+  for kind in [@config.TestKind::WhiteBox, BlackBox] {
+    let (content, added) = render_build_rules(
+      "",
+      ["features/login.feature"],
+      package_dir="src",
+      world="MyWorld",
+      execution=Sync,
+      test_kind=kind,
+    )
+    assert_eq(added, 2)
+    assert_true(
+      content.contains(
+        "gen tests $input -w MyWorld --execution sync -o $output",
+      ),
+    )
+    assert_true(
+      content.contains(
+        build_rules_test_filename("features/login.feature", kind~),
+      ),
+    )
+    let (again, count) = render_build_rules(
+      content,
+      ["features/login.feature"],
+      package_dir="src",
+      world="MyWorld",
+      execution=Sync,
+      test_kind=kind,
+    )
+    assert_eq(again, content)
+    assert_eq(count, 0)
+  }
+}
+
+///|
+test "changing execution updates an existing generated rule before regeneration" {
+  let features = ["features/login.feature"]
+  let (async_rules, _) = render_build_rules(
+    "",
+    features,
+    package_dir="src",
+    world="MyWorld",
+  )
+  let (sync_rules, changed) = render_build_rules(
+    async_rules,
+    features,
+    package_dir="src",
+    world="MyWorld",
+    execution=Sync,
+  )
+  assert_eq(changed, 1)
+  assert_true(sync_rules.contains("--execution sync"))
+  assert_false(sync_rules.contains("--execution async"))
+  assert_eq(sync_rules.split("dev_build(").count(), 2)
+}
+
+///|
+test "legacy build rules gain an explicit execution choice" {
+  let legacy = "rule(\n  name: \"moonspec-tests\",\n  command: \"moonspec gen tests $input -w MyWorld -o $output\",\n)\n"
+  let (updated, count) = render_build_rules(
+    legacy,
+    [],
+    package_dir="src",
+    world="MyWorld",
+    execution=Sync,
+  )
+  assert_eq(count, 1)
+  assert_true(updated.contains("--execution sync"))
+  let (async_, _) = render_build_rules(
+    updated,
+    [],
+    package_dir="src",
+    world="MyWorld",
+    execution=Async,
+  )
+  assert_true(async_.contains("--execution async"))
+}
+
+///|
+test "registry 0.11.0 async build rules omit unsupported execution flags" {
+  let (content, _) = render_build_rules(
+    "",
+    ["features/login.feature"],
+    package_dir="src",
+    world="MyWorld",
+    cli=Moonx(version="0.11.0"),
+  )
+  assert_true(
+    content.contains("moonx moonrockz/moonspec/cmd/moonspec@0.11.0 gen tests"),
+  )
+  assert_false(content.contains("--execution"))
+}
+
+///|
+test "registry 0.11.0 sync build rules reject the incapable CLI" {
+  let rejected = try {
+    ignore(
+      render_build_rules(
+        "",
+        [],
+        package_dir="src",
+        world="MyWorld",
+        cli=Moonx(version="0.11.0"),
+        execution=Sync,
+      ),
+    )
+    false
+  } catch {
+    UnsupportedExecution(version~) => version == "0.11.0"
+    _ => false
+  }
+  assert_true(rejected)
+}
+
+///|
+test "unknown and prerelease registry pins reject both execution modes" {
+  for
+    version in [
+      "latest", "0.12.0-rc.1", "0.12", "v0.12.0", "0.12.0+local", "0.012.0", "0.12.invalid",
+    ] {
+    for execution in [@config.ExecutionMode::Async, Sync] {
+      let rejected = try {
+        ignore(
+          render_build_rules(
+            "",
+            [],
+            package_dir="src",
+            world="MyWorld",
+            cli=Moonx(version~),
+            execution~,
+          ),
+        )
+        false
+      } catch {
+        UnsupportedVersion(..) => true
+        _ => false
+      }
+      assert_true(rejected)
+    }
+  }
+}
+
+///|
+test "stable capable registry pins retain explicit execution selection" {
+  for version in ["0.12.0", "0.12.1", "0.13.0", "0.100.0", "1.0.0"] {
+    for execution in [@config.ExecutionMode::Async, Sync] {
+      let (content, _) = render_build_rules(
+        "",
+        [],
+        package_dir="src",
+        world="MyWorld",
+        cli=Moonx(version~),
+        execution~,
+      )
+      assert_true(content.contains("moonspec@" + version + " gen tests"))
+      let mode = match execution {
+        Async => "async"
+        Sync => "sync"
+      }
+      assert_true(content.contains("--execution " + mode))
+    }
+  }
+}
+
+///|
+test "canonical regeneration updates prefix and removes unsupported flags while retaining other arguments" {
+  let unrelated = "import {\n}\n\nrule(\n  name: \"other\",\n  command: \"echo --execution sync\",\n)\n\n"
+  let legacy = unrelated +
+    "rule(\n  name: \"moonspec-tests\",\n  command: \"moonx moonrockz/moonspec/cmd/moonspec@0.11.0 gen tests $input -w MyWorld --mode per-feature --execution sync --no-color -o $output\",\n)\n"
+  let (installed, changed) = render_build_rules(
+    legacy,
+    [],
+    package_dir="src",
+    world="MyWorld",
+    execution=Sync,
+  )
+  assert_eq(changed, 1)
+  assert_true(installed.has_prefix(unrelated))
+  assert_true(installed.contains("command: \"moonspec gen tests"))
+  assert_true(
+    installed.contains("--mode per-feature --execution sync --no-color"),
+  )
+  let (old_pin, changed) = render_build_rules(
+    installed,
+    [],
+    package_dir="src",
+    world="MyWorld",
+    cli=Moonx(version="0.11.0"),
+  )
+  assert_eq(changed, 1)
+  assert_true(old_pin.has_prefix(unrelated))
+  assert_true(
+    old_pin.contains(
+      "command: \"moonx moonrockz/moonspec/cmd/moonspec@0.11.0 gen tests",
+    ),
+  )
+  assert_true(old_pin.contains("--mode per-feature --no-color -o $output"))
+  let (again, changed) = render_build_rules(
+    old_pin,
+    [],
+    package_dir="src",
+    world="MyWorld",
+    cli=Moonx(version="0.11.0"),
+  )
+  assert_eq(again, old_pin)
+  assert_eq(changed, 0)
 }

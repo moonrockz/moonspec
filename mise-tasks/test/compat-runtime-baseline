@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Execute reusable downstream async baseline and verifier mutations on JS"
+set -euo pipefail
+mise run test:compat-runtime -- --mode async --target js
