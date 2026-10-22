@@ -1,12 +1,11 @@
 // Generated using `moon info`, DON'T EDIT IT
-package "moonspec-compat/runtime"
+package "moonspec-compat/runtime/async"
 
 // Values
 
 // Errors
 
 // Types and methods
-type CompatWorld
 
 // Type aliases
 

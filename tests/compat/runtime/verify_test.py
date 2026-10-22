@@ -39,6 +39,13 @@ class EnvelopeVerifierTests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             verify(record, self.expected["passing"])
 
+    def test_rejects_corrupt_intermediate_retry_status(self):
+        def corrupt(events):
+            first = next(e["testStepFinished"] for e in events if "testStepFinished" in e)
+            first["testStepResult"]["status"] = "PASSED"
+        with self.assertRaises(AssertionError):
+            verify(self.edited("retries-isolation", corrupt), self.expected["retries-isolation"])
+
     def test_rejects_changed_step_status(self):
         def corrupt(events):
             next(e["testStepFinished"] for e in events if "testStepFinished" in e)["testStepResult"]["status"] = "FAILED"
@@ -52,6 +59,18 @@ class EnvelopeVerifierTests(unittest.TestCase):
             attachment["testStepId"] = case["testSteps"][2]["id"]
         with self.assertRaises(AssertionError):
             verify(self.edited("hooks", corrupt), self.expected["hooks"])
+
+    def test_rejects_dry_run_hook_step_offset(self):
+        def corrupt(events):
+            case = next(e["testCase"] for e in events if "testCase" in e)
+            regular = next(s for s in case["testSteps"] if "pickleStepId" in s)
+            hook = next(s for s in case["testSteps"] if "hookId" in s)
+            for envelope in events:
+                for kind in ("testStepStarted", "testStepFinished"):
+                    if envelope.get(kind, {}).get("testStepId") == regular["id"]:
+                        envelope[kind]["testStepId"] = hook["id"]
+        with self.assertRaises((AssertionError, KeyError)):
+            verify(self.edited("hooks-dry-run", corrupt), self.expected["hooks-dry-run"])
 
     def test_rejects_dangling_step_reference(self):
         def corrupt(events):

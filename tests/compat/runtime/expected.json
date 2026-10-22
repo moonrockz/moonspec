@@ -206,7 +206,33 @@
         false
       ]
     ],
-    "parse_errors": 0
+    "parse_errors": 0,
+    "attempt_steps": {
+      "Tag retry": [
+        [
+          "FAILED"
+        ],
+        [
+          "PASSED"
+        ]
+      ],
+      "Global retry": [
+        [
+          "FAILED"
+        ],
+        [
+          "PASSED"
+        ]
+      ],
+      "Exhausted": [
+        [
+          "FAILED"
+        ],
+        [
+          "FAILED"
+        ]
+      ]
+    }
   },
   "tag-filter": {
     "source": "fixtures/filtering.feature",
@@ -606,7 +632,6 @@
     "attachments": 2,
     "external_attachments": 0,
     "dry_run": true,
-    "baseline_dry_run_hook_offset": true,
     "attachment_links": [
       [
         "BEFORE_TEST_RUN",

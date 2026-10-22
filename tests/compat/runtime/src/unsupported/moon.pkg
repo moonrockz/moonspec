@@ -1,0 +1,5 @@
+import {
+  "moonrockz/moonspec/async" @moonspec,
+}
+
+supported_targets = "wasm+wasm-gc+js+native"

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Reject failed cancelled skipped or missing required CI results"
+set -euo pipefail
+python3 -B tests/compat/runtime/ci_gate.py

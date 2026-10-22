@@ -1,5 +1,5 @@
 ///|
-struct CompatWorld {
+pub struct CompatWorld {
   mut counter : Int32
   attempts : Map[String, Int32]
   hook_log : Array[String]
@@ -7,7 +7,7 @@ struct CompatWorld {
 }
 
 ///|
-impl @moonspec.World for CompatWorld with fn configure(self, setup) {
+pub impl @moonspec.World for CompatWorld with fn configure(self, setup) {
   setup.given("pass", _ctx => ())
   setup.given("fail", fn(_ctx) raise { raise Failure("expected failure") })
   setup.given("pending", fn(_ctx) raise {
@@ -177,7 +177,7 @@ fn observation(
 }
 
 ///|
-async fn run_fixture(label : String, path : String) -> Unit {
+pub fn fixture(label : String, path : String) -> Fixture raise {
   let content = @fs.read_file_to_string(path)
   let messages = @format.MessagesFormatter::new()
   let sources = [@moonspec.FeatureSource::Text(path, content)]
@@ -204,30 +204,155 @@ async fn run_fixture(label : String, path : String) -> Unit {
   options.add_sink(messages)
   let attempts : Map[String, Int32] = Map([])
   let hook_log : Array[String] = []
-  let result = @moonspec.run(
-    () => CompatWorld::{
-      counter: 0,
-      attempts,
-      hook_log,
-      with_hooks: label.has_prefix("hooks"),
-    },
+  Fixture::{
     options,
-  )
+    attempts,
+    hook_log,
+    with_hooks: label.has_prefix("hooks"),
+    messages,
+  }
+}
+
+///|
+pub struct Fixture {
+  options : @moonspec.RunOptions
+  attempts : Map[String, Int32]
+  hook_log : Array[String]
+  with_hooks : Bool
+  messages : @format.MessagesFormatter
+}
+
+///|
+pub fn Fixture::world(self : Fixture) -> CompatWorld {
+  CompatWorld::{
+    counter: 0,
+    attempts: self.attempts,
+    hook_log: self.hook_log,
+    with_hooks: self.with_hooks,
+  }
+}
+
+///|
+pub fn Fixture::emit(
+  self : Fixture,
+  label : String,
+  result : @moonspec.RunResult,
+) -> Unit {
   println(
     "COMPAT:" +
-    observation(label, result, messages.output(), hook_log).stringify(),
+    observation(label, result, self.messages.output(), self.hook_log).stringify(),
   )
 }
 
 ///|
-async fn main {
-  run_fixture("passing", "fixtures/passing.feature")
-  run_fixture("outcomes", "fixtures/outcomes.feature")
-  run_fixture("retries-isolation", "fixtures/retries-isolation.feature")
-  run_fixture("tag-filter", "fixtures/filtering.feature")
-  run_fixture("name-filter", "fixtures/filtering.feature")
-  run_fixture("dry-run", "fixtures/outcomes.feature")
-  run_fixture("parse-error", "fixtures/invalid.feature")
-  run_fixture("hooks", "fixtures/hooks.feature")
-  run_fixture("hooks-dry-run", "fixtures/hooks.feature")
+pub fn fixtures() -> Array[(String, String)] {
+  [
+    ("passing", "fixtures/passing.feature"),
+    ("outcomes", "fixtures/outcomes.feature"),
+    ("retries-isolation", "fixtures/retries-isolation.feature"),
+    ("tag-filter", "fixtures/filtering.feature"),
+    ("name-filter", "fixtures/filtering.feature"),
+    ("dry-run", "fixtures/outcomes.feature"),
+    ("parse-error", "fixtures/invalid.feature"),
+    ("hooks", "fixtures/hooks.feature"),
+    ("hooks-dry-run", "fixtures/hooks.feature"),
+  ]
+}
+
+///|
+pub fn portable_options() -> @moonspec.RunOptions raise {
+  let content = "Feature: Portable\n  Scenario: Parsed\n    Given pass\n"
+  let document = @gherkin.parse(
+    @gherkin.Source::from_string(content, uri="unreadable/parsed.feature"),
+  )
+  guard document.feature is Some(feature) else {
+    fail("missing parsed feature")
+  }
+  @moonspec.RunOptions([
+    @moonspec.FeatureSource::Text(
+      "unreadable/text.feature", "Feature: Portable\n  Scenario: Text\n    Given pass\n",
+    ),
+    @moonspec.FeatureSource::Parsed("unreadable/parsed.feature", feature),
+  ])
+}
+
+///|
+pub fn portable_world() -> CompatWorld {
+  CompatWorld::{
+    counter: 0,
+    attempts: Map([]),
+    hook_log: [],
+    with_hooks: false,
+  }
+}
+
+///|
+pub fn verify_report(label : String, report : String) -> Unit raise {
+  let fragments = match label {
+    "outcomes" =>
+      [
+        "1 failed", "1 undefined", "1 pending", "Failed", "Undefined", "Pending",
+        "expected failure", "not implemented", "missing definition", "s.given", "fixtures/outcomes.feature:",
+      ]
+    "retries-isolation" =>
+      ["Exhausted", "expected failure", "fixtures/retries-isolation.feature:"]
+    "dry-run" =>
+      [
+        "Undefined", "missing definition", "s.given", "fixtures/outcomes.feature:",
+      ]
+    "parse-error" => ["fixtures/invalid.feature:1", "Feature:"]
+    "hooks" => ["Hook failure", "expected failure", "fixtures/hooks.feature:"]
+    _ => []
+  }
+  if fragments.is_empty() {
+    assert_eq(report, "")
+  } else {
+    for fragment in fragments {
+      assert_true(
+        report.contains(fragment),
+        msg=label + ": missing " + fragment + " in " + report,
+      )
+    }
+  }
+}
+
+///|
+pub extend CompatWorld with @moonspec.World::{configure}
+
+///|
+pub suberror ConfigureFailure {
+  ConfigureFailure
+}
+
+///|
+pub struct ConfigureWorld {
+  ordinal : Int32
+  fail_at : Int32
+}
+
+///|
+pub impl @moonspec.World for ConfigureWorld with fn configure(self, setup) {
+  if self.ordinal == self.fail_at {
+    raise ConfigureFailure
+  }
+  setup.given("fail", fn(_ctx) raise { raise Failure("retry") })
+}
+
+///|
+pub extend ConfigureWorld with @moonspec.World::{configure}
+
+///|
+pub fn configure_world(ordinal : Int32, fail_at : Int32) -> ConfigureWorld {
+  ConfigureWorld::{ ordinal, fail_at, }
+}
+
+///|
+pub fn configure_options() -> @moonspec.RunOptions {
+  let options = @moonspec.RunOptions([
+    @moonspec.FeatureSource::Text(
+      "configure.feature", "Feature: Configure\n  Scenario: Retry\n    Given fail\n",
+    ),
+  ])
+  options.retries(3)
+  options
 }

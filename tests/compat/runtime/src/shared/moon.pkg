@@ -1,9 +1,9 @@
 import {
-  "moonrockz/moonspec/async" @moonspec,
+  "moonrockz/moonspec",
   "moonrockz/moonspec/format",
   "moonrockz/moonspec/core",
   "moonbitlang/x/fs",
-  "moonbitlang/async",
+  "moonrockz/gherkin",
 }
 
-pkgtype(kind: "executable")
+supported_targets = "wasm+wasm-gc+js+native"

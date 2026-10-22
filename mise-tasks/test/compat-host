@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Execute Text/Parsed with denied filesystem and prove File host denial"
+set -euo pipefail
+mkdir -p tests/compat/runtime/_build
+python3 -B tests/compat/runtime/host.py

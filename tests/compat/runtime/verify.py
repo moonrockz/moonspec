@@ -63,7 +63,7 @@ def verify_envelopes(record, expected, envelopes):
     source_paths = expected.get("sources", [expected["source"]])
     assert set(sources) == set(source_paths), (label, "source URIs", list(sources))
     for uri, (_, source) in sources.items():
-        assert source["data"] == Path(uri).read_text(), (label, "original source", uri)
+        assert source["data"] == (Path(__file__).resolve().parent / uri).read_text(), (label, "original source", uri)
     for index, document in events("gherkinDocument"):
         reference(sources, document["uri"], index)
     pickles = definitions("pickle")
@@ -151,15 +151,16 @@ def verify_envelopes(record, expected, envelopes):
         regular = [step for step in planned if "pickleStepId" in step]
         count = len(regular) if expected.get("dry_run") else len(planned)
         assert sum(key[0] == identity for key in step_starts) == count, (label, "every planned step must emit events")
-    # The pre-split async engine offsets regular IDs when dry-run has case
-    # hooks. Coordinator assigned the fix to A; .5 must remove this exception.
-    if not expected.get("baseline_dry_run_hook_offset"):
-        for scenario in record["scenarios"]:
-            case = cases_by_name[scenario["name"]]
-            final = max(starts_by_case[case["id"]], key=lambda start: start["attempt"])
-            regular = [step for step in case["testSteps"] if "pickleStepId" in step]
-            statuses = [step_finishes[(final["id"], step["id"])][1]["testStepResult"]["status"] for step in regular]
-            assert statuses == [step["status"].upper() for step in scenario["steps"]], (label, "envelope/result step statuses")
+    for scenario in record["scenarios"]:
+        case = cases_by_name[scenario["name"]]
+        starts = sorted(starts_by_case[case["id"]], key=lambda start: start["attempt"])
+        regular = [step for step in case["testSteps"] if "pickleStepId" in step]
+        expected_attempts = expected.get("attempt_steps", {}).get(
+            scenario["name"], [[step["status"].upper() for step in scenario["steps"]]])
+        assert len(starts) == len(expected_attempts), (label, "attempt status coverage")
+        for start, wanted in zip(starts, expected_attempts):
+            statuses = [step_finishes[(start["id"], step["id"])][1]["testStepResult"]["status"] for step in regular]
+            assert statuses == wanted, (label, scenario["name"], start["attempt"], "envelope/result attempt step statuses", statuses)
 
     run_hook_finishes = {}
     for index, start in run_hook_starts.values():
