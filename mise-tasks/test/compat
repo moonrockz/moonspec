@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 #MISE description="Run all merge-required public runtime generated and example compatibility gates"
-#MISE depends=["test:compat-runtime", "test:compat-graph", "test:compat-host", "test:compat-generated", "examples:sync-wasm"]
+#MISE depends=["test:compat-runtime", "test:compat-graph", "test:compat-host", "test:compat-generated", "test:compat-cli-pin", "examples:sync-wasm"]
 set -euo pipefail
 printf '%s\n' 'All required compatibility gates succeeded.'
