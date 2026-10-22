@@ -174,7 +174,12 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
       cli~,
       test_kind~,
       execution~,
-    )
+    ) catch {
+      error => {
+        die(build_rule_error_message(error))
+        return
+      }
+    }
     println(snippet.trim_end(chars="\n"))
     return
   }
@@ -196,7 +201,12 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
     cli~,
     test_kind~,
     execution~,
-  )
+  ) catch {
+    error => {
+      die(build_rule_error_message(error))
+      return
+    }
+  }
   if added == 0 {
     println("\{pkg_path} is up to date")
     return
@@ -383,4 +393,17 @@ fn cmd_check(value : @argparse.Matches) -> Unit {
   if has_errors {
     @sys.exit(1)
   }
+}
+
+///|
+fn build_rule_error_message(error : @codegen.BuildRuleError) -> String {
+  let reason = match error {
+    @codegen.UnsupportedExecution(version~) =>
+      "registry CLI pin " + version + " does not support sync execution"
+    @codegen.UnsupportedVersion(version~) =>
+      "registry CLI pin " + version + " has unknown execution support"
+  }
+  "Error: " +
+  reason +
+  ". Build the current checkout CLI with `mise run build:cli`, add its `_build/bin` to PATH, and rerun without --moonx."
 }

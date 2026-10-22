@@ -199,7 +199,19 @@ The unchanged async default emits `async test`, `run_or_fail` and
 `FeatureSource::File`. Use the `/async` facade and the async test-driver import
 for that output. Build-rule commands retain the selected execution; rerun
 `gen build --apply` after changing the config selection to update existing
-rules. Commit generated source, since dependency builds do not run those rules.
+rules. In this checkout, `--moonx` pins published `0.11.0`, which supports
+async generation only. Its rules omit `--execution`; requesting sync fails
+before writes and directs you to the locally built CLI without `--moonx`.
+Regeneration updates both the canonical rule's CLI prefix and its execution
+selection, preserving unrelated options and rules. Commit generated source,
+since dependency builds do not run those rules.
+
+For direct codegen API callers, `render_build_rules` now raises the typed
+`BuildRuleError`. `UnsupportedExecution(version~)` rejects sync with a legacy
+stable pin below `0.12.0`; `UnsupportedVersion(version~)` rejects unknown or
+prerelease pins in either mode. Stable numeric pins from `0.12.0` use the
+explicit execution selection contract. No newer registry release is required
+to use this checkout's locally built CLI.
 
 ### Host I/O
 

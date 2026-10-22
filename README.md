@@ -763,6 +763,14 @@ The examples below use `moonspec`. With moonx, replace `moonspec` with
 `moonx moonrockz/moonspec/cmd/moonspec@latest`. In this repository,
 `mise run build:cli` builds the CLI from source as `_build/bin/moonspec`.
 
+This checkout still pins the published `0.11.0` CLI with `--moonx`. That CLI
+supports async generation only, so its rules omit `--execution`. Sync selection
+with that pin fails before writing files. For sync, build this checkout with
+`mise run build:cli`, add `_build/bin` to `PATH`, and run without `--moonx`.
+The build-rule API accepts stable numeric pins only. Its explicit execution
+selection contract starts at `0.12.0`; this does not imply that version is
+published. Unknown and prerelease pins fail for both execution modes.
+
 `moonrockz/moonspec/cmd/main` is a deprecated alias. `moon install` names the
 binary after the package directory, so it installs as `main`.
 
@@ -830,7 +838,7 @@ moonspec gen build features/*.feature -w CalcWorld --apply --moonx
 - `--apply`: write to `<package>/moon.pkg` instead of printing
 - `--execution`: `async` (default) or `sync`; CLI overrides merged config
 - `--test-kind`: `wbtest` (default) or `test`; see [`gen tests`](#gen-tests----generate-test-files)
-- `--moonx`: the rule runs `moonx moonrockz/moonspec/cmd/moonspec@<this CLI's version>` instead of `moonspec`
+- `--moonx`: the rule pins this CLI version through the registry. Published `0.11.0` supports async only; use the locally built CLI without this option for sync.
 
 `--apply` adds missing entries and updates an existing rule when the selected
 execution changes. Repeating it with the same selection is idempotent. It also writes test

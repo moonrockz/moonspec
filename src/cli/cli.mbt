@@ -119,7 +119,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.FlagArg(
         "moonx",
         long="moonx",
-        about="Make the rule run this CLI version through moonx instead of an installed `moonspec`",
+        about="Pin the registry CLI through moonx; legacy pins support async only (use the local CLI for sync)",
       ),
     ],
     about="Generate moon.pkg rule/dev_build entries that run `gen tests` before each build",

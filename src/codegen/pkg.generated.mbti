@@ -15,9 +15,14 @@ pub fn generate_test_file(String, String, config? : CodegenConfig) -> String
 
 pub fn relative_to_package(String, String) -> String
 
-pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String, cli? : CliCommand, test_kind? : @config.TestKind, execution? : @config.ExecutionMode) -> (String, Int)
+pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String, cli? : CliCommand, test_kind? : @config.TestKind, execution? : @config.ExecutionMode) -> (String, Int) raise BuildRuleError
 
 // Errors
+pub suberror BuildRuleError {
+  UnsupportedExecution(version~ : String)
+  UnsupportedVersion(version~ : String)
+} derive(@debug.Debug)
+pub fn BuildRuleError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
 pub(all) enum CliCommand {
