@@ -7,7 +7,17 @@ import {
 }
 
 // Values
-pub fn options() -> @runner.RunOptions
+pub fn hook_events(@runner.RunOptions) -> Array[String] raise
+
+pub fn options(Array[@runner.FeatureSource]) -> @runner.RunOptions
+
+pub fn parallel_options(Array[@runner.FeatureSource]) -> @runner.RunOptions
+
+pub fn sources() -> Array[@runner.FeatureSource]
+
+pub fn verify_hooks(@runner.RunOptions) -> Unit raise
+
+pub fn verify_result(@runner.RunResult) -> Unit raise
 
 pub fn world() -> SharedWorld
 
