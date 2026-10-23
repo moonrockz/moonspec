@@ -1,0 +1,35 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moonspec-compat/shared-definition/shared"
+
+import {
+  "moonrockz/moonspec/core",
+  "moonrockz/moonspec/runner",
+}
+
+// Values
+pub fn hook_events(@runner.RunOptions) -> Array[String] raise
+
+pub fn options(Array[@runner.FeatureSource]) -> @runner.RunOptions
+
+pub fn parallel_options(Array[@runner.FeatureSource]) -> @runner.RunOptions
+
+pub fn sources() -> Array[@runner.FeatureSource]
+
+pub fn verify_hooks(@runner.RunOptions) -> Unit raise
+
+pub fn verify_result(@runner.RunResult) -> Unit raise
+
+pub fn world() -> SharedWorld
+
+// Errors
+
+// Types and methods
+pub struct SharedWorld {
+  // private fields
+}
+pub fn SharedWorld::configure(Self, @core.Setup) -> Unit raise
+pub impl @core.World for SharedWorld
+
+// Type aliases
+
+// Traits

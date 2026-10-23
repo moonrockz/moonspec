@@ -13,15 +13,63 @@ properties:
       Must match a MoonBit struct that implements the World trait.
 
   execution:
-    type: string
-    enum: ["async", "sync"]
     default: "async"
     description: >
-      Execution mode for generated tests, independent of mode and test_kind.
-      "async" emits async tests using file sources. "sync" emits ordinary
-      tests with the complete feature source embedded for execution without
-      reading feature files at runtime. The CLI --execution option overrides
-      configuration.
+      Scalar async/sync preserves legacy generation. An object policy emits shared
+      target packages. All four targets resolve explicitly; async wasm-gc is
+      unsupported. Nearer config replaces the whole value. CLI --execution selects
+      a scalar override while retaining shared factories when configured.
+      Partial suite configs may inherit shared; effective merged object policies
+      require shared factories during planning.
+    oneOf:
+      - type: string
+        enum: ["async", "sync"]
+      - type: object
+        required: ["default"]
+        additionalProperties: false
+        properties:
+          default:
+            type: string
+            enum: ["async", "sync"]
+          targets:
+            type: object
+            additionalProperties: false
+            properties:
+              wasm:
+                enum: ["async", "sync"]
+              wasm-gc:
+                const: "sync"
+              js:
+                enum: ["async", "sync"]
+              native:
+                enum: ["async", "sync"]
+        allOf:
+          - if:
+              properties:
+                default:
+                  const: "async"
+            then:
+              required: ["targets"]
+              properties:
+                targets:
+                  required: ["wasm-gc"]
+
+  shared:
+    type: object
+    required: ["package", "world_factory", "options_factory"]
+    additionalProperties: false
+    description: >
+      Portable definitions package exposing a public World implementation and world
+      factory, plus options_factory(Array[FeatureSource]) returning fresh RunOptions
+      and sinks on each call. Shared packages always use public visibility.
+    properties:
+      package:
+        type: string
+        pattern: "^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*$"
+      world_factory:
+        $ref: "#/$defs/factoryIdentifier"
+      options_factory:
+        $ref: "#/$defs/factoryIdentifier"
 
   test_kind:
     type: string
@@ -122,3 +170,10 @@ properties:
         items:
           type: string
         examples: [["lib/*", "vendor/*"]]
+
+$defs:
+  factoryIdentifier:
+    type: string
+    pattern: "^[A-Za-z_][A-Za-z0-9_]*$"
+    not:
+      enum: ["_", "abstract", "alias", "and", "as", "assert", "async", "await", "break", "catch", "const", "continue", "declare", "defer", "derive", "do", "dyn", "else", "enum", "enumview", "errdefer", "extend", "extenum", "extern", "false", "final", "fn", "for", "guard", "if", "impl", "import", "in", "is", "let", "letrec", "lexmatch", "lexscan", "local", "loop", "macro", "match", "method", "module", "move", "mut", "nobreak", "nocancel", "noraise", "override", "package", "priv", "proof_assert", "proof_let", "pub", "raise", "readonly", "ref", "return", "static", "struct", "suberror", "super", "test", "throw", "trait", "true", "try", "type", "typeof", "unsafe", "use", "using", "var", "virtual", "where", "while", "with", "yield"]

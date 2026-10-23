@@ -8,7 +8,21 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
   let files = positional_values(value, "files")
   let output_dir : String? = option_value(value, "output-dir")
   let config_path : String? = option_value(value, "config")
-  let moonspec_config = load_config(config_path)
+  let moonspec_config = load_config_for(config_path, output_dir.unwrap_or("."))
+  if uses_shared(moonspec_config, option_value(value, "execution")) {
+    cmd_gen_shared(
+      value,
+      files,
+      output_dir.unwrap_or("."),
+      moonspec_config,
+      apply=!value.flags.get_or_default("preview", false),
+    )
+    return
+  }
+  if value.flags.get_or_default("preview", false) {
+    die("Error: --preview currently supports shared package generation only")
+    return
+  }
   // Resolve world: CLI --world overrides config
   let world = match option_value(value, "world") {
     Some(v) => v
@@ -36,7 +50,11 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
   let cli_mode : String? = option_value(value, "mode")
   let execution = match
     resolve_execution(option_value(value, "execution"), moonspec_config) {
-    Ok(mode) => mode
+    Ok(Scalar(mode)) => mode
+    Ok(Targeted(..)) => {
+      die("Error: shared package generation requires a validated plan")
+      return
+    }
     Err(message) => {
       die(message)
       return
@@ -96,7 +114,8 @@ fn write_test_file(
     }
   }
   let config = @codegen.CodegenConfig::{
-    execution,
+    execution: Scalar(execution),
+    shared: None,
     mode,
     world,
     skip_tags: moonspec_config.skip_tags,
@@ -109,7 +128,12 @@ fn write_test_file(
       return false
     }
   }
-  let test_code = @codegen.generate_test_file(content, file, config~)
+  let test_code = @codegen.generate_test_file(content, file, config~) catch {
+    _ => {
+      die("Error: use shared generation plan")
+      return false
+    }
+  }
   ensure_parent_dir(output_path)
   @fs.write_string_to_file(output_path, test_code) catch {
     @fs.IOError(msg) => {
@@ -124,7 +148,32 @@ fn write_test_file(
 fn cmd_gen_build(value : @argparse.Matches) -> Unit {
   let files = positional_values(value, "files")
   let package_dir = option_value(value, "package").unwrap_or("src")
-  let moonspec_config = load_config(option_value(value, "config"))
+  let moonspec_config = load_config_for(
+    option_value(value, "config"),
+    package_dir,
+  )
+  if uses_shared(moonspec_config, option_value(value, "execution")) {
+    cmd_gen_shared(
+      value,
+      files,
+      package_dir,
+      moonspec_config,
+      apply=value.flags.get_or_default("apply", false),
+      build=true,
+    )
+    return
+  }
+  if !positional_values(value, "refresh-output").is_empty() {
+    die("Error: --refresh-output requires shared package generation")
+    return
+  }
+  if option_value(value, "mode") is Some(_) ||
+    value.flags.get_or_default("no-color", false) {
+    die(
+      "Error: --mode and --no-color build options require shared package generation",
+    )
+    return
+  }
   let world = match option_value(value, "world") {
     Some(v) => v
     None => moonspec_config.world.unwrap_or("")
@@ -146,7 +195,11 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
   // needs no installed `moonspec` binary.
   let execution = match
     resolve_execution(option_value(value, "execution"), moonspec_config) {
-    Ok(mode) => mode
+    Ok(Scalar(mode)) => mode
+    Ok(Targeted(..)) => {
+      die("Error: shared package generation requires a validated plan")
+      return
+    }
     Err(message) => {
       die(message)
       return

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Execute shared-definition sync and async together on every supported host"
+set -euo pipefail
+python3 -B tests/compat/shared-definition/probe.py --shared-only "$@"

@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+#MISE description="Verify compiler package-selection and shared-definition contract"
+set -euo pipefail
+python3 -B tests/compat/shared-definition/probe.py

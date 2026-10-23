@@ -39,7 +39,7 @@ A virtual package cannot change a function's effect from sync to async, so
 no virtual packages or implementation overrides are required.
 
 `run_sync` rejects `parallel(true)` with
-`SyncExecutionError::ParallelNotSupported` before factories, hooks or events.
+`SyncExecutionError::ParallelNotSupported` before World factories, hooks or events.
 `max_concurrent` applies only to async parallel execution. Both execution modes
 share failed-only retries and fresh Worlds per attempt. Dry-run suppresses
 step handlers and case/step hooks, but before/after TestRun hooks still execute.
@@ -63,6 +63,25 @@ Run the real generated example from this repository root:
 mise run examples:sync-wasm -- wasm-gc
 mise run examples:sync-wasm  # all four sync targets
 ```
+
+For one shared World, steps, hooks and options factory, use the unreleased
+[target-policy guide](docs/guide/testing-strategies.md#one-setup-across-targets) and
+[multi-target example](examples/multi-target/). Scalar execution still defaults
+to async. Object policy opts into separate common/sync/async packages and
+requires shared public factories in your own module; World fields stay private.
+Nearer config replaces the whole policy, and CLI `--execution` wins. Fresh
+options and stateful sinks are required on every call. Sync parallel mode
+raises a typed error before World factories, hooks or events.
+All policy `--moonx` rules reject until a
+supporting registry release is verified; use the local CLI on `PATH`.
+
+```sh
+mise run examples:multi-target
+```
+
+The example verifies sync on four targets, async on three, both modes together
+on native, safe regeneration and unchanged manual generation without writes.
+The guide records pre-1.0 constructor and `GenerationError` migration.
 
 ## Installation
 

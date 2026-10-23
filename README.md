@@ -47,7 +47,7 @@ A virtual package cannot change a function's effect from sync to async, so
 no virtual packages or implementation overrides are required.
 
 `run_sync` rejects `parallel(true)` with
-`SyncExecutionError::ParallelNotSupported` before factories, hooks or events.
+`SyncExecutionError::ParallelNotSupported` before World factories, hooks or events.
 `max_concurrent` applies only to async parallel execution. Both execution modes
 share failed-only retries and fresh Worlds per attempt. Dry-run suppresses
 step handlers and case/step hooks, but before/after TestRun hooks still execute.
@@ -771,6 +771,10 @@ The build-rule API accepts stable numeric pins only. Its explicit execution
 selection contract starts at `0.12.0`; this does not imply that version is
 published. Unknown and prerelease pins fail for both execution modes.
 
+Target-policy capability is separate from that scalar version threshold.
+All shared-policy `--moonx` rules reject until an actual supporting release
+is verified. Use the local CLI and runtime for the unreleased workflow below.
+
 `moonrockz/moonspec/cmd/main` is a deprecated alias. `moon install` names the
 binary after the package directory, so it installs as `main`.
 
@@ -784,6 +788,40 @@ moon test                                                             # run the 
 
 See [Getting Started: Codegen Mode](docs/guide/getting-started.md#codegen-mode)
 for the full walkthrough.
+
+### One setup across targets
+
+Define World, steps, hooks and settings once in a portable package of your own
+module. The new opt-in policy emits common source plus separate target launchers:
+
+```json5
+{
+  execution: { default: "async", targets: { "wasm-gc": "sync" } },
+  shared: {
+    package: "example/multi-target/definitions",
+    world_factory: "world",
+    options_factory: "options",
+  },
+}
+```
+
+Scalar `execution` still defaults to async. The object resolves every target
+and rejects async on Wasm-GC. A nearer config replaces the whole policy; CLI
+`--execution sync|async` overrides it while inheriting shared factories. Suites
+can run sync and async together on capable hosts. Export the World, World impl
+and factories; keep fields private, and create fresh options and stateful sinks
+on every call. Legacy same-package whitebox generation still supports a
+private World. Sync rejects explicit parallel settings before World factories,
+hooks or events.
+
+Run `mise run examples:multi-target` for the actual local-CLI example across all
+declared targets. Read the [target-policy guide](docs/guide/testing-strategies.md#one-setup-across-targets) for
+manifest ownership, safe regeneration, explicit structural refresh, `moon fmt`
+manifest migration and pre-1.0 source API changes. Generated `moonspec_gen`
+files belong to the generator. Feature bodies and existing grouping config
+regenerate through Moon; structural changes require `gen build --apply`.
+Unchanged manual generation performs no writes. The selected Wasm-GC graph
+excludes async; standard MoonBit host ABI and file/output I/O limits still apply.
 
 ### `gen steps` -- Generate the World Impl
 
@@ -1353,6 +1391,7 @@ host limits and migration, and [sync-wasm](examples/sync-wasm/) for a generated 
 mise run test:unit                 # project tests on JavaScript
 mise run test:compat-generated     # actual CLI-generated consumer tests
 mise run examples:sync-wasm        # generated sync example on four targets
+mise run examples:multi-target     # one shared setup, target policy and mixed native suites
 mise run examples:test             # shared example workspace on JavaScript
 mise run site:check                # site tests, both builds and link checks
 mise run check:interfaces          # moon info, then moon fmt

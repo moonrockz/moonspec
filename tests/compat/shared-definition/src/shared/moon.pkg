@@ -1,0 +1,7 @@
+import {
+  "moonbitlang/core/json",
+  "moonrockz/moonspec",
+  "moonrockz/moonspec/format",
+}
+
+supported_targets = "wasm+wasm-gc+js+native"

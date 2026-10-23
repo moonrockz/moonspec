@@ -11,7 +11,9 @@ pub fn build_rules_test_filename(String, kind? : @config.TestKind) -> String
 
 pub fn feature_to_test_filename(String, kind? : @config.TestKind) -> String
 
-pub fn generate_test_file(String, String, config? : CodegenConfig) -> String
+pub fn generate_test_file(String, String, config? : CodegenConfig) -> String raise GenerationError
+
+pub fn plan_shared_generation(Array[FeatureInput], module_name~ : String, package_path~ : String, config~ : CodegenConfig, test_kind? : @config.TestKind) -> GenerationPlan raise PlanError
 
 pub fn relative_to_package(String, String) -> String
 
@@ -24,6 +26,16 @@ pub suberror BuildRuleError {
 } derive(@debug.Debug)
 pub fn BuildRuleError::to_repr(Self) -> @debug.Repr
 
+pub suberror GenerationError {
+  SharedGenerationRequired
+} derive(@debug.Debug)
+pub fn GenerationError::to_repr(Self) -> @debug.Repr
+
+pub(all) suberror PlanError {
+  InvalidPlan(String)
+} derive(@debug.Debug)
+pub fn PlanError::to_repr(Self) -> @debug.Repr
+
 // Types and methods
 pub(all) enum CliCommand {
   Installed
@@ -35,7 +47,8 @@ pub fn CliCommand::prefix(Self) -> String
 pub fn CliCommand::to_repr(Self) -> @debug.Repr
 
 pub(all) struct CodegenConfig {
-  execution : @config.ExecutionMode
+  execution : @config.ExecutionPolicy
+  shared : @config.SharedConfig?
   mode : CodegenMode
   world : String
   skip_tags : Array[String]?
@@ -55,6 +68,22 @@ pub(all) enum CodegenMode {
 pub fn CodegenMode::equal(Self, Self) -> Bool
 pub fn CodegenMode::not_equal(Self, Self) -> Bool
 pub fn CodegenMode::to_repr(Self) -> @debug.Repr
+
+pub(all) struct FeatureInput {
+  uri : String
+  content : String
+  mode : CodegenMode
+}
+
+pub struct GenerationPlan {
+  // private fields
+}
+pub fn GenerationPlan::files(Self) -> Array[PlannedFile]
+
+pub(all) struct PlannedFile {
+  path : String
+  content : String
+}
 
 // Type aliases
 

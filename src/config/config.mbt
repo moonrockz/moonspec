@@ -107,7 +107,8 @@ pub(all) struct MoonspecConfig {
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
   no_color : Bool?
-  execution : ExecutionMode?
+  execution : ExecutionPolicy?
+  shared : SharedConfig?
   test_kind : TestKind?
 } derive(Debug, Eq)
 
@@ -127,6 +128,7 @@ pub fn MoonspecConfig::empty() -> MoonspecConfig {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
 }
@@ -143,7 +145,8 @@ pub fn MoonspecConfig::from_json5(
   let mut skip_tags : Array[String]? = None
   let mut formatters : Array[FormatterConfig]? = None
   let mut no_color : Bool? = None
-  let mut execution : ExecutionMode? = None
+  let mut execution : ExecutionPolicy? = None
+  let mut shared : SharedConfig? = None
   let mut test_kind : TestKind? = None
   match json {
     Object(obj) => {
@@ -172,16 +175,11 @@ pub fn MoonspecConfig::from_json5(
       }
       match obj.get("execution") {
         None => ()
-        Some(String(s)) =>
-          match ExecutionMode::parse(s) {
-            Some(mode) => execution = Some(mode)
-            None =>
-              raise InvalidExecution(
-                "execution must be \"async\" or \"sync\", got \"\{s}\"",
-              )
-          }
-        Some(_) =>
-          raise InvalidExecution("execution must be \"async\" or \"sync\"")
+        Some(value) => execution = Some(parse_execution(value))
+      }
+      match obj.get("shared") {
+        None => ()
+        Some(value) => shared = Some(parse_shared(value))
       }
       match obj.get("test_kind") {
         Some(String(s)) => test_kind = TestKind::parse(s)
@@ -258,7 +256,17 @@ pub fn MoonspecConfig::from_json5(
     }
     _ => ()
   }
-  { world, mode, steps, skip_tags, formatters, no_color, test_kind, execution, }
+  {
+    world,
+    mode,
+    steps,
+    skip_tags,
+    formatters,
+    no_color,
+    test_kind,
+    execution,
+    shared,
+  }
 }
 
 ///|
@@ -298,6 +306,10 @@ pub fn MoonspecConfig::merge(
     execution: match override_.execution {
       Some(_) => override_.execution
       None => self.execution
+    },
+    shared: match override_.shared {
+      Some(_) => override_.shared
+      None => self.shared
     },
     test_kind: match override_.test_kind {
       Some(_) => override_.test_kind

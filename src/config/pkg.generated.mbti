@@ -26,6 +26,15 @@ pub fn ExecutionMode::not_equal(Self, Self) -> Bool
 pub fn ExecutionMode::parse(String) -> Self?
 pub fn ExecutionMode::to_repr(Self) -> @debug.Repr
 
+pub(all) enum ExecutionPolicy {
+  Scalar(ExecutionMode)
+  Targeted(default~ : ExecutionMode, targets~ : Map[Target, ExecutionMode])
+} derive(Eq, @debug.Debug)
+pub fn ExecutionPolicy::equal(Self, Self) -> Bool
+pub fn ExecutionPolicy::not_equal(Self, Self) -> Bool
+pub fn ExecutionPolicy::resolve(Self, Target) -> ExecutionMode
+pub fn ExecutionPolicy::to_repr(Self) -> @debug.Repr
+
 pub(all) struct FormatterConfig {
   type_ : String
   output : String
@@ -50,7 +59,8 @@ pub(all) struct MoonspecConfig {
   skip_tags : Array[String]?
   formatters : Array[FormatterConfig]?
   no_color : Bool?
-  execution : ExecutionMode?
+  execution : ExecutionPolicy?
+  shared : SharedConfig?
   test_kind : TestKind?
 } derive(Eq, @debug.Debug)
 pub fn MoonspecConfig::empty() -> Self
@@ -61,6 +71,16 @@ pub fn MoonspecConfig::not_equal(Self, Self) -> Bool
 pub fn MoonspecConfig::resolve_mode(Self, String) -> String
 pub fn MoonspecConfig::to_repr(Self) -> @debug.Repr
 
+pub(all) struct SharedConfig {
+  package_path : String
+  world_factory : String
+  options_factory : String
+} derive(Eq, @debug.Debug)
+pub fn SharedConfig::equal(Self, Self) -> Bool
+pub fn SharedConfig::not_equal(Self, Self) -> Bool
+pub fn SharedConfig::to_repr(Self) -> @debug.Repr
+pub fn SharedConfig::validate(Self) -> Unit raise ConfigError
+
 pub(all) struct StepsConfig {
   output : String?
   exclude : Array[String]?
@@ -68,6 +88,20 @@ pub(all) struct StepsConfig {
 pub fn StepsConfig::equal(Self, Self) -> Bool
 pub fn StepsConfig::not_equal(Self, Self) -> Bool
 pub fn StepsConfig::to_repr(Self) -> @debug.Repr
+
+pub(all) enum Target {
+  Wasm
+  WasmGc
+  Js
+  Native
+} derive(Eq, Hash, @debug.Debug)
+pub fn Target::equal(Self, Self) -> Bool
+pub fn Target::hash(Self) -> Int
+pub fn Target::hash_combine(Self, Hasher) -> Unit
+pub fn Target::name(Self) -> String
+pub fn Target::not_equal(Self, Self) -> Bool
+pub fn Target::parse(String) -> Self?
+pub fn Target::to_repr(Self) -> @debug.Repr
 
 pub(all) enum TestKind {
   WhiteBox

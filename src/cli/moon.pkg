@@ -1,5 +1,8 @@
 import {
+  "moonbitlang/core/json",
   "moonrockz/moonspec/codegen",
+  "moonbitlang/moon_config",
+  "moonbitlang/core/env",
   "moonrockz/moonspec/config",
   "moonrockz/moonspec/scanner",
   "moonrockz/gherkin",
@@ -8,6 +11,6 @@ import {
   "moonbitlang/x/sys",
 }
 
-import {
-  "moonbitlang/core/env",
-} for "wbtest"
+options(
+  "native-stub": [ "shared_lock.c" ],
+)

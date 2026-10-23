@@ -230,17 +230,17 @@ fn resolve_no_color(cli_flag : Bool, config : @config.MoonspecConfig) -> Bool {
 fn resolve_execution(
   cli_value : String?,
   config : @config.MoonspecConfig,
-) -> Result[@config.ExecutionMode, String] {
+) -> Result[@config.ExecutionPolicy, String] {
   match cli_value {
     Some(value) =>
       match @config.ExecutionMode::parse(value) {
-        Some(mode) => Ok(mode)
+        Some(mode) => Ok(Scalar(mode))
         None =>
           Err(
             "Error: --execution must be \"async\" or \"sync\", got \"\{value}\"",
           )
       }
-    None => Ok(config.execution.unwrap_or(Async))
+    None => Ok(config.execution.unwrap_or(Scalar(Async)))
   }
 }
 

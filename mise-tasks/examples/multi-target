@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Generate and execute the shared multi-target example"
+#MISE depends=["build:cli"]
+set -euo pipefail
+python3 -B examples/multi-target/verify.py "$@"

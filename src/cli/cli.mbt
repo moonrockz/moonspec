@@ -24,7 +24,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "world",
         short='w',
-        about="World type name (e.g. CalcWorld)",
+        about="World type name for legacy generation; shared factories need no --world",
       ),
       @argparse.OptionArg(
         "mode",
@@ -39,7 +39,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "execution",
         long="execution",
-        about="Test execution: async (default) or sync (embeds feature source)",
+        about="Override execution policy with scalar async or sync; object policies emit shared target packages",
       ),
       @argparse.OptionArg(
         "test-kind",
@@ -48,6 +48,11 @@ fn build_parser() -> @argparse.Command {
       ),
     ],
     flags=[
+      @argparse.FlagArg(
+        "preview",
+        long="preview",
+        about="Print the validated shared package output plan without writing files",
+      ),
       @argparse.FlagArg(
         "no-color",
         long="no-color",
@@ -85,6 +90,17 @@ fn build_parser() -> @argparse.Command {
     ],
     options=[
       @argparse.OptionArg(
+        "refresh-output",
+        long="refresh-output",
+        action=Append,
+        about="Build-rule refresh of one planned generated source; repeat for multiple outputs",
+      ),
+      @argparse.OptionArg(
+        "mode",
+        short='m',
+        about="Shared package grouping: per-scenario (default) or per-feature",
+      ),
+      @argparse.OptionArg(
         "package",
         short='p',
         about="Package directory that gets the tests (default: src)",
@@ -92,7 +108,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "world",
         short='w',
-        about="World type name (e.g. CalcWorld)",
+        about="World type name for legacy generation; shared factories need no --world",
       ),
       @argparse.OptionArg(
         "config",
@@ -102,7 +118,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "execution",
         long="execution",
-        about="Test execution: async (default) or sync (embeds feature source)",
+        about="Override execution policy with scalar async or sync; object policies emit shared target packages",
       ),
       @argparse.OptionArg(
         "test-kind",
@@ -112,9 +128,14 @@ fn build_parser() -> @argparse.Command {
     ],
     flags=[
       @argparse.FlagArg(
+        "no-color",
+        long="no-color",
+        about="Generate shared failure reports without ANSI colors",
+      ),
+      @argparse.FlagArg(
         "apply",
         long="apply",
-        about="Write the missing entries to <package>/moon.pkg instead of printing them",
+        about="Apply validated shared output plan, or legacy entries to <package>/moon.pkg",
       ),
       @argparse.FlagArg(
         "moonx",

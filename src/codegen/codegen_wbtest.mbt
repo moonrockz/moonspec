@@ -90,7 +90,8 @@ test "simple_hash produces consistent output" {
 test "per-scenario mode generates runner call with world" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n    When they log in\n    Then they see the dashboard\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -111,7 +112,8 @@ test "per-scenario mode generates runner call with world" {
 test "per-feature mode generates file-based runner call" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerFeature,
     world: "MyWorld",
     skip_tags: None,
@@ -132,7 +134,8 @@ test "per-feature mode generates file-based runner call" {
 test "per-scenario mode uses file source with scenario_name" {
   let content = "Feature: Auth\n\n  Background:\n    Given a logged in user\n\n  Scenario: View profile\n    When I visit my profile\n    Then I see my name\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "AuthWorld",
     skip_tags: None,
@@ -149,7 +152,8 @@ test "per-scenario mode uses file source with scenario_name" {
 test "per-scenario mode expands scenario outline" {
   let content = "Feature: Math\n\n  Scenario Outline: Add numbers\n    Given <a> and <b>\n    Then result is <sum>\n\n    Examples:\n      | a | b | sum |\n      | 1 | 2 | 3   |\n      | 4 | 5 | 9   |\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MathWorld",
     skip_tags: None,
@@ -201,7 +205,8 @@ test "config from_json5 defaults to per-scenario" {
 test "per-scenario mode omits skip_tags when None" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -217,7 +222,8 @@ test "per-scenario mode omits skip_tags when None" {
 test "per-scenario mode emits skip_tags when configured" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: Some(["@skip", "@wip"]),
@@ -232,7 +238,8 @@ test "per-scenario mode emits skip_tags when configured" {
 test "per-feature mode emits skip_tags when configured" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerFeature,
     world: "MyWorld",
     skip_tags: Some(["@ignore"]),
@@ -247,7 +254,8 @@ test "per-feature mode emits skip_tags when configured" {
 test "skip_tags not emitted for stub tests" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "",
     skip_tags: Some(["@skip"]),
@@ -263,7 +271,8 @@ test "skip_tags not emitted for stub tests" {
 test "empty skip_tags array emits empty array call" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: Some([]),
@@ -278,7 +287,8 @@ test "empty skip_tags array emits empty array call" {
 test "codegen emits default pretty formatter when formatters is None" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -297,7 +307,8 @@ test "codegen emits default pretty formatter when formatters is None" {
 test "codegen emits add_formatter for pretty on stdout" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -322,7 +333,8 @@ test "codegen emits add_formatter for pretty on stdout" {
 test "codegen emits add_formatter for junit to file" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -347,7 +359,8 @@ test "codegen emits add_formatter for junit to file" {
 test "codegen emits add_formatter with no_color for pretty" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -372,7 +385,8 @@ test "codegen emits add_formatter with no_color for pretty" {
 test "codegen emits no formatter lines for empty formatters array" {
   let content = "Feature: Login\n\n  Scenario: Valid credentials\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "MyWorld",
     skip_tags: None,
@@ -386,7 +400,8 @@ test "codegen emits no formatter lines for empty formatters array" {
 ///|
 fn skip_config(mode : CodegenMode, skip_tags : Array[String]?) -> CodegenConfig {
   CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode,
     world: "MyWorld",
     skip_tags,
@@ -519,7 +534,8 @@ test "per-feature mode emits #skip only for a feature-level skip tag" {
 test "stub tests emit no #skip" {
   let content = "Feature: Login\n\n  @skip\n  Scenario: A\n    Given a user\n"
   let config = CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode: PerScenario,
     world: "",
     skip_tags: None,
@@ -536,7 +552,8 @@ fn no_color_config(
   formatters : Array[@config.FormatterConfig]?,
 ) -> CodegenConfig {
   CodegenConfig::{
-    execution: Async,
+    execution: Scalar(Async),
+    shared: None,
     mode,
     world: "MyWorld",
     skip_tags: None,
@@ -608,9 +625,12 @@ test "generate_test_file gives the same output with or without a leading ./" {
 
 ///|
 test "codegen config parses sync execution with async as the default" {
-  assert_eq(CodegenConfig::default().execution, Async)
-  assert_eq(CodegenConfig::from_json5("{}").execution, Async)
-  assert_eq(CodegenConfig::from_json5("{ execution: 'sync' }").execution, Sync)
+  assert_eq(CodegenConfig::default().execution, Scalar(Async))
+  assert_eq(CodegenConfig::from_json5("{}").execution, Scalar(Async))
+  assert_eq(
+    CodegenConfig::from_json5("{ execution: 'sync' }").execution,
+    Scalar(Sync),
+  )
 }
 
 ///|
@@ -636,7 +656,8 @@ test "sync per-feature emits ordinary test and embeds the original source URI an
     ..CodegenConfig::default(),
     mode: PerFeature,
     world: "MyWorld",
-    execution: Sync,
+    execution: Scalar(Sync),
+    shared: None,
   }
   let output = generate_test_file(content, "./features/login.feature", config~)
   assert_true(output.contains("test \"Feature: Login\" {"))
@@ -657,7 +678,8 @@ test "sync per-scenario preserves outline row filtering with the full source" {
   let config = CodegenConfig::{
     ..CodegenConfig::default(),
     world: "MyWorld",
-    execution: Sync,
+    execution: Scalar(Sync),
+    shared: None,
   }
   let output = generate_test_file(content, "features/counts.feature", config~)
   assert_false(output.contains("async test"))
@@ -680,7 +702,8 @@ test "sync Markdown embeds prose and escaped source with formatter and skip sett
       ..CodegenConfig::default(),
       mode,
       world: "MyWorld",
-      execution: Sync,
+      execution: Scalar(Sync),
+      shared: None,
       no_color: true,
     }
     let output = generate_test_file(
@@ -710,7 +733,8 @@ test "sync preserves configured formatter destinations and custom skip tags" {
       ..CodegenConfig::default(),
       mode,
       world: "MyWorld",
-      execution: Sync,
+      execution: Scalar(Sync),
+      shared: None,
       skip_tags: Some(["@wip"]),
       formatters: Some([
         { type_: "junit", output: "reports/results.xml", no_color: false, },
@@ -730,4 +754,176 @@ test "sync preserves configured formatter destinations and custom skip tags" {
       ),
     )
   }
+}
+
+///|
+test "codegen parser retains targeted policy and shared options factory" {
+  let config = CodegenConfig::from_json5(
+    "{ execution: {default:'async', targets:{'wasm-gc':'sync'}}, shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'} }",
+  )
+  assert_eq(config.execution.resolve(WasmGc), Sync)
+  assert_eq(config.execution.resolve(Native), Async)
+  assert_eq(config.shared.unwrap().options_factory, "options")
+}
+
+///|
+test "single-file rendering rejects shared package policies explicitly" {
+  let config = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let message = try {
+    ignore(
+      generate_test_file(
+        "Feature: Shared\n Scenario: Works\n  Given ready\n",
+        "features/shared.feature",
+        config~,
+      ),
+    )
+    "accepted"
+  } catch {
+    SharedGenerationRequired => "use plan_shared_generation"
+  }
+  assert_eq(message, "use plan_shared_generation")
+}
+
+///|
+test "shared generation plans portable source and thin target packages" {
+  let config = CodegenConfig::from_json5(
+    "{execution:{default:'async',targets:{'wasm-gc':'sync'}},shared:{package:'consumer/module/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let plan = plan_shared_generation(
+    [
+      FeatureInput::{
+        uri: "./features/shared.feature",
+        content: "Feature: Shared\n Scenario: Works\n  Given ready\n",
+        mode: PerScenario,
+      },
+    ],
+    module_name="consumer/module",
+    package_path="suite",
+    config~,
+  )
+  let files = plan.files()
+  assert_eq(files.length(), 6)
+  assert_true(
+    files[0].content.contains(
+      "FeatureSource::Text(\"./features/shared.feature\"",
+    ),
+  )
+  assert_true(files[0].content.contains("@definitions.options(["))
+  let sync = files.filter(fn(f) { f.path == "sync/moon.pkg" })[0].content
+  assert_true(sync.contains("supported_targets = \"wasm-gc\""))
+  assert_false(sync.contains("moonbitlang/async"))
+  let async_ = files.filter(fn(f) { f.path == "async/moon.pkg" })[0].content
+  assert_true(async_.contains("supported_targets = \"wasm+js+native\""))
+}
+
+///|
+test "scalar shared CLI override emits only the supported selected mode" {
+  let config = CodegenConfig::from_json5(
+    "{execution:'async',shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let plan = plan_shared_generation(
+    [
+      FeatureInput::{
+        uri: "feature.feature",
+        content: "Feature: Shared\n Scenario: Works\n  Given ready\n",
+        mode: PerFeature,
+      },
+    ],
+    module_name="consumer",
+    package_path="suite",
+    config~,
+  )
+  assert_true(plan.files().any(f => f.path == "async/moon.pkg"))
+  assert_false(plan.files().any(f => f.path == "sync/moon.pkg"))
+}
+
+///|
+test "shared planner validates all feature sources before exposing output" {
+  let config = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let inputs = [
+    FeatureInput::{
+      uri: "first.feature",
+      content: "Feature: Shared\n Scenario: Works\n  Given ready\n",
+      mode: PerScenario,
+    },
+    FeatureInput::{
+      uri: "broken.feature",
+      content: "Feature: Broken\n  Scenario: No\n  Examples:\n    | x | y |\n    | 1 |\n",
+      mode: PerScenario,
+    },
+  ]
+  let message = try {
+    ignore(
+      plan_shared_generation(
+        inputs,
+        module_name="consumer",
+        package_path="suite",
+        config~,
+      ),
+    )
+    "accepted"
+  } catch {
+    InvalidPlan(message) => message
+  }
+  assert_true(message.contains("broken.feature"))
+}
+
+///|
+test "programmatic shared plans validate factory identifiers before rendering" {
+  let base = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let config = {
+    ..base,
+    shared: Some({ ..base.shared.unwrap(), world_factory: "world()", }),
+  }
+  let message = try {
+    ignore(
+      plan_shared_generation(
+        [],
+        module_name="consumer",
+        package_path="suite",
+        config~,
+      ),
+    )
+    "accepted"
+  } catch {
+    InvalidPlan(message) => message
+  }
+  assert_true(message.contains("shared"))
+}
+
+///|
+test "public planner validates module and output package identifiers" {
+  let config = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  for
+    (module_name, package_path, expected) in [
+      ("consumer/", "suite", "module_name"),
+      ("consumer", "suite/bad\"name", "package_path"),
+      ("consumer", "suite//group", "package_path"),
+    ] {
+    let message = try {
+      ignore(plan_shared_generation([], module_name~, package_path~, config~))
+      "accepted"
+    } catch {
+      InvalidPlan(message) => message
+    }
+    assert_true(message.contains(expected), msg=message)
+  }
+}
+
+///|
+test "shared codegen parser retains common settings for planning" {
+  let config = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'},skip_tags:['@later'],formatters:[{type:'messages',output:'stdout'}],no_color:true}",
+  )
+  assert_eq(config.skip_tags, Some(["@later"]))
+  assert_eq(config.formatters.unwrap()[0].type_, "messages")
+  assert_true(config.no_color)
 }

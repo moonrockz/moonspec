@@ -58,7 +58,8 @@ moonspec gen tests --config path/to/custom.json5 features/*.feature
 
 The World type name used during code generation. This is the struct that holds scenario state and is passed to every step handler.
 
-Required for `moonspec gen tests`. Can be set here or via the `--world` CLI flag.
+Required for legacy same-package `gen tests` and `gen build`. Can be set here
+or via `--world`. Shared generation uses `shared.world_factory` instead.
 
 #### `mode` (string | object)
 
@@ -81,7 +82,7 @@ The `mode` field also accepts a per-file map for mixed-mode projects:
 
 The `"*"` key acts as a fallback. If a feature file path is not listed and no `"*"` key exists, the default `"per-scenario"` mode is used.
 
-#### `execution` (string)
+#### `execution` (string or object)
 
 Select `"async"` or `"sync"` for `gen tests` and `gen build`. The default is
 `"async"`. CLI `--execution sync|async` wins over the merged config value,
@@ -94,13 +95,49 @@ original source embedded as `FeatureSource::Text`. Import the root
 `moonrockz/moonspec` and the configured formatter package, without an async test
 driver. The source URI stays available for diagnostics without a runtime read.
 
-Async output preserves `async test`, `run_or_fail` and `FeatureSource::File`.
+Legacy scalar async output preserves `async test`, `run_or_fail` and `FeatureSource::File`.
 Import `"moonrockz/moonspec/async" @moonspec` and retain `moonbitlang/async`
 for the test driver. Build rules pin the selected execution. Rerun
 `gen build --apply` after a config change to update existing rules.
 
 See [sync execution](testing-strategies.md#sync-execution-and-target-support) for the unreleased import migration,
 verified toolchain, target matrix and host limits.
+
+An object opts into target selection with one shared setup:
+
+```json5
+{
+  execution: { default: "async", targets: { "wasm-gc": "sync" } },
+  shared: {
+    package: "example/multi-target/definitions",
+    world_factory: "world",
+    options_factory: "options",
+  },
+}
+```
+
+`default` is required; `targets` is optional. Supported target keys are `wasm`,
+`wasm-gc`, `js` and `native`. Every target resolves before writes; async on
+Wasm-GC is invalid and never falls back silently. Unknown keys and values
+reject. The CLI scalar override replaces the entire policy while retaining
+shared factories. Both shared modes embed complete original source.
+
+#### `shared` (object)
+
+`package`, `world_factory` and `options_factory` are required nonempty strings.
+Factories must be simple identifiers. The package must belong to the consumer's
+own module, either its root or a visible subpackage; external shared packages
+are unsupported. The public World can keep its fields private. Expose its World
+impl and factories, and return fresh options and stateful sinks on every call.
+Legacy same-package whitebox output still supports a private World.
+
+An effective execution object requires `shared`. Partial child configs can
+inherit it, which the schema permits; the CLI validates the merged result.
+Both `execution` and `shared` replace their whole inherited field. Read
+[one setup across targets](testing-strategies.md#one-setup-across-targets) for runnable commands, suite
+overrides, source API migration, ownership and regeneration rules. This feature
+requires the local native checkout CLI on `PATH`; all policy `--moonx` rules reject
+until a supporting registry release has been verified.
 
 #### `skip_tags` (array of strings)
 
@@ -133,7 +170,9 @@ The kind of test file that `moonspec gen tests` and `moonspec gen build` write.
 - **`"test"`** -- black-box tests, `<name>_feature_test.mbt`. They see only
   the package's public API, so the World type and its impl must be `pub`.
 
-An `-o` value that ends in `.mbt` is the exact file name, whatever the kind.
+In legacy scalar mode, an `-o` value ending in `.mbt` is the exact file name.
+Shared mode takes an output directory and generates separate packages;
+`wbtest` does not expose private items across those packages.
 
 #### `steps` (object)
 
@@ -236,7 +275,7 @@ Enable or disable parallel scenario execution. Default: `false`.
 
 For async execution, scenarios run concurrently up to `max_concurrent`. Each
 gets its own World. Sync execution rejects `parallel(true)` with
-`SyncExecutionError::ParallelNotSupported` before factories, hooks or events.
+`SyncExecutionError::ParallelNotSupported` before World factories, hooks or events.
 
 #### `max_concurrent(value : Int)`
 
@@ -326,6 +365,7 @@ CLI flags override the corresponding config file fields for the current invocati
 | `--no-color`      |       | `no_color`       | Generate tests without ANSI colors            |
 | `--execution`     |       | `execution`      | `async` (default) or `sync`, independent of mode/kind |
 | `--test-kind`     |       | `test_kind`      | `wbtest` (default) or `test`                  |
+| `--preview`       |       | --               | Preview shared generation without writing |
 
 When `--world`, `--mode`, `--execution` or `--test-kind` is provided, the CLI value takes precedence over the config file value. When `--config` is provided, auto-discovery is bypassed entirely and only the specified file is loaded.
 
@@ -348,11 +388,21 @@ Note: `--mode` on the CLI applies uniformly to all files in that invocation. To 
 | `--apply`         |       | --               | Write missing entries to `<package>/moon.pkg`      |
 | `--execution`     |       | `execution`      | `async` (default) or `sync`, independent of mode/kind |
 | `--test-kind`     |       | `test_kind`      | `wbtest` (default) or `test`                       |
+| `--mode`          | `-m`  | `mode`           | Shared generation grouping |
+| `--no-color`      |       | `no_color`       | Shared generation color setting |
+| `--refresh-output`|       | --               | Repeatable validated planned source path, used by generated shared rules |
 | `--moonx`         |       | --               | Rule runs `moonx moonrockz/moonspec/cmd/moonspec@<CLI version>` instead of `moonspec` |
 
 ### `moonspec check`
 
 The `check` subcommand accepts positional `.feature` file arguments and does not use config file settings.
+
+Shared `gen build --apply` writes owned `moonspec_gen` packages and a manifest,
+leaving parent package metadata intact. Feature-body and existing grouping
+changes regenerate through Moon. Rerun `gen build --apply` for structural
+target/package/feature-list/test-kind changes or config-path additions/removals.
+Manual unchanged generation performs no writes. Rules use the current local
+native CLI on `PATH` and validated refresh paths; do not edit generated files.
 
 ---
 
@@ -381,11 +431,12 @@ codes as raw text. Set `NO_COLOR=1` for those runs.
 Configuration values are resolved with the following precedence (highest wins):
 
 1. **CLI flags** -- `--world`, `--mode`, etc.
-2. **Override config** -- `moonspec.json5` (during auto-discovery)
-3. **Base config** -- `moonspec.json` (during auto-discovery)
+2. **Nearer package config** -- for generation, files toward the selected output package override ancestors
+3. **Per-directory configs** -- `moonspec.json5` overrides `moonspec.json`
 4. **Built-in defaults** -- `mode: "per-scenario"`, `skip_tags: ["@skip", "@ignore"]`, etc.
 
-When `--config` is used, steps 2 and 3 are replaced by the single specified file.
+Discovery starts with the module-root configuration for generation. When
+`--config` is used, steps 2 and 3 are replaced by the single specified file.
 
 ---
 
@@ -397,6 +448,7 @@ When both `moonspec.json` and `moonspec.json5` exist, they are merged using **fi
 - Fields present in the base but absent from the override are **preserved**.
 - Fields present in the override but absent from the base are **added**.
 - For nested objects like `steps`, the entire object is replaced -- individual sub-fields are not merged independently.
+- The same rule applies to `execution` and `shared`, including the entire target map. A missing field inherits.
 - For array fields like `skip_tags`, the override array replaces the base array entirely (arrays are not concatenated).
 
 ### Example
