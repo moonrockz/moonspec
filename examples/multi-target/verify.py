@@ -62,6 +62,7 @@ def main():
         shutil.copytree(EXAMPLE, path, dirs_exist_ok=True,
                         ignore=shutil.ignore_patterns("_build", ".mooncakes", "__pycache__"))
         (path / "moon.work").write_text(f'members = ["{ROOT}", "."]\n')
+        shutil.rmtree(path / "src/suite/moonspec_gen")
         command([CLI, "gen", "tests", "features/counter.feature", "-o", "src/suite"],
                 path, "generate")
         build = [CLI, "gen", "build", "features/counter.feature", "--package", "src/suite", "--apply"]

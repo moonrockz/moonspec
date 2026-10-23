@@ -490,10 +490,16 @@ You can create a `moonspec.json5` file in your project root to avoid repeating C
 
 Options:
 
-- `world` -- the World type name (required for `gen tests` and `gen build`)
-- `execution` -- `"async"` by default; `"sync"` emits ordinary tests with embedded source. CLI `--execution` overrides merged config, then the default; this choice is independent of `mode` and `test_kind`
+- `world` -- the World type name, required for legacy same-package generation
+- `execution` -- `"async"` by default; `"sync"` emits ordinary tests with embedded source. An object can select execution by target with shared factories. CLI `--execution` replaces merged policy; this choice is independent of `mode` and `test_kind`
+- `shared` -- optional public World/options factories in your own module; required after inheritance when execution is an object
 - `mode` -- `"per-scenario"` (default) generates one test per scenario; `"per-feature"` generates one test per feature file
 - `steps.output` -- `"alongside"` (default) writes `<world>_steps_gen.mbt` next to the step functions; see the [configuration reference](configuration.md#steps-object) for the other strategies
+
+For sync Wasm-GC and async host tests from one setup, follow
+[one setup across targets](testing-strategies.md#one-setup-across-targets). It uses the current local CLI
+without `--moonx`, explains manifest migration with `moon fmt`, and includes a
+verified regeneration workflow.
 
 ## Where to Put Files
 

@@ -74,11 +74,12 @@ the manifest and files under `moonspec_gen`, rejects modified files and
 collisions, and removes only unchanged stale outputs it previously recorded.
 
 The shared options remain sequential. Enabling `parallel(true)` would make a
-sync run raise `SyncExecutionError::ParallelNotSupported` before effects. Use a
+sync run raise `SyncExecutionError::ParallelNotSupported` before World factories,
+hooks or events. Use a
 separate explicit async suite/factory for parallel settings. Wasm-GC launchers
 do not import the async runtime. All targets still need the standard MoonBit
 host ABI; embedded source avoids feature reads, and file/stderr destinations
 still require host I/O. There is no browser filesystem emulation.
 
-See the [target-policy guide](../../docs/guide/multi-target.md) for config
+See the [target-policy guide](../../docs/guide/testing-strategies.md#one-setup-across-targets) for config
 precedence, package visibility, safe regeneration and source API migration.
