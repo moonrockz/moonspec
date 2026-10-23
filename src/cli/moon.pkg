@@ -1,4 +1,5 @@
 import {
+  "moonbitlang/core/json",
   "moonrockz/moonspec/codegen",
   "moonbitlang/moon_config",
   "moonbitlang/core/env",

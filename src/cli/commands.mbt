@@ -159,6 +159,18 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
       package_dir,
       moonspec_config,
       apply=value.flags.get_or_default("apply", false),
+      build=true,
+    )
+    return
+  }
+  if !positional_values(value, "refresh-output").is_empty() {
+    die("Error: --refresh-output requires shared package generation")
+    return
+  }
+  if option_value(value, "mode") is Some(_) ||
+    value.flags.get_or_default("no-color", false) {
+    die(
+      "Error: --mode and --no-color build options require shared package generation",
     )
     return
   }

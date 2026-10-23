@@ -226,9 +226,10 @@ def verify_plan_boundary():
         config = dict(POLICY, execution="sync")
         (path / "moonspec.json5").write_text(json.dumps(config))
         before = snapshot(path)
-        output = command(inputs, path, "stale-policy", success=False)
-        assert "stale" in output, output
-        assert before == snapshot(path), "stale tree changed before safe reconciliation"
+        command(inputs + ["--preview"], path, "changed-policy-preview")
+        assert before == snapshot(path), "changed-policy preview wrote output"
+        command(inputs, path, "changed-policy")
+        assert not list((path / "lib/suite/moonspec_gen/async").glob("*")), "stale owned async outputs remain"
 
 
 
