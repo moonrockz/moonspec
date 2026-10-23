@@ -47,6 +47,7 @@ pub fn SiteConfig::to_repr(Self) -> @debug.Repr
 pub(all) struct SiteData {
   config : SiteConfig
   pages : Array[@content.Page]
+  counterpart_routes : Array[@route.Route]
   route : @route.Route
   markdown : String?
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)

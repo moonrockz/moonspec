@@ -18,6 +18,7 @@ fn sample() -> SiteData {
         group: Guides,
       },
     ],
+    counterpart_routes: [Doc("getting-started")],
     route: Doc("configuration"),
     markdown: Some("# Configuration\n\nQuote \" < > & </script> done\n"),
   }

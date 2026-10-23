@@ -20,9 +20,23 @@ mise run site:dev     # build at base / and serve on http://localhost:8080
 mise run site:check   # unit tests, build release + next, link check
 ```
 
-`mise run site:build -- --content <repo dir> --channel release|next --site-root /moonspec/ --release-version vX.Y.Z --ref <git ref> --out <dir>`
+`mise run site:build -- --content <repo dir> --counterpart-content <other repo dir> --channel release|next --site-root /moonspec/ --release-version vX.Y.Z --ref <git ref> --out <dir>`
 builds one version. The Pages workflow builds the latest `v*` tag at `/moonspec/`
 and `main` at `/moonspec/next/`.
+
+Pass the other version's content checkout as `--counterpart-content`: the
+release build uses main, and the next build uses the released tag. Version
+links keep the current page when that destination publishes it, and go to the
+destination home otherwise. The same rule applies to the next-version banner.
+The published route inventory is included in hydration data so client-side
+navigation keeps this behavior. Omitting the optional argument sends links to
+the other version's home.
+
+`mise run site:check` adds temporary shared and version-only guides to copies
+of the real content. It verifies rendered version links and hydration data,
+then runs both link checks using the two existing builds. Test guides are not
+part of the published site. Use `mise run site:test -- native shell` or
+`mise run site:test -- js shell` for focused tests.
 
 ## Packages
 

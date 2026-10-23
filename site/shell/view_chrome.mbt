@@ -17,13 +17,31 @@ fn theme_icon(theme : Theme) -> String {
 }
 
 ///|
+fn version_href(
+  m : Model,
+  channel : @data.Channel,
+  route : @route.Route,
+) -> String {
+  let published = if channel == m.config.channel {
+    m.manifest.find(route) is Some(_)
+  } else {
+    m.counterpart_routes.contains(route)
+  }
+  let destination = match route {
+    Landing | NotFound(_) => @route.Landing
+    _ if published => route
+    _ => @route.Landing
+  }
+  let base = match channel {
+    Release => m.config.release_base
+    Next => m.config.next_base
+  }
+  @route.href(base, destination)
+}
+
+///|
 fn version_picker(m : Model) -> Html {
   let c = m.config
-  // A missing page has no counterpart in the other version: link to its home.
-  let route = match m.route {
-    NotFound(_) => @route.Landing
-    r => r
-  }
   @html.div(class="ms-version", [
     @html.a(
       class=class_if(
@@ -31,12 +49,12 @@ fn version_picker(m : Model) -> Html {
         "ms-version-current",
         c.channel == Release,
       ),
-      href=@route.href(c.release_base, route),
+      href=version_href(m, Release, m.route),
       c.release_version,
     ),
     @html.a(
       class=class_if("ms-version-link", "ms-version-current", c.channel == Next),
-      href=@route.href(c.next_base, route),
+      href=version_href(m, Next, m.route),
       "next",
     ),
   ])
@@ -123,11 +141,11 @@ fn not_found_view(m : Model) -> Html {
       @html.a(href=c.base, "Home"),
       @html.text(" · "),
       @html.a(
-        href=@route.href(c.release_base, docs),
+        href=version_href(m, Release, docs),
         "Docs (\{c.release_version})",
       ),
       @html.text(" · "),
-      @html.a(href=@route.href(c.next_base, docs), "Docs (next)"),
+      @html.a(href=version_href(m, Next, docs), "Docs (next)"),
     ]),
   ])
 }

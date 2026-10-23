@@ -212,3 +212,38 @@ async test "the moonx install tab shows the moonx commands" {
     html.contains("moonx moonrockz/moonspec/cmd/moonspec@latest gen steps"),
   )
 }
+
+///|
+#cfg(not(target="js"))
+async test "next-only guides link to release home in the picker and banner" {
+  let source = site_data(Doc("next-only"), Some("# Next only\n"))
+  let data : @data.SiteData = {
+    ..source,
+    config: { ..source.config, channel: Next, base: "/moonspec/next/", },
+    pages: [
+      ..source.pages,
+      {
+        route: Doc("next-only"),
+        title: "Next only",
+        source: "docs/guide/next-only.md",
+        group: Guides,
+      },
+    ],
+    counterpart_routes: [Doc("getting-started")],
+  }
+  let html = @rabbita.new(() => component(data, data.encode())).render(
+    url="http://localhost/moonspec/next/docs/next-only/",
+  )
+  assert_true(html.contains("ms-banner"))
+  assert_false(html.contains("href=\"/moonspec/docs/next-only/\""))
+  assert_true(
+    html.contains(
+      "href=\"/moonspec/\" target=\"_self\" class=\"ms-version-link\"",
+    ),
+  )
+  assert_true(
+    html.contains(
+      "href=\"/moonspec/next/docs/next-only/\" target=\"_self\" class=\"ms-version-link ms-version-current\"",
+    ),
+  )
+}

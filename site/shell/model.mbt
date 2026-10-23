@@ -88,6 +88,7 @@ pub extend SearchState with @debug.Debug::{to_repr}
 pub(all) struct Model {
   config : @data.SiteConfig
   manifest : @content.Manifest
+  counterpart_routes : Array[@route.Route]
   route : @route.Route
   page : PageState
   theme : Theme
@@ -155,6 +156,7 @@ pub fn Model::init(data : @data.SiteData) -> Model {
   {
     config: data.config,
     manifest,
+    counterpart_routes: data.counterpart_routes,
     route: data.route,
     page,
     theme: Auto,

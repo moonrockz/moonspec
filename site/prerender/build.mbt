@@ -67,17 +67,18 @@ fn check_manifest(
 }
 
 ///|
-/// Builds one version of the site into `args.out`.
-pub async fn build_site(args : Args) -> Unit {
-  let config = config_of(args)
+/// Reads both text and route inventory through the publication allowlist.
+fn read_site_content(
+  content : String,
+) -> (@content.Manifest, Map[String, String]) raise {
   let files = [
-    ..read_markdown_dir(args.content, "docs/guide"),
-    ..read_markdown_dir(args.content, "docs/migrations"),
+    ..read_markdown_dir(content, "docs/guide"),
+    ..read_markdown_dir(content, "docs/migrations"),
   ]
   let manifest = @content.Manifest::build(
     files.map(f => { path: f.0, title: @markdown.title_of(f.1), }),
   )
-  match check_manifest(manifest, args.content) {
+  match check_manifest(manifest, content) {
     Ok(_) => ()
     Err(message) => {
       println("prerender: " + message)
@@ -88,6 +89,21 @@ pub async fn build_site(args : Args) -> Unit {
   for f in files {
     texts.set(f.0, f.1)
   }
+  (manifest, texts)
+}
+
+///|
+/// Builds one version of the site into `args.out`.
+pub async fn build_site(args : Args) -> Unit {
+  let config = config_of(args)
+  let (manifest, texts) = read_site_content(args.content)
+  let counterpart_routes = match args.counterpart_content {
+    None => []
+    Some(path) => {
+      let (counterpart, _) = read_site_content(path)
+      counterpart.pages.map(page => page.route)
+    }
+  }
   let entries : Array[@search.Entry] = []
   let routes : Array[String] = [""]
   write_file(
@@ -95,6 +111,7 @@ pub async fn build_site(args : Args) -> Unit {
     render_page({
       config,
       pages: manifest.pages,
+      counterpart_routes,
       route: Landing,
       markdown: None,
     }),
@@ -106,6 +123,7 @@ pub async fn build_site(args : Args) -> Unit {
       render_page({
         config,
         pages: manifest.pages,
+        counterpart_routes,
         route: page.route,
         markdown: Some(text),
       }),
@@ -129,6 +147,7 @@ pub async fn build_site(args : Args) -> Unit {
         render_page({
           config,
           pages: manifest.pages,
+          counterpart_routes,
           route: default_route,
           markdown: Some(texts.get(page.source).unwrap_or("")),
         }),
@@ -142,6 +161,7 @@ pub async fn build_site(args : Args) -> Unit {
     render_page({
       config,
       pages: manifest.pages,
+      counterpart_routes,
       route: NotFound("404"),
       markdown: None,
     }),
