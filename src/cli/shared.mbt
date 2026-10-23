@@ -358,12 +358,47 @@ fn cmd_gen_shared(
   apply~ : Bool,
   build~ : Bool = false,
 ) -> Unit {
-  let (outputs, base) = plan_shared_command(value, files, directory, config) catch {
-    @codegen.InvalidPlan(message) => {
-      shared_failure(message)
-      return
+  let locked = if apply {
+    acquire_shared_generation_lock(
+      !positional_values(value, "refresh-output").is_empty(),
+    ) catch {
+      @codegen.InvalidPlan(message) => {
+        shared_failure(message)
+        return
+      }
+    }
+  } else {
+    false
+  }
+  let failure = try {
+    cmd_gen_shared_locked(value, files, directory, config, apply~, build~)
+    None
+  } catch {
+    @codegen.InvalidPlan(message) => Some(message)
+  }
+  if locked {
+    @fs.remove_dir(shared_generation_lock) catch {
+      @fs.IOError(message) => {
+        shared_failure("releasing generation guard: " + message)
+        return
+      }
     }
   }
+  if failure is Some(message) {
+    shared_failure(message)
+  }
+}
+
+///|
+fn cmd_gen_shared_locked(
+  value : @argparse.Matches,
+  files : Array[String],
+  directory : String,
+  config : @config.MoonspecConfig,
+  apply~ : Bool,
+  build~ : Bool = false,
+) -> Unit raise @codegen.PlanError {
+  let (outputs, base) = plan_shared_command(value, files, directory, config)
   let outputs = shared_build_outputs(
     outputs,
     base,
@@ -371,35 +406,19 @@ fn cmd_gen_shared(
     directory,
     value,
     build~,
-  ) catch {
-    @codegen.InvalidPlan(message) => {
-      shared_failure(message)
-      return
-    }
-  }
-  let owned = validate_shared_outputs(outputs, base) catch {
-    @codegen.InvalidPlan(message) => {
-      shared_failure(message)
-      return
-    }
-  }
+  )
+  let owned = validate_shared_outputs(outputs, base)
   let refresh = positional_values(value, "refresh-output").map(path => {
     normalized_relative(path)
-  }) catch {
-    @codegen.InvalidPlan(message) => {
-      shared_failure(message)
-      return
-    }
-  }
+  })
   for path in refresh {
     if !outputs.any(file => {
         file.path.has_suffix(".mbt") &&
         (normalized_relative(base + "/" + file.path) catch { _ => "" }) == path
       }) {
-      shared_failure(
+      raise @codegen.InvalidPlan(
         "refresh-output must name a planned generated source: " + path,
       )
-      return
     }
   }
   if !apply {
@@ -421,10 +440,8 @@ fn cmd_gen_shared(
     let path = base + "/" + relative
     if !outputs.any(file => file.path == relative) && @fs.path_exists(path) {
       @fs.remove_file(path) catch {
-        @fs.IOError(message) => {
-          shared_failure("removing " + path + ": " + message)
-          return
-        }
+        @fs.IOError(message) =>
+          raise @codegen.InvalidPlan("removing " + path + ": " + message)
       }
     }
   }
@@ -437,10 +454,8 @@ fn cmd_gen_shared(
     }
     ensure_parent_dir(path)
     @fs.write_string_to_file(path, file.content) catch {
-      @fs.IOError(message) => {
-        shared_failure("writing " + path + ": " + message)
-        return
-      }
+      @fs.IOError(message) =>
+        raise @codegen.InvalidPlan("writing " + path + ": " + message)
     }
     println(path)
   }
@@ -451,10 +466,8 @@ fn cmd_gen_shared(
     return
   }
   @fs.write_string_to_file(manifest_path, manifest) catch {
-    @fs.IOError(message) => {
-      shared_failure("writing manifest: " + message)
-      return
-    }
+    @fs.IOError(message) =>
+      raise @codegen.InvalidPlan("writing manifest: " + message)
   }
 }
 
@@ -530,8 +543,8 @@ fn shared_build_outputs(
     }
     (args.join(" "), inputs)
   }
-  // Moon must see each test source as a local dev_build output. Order launcher
-  // refresh after common-source generation so discovery observes changed tests.
+  // Moon must see each test source as a local dev_build output. Launcher
+  // inputs track common sources; the CLI guard serializes concurrent refresh.
   outputs.map(fn(file) {
     if !file.path.has_suffix("/moon.pkg") {
       return file

@@ -3,6 +3,8 @@ import json
 import os
 import re
 import tempfile
+import subprocess
+import time
 from pathlib import Path
 import verify as policy
 
@@ -45,6 +47,57 @@ def test_mode_change():
         assert not list((generated / 'async').glob('*')), 'unchanged stale async outputs remain'
         output = policy.command(['moon', 'test', 'lib/suite/moonspec_gen/sync', '--target', 'native'], path, 'sync-executed')
         return policy.verify_run(output, 'native', 'per-scenario', 'wbtest')
+
+
+def test_concurrent_generation():
+    with tempfile.TemporaryDirectory(prefix='moonspec-concurrent-generation-') as tmp:
+        path = Path(tmp)
+        policy.fixture(path)
+        args = [policy.CLI, 'gen', 'build', *policy.SOURCES, '--package', 'lib/suite', '--apply']
+        policy.command(args, path, 'concurrent-initial')
+        source = path / 'features/shared.feature'
+        source.write_text(source.read_text() + '  @keep\n  Scenario: Concurrent regeneration\n    Given a fresh world\n')
+        before = policy.snapshot(path)
+        lock = path / '.moonspec-generation.lock'
+        lock.mkdir()
+        process = subprocess.Popen([str(x) for x in args], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        try:
+            time.sleep(.15)
+            assert process.poll() is None, 'generation did not wait for another writer'
+            assert before == policy.snapshot(path), 'queued generation wrote before acquiring ownership'
+        finally:
+            lock.rmdir()
+            output, _ = process.communicate(timeout=15)
+        assert process.returncode == 0, output
+        generated = path / 'lib/suite/moonspec_gen/shared/sources.mbt'
+        assert 'Concurrent regeneration' in generated.read_text()
+        # Both automatic package commands execute concurrently on the pinned Moon.
+        # A shared CLI guard must also cover validation and manifest publication.
+        writers = [subprocess.Popen([str(x) for x in [*args, '--refresh-output', 'lib/suite/moonspec_gen/' + ('shared/sources.mbt' if i % 2 else 'async/shared_feature_wbtest.mbt')]], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True) for i in range(8)]
+        for writer in writers:
+            output, _ = writer.communicate(timeout=15)
+            assert writer.returncode == 0, output
+        assert not lock.exists(), 'generation leaked its writer guard'
+        policy.command(args, path, 'concurrent-idempotent')
+
+
+def test_automatic_generation_cli_capability():
+    policy.command(['moon', 'build', '--target', 'js', 'src/cmd/moonspec'], policy.ROOT, 'javascript-cli-build')
+    cli = policy.ROOT / '_build/js/debug/build/cmd/moonspec/moonspec.js'
+    # cli.run expects one executable prefix; Node supplies two without this adapter.
+    node_cli = ['node', '--input-type=module', '--eval', f'process.argv.splice(1,1); await import({json.dumps(cli.as_uri())});', str(cli)]
+    with tempfile.TemporaryDirectory(prefix='moonspec-cli-generation-capability-') as tmp:
+        path = Path(tmp)
+        policy.fixture(path)
+        args = ['gen', 'tests', *policy.SOURCES, '-o', 'lib/suite']
+        policy.command([policy.CLI, *args], path, 'capability-initial')
+        before = policy.snapshot(path)
+        output = policy.command([*node_cli, 'gen', 'build', *policy.SOURCES, '--package', 'lib/suite', '--apply', '--refresh-output', 'lib/suite/moonspec_gen/shared/sources.mbt'], path, 'javascript-automatic-rejected', success=False)
+        assert 'automatic shared regeneration requires the local native moonspec CLI' in output, output
+        assert before == policy.snapshot(path), 'unsupported automatic CLI wrote files'
+        policy.command([*node_cli, *args, '--preview'], path, 'javascript-preview')
+        policy.command([*node_cli, *args], path, 'javascript-manual-generation')
+        assert before == policy.snapshot(path), 'manual generation changed compatible output'
 
 
 def test_build_rule():
@@ -226,6 +279,8 @@ def test_rejections():
 if __name__ == '__main__':
     (policy.EVIDENCE / 'report.json').unlink(missing_ok=True)
     test_mode_change()
+    test_concurrent_generation()
+    test_automatic_generation_cli_capability()
     test_build_rule()
     test_malformed_ownership()
     test_targets_and_preservation()

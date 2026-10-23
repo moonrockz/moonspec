@@ -408,10 +408,16 @@ generation preserves bytes and modification times. Unexpected host write
 failures still report errors; generation does not promise rollback after such
 a failure.
 
-Generated per-package rules declare local outputs. They run the local CLI on
-`PATH` with validated `--refresh-output` paths so Moon discovers changed test
-counts. This refresh is for generated rules. Keep the manifest and generated
-contents intact. Feature-body edits and existing grouping-config edits
+Generated per-package rules declare local outputs. They run the local native
+CLI on `PATH` with validated `--refresh-output` paths so Moon discovers changed test
+counts. This refresh is for generated rules. The native CLI serializes shared
+writers with a temporary `.moonspec-generation.lock` directory in the consumer
+root, covering validation through manifest publication. If a killed generator
+leaves that directory behind, confirm no generator is running before removing
+it; a contender times out after ten seconds. Automatic refresh rejects other
+CLI backends before output writes because their filesystem adapters lack an
+exclusive directory operation. Manual generation and preview remain available.
+Keep the manifest and generated contents intact. Feature-body edits and existing grouping-config edits
 regenerate when Moon runs. Rerun `gen build --apply` explicitly when changing
 target sets, package structure, feature lists or test kind, or when adding or
 removing config paths. Preview first when reviewing structural changes.

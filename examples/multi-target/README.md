@@ -50,7 +50,7 @@ moon test src/suite/moonspec_gen/async --target js
 moon test src/suite/moonspec_gen/async --target native
 ```
 
-Keep that local `moonspec` on `PATH`: generated per-package rules invoke it
+Keep that local native `moonspec` on `PATH`: generated per-package rules invoke it
 through Moon. Do not pass `--moonx`; shared-policy registry capability has not
 been verified and the generator rejects it before writing.
 

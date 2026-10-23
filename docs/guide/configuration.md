@@ -136,7 +136,7 @@ inherit it, which the schema permits; the CLI validates the merged result.
 Both `execution` and `shared` replace their whole inherited field. Read
 [one setup across targets](testing-strategies.md#one-setup-across-targets) for runnable commands, suite
 overrides, source API migration, ownership and regeneration rules. This feature
-requires the local checkout CLI on `PATH`; all policy `--moonx` rules reject
+requires the local native checkout CLI on `PATH`; all policy `--moonx` rules reject
 until a supporting registry release has been verified.
 
 #### `skip_tags` (array of strings)
@@ -402,7 +402,7 @@ leaving parent package metadata intact. Feature-body and existing grouping
 changes regenerate through Moon. Rerun `gen build --apply` for structural
 target/package/feature-list/test-kind changes or config-path additions/removals.
 Manual unchanged generation performs no writes. Rules use the current local
-CLI on `PATH` and validated refresh paths; do not edit generated files.
+native CLI on `PATH` and validated refresh paths; do not edit generated files.
 
 ---
 
