@@ -19,6 +19,7 @@ fn acquire_shared_generation_lock(
     if acquired {
       return true
     }
+    shared_generation_pause()
   }
   raise @codegen.InvalidPlan(
     "generation is busy; if no generator is running, remove the stale " +
@@ -39,3 +40,7 @@ fn acquire_shared_generation_lock(
   }
   false
 }
+
+///|
+#cfg(target="native")
+extern "C" fn shared_generation_pause() -> Unit = "moonspec_cli_generation_pause"

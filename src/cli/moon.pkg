@@ -10,3 +10,7 @@ import {
   "moonbitlang/x/fs",
   "moonbitlang/x/sys",
 }
+
+options(
+  "native-stub": [ "shared_lock.c" ],
+)

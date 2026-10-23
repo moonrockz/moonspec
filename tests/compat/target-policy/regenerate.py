@@ -5,6 +5,7 @@ import re
 import tempfile
 import subprocess
 import time
+import resource
 from pathlib import Path
 import verify as policy
 
@@ -60,15 +61,19 @@ def test_concurrent_generation():
         before = policy.snapshot(path)
         lock = path / '.moonspec-generation.lock'
         lock.mkdir()
+        usage_before = resource.getrusage(resource.RUSAGE_CHILDREN)
         process = subprocess.Popen([str(x) for x in args], cwd=path, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
         try:
-            time.sleep(.15)
+            time.sleep(.3)
             assert process.poll() is None, 'generation did not wait for another writer'
             assert before == policy.snapshot(path), 'queued generation wrote before acquiring ownership'
         finally:
             lock.rmdir()
             output, _ = process.communicate(timeout=15)
         assert process.returncode == 0, output
+        usage_after = resource.getrusage(resource.RUSAGE_CHILDREN)
+        cpu_seconds = usage_after.ru_utime + usage_after.ru_stime - usage_before.ru_utime - usage_before.ru_stime
+        assert cpu_seconds < .15, f'waiting generator consumed {cpu_seconds:.3f}s CPU during a .3s hold'
         generated = path / 'lib/suite/moonspec_gen/shared/sources.mbt'
         assert 'Concurrent regeneration' in generated.read_text()
         # Both automatic package commands execute concurrently on the pinned Moon.
@@ -79,6 +84,7 @@ def test_concurrent_generation():
             assert writer.returncode == 0, output
         assert not lock.exists(), 'generation leaked its writer guard'
         policy.command(args, path, 'concurrent-idempotent')
+        (policy.EVIDENCE / 'concurrency.json').write_text(json.dumps(dict(held_seconds=.3, waiting_cpu_seconds=cpu_seconds, concurrent_refreshes=len(writers), guard_released=not lock.exists()), indent=2) + '\n')
 
 
 def test_automatic_generation_cli_capability():
