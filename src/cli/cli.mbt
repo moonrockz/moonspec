@@ -24,7 +24,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "world",
         short='w',
-        about="World type name (e.g. CalcWorld)",
+        about="World type name for legacy generation; shared factories need no --world",
       ),
       @argparse.OptionArg(
         "mode",
@@ -39,7 +39,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "execution",
         long="execution",
-        about="Test execution: async (default) or sync (embeds feature source)",
+        about="Override execution policy with scalar async or sync; object policies emit shared target packages",
       ),
       @argparse.OptionArg(
         "test-kind",
@@ -48,6 +48,11 @@ fn build_parser() -> @argparse.Command {
       ),
     ],
     flags=[
+      @argparse.FlagArg(
+        "preview",
+        long="preview",
+        about="Print the validated shared package output plan without writing files",
+      ),
       @argparse.FlagArg(
         "no-color",
         long="no-color",
@@ -92,7 +97,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "world",
         short='w',
-        about="World type name (e.g. CalcWorld)",
+        about="World type name for legacy generation; shared factories need no --world",
       ),
       @argparse.OptionArg(
         "config",
@@ -102,7 +107,7 @@ fn build_parser() -> @argparse.Command {
       @argparse.OptionArg(
         "execution",
         long="execution",
-        about="Test execution: async (default) or sync (embeds feature source)",
+        about="Override execution policy with scalar async or sync; object policies emit shared target packages",
       ),
       @argparse.OptionArg(
         "test-kind",

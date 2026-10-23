@@ -58,6 +58,7 @@ test "merge: package config overrides module config" {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let package_config = MoonspecConfig::{
@@ -68,6 +69,7 @@ test "merge: package config overrides module config" {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let merged = module_config.merge(package_config)
@@ -92,6 +94,7 @@ test "resolve_mode with simple mode" {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   assert_eq(config.resolve_mode("any/file.feature"), "per-feature")
@@ -110,6 +113,7 @@ test "resolve_mode with per-file map" {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   assert_eq(config.resolve_mode("features/checkout.feature"), "per-feature")
@@ -161,6 +165,7 @@ test "merge: skip_tags override takes precedence" {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let package_config = MoonspecConfig::{
@@ -171,6 +176,7 @@ test "merge: skip_tags override takes precedence" {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let merged = module_config.merge(package_config)
@@ -187,6 +193,7 @@ test "merge: skip_tags falls back to base when override absent" {
     formatters: None,
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let package_config = MoonspecConfig::empty()
@@ -254,6 +261,7 @@ test "merge: formatters override takes precedence" {
     ]),
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let override_ = MoonspecConfig::{
@@ -270,6 +278,7 @@ test "merge: formatters override takes precedence" {
     ]),
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let merged = base.merge(override_)
@@ -294,6 +303,7 @@ test "merge: formatters falls back to base when override absent" {
     ]),
     no_color: None,
     execution: None,
+    shared: None,
     test_kind: None,
   }
   let override_ = MoonspecConfig::empty()
@@ -412,13 +422,13 @@ test "execution parses independently of generation mode and test kind" {
   let config = MoonspecConfig::from_json5(
     "{ execution: 'sync', mode: 'per-feature', test_kind: 'test' }",
   )
-  assert_eq(config.execution, Some(Sync))
+  assert_eq(config.execution, Some(Scalar(Sync)))
   assert_eq(config.resolve_mode("features/login.feature"), "per-feature")
   assert_eq(config.test_kind, Some(BlackBox))
   assert_eq(MoonspecConfig::empty().execution, None)
   assert_eq(
     MoonspecConfig::from_json5("{ execution: 'async' }").execution,
-    Some(Async),
+    Some(Scalar(Async)),
   )
 }
 
@@ -444,7 +454,97 @@ test "invalid execution config is rejected with an actionable diagnostic" {
 test "execution merge retains a parent and lets a child override either mode" {
   let sync = MoonspecConfig::from_json5("{ execution: 'sync' }")
   let async_ = MoonspecConfig::from_json5("{ execution: 'async' }")
-  assert_eq(sync.merge(MoonspecConfig::empty()).execution, Some(Sync))
-  assert_eq(sync.merge(async_).execution, Some(Async))
-  assert_eq(async_.merge(sync).execution, Some(Sync))
+  assert_eq(sync.merge(MoonspecConfig::empty()).execution, Some(Scalar(Sync)))
+  assert_eq(sync.merge(async_).execution, Some(Scalar(Async)))
+  assert_eq(async_.merge(sync).execution, Some(Scalar(Sync)))
+}
+
+///|
+test "object execution resolves every supported target and keeps shared factories" {
+  let config = MoonspecConfig::from_json5(
+    (
+      #|{ execution: { default: 'async', targets: { 'wasm-gc': 'sync' } },
+      #|  shared: { package: 'consumer/module/definitions', world_factory: 'world', options_factory: 'options' } }
+    ),
+  )
+  assert_eq(config.execution.unwrap().resolve(WasmGc), Sync)
+  assert_eq(config.execution.unwrap().resolve(Native), Async)
+  assert_eq(config.shared.unwrap().package_path, "consumer/module/definitions")
+}
+
+///|
+test "execution policy rejects incomplete invalid and unsupported target maps" {
+  for
+    execution in [
+      "{}", "{default:'parallel'}", "{default:'sync', extra: true}", "{default:'sync', targets: []}",
+      "{default:'sync', targets:{llvm:'sync'}}", "{default:'sync', targets:{native:'parallel'}}",
+      "{default:'async'}", "{default:'sync', targets:{'wasm-gc':'async'}}",
+    ] {
+    let message = try {
+      ignore(MoonspecConfig::from_json5("{execution:" + execution + "}"))
+      "accepted invalid execution"
+    } catch {
+      InvalidExecution(message) => message
+    }
+    assert_true(message.contains("execution"), msg=execution + ": " + message)
+    assert_false(message == "accepted invalid execution", msg=execution)
+  }
+}
+
+///|
+test "shared factories reject missing unsafe and unknown fields" {
+  for
+    shared in [
+      "true", "{}", "{package:'',world_factory:'world',options_factory:'options'}",
+      "{package:'consumer/../defs',world_factory:'world',options_factory:'options'}",
+      "{package:'consumer/defs',world_factory:'x()',options_factory:'options'}",
+      "{package:'consumer/defs',world_factory:'world',options_factory:'bad.name'}",
+      "{package:'consumer/defs',world_factory:'world',options_factory:'options',extra:1}",
+    ] {
+    let message = try {
+      ignore(MoonspecConfig::from_json5("{shared:" + shared + "}"))
+      "accepted"
+    } catch {
+      InvalidExecution(message) => message
+    }
+    assert_true(message.contains("shared"), msg=shared + ": " + message)
+  }
+}
+
+///|
+test "nearer execution and shared values replace complete inherited objects" {
+  let parent = MoonspecConfig::from_json5(
+    "{execution:{default:'async',targets:{'wasm-gc':'sync',native:'sync'}},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let child = MoonspecConfig::from_json5(
+    "{execution:{default:'sync',targets:{}},shared:{package:'consumer/other',world_factory:'make_world',options_factory:'make_options'}}",
+  )
+  let merged = parent.merge(child)
+  assert_eq(merged.execution.unwrap().resolve(Native), Sync)
+  assert_eq(merged.execution.unwrap().resolve(Js), Sync)
+  assert_eq(merged.shared.unwrap().package_path, "consumer/other")
+  assert_eq(parent.merge(MoonspecConfig::empty()), parent)
+  assert_eq(
+    parent.merge(MoonspecConfig::from_json5("{execution:'sync'}")).execution,
+    Some(Scalar(Sync)),
+  )
+  let async_child = MoonspecConfig::from_json5(
+    "{execution:{default:'async',targets:{'wasm-gc':'sync'}}}",
+  )
+  assert_eq(parent.merge(async_child).execution.unwrap().resolve(Native), Async)
+}
+
+///|
+test "shared factories reject reserved MoonBit identifiers" {
+  let message = try {
+    ignore(
+      MoonspecConfig::from_json5(
+        "{shared:{package:'consumer/definitions',world_factory:'fn',options_factory:'options'}}",
+      ),
+    )
+    "accepted"
+  } catch {
+    InvalidExecution(message) => message
+  }
+  assert_true(message.contains("shared"))
 }

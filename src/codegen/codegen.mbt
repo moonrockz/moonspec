@@ -126,7 +126,10 @@ pub fn generate_test_file(
   feature_content : String,
   source_path : String,
   config~ : CodegenConfig = CodegenConfig::default(),
-) -> String {
+) -> String raise GenerationError {
+  if config.shared is Some(_) || config.execution is Targeted(..) {
+    raise SharedGenerationRequired
+  }
   // moon passes `$input` as "./features/x.feature"; drop the "./" so the
   // output does not depend on how the path was written.
   let original_uri = source_path
@@ -154,7 +157,7 @@ pub fn generate_test_file(
     Some(f) => f
     None => return buf.to_string()
   }
-  let source_expr = match config.execution {
+  let source_expr = match config.execution.resolve(Native) {
     Async =>
       "@moonspec.FeatureSource::File(\"" + escape_string(source_path) + "\")"
     Sync =>
@@ -183,21 +186,21 @@ fn generate_per_feature(
   let test_name = "Feature: " + feature.name
   let skip = skip_reason_for(config, [feature.tags])
   generate_skip_attribute(buf, skip, config)
-  let test_keyword = match config.execution {
+  let test_keyword = match config.execution.resolve(Native) {
     Async => "async test"
     Sync => "test"
   }
   buf.write_string(test_keyword + " \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
-    buf.write_string(
-      "  let options = @moonspec.RunOptions::new([" + source_expr + "])\n",
-    )
+    generate_options_line(buf, source_expr, config)
     generate_skip_tags_line(buf, skip, config)
     if config.no_color {
       buf.write_string("  options.no_color(true)\n")
     }
-    generate_formatter_lines(buf, config)
-    let runner = match config.execution {
+    if config.shared is None {
+      generate_formatter_lines(buf, config)
+    }
+    let runner = match config.execution.resolve(Native) {
       Async => "run_or_fail"
       Sync => "run_or_fail_sync"
     }
@@ -205,8 +208,8 @@ fn generate_per_feature(
       "  @moonspec." +
       runner +
       "(\n    " +
-      config.world +
-      "::default, options,\n  )\n",
+      world_factory(config) +
+      ", options,\n  )\n",
     )
   } else {
     buf.write_string("  ignore(\"\")\n")
@@ -285,25 +288,24 @@ fn generate_scenario_runner_test(
 ) -> Unit {
   let test_name = "Feature: " + feature_name + " / Scenario: " + scenario_name
   generate_skip_attribute(buf, skip, config)
-  let test_keyword = match config.execution {
+  let test_keyword = match config.execution.resolve(Native) {
     Async => "async test"
     Sync => "test"
   }
   buf.write_string(test_keyword + " \"" + escape_string(test_name) + "\" {\n")
   if config.world.length() > 0 {
+    generate_options_line(buf, source_expr, config)
     buf.write_string(
-      "  let options = @moonspec.RunOptions::new([" +
-      source_expr +
-      "])\n  options.scenario_name(\"" +
-      escape_string(scenario_name) +
-      "\")\n",
+      "  options.scenario_name(\"" + escape_string(scenario_name) + "\")\n",
     )
     generate_skip_tags_line(buf, skip, config)
     if config.no_color {
       buf.write_string("  options.no_color(true)\n")
     }
-    generate_formatter_lines(buf, config)
-    let runner = match config.execution {
+    if config.shared is None {
+      generate_formatter_lines(buf, config)
+    }
+    let runner = match config.execution.resolve(Native) {
       Async => "run_or_fail"
       Sync => "run_or_fail_sync"
     }
@@ -311,8 +313,8 @@ fn generate_scenario_runner_test(
       "  @moonspec." +
       runner +
       "(\n    " +
-      config.world +
-      "::default, options,\n  )\n",
+      world_factory(config) +
+      ", options,\n  )\n",
     )
   } else {
     buf.write_string("  // Source: " + source_path + "\n")
@@ -438,4 +440,35 @@ fn escape_string(s : String) -> String {
     }
   }
   buf.to_string()
+}
+
+///|
+pub suberror GenerationError {
+  SharedGenerationRequired
+} derive(Debug)
+
+///|
+pub extend GenerationError with @moonbitlang/core/debug.Debug::{to_repr}
+
+///|
+fn generate_options_line(
+  buf : StringBuilder,
+  source_expr : String,
+  config : CodegenConfig,
+) -> Unit {
+  if config.shared is Some(_) {
+    buf.write_string("  let options = " + source_expr + "\n")
+  } else {
+    buf.write_string(
+      "  let options = @moonspec.RunOptions::new([" + source_expr + "])\n",
+    )
+  }
+}
+
+///|
+fn world_factory(config : CodegenConfig) -> String {
+  match config.shared {
+    Some(shared) => "@definitions." + shared.world_factory
+    None => config.world + "::default"
+  }
 }

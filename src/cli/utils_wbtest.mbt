@@ -69,10 +69,13 @@ test "resolve_test_kind: the CLI value, then the config, then wbtest" {
 test "execution selection uses CLI then merged config then async" {
   let sync = @config.MoonspecConfig::from_json5("{ execution: 'sync' }")
   let async_ = @config.MoonspecConfig::from_json5("{ execution: 'async' }")
-  assert_eq(resolve_execution(None, @config.MoonspecConfig::empty()), Ok(Async))
-  assert_eq(resolve_execution(None, sync), Ok(Sync))
-  assert_eq(resolve_execution(Some("async"), sync), Ok(Async))
-  assert_eq(resolve_execution(Some("sync"), async_), Ok(Sync))
+  assert_eq(
+    resolve_execution(None, @config.MoonspecConfig::empty()),
+    Ok(Scalar(Async)),
+  )
+  assert_eq(resolve_execution(None, sync), Ok(Scalar(Sync)))
+  assert_eq(resolve_execution(Some("async"), sync), Ok(Scalar(Async)))
+  assert_eq(resolve_execution(Some("sync"), async_), Ok(Scalar(Sync)))
   match resolve_execution(Some("parallel"), sync) {
     Err(message) => {
       assert_true(message.contains("--execution"))
@@ -156,4 +159,16 @@ test "gen build apply carries sync execution to the rule and initial test file" 
   @fs.remove_dir(package_dir)
   assert_true(rules.contains("--execution sync"))
   assert_true(generated.contains("@moonspec.run_or_fail_sync("))
+}
+
+///|
+test "CLI scalar selection replaces targeted policy while preserving shared factories" {
+  let config = @config.MoonspecConfig::from_json5(
+    "{execution:{default:'async',targets:{'wasm-gc':'sync'}},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let policy = resolve_execution(None, config).unwrap()
+  assert_eq(policy.resolve(WasmGc), Sync)
+  assert_eq(policy.resolve(Native), Async)
+  assert_eq(resolve_execution(Some("sync"), config), Ok(Scalar(Sync)))
+  assert_eq(config.shared.unwrap().world_factory, "world")
 }

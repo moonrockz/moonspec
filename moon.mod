@@ -4,6 +4,7 @@ version = "0.11.0"
 
 import {
   "moonbitlang/x@0.5.5",
+  "moonbitlang/moon_config@0.4.2",
   "moonbitlang/async@0.22.4",
   "moonbitlang/regexp@0.3.6",
   "moonrockz/gherkin@0.5.1",
