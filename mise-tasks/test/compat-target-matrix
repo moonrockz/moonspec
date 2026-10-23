@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+#MISE description="Execute generated mixed sync sequential and parallel suites on supported targets"
+#MISE depends=["build:cli"]
+set -euo pipefail
+python3 -B tests/compat/target-policy/matrix.py "$@"
+python3 -B -m unittest discover -s tests/compat/target-policy -p 'matrix_test.py'

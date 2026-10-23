@@ -10,6 +10,25 @@ ROOT = Path(__file__).resolve().parents[3]
 
 
 class CiGateTests(unittest.TestCase):
+    def test_shared_gate_selects_complete_shared_matrix(self):
+        task = (ROOT / "mise-tasks/test/compat-shared").read_text()
+        self.assertIn("probe.py --shared-only", task)
+
+    def test_policy_schema_environment_is_provisioned_in_compatibility(self):
+        workflow = (ROOT / ".github/workflows/ci.yml").read_text()
+        category = workflow.split("  compatibility:\n", 1)[1].split("  ci-ok:", 1)[0]
+        for dependency in ("PyYAML==6.0.3", "jsonschema==4.26.0", "uv==0.13.4"):
+            self.assertIn(dependency, category)
+
+    def test_compatibility_requires_every_policy_gate(self):
+        import ast
+        task = (ROOT / "mise-tasks/test/compat").read_text()
+        line = next(line for line in task.splitlines() if line.startswith("#MISE depends="))
+        selected = ast.literal_eval(line.split("=", 1)[1])
+        for name in ("test:compat-contract", "test:compat-shared", "test:compat-target-policy",
+                     "test:compat-policy-regeneration", "test:compat-target-matrix", "examples:multi-target"):
+            self.assertIn(name, selected)
+
     def test_workflow_rejects_skipped_required_job(self):
         workflow = (ROOT / ".github/workflows/ci.yml").read_text()
         script = textwrap.dedent(workflow.split("  ci-ok:\n", 1)[1].split("        run: |\n", 1)[1])

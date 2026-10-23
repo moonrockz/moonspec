@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-#MISE description="Execute the shared-definition contract consumer"
+#MISE description="Execute shared-definition sync and async together on every supported host"
 set -euo pipefail
-cd tests/compat/shared-definition
-moon test --target "${1:-wasm-gc}" "${2:-src/sync}"
+python3 -B tests/compat/shared-definition/probe.py --shared-only "$@"

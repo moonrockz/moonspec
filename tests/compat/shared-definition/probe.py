@@ -1,7 +1,10 @@
 """Executable package-selection and effect contract probes."""
 import json
+import argparse
 from pathlib import Path
+import re
 import subprocess
+import sys
 import tempfile
 
 HERE = Path(__file__).resolve().parent
@@ -14,10 +17,34 @@ def run(cwd, label, args, expected=None):
     (LOG / (label + '.log')).write_text(p.stdout)
     if expected is None:
         assert p.returncode == 0, p.stdout
+        if 'test' in args and '--build-only' not in args:
+            summaries = re.findall(r'Total tests: (\d+), passed: (\d+), failed: (\d+)(?:, skipped: (\d+))?', p.stdout)
+            assert len(summaries) == 1, p.stdout
+            total, passed, failed, skipped = (int(x or 0) for x in summaries[0])
+            assert total > 0 and total == passed and failed == skipped == 0, p.stdout
     else:
         assert p.returncode != 0 and expected in p.stdout, p.stdout
     print(label + ': verified')
     return p.stdout
+
+
+if '--shared-only' in sys.argv:
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--shared-only', action='store_true')
+    parser.add_argument('--target', choices=['wasm', 'wasm-gc', 'js', 'native'])
+    args = parser.parse_args()
+    report = LOG / 'shared-matrix.json'
+    report.unlink(missing_ok=True)
+    results = []
+    for target in ([args.target] if args.target else ['wasm', 'wasm-gc', 'js', 'native']):
+        packages = ['src/sync'] + ([] if target == 'wasm-gc' else ['src/async'])
+        output = run(HERE, 'shared-mixed-' + target, ['test', '--target', target, *packages])
+        tests = 4 * len(packages)
+        assert f'Total tests: {tests}, passed: {tests}, failed: 0' in output, output
+        results.append(dict(target=target, tests=tests, packages=packages))
+    report.write_text(json.dumps(results, indent=2) + '\n')
+    print(json.dumps(results))
+    raise SystemExit(0)
 
 with tempfile.TemporaryDirectory(prefix='moonspec-u15-contract-') as temp:
     p = Path(temp)

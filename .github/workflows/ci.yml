@@ -144,7 +144,13 @@ jobs:
       - name: Install dependencies
         run: moon update
 
-      - name: Execute public runtime matrix, generated consumers and sync example
+      - name: Provision policy schema verifier
+        run: |
+          python3 -m venv _build/compat-python
+          _build/compat-python/bin/python -m pip install PyYAML==6.0.3 jsonschema==4.26.0 uv==0.13.4
+          echo "$PWD/_build/compat-python/bin" >> "$GITHUB_PATH"
+
+      - name: Execute runtime, generated mixed-target, regeneration and example gates
         run: mise run test:compat
 
   # The only check required by the main branch ruleset. Every selected job
