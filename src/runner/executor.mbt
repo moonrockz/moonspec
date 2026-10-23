@@ -181,19 +181,10 @@ pub fn execute_scenario(
       "SKIPPED"
     } else {
       match hook.handler {
-        @core.CaseHandler(h) =>
-          try {
-            let hook_ctx = @core.CaseHookCtx::new(info)
+        @core.CaseHandler(h) => {
+          let hook_ctx = @core.CaseHookCtx::new(info)
+          let status = try {
             h(hook_ctx)
-            if has_sinks && hook_ctx.pending_attachments().length() > 0 {
-              emit_attachments(
-                sinks,
-                hook_ctx.pending_attachments(),
-                test_case_started_id,
-                Some(ts_id),
-              )
-              hook_ctx.pending_attachments().clear()
-            }
             "PASSED"
           } catch {
             e => {
@@ -201,6 +192,17 @@ pub fn execute_scenario(
               "FAILED"
             }
           }
+          if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+            emit_attachments(
+              sinks,
+              hook_ctx.pending_attachments(),
+              test_case_started_id,
+              Some(ts_id),
+            )
+            hook_ctx.pending_attachments().clear()
+          }
+          status
+        }
         _ => "PASSED"
       }
     }
@@ -278,23 +280,25 @@ pub fn execute_scenario(
         )
       }
       let after_status = match hook.handler {
-        @core.CaseAfterHandler(h) =>
-          try {
-            let hook_ctx = @core.CaseHookCtx::new(info)
+        @core.CaseAfterHandler(h) => {
+          let hook_ctx = @core.CaseHookCtx::new(info)
+          let status = try {
             h(hook_ctx, case_hook_result)
-            if has_sinks && hook_ctx.pending_attachments().length() > 0 {
-              emit_attachments(
-                sinks,
-                hook_ctx.pending_attachments(),
-                test_case_started_id,
-                Some(ts_id),
-              )
-              hook_ctx.pending_attachments().clear()
-            }
             "PASSED"
           } catch {
             _ => "FAILED"
           }
+          if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+            emit_attachments(
+              sinks,
+              hook_ctx.pending_attachments(),
+              test_case_started_id,
+              Some(ts_id),
+            )
+            hook_ctx.pending_attachments().clear()
+          }
+          status
+        }
         _ => "PASSED"
       }
       if has_sinks {
@@ -442,8 +446,10 @@ pub fn execute_scenario(
                 None => ()
               }
               let ctx = @core.Ctx::new(args, info, step_info)
-              (step_def.handler.0)(ctx)
+              // Keep ctx before the handler runs, so attachments drain
+              // also when the handler raises.
               ctx_for_drain = Some(ctx)
+              (step_def.handler.0)(ctx)
               (StepStatus::Passed, None)
             } catch {
               @core.MoonspecError::PendingStep(step~, keyword=kw, message~) =>
@@ -588,23 +594,25 @@ pub fn execute_scenario(
       emit(sinks, make_test_step_started_envelope(test_case_started_id, ts_id))
     }
     let after_status = match hook.handler {
-      @core.CaseAfterHandler(h) =>
-        try {
-          let hook_ctx = @core.CaseHookCtx::new(info)
+      @core.CaseAfterHandler(h) => {
+        let hook_ctx = @core.CaseHookCtx::new(info)
+        let status = try {
           h(hook_ctx, case_hook_result)
-          if has_sinks && hook_ctx.pending_attachments().length() > 0 {
-            emit_attachments(
-              sinks,
-              hook_ctx.pending_attachments(),
-              test_case_started_id,
-              Some(ts_id),
-            )
-            hook_ctx.pending_attachments().clear()
-          }
           "PASSED"
         } catch {
           _ => "FAILED"
         }
+        if has_sinks && hook_ctx.pending_attachments().length() > 0 {
+          emit_attachments(
+            sinks,
+            hook_ctx.pending_attachments(),
+            test_case_started_id,
+            Some(ts_id),
+          )
+          hook_ctx.pending_attachments().clear()
+        }
+        status
+      }
       _ => "PASSED"
     }
     if has_sinks {
