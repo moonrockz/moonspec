@@ -871,3 +871,59 @@ test "shared planner validates all feature sources before exposing output" {
   }
   assert_true(message.contains("broken.feature"))
 }
+
+///|
+test "programmatic shared plans validate factory identifiers before rendering" {
+  let base = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  let config = {
+    ..base,
+    shared: Some({ ..base.shared.unwrap(), world_factory: "world()", }),
+  }
+  let message = try {
+    ignore(
+      plan_shared_generation(
+        [],
+        module_name="consumer",
+        package_path="suite",
+        config~,
+      ),
+    )
+    "accepted"
+  } catch {
+    InvalidPlan(message) => message
+  }
+  assert_true(message.contains("shared"))
+}
+
+///|
+test "public planner validates module and output package identifiers" {
+  let config = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'}}",
+  )
+  for
+    (module_name, package_path, expected) in [
+      ("consumer/", "suite", "module_name"),
+      ("consumer", "suite/bad\"name", "package_path"),
+      ("consumer", "suite//group", "package_path"),
+    ] {
+    let message = try {
+      ignore(plan_shared_generation([], module_name~, package_path~, config~))
+      "accepted"
+    } catch {
+      InvalidPlan(message) => message
+    }
+    assert_true(message.contains(expected), msg=message)
+  }
+}
+
+///|
+test "shared codegen parser retains common settings for planning" {
+  let config = CodegenConfig::from_json5(
+    "{execution:{default:'sync'},shared:{package:'consumer/definitions',world_factory:'world',options_factory:'options'},skip_tags:['@later'],formatters:[{type:'messages',output:'stdout'}],no_color:true}",
+  )
+  assert_eq(config.skip_tags, Some(["@later"]))
+  assert_eq(config.formatters.unwrap()[0].type_, "messages")
+  assert_true(config.no_color)
+}

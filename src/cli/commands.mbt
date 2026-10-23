@@ -9,7 +9,7 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
   let output_dir : String? = option_value(value, "output-dir")
   let config_path : String? = option_value(value, "config")
   let moonspec_config = load_config_for(config_path, output_dir.unwrap_or("."))
-  if uses_shared(moonspec_config) {
+  if uses_shared(moonspec_config, option_value(value, "execution")) {
     cmd_gen_shared(
       value,
       files,
@@ -17,6 +17,10 @@ fn cmd_gen_tests(value : @argparse.Matches) -> Unit {
       moonspec_config,
       apply=!value.flags.get_or_default("preview", false),
     )
+    return
+  }
+  if value.flags.get_or_default("preview", false) {
+    die("Error: --preview currently supports shared package generation only")
     return
   }
   // Resolve world: CLI --world overrides config
@@ -148,7 +152,7 @@ fn cmd_gen_build(value : @argparse.Matches) -> Unit {
     option_value(value, "config"),
     package_dir,
   )
-  if uses_shared(moonspec_config) {
+  if uses_shared(moonspec_config, option_value(value, "execution")) {
     cmd_gen_shared(
       value,
       files,

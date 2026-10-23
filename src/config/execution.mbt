@@ -117,24 +117,6 @@ fn parse_shared(value : Json) -> SharedConfig raise ConfigError {
         }
       }
       let package_path = shared_string(obj.get("package"), "shared.package")
-      for segment in package_path.split("/") {
-        if segment.is_empty() || segment == "." || segment == ".." {
-          raise InvalidExecution(
-            "shared.package must be a nonempty package path without dot segments",
-          )
-        }
-        for c in segment.to_owned().iter() {
-          if !(c >= 'a' && c <= 'z') &&
-            !(c >= 'A' && c <= 'Z') &&
-            !(c >= '0' && c <= '9') &&
-            c != '_' &&
-            c != '-' {
-            raise InvalidExecution(
-              "shared.package contains an invalid character",
-            )
-          }
-        }
-      }
       let world_factory = shared_string(
         obj.get("world_factory"),
         "shared.world_factory",
@@ -143,14 +125,9 @@ fn parse_shared(value : Json) -> SharedConfig raise ConfigError {
         obj.get("options_factory"),
         "shared.options_factory",
       )
-      for factory in [world_factory, options_factory] {
-        if !simple_identifier(factory) {
-          raise InvalidExecution(
-            "shared factories must be simple MoonBit identifiers",
-          )
-        }
-      }
-      { package_path, world_factory, options_factory, }
+      let shared = { package_path, world_factory, options_factory, }
+      shared.validate()
+      shared
     }
     _ => raise InvalidExecution("shared must be an object")
   }
@@ -228,4 +205,35 @@ fn simple_identifier(value : String) -> Bool {
     }
   }
   !value.is_empty()
+}
+
+///|
+/// Validate both parsed and directly constructed shared configuration.
+pub fn SharedConfig::validate(self : SharedConfig) -> Unit raise ConfigError {
+  let package_path = self.package_path
+  let world_factory = self.world_factory
+  let options_factory = self.options_factory
+  for segment in package_path.split("/") {
+    if segment.is_empty() || segment == "." || segment == ".." {
+      raise InvalidExecution(
+        "shared.package must be a nonempty package path without dot segments",
+      )
+    }
+    for c in segment.to_owned().iter() {
+      if !(c >= 'a' && c <= 'z') &&
+        !(c >= 'A' && c <= 'Z') &&
+        !(c >= '0' && c <= '9') &&
+        c != '_' &&
+        c != '-' {
+        raise InvalidExecution("shared.package contains an invalid character")
+      }
+    }
+  }
+  for factory in [world_factory, options_factory] {
+    if !simple_identifier(factory) {
+      raise InvalidExecution(
+        "shared factories must be simple MoonBit identifiers",
+      )
+    }
+  }
 }

@@ -79,6 +79,7 @@ pub(all) struct SharedConfig {
 pub fn SharedConfig::equal(Self, Self) -> Bool
 pub fn SharedConfig::not_equal(Self, Self) -> Bool
 pub fn SharedConfig::to_repr(Self) -> @debug.Repr
+pub fn SharedConfig::validate(Self) -> Unit raise ConfigError
 
 pub(all) struct StepsConfig {
   output : String?

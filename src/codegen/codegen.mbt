@@ -368,6 +368,9 @@ fn generate_skip_tags_line(
     buf.write_string("  options.skip_tags([])\n")
     return
   }
+  if config.shared is Some(_) {
+    return
+  }
   match config.skip_tags {
     Some(tags) => {
       buf.write_string("  options.skip_tags([")

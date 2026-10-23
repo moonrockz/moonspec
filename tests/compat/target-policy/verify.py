@@ -159,10 +159,9 @@ def verify_schema():
     schema = yaml.safe_load((ROOT / "schemas/moonspec.schema.yaml").read_text())
     Draft202012Validator.check_schema(schema)
     validator = Draft202012Validator(schema)
-    for config in [POLICY, {}, {"execution": "async"}, {"execution": "sync"}, dict(POLICY, execution={"default":"sync"})]:
+    for config in [POLICY, {}, {"execution": "async"}, {"execution": "sync"}, dict(POLICY, execution={"default":"sync"}), {"execution":{"default":"sync"}}]:
         validator.validate(config)
     invalid = [
-        {"execution": {"default": "sync"}},
         dict(POLICY, execution={}),
         dict(POLICY, execution={"default": "async"}),
         dict(POLICY, execution={"default": "sync", "targets": {"llvm": "sync"}}),
@@ -176,7 +175,7 @@ def verify_schema():
     ]
     for config in invalid:
         assert list(validator.iter_errors(config)), config
-    return {"valid": 5, "invalid": len(invalid)}
+    return {"valid": 6, "invalid": len(invalid)}
 
 
 
@@ -241,9 +240,12 @@ def verify_precedence():
         definitions = (path / "lib/definitions/world.mbt").read_bytes()
         (path / "lib/sync_suite").mkdir()
         (path / "lib/sync_suite/moonspec.json5").write_text('{"execution":"sync"}')
+        (path / "lib/object_suite").mkdir()
+        (path / "lib/object_suite/moonspec.json5").write_text('{"execution":{"default":"sync","targets":{}}}')
         for label, directory, flags, entry in [
             ("parent", "lib/async_suite", [], "async"),
             ("child", "lib/sync_suite", [], "sync"),
+            ("object-child", "lib/object_suite", [], "sync"),
             ("cli", "lib/sync_suite/override", ["--execution", "async"], "async"),
         ]:
             command([CLI, "gen", "tests", *SOURCES, "-o", str(path.resolve() / directory) if label == "child" else directory, *flags], path, "precedence-" + label)
@@ -283,6 +285,134 @@ def reject_async_shared_import():
         assert before == snapshot(path)
 
 
+
+def reject_external_shared_package():
+    with tempfile.TemporaryDirectory(prefix="moonspec-policy-external-") as tmp:
+        path = Path(tmp)
+        fixture(path)
+        config = dict(POLICY, shared=dict(POLICY["shared"], package="external/module/definitions"))
+        (path / "moonspec.json5").write_text(json.dumps(config))
+        before = snapshot(path)
+        output = command([CLI, "gen", "tests", *SOURCES, "-o", "lib/suite"], path, "external-shared", success=False)
+        assert "shared.package" in output and "current module" in output, output
+        assert before == snapshot(path)
+
+
+
+def verify_configured_formatters():
+    results = []
+    with tempfile.TemporaryDirectory(prefix="moonspec-policy-formatters-") as tmp:
+        path = Path(tmp)
+        fixture(path)
+        factory = DEFINITION.replace('  options.no_color(true)\n', '').replace('  options.add_formatter(@format.MessagesFormatter::new(), @moonspec.OutputDest::Stdout)\n', '')
+        (path / "lib/definitions/world.mbt").write_text(factory)
+        config = dict(POLICY, no_color=True, formatters=[{"type":"messages","output":"stdout"},{"type":"pretty","output":"stdout"}])
+        (path / "moonspec.json5").write_text(json.dumps(config))
+        command([CLI, "gen", "tests", *SOURCES, "-o", "lib/suite"], path, "configured-formatters-generate")
+        for entry, target in [("async", "native"), ("sync", "wasm-gc")]:
+            output = command(["moon", "test", "lib/suite/moonspec_gen/" + entry, "--target", target], path, "configured-formatters-" + target)
+            assert "\x1b[" not in output, output
+            result = verify_run(output, target, "per-scenario", "wbtest")
+            result["settings"] = "config-only-formatters-and-no-color"
+            results.append(result)
+        common = (path / "lib/suite/moonspec_gen/shared/sources.mbt").read_text()
+        assert "options.no_color(true)" in common
+        for file in (path / "lib/suite/moonspec_gen").glob("*/*_wbtest.mbt"):
+            assert "add_formatter" not in file.read_text() and "no_color" not in file.read_text(), file
+    return results
+
+
+
+def reject_incompatible_json_package():
+    for label, package in [
+        ("portable", {"import": ["moonrockz/moonspec", "moonrockz/moonspec/format"], "supported-targets": ["wasm", "wasm-gc", "js", "native"]}),
+        ("async", {"import": ["moonrockz/moonspec/async", "moonrockz/moonspec/format"]}),
+        ("targets", {"import": ["moonrockz/moonspec", "moonrockz/moonspec/format"], "supported-targets": ["native"]}),
+    ]:
+        with tempfile.TemporaryDirectory(prefix="moonspec-policy-json-") as tmp:
+            path = Path(tmp)
+            fixture(path)
+            (path / "lib/definitions/moon.pkg").unlink()
+            (path / "lib/definitions/moon.pkg.json").write_text(json.dumps(package))
+            if label == "portable":
+                compiler = command(["moon", "check", "lib/definitions", "--target", "native"], path, "json-package-compiler", success=False)
+                assert "no longer supported" in compiler and "moon fmt" in compiler, compiler
+            before = snapshot(path)
+            output = command([CLI, "gen", "tests", *SOURCES, "-o", "lib/suite"], path, "json-package-" + label, success=False)
+            assert "shared.package" in output and "moon fmt" in output, output
+            assert before == snapshot(path)
+
+
+
+def verify_root_shared_package():
+    results = []
+    with tempfile.TemporaryDirectory(prefix="moonspec-policy-root-") as tmp:
+        path = Path(tmp)
+        fixture(path)
+        (path / "lib/definitions/world.mbt").rename(path / "lib/world.mbt")
+        (path / "lib/definitions/moon.pkg").rename(path / "lib/moon.pkg")
+        (path / "lib/definitions").rmdir()
+        config = dict(POLICY, shared=dict(POLICY["shared"], package="policy/consumer"))
+        (path / "moonspec.json5").write_text(json.dumps(config))
+        command([CLI, "gen", "tests", *SOURCES, "-o", "lib/suite"], path, "root-shared-generate")
+        for entry, target in [("async", "native"), ("sync", "wasm-gc")]:
+            output = command(["moon", "test", "lib/suite/moonspec_gen/" + entry, "--target", target], path, "root-shared-" + target)
+            result = verify_run(output, target, "per-scenario", "wbtest")
+            result["shared"] = "module-root"
+            results.append(result)
+    return results
+
+
+def reject_effective_policy_without_shared():
+    with tempfile.TemporaryDirectory(prefix="moonspec-policy-without-shared-") as tmp:
+        path = Path(tmp)
+        fixture(path)
+        (path / "moonspec.json5").write_text('{"execution":{"default":"sync"}}')
+        before = snapshot(path)
+        output = command([CLI, "gen", "tests", *SOURCES, "-o", "lib/suite"], path, "missing-effective-shared", success=False)
+        assert "requires shared" in output, output
+        assert before == snapshot(path)
+
+
+
+def reject_unsupported_json_module():
+    with tempfile.TemporaryDirectory(prefix="moonspec-policy-json-module-") as tmp:
+        path = Path(tmp)
+        fixture(path)
+        (path / "moon.mod").unlink()
+        (path / "moon.mod.json").write_text(json.dumps({"name":"policy/consumer", "version":"0.0.1", "source":"lib", "deps":{"moonrockz/moonspec":"0.11.0", "moonbitlang/async":"0.22.4"}}))
+        compiler = command(["moon", "check", "lib/definitions", "--target", "native"], path, "json-module-compiler", success=False)
+        assert "no longer supported" in compiler and "moon fmt" in compiler, compiler
+        before = snapshot(path)
+        output = command([CLI, "gen", "tests", *SOURCES, "-o", "lib/suite"], path, "json-module-preflight", success=False)
+        assert "moon.mod.json" in output and "moon fmt" in output, output
+        assert before == snapshot(path)
+
+
+
+def reject_scalar_preview():
+    with tempfile.TemporaryDirectory(prefix="moonspec-scalar-preview-") as tmp:
+        path = Path(tmp)
+        fixture(path)
+        (path / "moonspec.json5").write_text('{"world":"MyWorld","execution":"sync"}')
+        before = snapshot(path)
+        output = command([CLI, "gen", "tests", "./features/shared.feature", "-o", "lib/suite", "--preview"], path, "scalar-preview", success=False)
+        assert "preview" in output and "shared" in output, output
+        assert before == snapshot(path)
+
+
+
+def verify_scalar_override_without_shared():
+    with tempfile.TemporaryDirectory(prefix="moonspec-policy-scalar-override-") as tmp:
+        path = Path(tmp)
+        fixture(path)
+        (path / "moonspec.json5").write_text('{"execution":{"default":"sync"},"world":"MyWorld"}')
+        command([CLI, "gen", "tests", "./features/shared.feature", "--execution", "sync", "-o", "lib/legacy_test.mbt"], path, "scalar-override-no-shared")
+        output = (path / "lib/legacy_test.mbt").read_text()
+        assert "run_or_fail_sync" in output and "MyWorld::default" in output
+        assert not (path / "lib/moonspec_gen").exists()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--schema-only", action="store_true")
@@ -300,6 +430,14 @@ def main():
     verify_plan_boundary()
     reject_nonportable_shared_package()
     reject_async_shared_import()
+    reject_external_shared_package()
+    reject_incompatible_json_package()
+    reject_unsupported_json_module()
+    reject_scalar_preview()
+    verify_scalar_override_without_shared()
+    reject_effective_policy_without_shared()
+    root_shared = verify_root_shared_package()
+    configured_formatters = verify_configured_formatters()
     precedence = verify_precedence()
     results = []
     graph = None
@@ -331,7 +469,7 @@ def main():
                     graph = audit_graph(path)
                     unsupported = command(["moon", "check", "lib/suite/moonspec_gen/async", "--target", "wasm-gc"], path, "unsupported-async-target", success=False)
                     assert "does not support target backend" in unsupported and "wasm-gc" in unsupported, unsupported
-    report.write_text(json.dumps({"runs": results, "graph": graph, "schema": schema, "precedence": precedence}, indent=2) + "\n")
+    report.write_text(json.dumps({"runs": results, "graph": graph, "schema": schema, "precedence": precedence, "configured_formatters": configured_formatters, "root_shared": root_shared}, indent=2) + "\n")
     print(json.dumps(results))
 
 

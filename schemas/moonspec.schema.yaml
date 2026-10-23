@@ -19,6 +19,8 @@ properties:
       target packages. All four targets resolve explicitly; async wasm-gc is
       unsupported. Nearer config replaces the whole value. CLI --execution selects
       a scalar override while retaining shared factories when configured.
+      Partial suite configs may inherit shared; effective merged object policies
+      require shared factories during planning.
     oneOf:
       - type: string
         enum: ["async", "sync"]
@@ -168,15 +170,6 @@ properties:
         items:
           type: string
         examples: [["lib/*", "vendor/*"]]
-
-allOf:
-  - if:
-      required: ["execution"]
-      properties:
-        execution:
-          type: object
-    then:
-      required: ["shared"]
 
 $defs:
   factoryIdentifier:

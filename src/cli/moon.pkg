@@ -2,7 +2,6 @@ import {
   "moonrockz/moonspec/codegen",
   "moonbitlang/moon_config",
   "moonbitlang/core/env",
-  "moonbitlang/core/json",
   "moonrockz/moonspec/config",
   "moonrockz/moonspec/scanner",
   "moonrockz/gherkin",

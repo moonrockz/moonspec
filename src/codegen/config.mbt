@@ -58,6 +58,7 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
   let json = @json5.parse(input)
   let parsed = @config.MoonspecConfig::from_json5(input)
   let execution = parsed.execution.unwrap_or(Scalar(Async))
+  let common_settings = parsed.shared is Some(_) || execution is Targeted(..)
   let mut mode = PerScenario
   let mut world = ""
   match json {
@@ -78,8 +79,20 @@ pub fn CodegenConfig::from_json5(input : String) -> CodegenConfig raise Error {
     shared: parsed.shared,
     mode,
     world,
-    skip_tags: None,
-    formatters: None,
-    no_color: false,
+    skip_tags: if common_settings {
+      parsed.skip_tags
+    } else {
+      None
+    },
+    formatters: if common_settings {
+      parsed.formatters
+    } else {
+      None
+    },
+    no_color: if common_settings {
+      parsed.no_color.unwrap_or(false)
+    } else {
+      false
+    },
   }
 }

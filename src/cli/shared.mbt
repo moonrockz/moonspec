@@ -1,6 +1,10 @@
 ///|
-fn uses_shared(config : @config.MoonspecConfig) -> Bool {
-  config.shared is Some(_) || config.execution is Some(Targeted(..))
+fn uses_shared(
+  config : @config.MoonspecConfig,
+  cli_execution : String?,
+) -> Bool {
+  config.shared is Some(_) ||
+  (cli_execution is None && config.execution is Some(Targeted(..)))
 }
 
 ///|
@@ -73,20 +77,12 @@ fn module_metadata() -> (String, String) raise @codegen.PlanError {
       }
     }
   } else if @fs.path_exists("moon.mod.json") {
-    let json = @json.parse(read_required("moon.mod.json")) catch {
-      _ => raise @codegen.InvalidPlan("invalid moon.mod.json")
-    }
-    if json is Object(obj) {
-      if obj.get("name") is Some(String(value)) {
-        name = Some(value)
-      }
-      if obj.get("source") is Some(String(value)) {
-        source = Some(value)
-      }
-    }
+    raise @codegen.InvalidPlan(
+      "moon.mod.json is no longer supported by the compiler; run moon fmt to migrate it to moon.mod before shared generation",
+    )
   } else {
     raise @codegen.InvalidPlan(
-      "run shared generation from a module root containing moon.mod or moon.mod.json",
+      "run shared generation from a module root containing moon.mod",
     )
   }
   let name = match name {
@@ -206,13 +202,8 @@ fn plan_shared_command(
         )
       }
     } else if @fs.path_exists(shared_dir + "/moon.pkg.json") {
-      ignore(
-        @json.parse(read_required(shared_dir + "/moon.pkg.json")) catch {
-          _ =>
-            raise @codegen.InvalidPlan(
-              "shared.package has invalid moon.pkg.json",
-            )
-        },
+      raise @codegen.InvalidPlan(
+        "shared.package moon.pkg.json is no longer supported by the compiler; run moon fmt to migrate it to moon.pkg before generation",
       )
     } else {
       raise @codegen.InvalidPlan(
