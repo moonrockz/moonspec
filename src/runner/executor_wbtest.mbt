@@ -416,3 +416,192 @@ test "execute_scenario dry-run with mixed defined and undefined" {
   assert_eq(result.steps[1].status, StepStatus::Undefined)
   assert_eq(result.status, ScenarioStatus::Undefined)
 }
+
+///|
+/// Collect each Attachment and ExternalAttachment envelope as
+/// "testStepId:body" or "testStepId:url".
+fn collected_attachments(sink : CollectorSink) -> Array[String] {
+  let out : Array[String] = []
+  for envelope in sink.envelopes {
+    match envelope {
+      @cucumber_messages.Envelope::Attachment(event) =>
+        out.push(event.testStepId.unwrap_or("") + ":" + event.body)
+      @cucumber_messages.Envelope::ExternalAttachment(event) =>
+        out.push(event.testStepId.unwrap_or("") + ":" + event.url)
+      _ => ()
+    }
+  }
+  out
+}
+
+///|
+/// Collect each TestStepFinished envelope as "testStepId:STATUS".
+fn collected_step_statuses(sink : CollectorSink) -> Array[String] {
+  let out : Array[String] = []
+  for envelope in sink.envelopes {
+    match envelope {
+      @cucumber_messages.Envelope::TestStepFinished(event) =>
+        out.push(
+          event.testStepId +
+          ":" +
+          event.testStepResult.status.to_json().stringify(),
+        )
+      _ => ()
+    }
+  }
+  out
+}
+
+///|
+test "execute_scenario emits step attachments when the handler raises" {
+  let setup = @core.Setup::new()
+  setup.given("a step that attaches and fails", fn(ctx) raise {
+    ctx.attach("text before failure", "text/plain")
+    ctx.attach_bytes(b"abc", "application/octet-stream")
+    ctx.attach_url("https://example.com/failure.png", "image/png")
+    raise Failure::Failure("boom")
+  })
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a step that attaches and fails",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let sink = CollectorSink::new()
+  let result = execute_scenario(
+    setup.step_registry(),
+    feature_name="Attachments",
+    scenario_name="Failing step attaches",
+    pickle_id="pickle-attach-fail",
+    tags=[],
+    steps~,
+    sinks=[sink],
+    test_case_started_id="tcs-1",
+    test_step_ids=["ts-1"],
+  )
+  assert_true(result.steps[0].status is StepStatus::Failed(_))
+  assert_eq(result.status, ScenarioStatus::Failed)
+  assert_eq(collected_step_statuses(sink), ["ts-1:\"FAILED\""])
+  assert_eq(collected_attachments(sink), [
+    "ts-1:text before failure", "ts-1:YWJj", "ts-1:https://example.com/failure.png",
+  ])
+}
+
+///|
+test "execute_scenario emits step attachments when the step is pending" {
+  let setup = @core.Setup::new()
+  setup.given("a step that attaches and is pending", fn(ctx) raise {
+    ctx.attach("text before pending", "text/plain")
+    raise @core.pending_step_error(
+      step="a step that attaches and is pending",
+      keyword="Given",
+      message="TODO",
+    )
+  })
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a step that attaches and is pending",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let sink = CollectorSink::new()
+  let result = execute_scenario(
+    setup.step_registry(),
+    feature_name="Attachments",
+    scenario_name="Pending step attaches",
+    pickle_id="pickle-attach-pending",
+    tags=[],
+    steps~,
+    sinks=[sink],
+    test_case_started_id="tcs-1",
+    test_step_ids=["ts-1"],
+  )
+  assert_eq(result.steps[0].status, StepStatus::Pending)
+  assert_eq(collected_step_statuses(sink), ["ts-1:\"PENDING\""])
+  assert_eq(collected_attachments(sink), ["ts-1:text before pending"])
+}
+
+///|
+test "execute_scenario emits case hook attachments when the hook raises" {
+  let setup = @core.Setup::new()
+  setup.before_test_case(fn(ctx) raise {
+    ctx.attach("before case failure", "text/plain")
+    raise Failure::Failure("before case")
+  })
+  setup.after_test_case(fn(ctx, _result) raise {
+    ctx.attach("after case failure", "text/plain")
+    raise Failure::Failure("after case")
+  })
+  setup.given("a step", fn(_ctx) {  })
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let sink = CollectorSink::new()
+  let result = execute_scenario(
+    setup.step_registry(),
+    feature_name="Attachments",
+    scenario_name="Failing case hooks attach",
+    pickle_id="pickle-attach-case-hooks",
+    tags=[],
+    steps~,
+    hook_registry=setup.hook_registry(),
+    sinks=[sink],
+    test_case_started_id="tcs-1",
+    test_step_ids=["ts-before", "ts-1", "ts-after"],
+  )
+  assert_eq(result.status, ScenarioStatus::Failed)
+  assert_eq(collected_step_statuses(sink), [
+    "ts-before:\"FAILED\"", "ts-1:\"SKIPPED\"", "ts-after:\"FAILED\"",
+  ])
+  assert_eq(collected_attachments(sink), [
+    "ts-before:before case failure", "ts-after:after case failure",
+  ])
+}
+
+///|
+test "execute_scenario emits after case hook attachments when the hook raises after steps run" {
+  let setup = @core.Setup::new()
+  setup.after_test_case(fn(ctx, _result) raise {
+    ctx.attach("after case failure", "text/plain")
+    raise Failure::Failure("after case")
+  })
+  setup.given("a step", fn(_ctx) {  })
+  let steps : Array[@cucumber_messages.PickleStep] = [
+    {
+      id: "s1",
+      text: "a step",
+      astNodeIds: [],
+      type_: Some(@cucumber_messages.PickleStepType::Context),
+      argument: None,
+    },
+  ]
+  let sink = CollectorSink::new()
+  let _ = execute_scenario(
+    setup.step_registry(),
+    feature_name="Attachments",
+    scenario_name="Failing after case hook attaches",
+    pickle_id="pickle-attach-after-case",
+    tags=[],
+    steps~,
+    hook_registry=setup.hook_registry(),
+    sinks=[sink],
+    test_case_started_id="tcs-1",
+    test_step_ids=["ts-1", "ts-after"],
+  )
+  assert_eq(collected_step_statuses(sink), [
+    "ts-1:\"PASSED\"", "ts-after:\"FAILED\"",
+  ])
+  assert_eq(collected_attachments(sink), ["ts-after:after case failure"])
+}
