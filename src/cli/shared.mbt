@@ -97,6 +97,9 @@ fn normalized_relative(path : String) -> String raise @codegen.PlanError {
   let mut path = path
   if path.has_prefix("/") {
     let cwd = @env.current_dir().unwrap_or("")
+    if !cwd.is_empty() && path == cwd {
+      return ""
+    }
     if cwd.is_empty() || !path.has_prefix(cwd + "/") {
       raise @codegen.InvalidPlan(
         "output must be inside the current module; use module-relative paths for filesystem aliases",

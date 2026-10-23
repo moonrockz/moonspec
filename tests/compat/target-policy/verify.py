@@ -350,14 +350,22 @@ def verify_root_shared_package():
     with tempfile.TemporaryDirectory(prefix="moonspec-policy-root-") as tmp:
         path = Path(tmp)
         fixture(path)
-        (path / "lib/definitions/world.mbt").rename(path / "lib/world.mbt")
-        (path / "lib/definitions/moon.pkg").rename(path / "lib/moon.pkg")
+        (path / "lib/definitions/world.mbt").rename(path / "world.mbt")
+        (path / "lib/definitions/moon.pkg").rename(path / "moon.pkg")
         (path / "lib/definitions").rmdir()
+        (path / "lib").rmdir()
+        module = path / "moon.mod"
+        module.write_text(module.read_text().replace('source = "lib"\n', ''))
         config = dict(POLICY, shared=dict(POLICY["shared"], package="policy/consumer"))
         (path / "moonspec.json5").write_text(json.dumps(config))
-        command([CLI, "gen", "tests", *SOURCES, "-o", "lib/suite"], path, "root-shared-generate")
+        command([CLI, "gen", "tests", *SOURCES, "-o", str(path.resolve())], path, "root-shared-absolute-generate")
+        before = snapshot(path)
+        mtimes = {str(p): p.stat().st_mtime_ns for p in (path / "moonspec_gen").rglob("*") if p.is_file()}
+        command([CLI, "gen", "tests", *SOURCES, "-o", "."], path, "root-shared-relative-repeat")
+        assert before == snapshot(path), "absolute and relative module-root output differ"
+        assert mtimes == {str(p): p.stat().st_mtime_ns for p in (path / "moonspec_gen").rglob("*") if p.is_file()}
         for entry, target in [("async", "native"), ("sync", "wasm-gc")]:
-            output = command(["moon", "test", "lib/suite/moonspec_gen/" + entry, "--target", target], path, "root-shared-" + target)
+            output = command(["moon", "test", "moonspec_gen/" + entry, "--target", target], path, "root-shared-" + target)
             result = verify_run(output, target, "per-scenario", "wbtest")
             result["shared"] = "module-root"
             results.append(result)
