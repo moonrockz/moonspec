@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Execute the shared-definition contract consumer"
+set -euo pipefail
+cd tests/compat/shared-definition
+moon test --target "${1:-wasm-gc}" "${2:-src/sync}"

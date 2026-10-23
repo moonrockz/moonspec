@@ -1,0 +1,6 @@
+import {
+  "moonrockz/moonspec",
+  "moonspec-compat/shared-definition/shared",
+} for "test"
+
+supported_targets = "wasm+wasm-gc+js+native"
