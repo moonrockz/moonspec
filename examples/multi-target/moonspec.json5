@@ -1,0 +1,9 @@
+{
+  execution: { default: "async", targets: { "wasm-gc": "sync" } },
+  shared: {
+    package: "example/multi-target/definitions",
+    world_factory: "world",
+    options_factory: "options",
+  },
+  test_kind: "test",
+}
