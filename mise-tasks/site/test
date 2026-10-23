@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+#MISE description="Run focused site tests on a selected target"
+set -euo pipefail
+target="${1:-native}"
+if (($#)); then
+  shift
+fi
+cd site
+moon test --target "$target" "$@"

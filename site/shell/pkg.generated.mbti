@@ -58,6 +58,7 @@ pub fn InstallTab::to_repr(Self) -> @debug.Repr
 pub(all) struct Model {
   config : @data.SiteConfig
   manifest : @content.Manifest
+  counterpart_routes : Array[@route.Route]
   route : @route.Route
   page : PageState
   theme : Theme

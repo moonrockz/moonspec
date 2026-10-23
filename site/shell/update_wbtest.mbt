@@ -29,6 +29,7 @@ fn site_data(route : @route.Route, markdown : String?) -> @data.SiteData {
         group: Guides,
       },
     ],
+    counterpart_routes: [Doc("getting-started"), Doc("configuration")],
     route,
     markdown,
   }
@@ -352,4 +353,60 @@ test "opening search closes the phone menu" {
   assert_true(s.search.open)
   assert_false(s.menu_open)
   assert_false(step(m, key("/")).menu_open)
+}
+
+///|
+test "hydrated counterpart routes remain valid after client navigation" {
+  let source = site_data(Doc("configuration"), Some("# Configuration\n"))
+  let data : @data.SiteData = {
+    ..source,
+    config: { ..source.config, channel: Next, base: "/moonspec/next/", },
+    pages: [
+      ..source.pages,
+      {
+        route: Doc("next-only"),
+        title: "Next only",
+        source: "docs/guide/next-only.md",
+        group: Guides,
+      },
+    ],
+  }
+  let m = Model::init(@data.SiteData::decode(data.encode()).unwrap())
+  assert_eq(version_href(m, Release, m.route), "/moonspec/docs/configuration/")
+  let navigated = step(
+    m,
+    UrlChanged(@url.parse("http://localhost/moonspec/next/docs/next-only/")),
+  )
+  assert_eq(version_href(navigated, Release, navigated.route), "/moonspec/")
+  assert_eq(
+    version_href(navigated, Next, navigated.route),
+    "/moonspec/next/docs/next-only/",
+  )
+}
+
+///|
+test "version links handle migrations missing routes and alternate bases" {
+  let data = site_data(Landing, None)
+  let source = Model::init({
+    ..data,
+    counterpart_routes: [Migration("v0.11.0")],
+  })
+  let m = {
+    ..source,
+    config: {
+      ..source.config,
+      base: "/",
+      release_base: "/",
+      next_base: "/next/",
+    },
+  }
+  assert_eq(
+    version_href(m, Next, Migration("v0.11.0")),
+    "/next/migrations/v0.11.0/",
+  )
+  assert_eq(version_href(m, Next, Migration("v0.10.0")), "/next/")
+  assert_eq(version_href(m, Release, Doc("missing")), "/")
+  assert_eq(version_href(m, Next, NotFound("missing")), "/next/")
+  assert_eq(version_href(m, Release, Landing), "/")
+  assert_eq(version_href(m, Next, Landing), "/next/")
 }

@@ -53,7 +53,7 @@ fn next_banner(m : Model) -> Html {
       @html.div(class="ms-banner", [
         @html.text("You are reading the docs for main (unreleased). "),
         @html.a(
-          href=@route.href(m.config.release_base, m.route),
+          href=version_href(m, Release, m.route),
           "Go to the \{m.config.release_version} docs.",
         ),
       ])

@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
-#MISE description="Validate the CI workflow with actionlint"
+#MISE description="Validate GitHub workflows with actionlint"
 set -euo pipefail
-actionlint .github/workflows/ci.yml
+if (($#)); then
+  actionlint "$@"
+else
+  actionlint .github/workflows/*.yml
+fi

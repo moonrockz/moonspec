@@ -8,6 +8,7 @@ test "parse_args reads every flag" {
     args,
     Ok({
       content: "../release",
+      counterpart_content: None,
       channel: Next,
       site_root: "/moonspec/",
       release_version: "v0.11.0",
@@ -69,4 +70,12 @@ test "check_manifest accepts a manifest with a guide page" {
     ],
   }
   assert_eq(check_manifest(m, "."), Ok(()))
+}
+
+///|
+test "prerender accepts the other version content root" {
+  let args = parse_args([
+    "prerender", "--content", "main", "--counterpart-content", "../release",
+  ]).unwrap()
+  assert_eq(args.counterpart_content, Some("../release"))
 }

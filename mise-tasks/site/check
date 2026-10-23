@@ -2,7 +2,9 @@
 #MISE description="Test the site packages, build the release and next versions, and check them"
 set -euo pipefail
 
-(cd site && moon test --target native && moon test --target js && moon check --target native && moon check --target js)
+mise run site:test -- native
+mise run site:test -- js
+(cd site && moon check --target native && moon check --target js)
 
 tmp=$(mktemp -d)
 cleanup() {
@@ -24,9 +26,31 @@ else
   echo "site:check: no stable release tag found; building the release channel from the working tree"
 fi
 
-mise run site:build -- --content "$release_content" --channel release --site-root /moonspec/ \
+# Exercise the real release/main content plus deliberately asymmetric pages.
+# The two existing browser builds are reused; fixtures stay in the temporary tree.
+mkdir -p "$tmp/release-content" "$tmp/next-content"
+cp -R "$release_content/docs" "$tmp/release-content/docs"
+cp -R docs "$tmp/next-content/docs"
+for channel in release next; do
+  cat > "$tmp/$channel-content/docs/guide/version-check-$channel-only.md" <<EOF
+# Version check: $channel only
+
+This page exists only in the $channel channel.
+EOF
+  cat > "$tmp/$channel-content/docs/guide/version-check-shared.md" <<'EOF'
+# Version check: shared
+
+This page exists in both channels.
+EOF
+done
+# Relative paths also verify site:build resolves inputs before entering site/.
+release_content=$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1]))' "$tmp/release-content")
+next_content=$(python3 -c 'import os,sys; print(os.path.relpath(sys.argv[1]))' "$tmp/next-content")
+
+mise run site:build -- --content "$release_content" --counterpart-content "$next_content" --channel release --site-root /moonspec/ \
   --release-version "$release" --ref "$release" --out "$tmp/site"
-mise run site:build -- --content . --channel next --site-root /moonspec/ \
+mise run site:build -- --content "$next_content" --counterpart-content "$release_content" --channel next --site-root /moonspec/ \
   --release-version "$release" --ref main --out "$tmp/site/next"
+python3 site/check_versions.py "$tmp/site"
 mise run site:linkcheck -- --dist "$tmp/site" --base /moonspec/ --ignore /moonspec/next/
 mise run site:linkcheck -- --dist "$tmp/site/next" --base /moonspec/next/

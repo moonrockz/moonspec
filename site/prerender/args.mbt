@@ -1,6 +1,7 @@
 ///|
 pub(all) struct Args {
   content : String
+  counterpart_content : String?
   channel : @data.Channel
   site_root : String
   release_version : String
@@ -23,6 +24,7 @@ fn with_slashes(path : String) -> String {
 pub fn parse_args(argv : Array[String]) -> Result[Args, String] {
   let mut args : Args = {
     content: ".",
+    counterpart_content: None,
     channel: Next,
     site_root: "/moonspec/",
     release_version: "v0.0.0",
@@ -37,6 +39,8 @@ pub fn parse_args(argv : Array[String]) -> Result[Args, String] {
     let value = argv[i + 1]
     match argv[i] {
       "--content" => args = { ..args, content: value, }
+      "--counterpart-content" =>
+        args = { ..args, counterpart_content: Some(value), }
       "--channel" =>
         match value {
           "release" => args = { ..args, channel: Release, }

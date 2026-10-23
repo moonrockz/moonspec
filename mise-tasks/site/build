@@ -17,7 +17,7 @@ abs_args=()
 for ((i = 0; i < ${#args[@]}; i++)); do
   case "${args[$i]}" in
     --out) abs_args+=(--out "$out_abs"); i=$((i + 1)) ;;
-    --content) abs_args+=(--content "$(cd "${args[$((i + 1))]}" && pwd)"); i=$((i + 1)) ;;
+    --content|--counterpart-content) abs_args+=("${args[$i]}" "$(cd "${args[$((i + 1))]}" && pwd)"); i=$((i + 1)) ;;
     *) abs_args+=("${args[$i]}") ;;
   esac
 done

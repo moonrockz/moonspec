@@ -57,6 +57,8 @@ pub extend SiteConfig with FromJson::{from_json}
 pub(all) struct SiteData {
   config : SiteConfig
   pages : Array[@content.Page]
+  /// Published routes in the other version, used for safe version links.
+  counterpart_routes : Array[@route.Route]
   route : @route.Route
   /// Markdown of the current page; `None` for the landing page and 404.
   markdown : String?
