@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+#MISE description="Verify executable and safe target-policy regeneration"
+#MISE depends=["build:cli"]
+set -euo pipefail
+python3 -B tests/compat/target-policy/regenerate.py "$@"
