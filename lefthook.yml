@@ -6,9 +6,9 @@ pre-commit:
     bd-pre-commit:
       run: bd hooks run pre-commit
     format-check:
-      run: moon fmt --check
+      run: mise exec -- moon fmt --check
     lint-check:
-      run: moon check
+      run: mise exec -- moon check
 
 pre-push:
   commands:

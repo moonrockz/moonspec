@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 #MISE description="Run focused codegen and CLI compatibility unit tests"
 set -euo pipefail
-moon test src/codegen src/cli --target js "$@"
+mise exec -- moon test src/codegen src/cli --target js "$@"

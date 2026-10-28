@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+#MISE description="Validate all OpenSpec artifacts"
+exec openspec validate --all --strict

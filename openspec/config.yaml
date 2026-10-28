@@ -1,0 +1,16 @@
+schema: html-design
+githubCopilot:
+  cloudAgent: false
+context: |
+  MoonSpec is a MoonBit BDD framework for Gherkin features, Cucumber Expressions, code generation, the runner API and CLI. Preserve compatibility across all supported integration modes and report formats.
+  Follow AGENTS.md for repository conventions, toolchain, testing and local beads tracking.
+  OpenSpec holds versioned requirements and designs; beads holds ownership and status.
+rules:
+  proposal:
+    - State scope and affected public contracts. Link repository-local tracking under a Tracking section.
+  specs:
+    - Describe observable behavior with concrete success and failure scenarios.
+  design:
+    - Use the shared offline design.html template and discuss compatibility and migration.
+  tasks:
+    - Include verification, tests and documentation with each task group.

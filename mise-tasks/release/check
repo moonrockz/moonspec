@@ -2,6 +2,6 @@
 #MISE description="Validate formatting, types, and tests before a release"
 set -euo pipefail
 
-moon fmt --check
-moon check
+mise exec -- moon fmt --check
+mise exec -- moon check
 mise run test:unit

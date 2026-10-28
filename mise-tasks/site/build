@@ -28,4 +28,4 @@ rm -rf .bundle
 warren build --browser-entry app --dist .bundle
 cp -R .bundle/. "$out_abs"/
 rm -rf .bundle
-moon run --target native prerender -- "${abs_args[@]}"
+mise exec -- moon run --target native prerender -- "${abs_args[@]}"

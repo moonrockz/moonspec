@@ -1,3 +1,16 @@
 [tools]
+node = "24.14.1"
+"npm:@fission-ai/openspec" = "1.14.3"
 "aqua:orhun/git-cliff" = "2.14.2"
 lefthook = "2.1.1"
+
+# Match the compiler and core version used by GitHub Actions. Local commands must
+# not fall back to a newer global MoonBit installation.
+[tools."http:moonbit"]
+version = "0.10.15+943464bfa"
+bin_path = "bin"
+
+[tools."http:moonbit".platforms]
+linux-x64 = { url = "https://cli.moonbitlang.com/binaries/0.10.15%2B943464bfa/moonbit-linux-x86_64.tar.gz" }
+macos-arm64 = { url = "https://cli.moonbitlang.com/binaries/0.10.15%2B943464bfa/moonbit-darwin-aarch64.tar.gz" }
+windows-x64 = { url = "https://cli.moonbitlang.com/binaries/0.10.15%2B943464bfa/moonbit-windows-x86_64.zip", format = "zip" }

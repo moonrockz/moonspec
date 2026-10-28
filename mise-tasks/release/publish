@@ -6,4 +6,4 @@ echo "==> Pre-publish checks"
 mise run release:check
 
 echo "==> Publishing to mooncakes.io"
-moon publish
+mise exec -- moon publish
