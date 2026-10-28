@@ -6,4 +6,4 @@ if (($#)); then
   shift
 fi
 cd site
-moon test --target "$target" "$@"
+mise exec -- moon test --target "$target" "$@"

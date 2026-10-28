@@ -7,4 +7,4 @@ set -euo pipefail
 # The todolist build rules call the moonspec CLI.
 export PATH="$PWD/_build/bin:$PATH"
 cd examples
-moon test --target js
+mise exec -- moon test --target js

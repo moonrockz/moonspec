@@ -5,4 +5,4 @@ target="${1:-js}"
 if (($#)); then
   shift
 fi
-moon test --target "$target" "$@"
+mise exec -- moon test --target "$target" "$@"

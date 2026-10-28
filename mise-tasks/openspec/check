@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+#MISE description="Verify the shared OpenSpec snapshot"
+exec mise exec -- moon run -q --target wasm scripts/openspec-ext.mbtx -- check

@@ -2,5 +2,5 @@
 #MISE description="Refresh MoonBit interfaces and format source"
 set -euo pipefail
 cd "${1:-.}"
-moon info --target js
-moon fmt
+mise exec -- moon info --target js
+mise exec -- moon fmt

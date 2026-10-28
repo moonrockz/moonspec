@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #MISE description="Build the local moonspec CLI and link it as _build/bin/moonspec"
 set -euo pipefail
-moon build --target native src/cmd/moonspec
+mise exec -- moon build --target native src/cmd/moonspec
 mkdir -p _build/bin
 ln -sf ../native/debug/build/cmd/moonspec/moonspec.exe _build/bin/moonspec
