@@ -475,17 +475,23 @@ rules continue to apply to local notes. Existing changes retain their own schema
 
 `.mise.toml` pins MoonBit to the same compiler and core version as CI. Run
 `mise install`, then use `mise run` tasks or `mise exec -- moon ...`. When
-upgrading, update this pin and its platform URLs together with the CI version.
-A newer global compiler can change core APIs and script syntax; it does not
-validate compatibility with the repository's declared toolchain.
+upgrading, copy the `http:moonbit` block (version, postinstall and platform
+URLs) and `tools/moonbit-core-pin.json` from finos/morphir-moonbit `main`, and
+update the CI version with them. A newer global compiler can change core APIs
+and script syntax; it does not validate compatibility with the repository's
+declared toolchain.
 
-The HTTP archive omits the core library. If the pin is incomplete on a fresh
-machine, complete that exact installation before running checks:
+The HTTP archive omits the core library. The `postinstall` hook completes the
+installation: on Unix it runs the upstream installer for the exact version, and
+on Windows it runs `tools/bootstrap-moonbit-windows.ps1`, which checks the core
+archive against `tools/moonbit-core-pin.json`. If an older install of the same
+version is incomplete, run `mise install --force http:moonbit`.
 
-```shell
-curl -fsSL https://cli.moonbitlang.com/install/unix.sh -o /tmp/install-moonbit.sh
-MOON_HOME="$(mise where http:moonbit)" bash /tmp/install-moonbit.sh '0.10.15+943464bfa'
-```
+Modules that build for `wasm-gc` (the root module, `examples/multi-target`,
+`examples/sync-wasm` and `tests/compat/*`) keep `moonbitlang/async` 0.22.5 or
+earlier. async 0.22.7 casts the core scheduler with `%identity`, and a Wasm-GC
+module that reaches the scheduler fails validation. Modules that do not build
+for `wasm-gc` (`site` and the JavaScript examples) use 0.22.7.
 
 Task launchers resolve MoonBit through `mise exec -- moon` so Git hooks and
 subprocesses also use the pin when their caller has a global compiler on PATH.

@@ -12,7 +12,7 @@ import {
 // Values
 pub fn color_enabled(no_color? : Bool) -> Bool
 
-pub fn parse_failed_error(uri~ : String, line~ : Int?, message~ : String) -> MoonspecError
+pub fn parse_failed_error(uri~ : String, line~ : Int32?, message~ : String) -> MoonspecError
 
 pub fn pending_step_error(step~ : String, keyword~ : String, message~ : String) -> Error
 
@@ -29,7 +29,7 @@ pub suberror MoonspecError {
   UndefinedStep(step~ : String, keyword~ : String, snippet~ : String, suggestions~ : Array[String])
   PendingStep(step~ : String, keyword~ : String, message~ : String)
   StepFailed(step~ : String, keyword~ : String, message~ : String)
-  ParseFailed(uri~ : String, line~ : Int?, message~ : String)
+  ParseFailed(uri~ : String, line~ : Int32?, message~ : String)
   ScenarioFailed(scenario~ : String, feature~ : String, location~ : String?, steps~ : Array[StepReport], errors~ : Array[MoonspecError])
   RunFailed(summary~ : String, errors~ : Array[MoonspecError], color~ : Bool)
 }
@@ -53,15 +53,15 @@ pub struct Cells {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn Cells::equal(Self, Self) -> Bool
-pub fn Cells::get(Self, Int) -> String
-pub fn Cells::length(Self) -> Int
+pub fn Cells::get(Self, Int32) -> String
+pub fn Cells::length(Self) -> Int32
 pub fn Cells::not_equal(Self, Self) -> Bool
 pub fn Cells::to_repr(Self) -> @debug.Repr
 pub fn Cells::values(Self) -> ArrayView[String]
 
 pub(all) struct Column {
   name : String
-  index : Int
+  index : Int32
 } derive(Eq, @debug.Debug)
 pub fn Column::equal(Self, Self) -> Bool
 pub fn Column::not_equal(Self, Self) -> Bool
@@ -72,8 +72,8 @@ pub struct Columns {
 } derive(Eq, @debug.Debug)
 pub fn Columns::equal(Self, Self) -> Bool
 pub fn Columns::find(Self, String) -> Column?
-pub fn Columns::get(Self, Int) -> Column
-pub fn Columns::length(Self) -> Int
+pub fn Columns::get(Self, Int32) -> Column
+pub fn Columns::length(Self) -> Int32
 pub fn Columns::not_equal(Self, Self) -> Bool
 pub fn Columns::to_repr(Self) -> @debug.Repr
 pub fn Columns::values(Self) -> ArrayView[Column]
@@ -85,17 +85,17 @@ pub(all) struct Ctx {
 }
 #alias(new)
 pub fn Ctx::Ctx(Array[StepArg], ScenarioInfo, StepInfo) -> Self
-pub fn Ctx::arg(Self, Int) -> StepArg
+pub fn Ctx::arg(Self, Int32) -> StepArg
 pub fn Ctx::args(Self) -> ArrayView[StepArg]
 #alias("_[_]")
-pub fn Ctx::at(Self, Int) -> StepArg
+pub fn Ctx::at(Self, Int32) -> StepArg
 pub fn Ctx::attach(Self, String, String, file_name? : String) -> Unit
 pub fn Ctx::attach_bytes(Self, Bytes, String, file_name? : String) -> Unit
 pub fn Ctx::attach_url(Self, String, String) -> Unit
 pub fn Ctx::pending_attachments(Self) -> Array[PendingAttachment]
 pub fn Ctx::scenario(Self) -> ScenarioInfo
 pub fn Ctx::step(Self) -> StepInfo
-pub fn Ctx::value(Self, Int) -> StepValue
+pub fn Ctx::value(Self, Int32) -> StepValue
 
 pub(all) struct CustomParamTypeInfo {
   name : String
@@ -107,12 +107,12 @@ pub(all) struct DataTable {
   columns : Columns
 } derive(Eq, @debug.Debug)
 pub fn DataTable::as_maps(Self) -> Array[Map[String, String]]
-pub fn DataTable::col_count(Self) -> Int
+pub fn DataTable::col_count(Self) -> Int32
 pub fn DataTable::equal(Self, Self) -> Bool
 pub fn DataTable::from_rows(Array[Array[String]]) -> Self
 pub fn DataTable::from_step_arg(StepArg) -> Self raise
 pub fn DataTable::not_equal(Self, Self) -> Bool
-pub fn DataTable::row_count(Self) -> Int
+pub fn DataTable::row_count(Self) -> Int32
 pub fn DataTable::to_repr(Self) -> @debug.Repr
 pub impl FromStepArg for DataTable
 
@@ -200,8 +200,8 @@ pub struct Rows {
   // private fields
 } derive(Eq, @debug.Debug)
 pub fn Rows::equal(Self, Self) -> Bool
-pub fn Rows::get(Self, Int) -> Row
-pub fn Rows::length(Self) -> Int
+pub fn Rows::get(Self, Int32) -> Row
+pub fn Rows::length(Self) -> Int32
 pub fn Rows::not_equal(Self, Self) -> Bool
 pub fn Rows::to_repr(Self) -> @debug.Repr
 pub fn Rows::values(Self) -> ArrayView[Row]
@@ -651,7 +651,7 @@ pub(all) struct StepDefId {
   // private fields
 } derive(Eq, Hash, @debug.Debug)
 pub fn StepDefId::equal(Self, Self) -> Bool
-pub fn StepDefId::hash(Self) -> Int
+pub fn StepDefId::hash(Self) -> Int32
 pub fn StepDefId::hash_combine(Self, Hasher) -> Unit
 pub fn StepDefId::not_equal(Self, Self) -> Bool
 pub fn StepDefId::to_repr(Self) -> @debug.Repr
@@ -698,7 +698,7 @@ pub(all) struct StepRegistry {
   // private fields
 }
 pub fn StepRegistry::find_match(Self, String, keyword? : String) -> StepMatchResult raise
-pub fn StepRegistry::len(Self) -> Int
+pub fn StepRegistry::len(Self) -> Int32
 pub fn StepRegistry::new() -> Self
 pub fn StepRegistry::register_def(Self, StepDef, @cucumber-expressions.ParamTypeRegistry) -> Unit
 pub fn StepRegistry::step_defs(Self) -> Array[StepDef]
@@ -712,21 +712,21 @@ pub(all) enum StepReport {
 
 pub(all) struct StepSource {
   uri : String?
-  line : Int?
+  line : Int32?
 } derive(Eq, @debug.Debug)
 #alias(new)
-pub fn StepSource::StepSource(uri? : String, line? : Int) -> Self
+pub fn StepSource::StepSource(uri? : String, line? : Int32) -> Self
 pub fn StepSource::equal(Self, Self) -> Bool
 pub fn StepSource::not_equal(Self, Self) -> Bool
 pub fn StepSource::to_repr(Self) -> @debug.Repr
 
 pub(all) enum StepValue {
-  IntVal(Int)
+  IntVal(Int32)
   FloatVal(Double)
   DoubleVal(Double)
   LongVal(Int64)
   ByteVal(Byte)
-  ShortVal(Int)
+  ShortVal(Int32)
   StringVal(String)
   WordVal(String)
   AnonymousVal(String)
@@ -781,7 +781,7 @@ pub(open) trait FromStepArg {
   fn from_step_arg(StepArg) -> Self raise
 }
 pub impl FromStepArg for Byte
-pub impl FromStepArg for Int
+pub impl FromStepArg for Int32
 pub impl FromStepArg for Int64
 pub impl FromStepArg for Double
 pub impl FromStepArg for String

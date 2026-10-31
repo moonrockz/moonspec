@@ -10,7 +10,7 @@ use a local checkout as described in [sync execution](testing-strategies.md#sync
 
 - [MoonBit toolchain](https://www.moonbitlang.com/download/) installed (`moon` CLI available)
 - An existing MoonBit project (create one with `moon new my-project` if needed)
-- moon/moonrun 0.1.20261012 and moonc/core 0.10.15+943464bfa for the tested setup
+- moon/moonrun 0.1.20261028 and moonc/core 0.10.18+6c83a7f62 for the tested setup
 - Node.js only when running the JavaScript target
 
 ## Step 1: Install moonspec

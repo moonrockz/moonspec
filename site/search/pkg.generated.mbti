@@ -15,7 +15,7 @@ pub fn excerpt(String, Array[String]) -> Array[Segment]
 
 pub fn group_by_page(Array[Match]) -> Array[(String, Array[Match])]
 
-pub fn search(Index, String, limit? : Int) -> Array[Match]
+pub fn search(Index, String, limit? : Int32) -> Array[Match]
 
 pub fn tokenize(String) -> Array[String]
 
@@ -41,12 +41,12 @@ pub struct Index {
 pub fn Index::equal(Self, Self) -> Bool
 pub fn Index::new(Array[Entry]) -> Self
 pub fn Index::not_equal(Self, Self) -> Bool
-pub fn Index::size(Self) -> Int
+pub fn Index::size(Self) -> Int32
 pub fn Index::to_repr(Self) -> @debug.Repr
 
 pub(all) struct Match {
   entry : Entry
-  score : Int
+  score : Int32
   excerpt : Array[Segment]
 } derive(Eq, @debug.Debug)
 pub fn Match::equal(Self, Self) -> Bool

@@ -6,8 +6,9 @@ BDD test framework for MoonBit with Gherkin and Cucumber Expressions.
 
 The sync APIs and async import migration below are unreleased pre-1.0 changes.
 Use this checkout for them; published 0.11.0 does not contain these APIs.
-The tested toolchain is moon/moonrun 0.1.20261012 with moonc and core
-0.10.15+943464bfa, and `moonbitlang/async` 0.22.4.
+The tested toolchain is moon/moonrun 0.1.20261028 with moonc and core
+0.10.18+6c83a7f62, and `moonbitlang/async` 0.22.4. The JavaScript examples also
+test the async facade with `moonbitlang/async` 0.22.7.
 
 | Execution | Package imported as `@moonspec` | Executed targets |
 |---|---|---|

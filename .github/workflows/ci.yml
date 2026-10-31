@@ -16,8 +16,8 @@ jobs:
 
       - uses: hustcer/setup-moonbit@87e2bdf5cf20d3b6f5c5f266a8a513f503bb5b76 # v1.25
         with:
-          version: "0.10.15+943464bfa"
-          core-version: "0.10.15+943464bfa"
+          version: "0.10.18+6c83a7f62"
+          core-version: "0.10.18+6c83a7f62"
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
@@ -42,8 +42,8 @@ jobs:
 
       - uses: hustcer/setup-moonbit@87e2bdf5cf20d3b6f5c5f266a8a513f503bb5b76 # v1.25
         with:
-          version: "0.10.15+943464bfa"
-          core-version: "0.10.15+943464bfa"
+          version: "0.10.18+6c83a7f62"
+          core-version: "0.10.18+6c83a7f62"
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
@@ -63,8 +63,8 @@ jobs:
 
       - uses: hustcer/setup-moonbit@87e2bdf5cf20d3b6f5c5f266a8a513f503bb5b76 # v1.25
         with:
-          version: "0.10.15+943464bfa"
-          core-version: "0.10.15+943464bfa"
+          version: "0.10.18+6c83a7f62"
+          core-version: "0.10.18+6c83a7f62"
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
@@ -86,8 +86,8 @@ jobs:
 
       - uses: hustcer/setup-moonbit@87e2bdf5cf20d3b6f5c5f266a8a513f503bb5b76 # v1.25
         with:
-          version: "0.10.15+943464bfa"
-          core-version: "0.10.15+943464bfa"
+          version: "0.10.18+6c83a7f62"
+          core-version: "0.10.18+6c83a7f62"
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
@@ -112,8 +112,8 @@ jobs:
 
       - uses: hustcer/setup-moonbit@87e2bdf5cf20d3b6f5c5f266a8a513f503bb5b76 # v1.25
         with:
-          version: "0.10.15+943464bfa"
-          core-version: "0.10.15+943464bfa"
+          version: "0.10.18+6c83a7f62"
+          core-version: "0.10.18+6c83a7f62"
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
@@ -133,8 +133,8 @@ jobs:
 
       - uses: hustcer/setup-moonbit@87e2bdf5cf20d3b6f5c5f266a8a513f503bb5b76 # v1.25
         with:
-          version: "0.10.15+943464bfa"
-          core-version: "0.10.15+943464bfa"
+          version: "0.10.18+6c83a7f62"
+          core-version: "0.10.18+6c83a7f62"
 
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:

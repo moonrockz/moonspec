@@ -55,7 +55,7 @@ pub struct FeatureCache {
 pub fn FeatureCache::contains(Self, String) -> Bool
 pub fn FeatureCache::features(Self) -> Array[(String, @gherkin.Feature)]
 pub fn FeatureCache::get(Self, String) -> @gherkin.Feature?
-pub fn FeatureCache::length(Self) -> Int
+pub fn FeatureCache::length(Self) -> Int32
 pub fn FeatureCache::load_file(Self, String) -> Unit raise
 pub fn FeatureCache::load_from_source(Self, FeatureSource) -> Array[ParseErrorInfo]
 pub fn FeatureCache::load_parsed(Self, String, @gherkin.Feature) -> Unit
@@ -103,7 +103,7 @@ pub fn OutputDest::to_repr(Self) -> @debug.Repr
 pub(all) struct ParseErrorInfo {
   uri : String
   message : String
-  line : Int?
+  line : Int32?
 } derive(Eq, @debug.Debug)
 pub fn ParseErrorInfo::equal(Self, Self) -> Bool
 pub fn ParseErrorInfo::not_equal(Self, Self) -> Bool
@@ -129,19 +129,19 @@ pub fn RunOptions::clear_sinks(Self) -> Unit
 pub fn RunOptions::dry_run(Self, Bool) -> Unit
 pub fn RunOptions::features(Self) -> Array[FeatureSource]
 pub fn RunOptions::get_formatters(Self) -> Array[FormatterEntry]
-pub fn RunOptions::get_max_concurrent(Self) -> Int
+pub fn RunOptions::get_max_concurrent(Self) -> Int32
 pub fn RunOptions::get_no_color(Self) -> Bool
-pub fn RunOptions::get_retries(Self) -> Int
+pub fn RunOptions::get_retries(Self) -> Int32
 pub fn RunOptions::get_scenario_name(Self) -> String
 pub fn RunOptions::get_sinks(Self) -> Array[&@core.MessageSink]
 pub fn RunOptions::get_skip_tags(Self) -> Array[String]
 pub fn RunOptions::get_tag_expr(Self) -> String
 pub fn RunOptions::is_dry_run(Self) -> Bool
 pub fn RunOptions::is_parallel(Self) -> Bool
-pub fn RunOptions::max_concurrent(Self, Int) -> Unit
+pub fn RunOptions::max_concurrent(Self, Int32) -> Unit
 pub fn RunOptions::no_color(Self, Bool) -> Unit
 pub fn RunOptions::parallel(Self, Bool) -> Unit
-pub fn RunOptions::retries(Self, Int) -> Unit
+pub fn RunOptions::retries(Self, Int32) -> Unit
 pub fn RunOptions::scenario_name(Self, String) -> Unit
 pub fn RunOptions::skip_tags(Self, Array[String]) -> Unit
 pub fn RunOptions::tag_expr(Self, String) -> Unit
@@ -154,13 +154,13 @@ pub(all) struct RunResult {
 pub fn RunResult::to_repr(Self) -> @debug.Repr
 
 pub(all) struct RunSummary {
-  total_scenarios : Int
-  passed : Int
-  failed : Int
-  undefined : Int
-  pending : Int
-  skipped : Int
-  retried : Int
+  total_scenarios : Int32
+  passed : Int32
+  failed : Int32
+  undefined : Int32
+  pending : Int32
+  skipped : Int32
+  retried : Int32
   duration_ms : Int64
 } derive(Eq, @debug.Debug)
 pub fn RunSummary::equal(Self, Self) -> Bool

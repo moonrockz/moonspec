@@ -10,7 +10,7 @@ import {
 // Values
 pub fn classify(String) -> (@route.Route, Group)?
 
-pub fn compare_versions(String, String) -> Int
+pub fn compare_versions(String, String) -> Int32
 
 pub let guide_order : Array[String]
 

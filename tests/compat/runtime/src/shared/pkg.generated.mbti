@@ -10,7 +10,7 @@ import {
 // Values
 pub fn configure_options() -> @runner.RunOptions
 
-pub fn configure_world(Int, Int) -> ConfigureWorld
+pub fn configure_world(Int32, Int32) -> ConfigureWorld
 
 pub fn fixture(String, String) -> Fixture raise
 
@@ -29,8 +29,8 @@ pub suberror ConfigureFailure {
 
 // Types and methods
 pub struct CompatWorld {
-  mut counter : Int
-  attempts : Map[String, Int]
+  mut counter : Int32
+  attempts : Map[String, Int32]
   hook_log : Array[String]
   with_hooks : Bool
 }
@@ -38,15 +38,15 @@ pub fn CompatWorld::configure(Self, @core.Setup) -> Unit raise
 pub impl @core.World for CompatWorld
 
 pub struct ConfigureWorld {
-  ordinal : Int
-  fail_at : Int
+  ordinal : Int32
+  fail_at : Int32
 }
 pub fn ConfigureWorld::configure(Self, @core.Setup) -> Unit raise
 pub impl @core.World for ConfigureWorld
 
 pub struct Fixture {
   options : @runner.RunOptions
-  attempts : Map[String, Int]
+  attempts : Map[String, Int32]
   hook_log : Array[String]
   with_hooks : Bool
   messages : @format.MessagesFormatter
