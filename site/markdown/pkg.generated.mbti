@@ -25,12 +25,12 @@ pub fn title_of(String) -> String
 
 // Types and methods
 pub(all) enum Block {
-  Heading(Int, String, Array[Inline])
+  Heading(Int32, String, Array[Inline])
   Paragraph(Array[Inline])
   CodeBlock(String, String)
   Quote(Array[Block])
   BulletList(Array[Array[Block]])
-  OrderedList(Int, Array[Array[Block]])
+  OrderedList(Int32, Array[Array[Block]])
   Table(Array[Array[Inline]], Array[Array[Array[Inline]]])
   Rule
 } derive(Eq, @debug.Debug)
@@ -79,7 +79,7 @@ pub fn Target::not_equal(Self, Self) -> Bool
 pub fn Target::to_repr(Self) -> @debug.Repr
 
 pub(all) struct TocEntry {
-  level : Int
+  level : Int32
   id : String
   text : String
 } derive(Eq, @debug.Debug)

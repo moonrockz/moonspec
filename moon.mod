@@ -10,8 +10,8 @@ import {
   "moonrockz/gherkin@0.5.1",
   "moonrockz/cucumber-expressions@0.6.1",
   "moonrockz/cucumber-messages@0.3.0",
-  "moonbitlang/parser@0.4.4",
-  "moonbitlang/lexer@0.4.0",
+  "moonbitlang/parser@0.4.7",
+  "moonbitlang/lexer@0.4.4",
   "Milky2018/xml@0.5.0",
   "moonrockz/expect@0.2.0",
 }

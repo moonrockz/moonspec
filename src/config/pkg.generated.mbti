@@ -96,7 +96,7 @@ pub(all) enum Target {
   Native
 } derive(Eq, Hash, @debug.Debug)
 pub fn Target::equal(Self, Self) -> Bool
-pub fn Target::hash(Self) -> Int
+pub fn Target::hash(Self) -> Int32
 pub fn Target::hash_combine(Self, Hasher) -> Unit
 pub fn Target::name(Self) -> String
 pub fn Target::not_equal(Self, Self) -> Bool

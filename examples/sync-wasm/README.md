@@ -8,7 +8,7 @@ background and outline. There is no async package or test-driver import.
 These APIs are unreleased pre-1.0 changes. Use this repository checkout and its
 local `moon.work`, rather than the published 0.11.0 package. The dependency
 version in `moon.mod` is resolved to this checkout by that workspace. Tested
-with moon/moonrun 0.1.20261012 and moonc/core 0.10.15+943464bfa.
+with moon/moonrun 0.1.20261028 and moonc/core 0.10.18+6c83a7f62.
 
 From the repository root:
 

@@ -79,7 +79,9 @@ pub fn {factory}(sources : Array[@moonspec.FeatureSource]) -> @moonspec.RunOptio
             entries = ["lib/sync_suite/moonspec_gen/sync", "lib/suite/moonspec_gen/" + ("sync" if target == "wasm-gc" else "async")]
             if target != "wasm-gc":
                 entries.append("lib/parallel_suite/moonspec_gen/async")
-            output = policy.command(["moon", "test", *entries, "--target", target], path, label + "-" + target)
+            # Moon 0.1.20261028 (MoonBit 0.10.18) runs test executables in parallel and
+            # interleaves their output. verify_execution reads one message stream per run.
+            output = policy.command(["moon", "test", "--no-parallelize", *entries, "--target", target], path, label + "-" + target)
             tests = (4 if mode == "per-scenario" else 2) * len(entries)
             require_tests(output, tests)
             result = verify_execution(output, target, mode, kind)

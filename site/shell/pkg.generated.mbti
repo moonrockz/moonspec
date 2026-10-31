@@ -81,7 +81,7 @@ pub(all) enum Msg {
   CloseSearch
   SearchInput(String)
   IndexLoaded(Result[String, Error])
-  MoveSelection(Int)
+  MoveSelection(Int32)
   OpenSelected
   KeyDown(@common.Keyboard)
   SelectTab(InstallTab)
@@ -101,7 +101,7 @@ pub fn PageState::to_repr(Self) -> @debug.Repr
 pub(all) struct SearchState {
   open : Bool
   query : String
-  selected : Int
+  selected : Int32
   index : IndexState
 } derive(Eq, @debug.Debug)
 pub fn SearchState::equal(Self, Self) -> Bool

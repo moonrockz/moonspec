@@ -41,7 +41,7 @@ pub(all) struct StepFnInfo {
   raises : Bool
   handler : Bool
   source_file : String
-  line : Int
+  line : Int32
 } derive(Eq, @debug.Debug)
 pub fn StepFnInfo::equal(Self, Self) -> Bool
 pub fn StepFnInfo::not_equal(Self, Self) -> Bool
@@ -51,7 +51,7 @@ pub(all) struct WorldConfigInfo {
   type_name : String
   init_fn : String?
   source_file : String
-  line : Int
+  line : Int32
 } derive(Eq, @debug.Debug)
 pub fn WorldConfigInfo::equal(Self, Self) -> Bool
 pub fn WorldConfigInfo::not_equal(Self, Self) -> Bool

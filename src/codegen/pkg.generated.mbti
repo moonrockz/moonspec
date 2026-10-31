@@ -17,7 +17,7 @@ pub fn plan_shared_generation(Array[FeatureInput], module_name~ : String, packag
 
 pub fn relative_to_package(String, String) -> String
 
-pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String, cli? : CliCommand, test_kind? : @config.TestKind, execution? : @config.ExecutionMode) -> (String, Int) raise BuildRuleError
+pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String, cli? : CliCommand, test_kind? : @config.TestKind, execution? : @config.ExecutionMode) -> (String, Int32) raise BuildRuleError
 
 // Errors
 pub suberror BuildRuleError {
