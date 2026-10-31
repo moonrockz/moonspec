@@ -59,41 +59,41 @@ test "TagExpression whitespace-only input matches everything" {
 
 ///|
 test "TagExpression rejects a missing operand at the end" {
-  assert_true(parse_result("@a and") is Err(UnexpectedEnd(expression="@a and")))
-  assert_true(parse_result("not") is Err(UnexpectedEnd(..)))
-  assert_true(parse_result("(") is Err(UnexpectedEnd(..)))
+  assert_true(parse_error("@a and") is Some(UnexpectedEnd(expression="@a and")))
+  assert_true(parse_error("not") is Some(UnexpectedEnd(..)))
+  assert_true(parse_error("(") is Some(UnexpectedEnd(..)))
 }
 
 ///|
 test "TagExpression rejects an operator in operand position" {
   assert_true(
-    parse_result("and @a")
-    is Err(UnexpectedToken(token="and", expression="and @a")),
+    parse_error("and @a")
+    is Some(UnexpectedToken(token="and", expression="and @a")),
   )
   assert_true(
-    parse_result("@a or or @b") is Err(UnexpectedToken(token="or", ..)),
+    parse_error("@a or or @b") is Some(UnexpectedToken(token="or", ..)),
   )
-  assert_true(parse_result("()") is Err(UnexpectedToken(token=")", ..)))
+  assert_true(parse_error("()") is Some(UnexpectedToken(token=")", ..)))
 }
 
 ///|
 test "TagExpression rejects trailing tokens" {
-  assert_true(parse_result("@a @b") is Err(UnexpectedToken(token="@b", ..)))
-  assert_true(parse_result("@a)") is Err(UnexpectedToken(token=")", ..)))
+  assert_true(parse_error("@a @b") is Some(UnexpectedToken(token="@b", ..)))
+  assert_true(parse_error("@a)") is Some(UnexpectedToken(token=")", ..)))
 }
 
 ///|
 test "TagExpression rejects an unclosed parenthesis" {
   assert_true(
-    parse_result("(@a or @b") is Err(UnclosedParen(expression="(@a or @b")),
+    parse_error("(@a or @b") is Some(UnclosedParen(expression="(@a or @b")),
   )
 }
 
 ///|
 test "TagExpressionError message names the expression" {
-  let msg = match parse_result("@a and") {
-    Err(e) => e.to_string()
-    Ok(_) => "parsed"
+  let msg = match parse_error("@a and") {
+    Some(e) => e.to_string()
+    None => "parsed"
   }
   inspect(
     msg,
@@ -102,10 +102,11 @@ test "TagExpressionError message names the expression" {
 }
 
 ///|
-fn parse_result(input : String) -> Result[TagExpression, TagExpressionError] {
+/// The error that parsing `input` raises, or `None` when `input` parses.
+fn parse_error(input : String) -> TagExpressionError? {
   try TagExpression::parse(input) catch {
-    e => Err(e)
+    e => Some(e)
   } noraise {
-    expr => Ok(expr)
+    _ => None
   }
 }

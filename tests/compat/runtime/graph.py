@@ -64,7 +64,8 @@ def main():
         imports.extend(re.findall(r'\(import "([^"]+)" "([^"]+)"', wat))
     unsupported = command(["moon", "check", "--target", "wasm-gc", "src/unsupported"], "async-unsupported", success=False)
     assert "Selected backend 'wasm-gc' is incompatible with the dependency graph" in unsupported
-    assert "requires 'moonrockz/moonspec/async' which supports" in unsupported
+    # Moon 0.1.20261028 (MoonBit 0.10.18) words this as "whose active dependency graph supports".
+    assert "requires 'moonrockz/moonspec/async' whose active dependency graph supports" in unsupported
     report = {"source_packages": len(names), "wasm_gc_files": [str(p.relative_to(HERE)) for p in files],
               "host_imports": sorted(set(imports)), "async_wasm_gc": "unavailable as required"}
     (HERE / "_build/graph-report.json").write_text(json.dumps(report, indent=2) + "\n")
