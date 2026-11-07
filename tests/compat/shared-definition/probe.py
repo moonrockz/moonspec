@@ -48,7 +48,7 @@ if '--shared-only' in sys.argv:
 
 with tempfile.TemporaryDirectory(prefix='moonspec-u15-contract-') as temp:
     p = Path(temp)
-    (p/'moon.mod').write_text('name = "probe/contract"\nimport { "moonrockz/moonspec@0.11.0", "moonbitlang/async@0.22.4" }\n')
+    (p/'moon.mod').write_text('name = "probe/contract"\nimport { "moonrockz/moonspec@0.12.0", "moonbitlang/async@0.22.4" }\n')
     (p/'moon.work').write_text('members = '+json.dumps([str(ROOT), '.'])+'\n')
     consumer=p/'consumer'
     consumer.mkdir()

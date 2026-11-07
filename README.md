@@ -769,17 +769,16 @@ The examples below use `moonspec`. With moonx, replace `moonspec` with
 `moonx moonrockz/moonspec/cmd/moonspec@latest`. In this repository,
 `mise run build:cli` builds the CLI from source as `_build/bin/moonspec`.
 
-This checkout still pins the published `0.11.0` CLI with `--moonx`. That CLI
-supports async generation only, so its rules omit `--execution`. Sync selection
-with that pin fails before writing files. For sync, build this checkout with
-`mise run build:cli`, add `_build/bin` to `PATH`, and run without `--moonx`.
-The build-rule API accepts stable numeric pins only. Its explicit execution
-selection contract starts at `0.12.0`; this does not imply that version is
-published. Unknown and prerelease pins fail for both execution modes.
+`--moonx` pins the version of the CLI that runs it (`0.12.0` for this
+release), and the rule includes `--execution async` or `--execution sync`.
+The build-rule API accepts stable numeric pins only. Explicit execution
+selection starts at `0.12.0`. Pins below `0.12.0` support async generation
+only: their rules omit `--execution`, and sync selection fails before writing
+files. Unknown and prerelease pins fail for both execution modes.
 
 Target-policy capability is separate from that scalar version threshold.
 All shared-policy `--moonx` rules reject until an actual supporting release
-is verified. Use the local CLI and runtime for the unreleased workflow below.
+is verified. Use the local CLI and runtime for the workflow below.
 
 `moonrockz/moonspec/cmd/main` is a deprecated alias. `moon install` names the
 binary after the package directory, so it installs as `main`.
@@ -882,7 +881,7 @@ moonspec gen build features/*.feature -w CalcWorld --apply --moonx
 - `--apply`: write to `<package>/moon.pkg` instead of printing
 - `--execution`: `async` (default) or `sync`; CLI overrides merged config
 - `--test-kind`: `wbtest` (default) or `test`; see [`gen tests`](#gen-tests----generate-test-files)
-- `--moonx`: the rule pins this CLI version through the registry. Published `0.11.0` supports async only; use the locally built CLI without this option for sync.
+- `--moonx`: the rule pins this CLI version through the registry. From `0.12.0` the pinned CLI supports both `async` and `sync`.
 
 `--apply` adds missing entries and updates an existing rule when the selected
 execution changes. Repeating it with the same selection is idempotent. It also writes test
@@ -1384,8 +1383,9 @@ host limits and migration, and [sync-wasm](examples/sync-wasm/) for a generated 
 
 ## Migration Guides
 
-- [Unreleased sync and async migration](docs/guide/testing-strategies.md#async-migration):
-  root sync APIs and the single async import change.
+- [0.11.0 to 0.12.0](docs/migrations/v0.12.0.md): MoonBit 0.10.20 or newer,
+  `#derive(...)`, the async facade import, `--moonx` execution selection,
+  source API changes and cucumber-messages 0.6.0.
 
 - [0.10.x to 0.11.0](docs/migrations/v0.11.0.md): CLI package `cmd/moonspec`,
   white-box test files by default, `gen steps` output location, tag

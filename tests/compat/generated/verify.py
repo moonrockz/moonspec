@@ -112,7 +112,7 @@ def consumer_case(mode, kind, *, execution="sync"):
         consumer = Path(tmp)
         (consumer / "src").mkdir()
         (consumer / "features").mkdir()
-        imports = '"moonrockz/moonspec@0.11.0"'
+        imports = '"moonrockz/moonspec@0.12.0"'
         facade = '"moonrockz/moonspec"'
         test_imports = '"moonrockz/moonspec/format"'
         targets = "wasm+wasm-gc+js+native"

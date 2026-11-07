@@ -68,7 +68,7 @@ mise run examples:sync-wasm -- wasm-gc
 mise run examples:sync-wasm  # all four sync targets
 ```
 
-For one shared World, steps, hooks and options factory, use the unreleased
+For one shared World, steps, hooks and options factory, use the
 [target-policy guide](docs/guide/testing-strategies.md#one-setup-across-targets) and
 [multi-target example](examples/multi-target/). Scalar execution still defaults
 to async. Object policy opts into separate common/sync/async packages and
@@ -582,8 +582,10 @@ Full docs, CLI reference, architecture, and examples:
 <https://moonrockz.github.io/moonspec/>, or
 [github.com/moonrockz/moonspec](https://github.com/moonrockz/moonspec)
 
+Upgrading from 0.11.0? See the
+[0.12.0 migration guide](https://github.com/moonrockz/moonspec/blob/main/docs/migrations/v0.12.0.md).
 Upgrading from 0.10.x? See the
-[0.11.0 migration guide](https://github.com/moonrockz/moonspec/blob/main/docs/migrations/v0.11.0.md).
+[0.11.0 migration guide](https://github.com/moonrockz/moonspec/blob/main/docs/migrations/v0.11.0.md) first.
 
 ## License
 

@@ -66,7 +66,7 @@ def command(args, cwd, label, *, success=True):
 def fixture(path):
     (path / "lib/definitions").mkdir(parents=True)
     (path / "features").mkdir()
-    (path / "moon.mod").write_text('name = "policy/consumer"\nversion = "0.0.1"\nsource = "lib"\nimport { "moonrockz/moonspec@0.11.0", "moonbitlang/async@0.22.4" }\n')
+    (path / "moon.mod").write_text('name = "policy/consumer"\nversion = "0.0.1"\nsource = "lib"\nimport { "moonrockz/moonspec@0.12.0", "moonbitlang/async@0.22.4" }\n')
     (path / "moon.work").write_text(f'members = ["{ROOT}", "."]\n')
     (path / "lib/definitions/moon.pkg").write_text('import { "moonrockz/moonspec", "moonrockz/moonspec/format" }\nsupported_targets = "wasm+wasm-gc+js+native"\n')
     (path / "lib/definitions/world.mbt").write_text(DEFINITION)
@@ -389,7 +389,7 @@ def reject_unsupported_json_module():
         path = Path(tmp)
         fixture(path)
         (path / "moon.mod").unlink()
-        (path / "moon.mod.json").write_text(json.dumps({"name":"policy/consumer", "version":"0.0.1", "source":"lib", "deps":{"moonrockz/moonspec":"0.11.0", "moonbitlang/async":"0.22.4"}}))
+        (path / "moon.mod.json").write_text(json.dumps({"name":"policy/consumer", "version":"0.0.1", "source":"lib", "deps":{"moonrockz/moonspec":"0.12.0", "moonbitlang/async":"0.22.4"}}))
         compiler = command(["moon", "check", "lib/definitions", "--target", "native"], path, "json-module-compiler", success=False)
         assert "no longer supported" in compiler and "moon fmt" in compiler, compiler
         before = snapshot(path)

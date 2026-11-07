@@ -100,7 +100,7 @@ Import `"moonrockz/moonspec/async" @moonspec` and retain `moonbitlang/async`
 for the test driver. Build rules pin the selected execution. Rerun
 `gen build --apply` after a config change to update existing rules.
 
-See [sync execution](testing-strategies.md#sync-execution-and-target-support) for the unreleased import migration,
+See [sync execution](testing-strategies.md#sync-execution-and-target-support) for the 0.12.0 import migration,
 verified toolchain, target matrix and host limits.
 
 An object opts into target selection with one shared setup:
