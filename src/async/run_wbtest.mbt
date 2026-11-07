@@ -1,5 +1,6 @@
 ///|
-struct RunWorld {} derive(Default)
+#derive(Default)
+struct RunWorld {}
 
 ///|
 pub extend RunWorld with Default::{default}
@@ -38,7 +39,8 @@ async test "run single feature and collect summary" {
 }
 
 ///|
-struct RunWorld2 {} derive(Default)
+#derive(Default)
+struct RunWorld2 {}
 
 ///|
 pub extend RunWorld2 with Default::{default}
@@ -67,7 +69,8 @@ async test "run multiple features" {
 }
 
 ///|
-struct PassWorld {} derive(Default)
+#derive(Default)
+struct PassWorld {}
 
 ///|
 pub extend PassWorld with Default::{default}
@@ -87,7 +90,8 @@ async test "run_or_fail succeeds when all pass" {
 }
 
 ///|
-struct NoStepsWorld {} derive(Default)
+#derive(Default)
+struct NoStepsWorld {}
 
 ///|
 pub extend NoStepsWorld with Default::{default}
@@ -385,7 +389,8 @@ async test "run emits no ParameterType envelopes for built-in types only" {
 }
 
 ///|
-struct ParamWorld {} derive(Default)
+#derive(Default)
+struct ParamWorld {}
 
 ///|
 pub extend ParamWorld with Default::{default}
@@ -489,9 +494,10 @@ async test "run_or_fail raises on parse errors" {
 }
 
 ///|
+#derive(Default)
 struct HookEnvWorld {
   log : Array[String]
-} derive(Default)
+}
 
 ///|
 pub extend HookEnvWorld with Default::{default}
@@ -550,7 +556,8 @@ async test "run emits Hook envelopes in correct position" {
 }
 
 ///|
-struct RunHookWorld {} derive(Default)
+#derive(Default)
+struct RunHookWorld {}
 
 ///|
 pub extend RunHookWorld with Default::{default}
@@ -642,7 +649,8 @@ async test "hook steps emit TestStepStarted and TestStepFinished" {
 }
 
 ///|
-struct ContextWorld {} derive(Default)
+#derive(Default)
+struct ContextWorld {}
 
 ///|
 pub extend ContextWorld with Default::{default}

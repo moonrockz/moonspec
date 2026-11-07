@@ -1,13 +1,14 @@
 ///|
 /// A boolean expression over tags, supporting `and`, `or`, `not`,
 /// parentheses, and bare `@tag` literals.
+#derive(Debug, Eq)
 pub(all) enum TagExpression {
   TagLiteral(String)
   Not(TagExpression)
   And(TagExpression, TagExpression)
   Or(TagExpression, TagExpression)
   Always // matches everything (empty expression)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TagExpression with @moonbitlang/core/debug.Debug::{to_repr}
@@ -19,6 +20,7 @@ pub extend TagExpression with Eq::{not_equal, equal}
 /// A syntax error in a tag expression.
 ///
 /// Every variant carries the whole expression, so the message can show it.
+#derive(Eq, Debug)
 pub(all) suberror TagExpressionError {
   /// The expression ended where a tag, `not` or `(` was expected.
   UnexpectedEnd(expression~ : String)
@@ -27,7 +29,7 @@ pub(all) suberror TagExpressionError {
   UnexpectedToken(expression~ : String, token~ : String)
   /// A `(` has no matching `)`.
   UnclosedParen(expression~ : String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TagExpressionError with @moonbitlang/core/debug.Debug::{to_repr}

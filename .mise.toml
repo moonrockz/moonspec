@@ -5,12 +5,15 @@ node = "24.14.1"
 lefthook = "2.1.1"
 
 # Match the compiler and core version used by GitHub Actions. Local commands must
-# not fall back to a newer global MoonBit installation. This block is copied from
-# finos/morphir-moonbit main (.config/mise/config.toml). To move to a newer
-# release, change the version here and in each URL (with "+" written as "%2B"),
-# and copy tools/moonbit-core-pin.json from the same reference.
+# not fall back to a newer global MoonBit installation. This block has the same
+# form as finos/morphir-moonbit main (.config/mise/config.toml), including its
+# Windows postinstall. The 0.10.20 version, URLs and tools/moonbit-core-pin.json
+# digests come from the MoonBit release itself, because morphir-moonbit main was
+# still on 0.10.18 when moonspec moved. To move to a newer release, change the
+# version here and in each URL (with "+" written as "%2B"), and update
+# tools/moonbit-core-pin.json for the same release.
 [tools."http:moonbit"]
-version = "0.10.18+6c83a7f62"
+version = "0.10.20+65efd5b93"
 bin_path = "bin"
 # The archive alone has no core or moonx. Complete Unix installs the same way
 # locally and in CI, using the upstream installer and the exact mise version.
@@ -26,9 +29,9 @@ pwsh -NoProfile -File "{{config_root}}/tools/bootstrap-moonbit-windows.ps1"
 """
 
 [tools."http:moonbit".platforms]
-linux-x64 = { url = "https://cli.moonbitlang.com/binaries/0.10.18%2B6c83a7f62/moonbit-linux-x86_64.tar.gz" }
-linux-arm64 = { url = "https://cli.moonbitlang.com/binaries/0.10.18%2B6c83a7f62/moonbit-linux-aarch64.tar.gz" }
-macos-arm64 = { url = "https://cli.moonbitlang.com/binaries/0.10.18%2B6c83a7f62/moonbit-darwin-aarch64.tar.gz" }
-windows-x64 = { url = "https://cli.moonbitlang.com/binaries/0.10.18%2B6c83a7f62/moonbit-windows-x86_64.zip", format = "zip" }
+linux-x64 = { url = "https://cli.moonbitlang.com/binaries/0.10.20%2B65efd5b93/moonbit-linux-x86_64.tar.gz" }
+linux-arm64 = { url = "https://cli.moonbitlang.com/binaries/0.10.20%2B65efd5b93/moonbit-linux-aarch64.tar.gz" }
+macos-arm64 = { url = "https://cli.moonbitlang.com/binaries/0.10.20%2B65efd5b93/moonbit-darwin-aarch64.tar.gz" }
+windows-x64 = { url = "https://cli.moonbitlang.com/binaries/0.10.20%2B65efd5b93/moonbit-windows-x86_64.zip", format = "zip" }
 # No Windows arm64 build is published; Windows on Arm runs the x64 build under emulation.
-windows-arm64 = { url = "https://cli.moonbitlang.com/binaries/0.10.18%2B6c83a7f62/moonbit-windows-x86_64.zip", format = "zip" }
+windows-arm64 = { url = "https://cli.moonbitlang.com/binaries/0.10.20%2B65efd5b93/moonbit-windows-x86_64.zip", format = "zip" }

@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug)
 struct Shade {
   color : String
   tone : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Shade with @moonbitlang/core/debug.Debug::{to_repr}

@@ -1,11 +1,12 @@
 ///|
 /// Supported portable execution targets. LLVM is experimental and excluded.
+#derive(Debug, Eq, Hash)
 pub(all) enum Target {
   Wasm
   WasmGc
   Js
   Native
-} derive(Debug, Eq, Hash)
+}
 
 ///|
 pub fn Target::parse(value : String) -> Target? {
@@ -29,10 +30,11 @@ pub fn Target::name(self : Target) -> String {
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) enum ExecutionPolicy {
   Scalar(ExecutionMode)
   Targeted(default~ : ExecutionMode, targets~ : Map[Target, ExecutionMode])
-} derive(Debug, Eq)
+}
 
 ///|
 pub fn ExecutionPolicy::resolve(
@@ -46,11 +48,12 @@ pub fn ExecutionPolicy::resolve(
 }
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct SharedConfig {
   package_path : String
   world_factory : String
   options_factory : String
-} derive(Debug, Eq)
+}
 
 ///|
 fn parse_execution(value : Json) -> ExecutionPolicy raise ConfigError {

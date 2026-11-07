@@ -19,16 +19,18 @@ pub fn link_context(SiteConfig, @content.Manifest, String) -> @markdown.LinkCont
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) enum Channel {
   Release
   Next
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Channel::equal(Self, Self) -> Bool
-pub fn Channel::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Channel::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Channel::not_equal(Self, Self) -> Bool
-pub fn Channel::to_json(Self) -> Json
+pub fn Channel::to_json(Self) -> @json.Json
 pub fn Channel::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct SiteConfig {
   base : String
   version : String
@@ -37,27 +39,28 @@ pub(all) struct SiteConfig {
   release_base : String
   next_base : String
   release_version : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn SiteConfig::equal(Self, Self) -> Bool
-pub fn SiteConfig::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SiteConfig::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn SiteConfig::not_equal(Self, Self) -> Bool
-pub fn SiteConfig::to_json(Self) -> Json
+pub fn SiteConfig::to_json(Self) -> @json.Json
 pub fn SiteConfig::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct SiteData {
   config : SiteConfig
   pages : Array[@content.Page]
   counterpart_routes : Array[@route.Route]
   route : @route.Route
   markdown : String?
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn SiteData::decode(String) -> Self?
 pub fn SiteData::encode(Self) -> String
 pub fn SiteData::equal(Self, Self) -> Bool
-pub fn SiteData::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SiteData::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn SiteData::manifest(Self) -> @content.Manifest
 pub fn SiteData::not_equal(Self, Self) -> Bool
-pub fn SiteData::to_json(Self) -> Json
+pub fn SiteData::to_json(Self) -> @json.Json
 pub fn SiteData::to_repr(Self) -> @debug.Repr
 
 // Type aliases

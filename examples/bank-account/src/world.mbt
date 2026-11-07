@@ -1,9 +1,10 @@
 ///|
 /// World struct holding per-scenario state for bank account tests.
+#derive(Default)
 struct BankWorld {
   mut balance : Int32
   mut last_declined : Bool
-} derive(Default)
+}
 
 ///|
 /// Make `BankWorld::default` an explicit method, so tests can pass it as the

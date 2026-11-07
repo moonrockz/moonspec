@@ -1,7 +1,8 @@
 ///|
+#derive(Default)
 struct IsolationWorld {
   mut counter : Int32
-} derive(Default)
+}
 
 ///|
 pub extend IsolationWorld with Default::{default}

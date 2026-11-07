@@ -1,9 +1,10 @@
 ///|
 /// World struct holding per-scenario state for calculator tests.
 /// Each scenario gets a fresh instance via `derive(Default)`.
+#derive(Default)
 struct CalcWorld {
   mut result : Int32
-} derive(Default)
+}
 
 ///|
 /// Make `CalcWorld::default` an explicit method, so tests can pass it as the

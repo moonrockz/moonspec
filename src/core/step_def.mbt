@@ -1,8 +1,9 @@
 ///|
 /// A unique identifier for a step definition, assigned by the StepRegistry.
+#derive(Debug, Eq, Hash)
 pub(all) struct StepDefId {
   priv value : String
-} derive(Debug, Eq, Hash)
+}
 
 ///|
 pub extend StepDefId with @moonbitlang/core/debug.Debug::{to_repr}
@@ -25,12 +26,13 @@ pub fn StepDefId::to_string(self : StepDefId) -> String {
 
 ///|
 /// Keyword classification for a step definition.
+#derive(Debug, Eq)
 pub(all) enum StepKeyword {
   Given
   When
   Then
   Step
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StepKeyword with @moonbitlang/core/debug.Debug::{to_repr}
@@ -40,10 +42,11 @@ pub extend StepKeyword with Eq::{not_equal, equal}
 
 ///|
 /// Optional source location for a step definition (populated by codegen).
+#derive(Debug, Eq)
 pub(all) struct StepSource {
   uri : String?
   line : Int32?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StepSource with @moonbitlang/core/debug.Debug::{to_repr}

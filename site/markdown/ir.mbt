@@ -1,5 +1,6 @@
 ///|
 /// Where a link goes after rewriting.
+#derive(Eq, Debug)
 pub(all) enum Target {
   /// A site page, with an optional anchor.
   Internal(@route.Route, String?)
@@ -9,7 +10,7 @@ pub(all) enum Target {
   External(String)
   /// A destination that is not safe to link. The link text stays, the link goes.
   Blocked
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Target with Eq::{equal, not_equal}
@@ -18,6 +19,7 @@ pub extend Target with Eq::{equal, not_equal}
 pub extend Target with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Inline {
   Text(String)
   Code(String)
@@ -28,7 +30,7 @@ pub(all) enum Inline {
   /// Source URL and alt text.
   Image(String, String)
   LineBreak
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Inline with Eq::{equal, not_equal}
@@ -37,6 +39,7 @@ pub extend Inline with Eq::{equal, not_equal}
 pub extend Inline with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Block {
   /// Level, unique id, content.
   Heading(Int32, String, Array[Inline])
@@ -50,7 +53,7 @@ pub(all) enum Block {
   /// Header cells and rows of cells.
   Table(Array[Array[Inline]], Array[Array[Array[Inline]]])
   Rule
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Block with Eq::{equal, not_equal}
@@ -59,11 +62,12 @@ pub extend Block with Eq::{equal, not_equal}
 pub extend Block with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct TocEntry {
   level : Int32
   id : String
   text : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend TocEntry with Eq::{equal, not_equal}
@@ -72,13 +76,14 @@ pub extend TocEntry with Eq::{equal, not_equal}
 pub extend TocEntry with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Document {
   /// Text of the first level-1 heading, or "".
   title : String
   blocks : Array[Block]
   /// Level-2 and level-3 headings.
   toc : Array[TocEntry]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Document with Eq::{equal, not_equal}

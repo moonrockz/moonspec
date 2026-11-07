@@ -1,5 +1,6 @@
 ///|
-struct FilterWorld {} derive(Default)
+#derive(Default)
+struct FilterWorld {}
 
 ///|
 pub extend FilterWorld with Default::{default}

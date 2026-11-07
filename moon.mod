@@ -9,7 +9,7 @@ import {
   "moonbitlang/regexp@0.3.6",
   "moonrockz/gherkin@0.5.1",
   "moonrockz/cucumber-expressions@0.6.1",
-  "moonrockz/cucumber-messages@0.3.0",
+  "moonrockz/cucumber-messages@0.6.0",
   "moonbitlang/parser@0.4.7",
   "moonbitlang/lexer@0.4.4",
   "Milky2018/xml@0.5.0",

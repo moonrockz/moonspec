@@ -446,9 +446,10 @@ fn escape_string(s : String) -> String {
 }
 
 ///|
+#derive(Debug)
 pub suberror GenerationError {
   SharedGenerationRequired
-} derive(Debug)
+}
 
 ///|
 pub extend GenerationError with @moonbitlang/core/debug.Debug::{to_repr}

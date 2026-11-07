@@ -2,9 +2,10 @@
 /// Tests for World isolation (fresh per scenario) and hook lifecycle.
 
 ///|
+#derive(Default)
 struct IsolationWorld {
   mut counter : Int32
-} derive(Default)
+}
 
 ///|
 pub extend IsolationWorld with Default::{default}
@@ -41,9 +42,10 @@ test "isolation: each scenario gets a fresh world" {
 }
 
 ///|
+#derive(Default)
 struct HookWorld {
   log : Array[String]
-} derive(Default)
+}
 
 ///|
 pub extend HookWorld with Default::{default}
@@ -122,9 +124,10 @@ test "hooks: correct ordering of lifecycle calls" {
 }
 
 ///|
+#derive(Default)
 struct FailHookWorld {
   log : Array[String]
-} derive(Default)
+}
 
 ///|
 pub extend FailHookWorld with Default::{default}

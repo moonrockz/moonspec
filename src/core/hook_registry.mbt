@@ -1,5 +1,6 @@
 ///|
 /// The six Cucumber lifecycle hook types.
+#derive(Debug, Eq)
 pub(all) enum HookType {
   BeforeTestRun
   AfterTestRun
@@ -7,7 +8,7 @@ pub(all) enum HookType {
   AfterTestCase
   BeforeTestStep
   AfterTestStep
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend HookType with @moonbitlang/core/debug.Debug::{to_repr}

@@ -477,7 +477,12 @@ rules continue to apply to local notes. Existing changes retain their own schema
 `mise install`, then use `mise run` tasks or `mise exec -- moon ...`. When
 upgrading, copy the `http:moonbit` block (version, postinstall and platform
 URLs) and `tools/moonbit-core-pin.json` from finos/morphir-moonbit `main`, and
-update the CI version with them. A newer global compiler can change core APIs
+update the CI version with them. If morphir-moonbit is not on the release yet,
+keep the block's form and take the version, URLs and digests from the MoonBit
+release: `archiveSha256` and `bootstrapWindowsCoreSha256` are the SHA-256 of
+`cores/core-<version>.tar.gz` and `.zip`, and `sourceSha256`/`sourceFiles`
+are the core source identity that morphir-moonbit's
+`scripts/moonbit-core.mbtx` computes. A newer global compiler can change core APIs
 and script syntax; it does not validate compatibility with the repository's
 declared toolchain.
 

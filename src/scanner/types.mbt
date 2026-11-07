@@ -1,8 +1,9 @@
 ///|
+#derive(Debug, Eq)
 pub(all) struct ParamInfo {
   name : String
   type_name : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ParamInfo with @moonbitlang/core/debug.Debug::{to_repr}
@@ -11,6 +12,7 @@ pub extend ParamInfo with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend ParamInfo with Eq::{not_equal, equal}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct StepFnInfo {
   keyword : String
   pattern : String
@@ -24,7 +26,7 @@ pub(all) struct StepFnInfo {
   handler : Bool
   source_file : String
   line : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StepFnInfo with @moonbitlang/core/debug.Debug::{to_repr}
@@ -33,12 +35,13 @@ pub extend StepFnInfo with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend StepFnInfo with Eq::{not_equal, equal}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct WorldConfigInfo {
   type_name : String
   init_fn : String?
   source_file : String
   line : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend WorldConfigInfo with @moonbitlang/core/debug.Debug::{to_repr}
@@ -47,10 +50,11 @@ pub extend WorldConfigInfo with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend WorldConfigInfo with Eq::{not_equal, equal}
 
 ///|
+#derive(Debug, Eq)
 pub(all) struct ScanResult {
   step_fns : Array[StepFnInfo]
   world_configs : Array[WorldConfigInfo]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ScanResult with @moonbitlang/core/debug.Debug::{to_repr}

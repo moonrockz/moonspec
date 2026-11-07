@@ -25,9 +25,10 @@ pub fn GenerationPlan::files(self : GenerationPlan) -> Array[PlannedFile] {
 }
 
 ///|
+#derive(Debug)
 pub(all) suberror PlanError {
   InvalidPlan(String)
-} derive(Debug)
+}
 
 ///|
 pub extend PlanError with @moonbitlang/core/debug.Debug::{to_repr}

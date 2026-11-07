@@ -20,32 +20,37 @@ pub fn relative_to_package(String, String) -> String
 pub fn render_build_rules(String, Array[String], package_dir~ : String, world~ : String, cli? : CliCommand, test_kind? : @config.TestKind, execution? : @config.ExecutionMode) -> (String, Int32) raise BuildRuleError
 
 // Errors
+#derive(@debug.Debug)
 pub suberror BuildRuleError {
   UnsupportedExecution(version~ : String)
   UnsupportedVersion(version~ : String)
-} derive(@debug.Debug)
+}
 pub fn BuildRuleError::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub suberror GenerationError {
   SharedGenerationRequired
-} derive(@debug.Debug)
+}
 pub fn GenerationError::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) suberror PlanError {
   InvalidPlan(String)
-} derive(@debug.Debug)
+}
 pub fn PlanError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum CliCommand {
   Installed
   Moonx(version~ : String)
-} derive(Eq, @debug.Debug)
+}
 pub fn CliCommand::equal(Self, Self) -> Bool
 pub fn CliCommand::not_equal(Self, Self) -> Bool
 pub fn CliCommand::prefix(Self) -> String
 pub fn CliCommand::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct CodegenConfig {
   execution : @config.ExecutionPolicy
   shared : @config.SharedConfig?
@@ -54,17 +59,18 @@ pub(all) struct CodegenConfig {
   skip_tags : Array[String]?
   formatters : Array[@config.FormatterConfig]?
   no_color : Bool
-} derive(Eq, @debug.Debug)
+}
 pub fn CodegenConfig::default() -> Self
 pub fn CodegenConfig::equal(Self, Self) -> Bool
 pub fn CodegenConfig::from_json5(String) -> Self raise
 pub fn CodegenConfig::not_equal(Self, Self) -> Bool
 pub fn CodegenConfig::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum CodegenMode {
   PerScenario
   PerFeature
-} derive(Eq, @debug.Debug)
+}
 pub fn CodegenMode::equal(Self, Self) -> Bool
 pub fn CodegenMode::not_equal(Self, Self) -> Bool
 pub fn CodegenMode::to_repr(Self) -> @debug.Repr

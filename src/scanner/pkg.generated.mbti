@@ -15,22 +15,25 @@ pub fn scan_source(String, String) -> ScanResult
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) struct ParamInfo {
   name : String
   type_name : String
-} derive(Eq, @debug.Debug)
+}
 pub fn ParamInfo::equal(Self, Self) -> Bool
 pub fn ParamInfo::not_equal(Self, Self) -> Bool
 pub fn ParamInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ScanResult {
   step_fns : Array[StepFnInfo]
   world_configs : Array[WorldConfigInfo]
-} derive(Eq, @debug.Debug)
+}
 pub fn ScanResult::equal(Self, Self) -> Bool
 pub fn ScanResult::not_equal(Self, Self) -> Bool
 pub fn ScanResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct StepFnInfo {
   keyword : String
   pattern : String
@@ -42,17 +45,18 @@ pub(all) struct StepFnInfo {
   handler : Bool
   source_file : String
   line : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn StepFnInfo::equal(Self, Self) -> Bool
 pub fn StepFnInfo::not_equal(Self, Self) -> Bool
 pub fn StepFnInfo::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct WorldConfigInfo {
   type_name : String
   init_fn : String?
   source_file : String
   line : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn WorldConfigInfo::equal(Self, Self) -> Bool
 pub fn WorldConfigInfo::not_equal(Self, Self) -> Bool
 pub fn WorldConfigInfo::to_repr(Self) -> @debug.Repr

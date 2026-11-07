@@ -116,7 +116,11 @@ fn compile_step(
         )
       }
       Some({
-        docString: Some({ content, mediaType: ds.media_type, }),
+        docString: Some({
+          argumentIndex: None,
+          content,
+          mediaType: ds.media_type,
+        }),
         dataTable: None,
       })
     }
@@ -137,7 +141,7 @@ fn compile_step(
         }
         rows.push({ cells, })
       }
-      Some({ docString: None, dataTable: Some({ rows, }), })
+      Some({ docString: None, dataTable: Some({ argumentIndex: None, rows, }), })
     }
     None => None
   }

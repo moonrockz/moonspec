@@ -37,24 +37,27 @@ pub fn view(Model, @cmd.Emit[Msg], String) -> @html.Html
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum IndexState {
   NotLoaded
   LoadingIndex
   IndexReady(@search.Index)
   IndexFailed
-} derive(Eq, @debug.Debug)
+}
 pub fn IndexState::equal(Self, Self) -> Bool
 pub fn IndexState::not_equal(Self, Self) -> Bool
 pub fn IndexState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum InstallTab {
   Installed
   Moonx
-} derive(Eq, @debug.Debug)
+}
 pub fn InstallTab::equal(Self, Self) -> Bool
 pub fn InstallTab::not_equal(Self, Self) -> Bool
 pub fn InstallTab::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Model {
   config : @data.SiteConfig
   manifest : @content.Manifest
@@ -66,7 +69,7 @@ pub(all) struct Model {
   install_tab : InstallTab
   menu_open : Bool
   pending_anchor : String?
-} derive(Eq, @debug.Debug)
+}
 pub fn Model::equal(Self, Self) -> Bool
 pub fn Model::init(@data.SiteData) -> Self
 pub fn Model::not_equal(Self, Self) -> Bool
@@ -88,31 +91,34 @@ pub(all) enum Msg {
   ToggleMenu
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum PageState {
   NoContent
   Loading
   Ready(@markdown.Document)
   PageFailed
-} derive(Eq, @debug.Debug)
+}
 pub fn PageState::equal(Self, Self) -> Bool
 pub fn PageState::not_equal(Self, Self) -> Bool
 pub fn PageState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct SearchState {
   open : Bool
   query : String
   selected : Int32
   index : IndexState
-} derive(Eq, @debug.Debug)
+}
 pub fn SearchState::equal(Self, Self) -> Bool
 pub fn SearchState::not_equal(Self, Self) -> Bool
 pub fn SearchState::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Theme {
   Auto
   Light
   Dark
-} derive(Eq, @debug.Debug)
+}
 pub fn Theme::equal(Self, Self) -> Bool
 pub fn Theme::not_equal(Self, Self) -> Bool
 pub fn Theme::parse(String) -> Self

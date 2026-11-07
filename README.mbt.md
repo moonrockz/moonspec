@@ -4,10 +4,13 @@ BDD test framework for MoonBit with Gherkin and Cucumber Expressions.
 
 ## Sync and async execution
 
-The sync APIs and async import migration below are unreleased pre-1.0 changes.
-Use this checkout for them; published 0.11.0 does not contain these APIs.
-The tested toolchain is moon/moonrun 0.1.20261028 with moonc and core
-0.10.18+6c83a7f62, and `moonbitlang/async` 0.22.4. The JavaScript examples also
+The sync APIs and async import migration below are pre-1.0 changes that
+first ship in 0.12.0; 0.11.0 does not contain these APIs.
+Version 0.12.0 and later need MoonBit 0.10.20 or newer: they use the
+`#derive(...)` attribute syntax and the `moonbitlang/core/json` package API,
+which older toolchains do not accept. On an older toolchain, use 0.11.0.
+The tested toolchain is moon/moonrun 0.1.20261104 with moonc and core
+0.10.20+65efd5b93, and `moonbitlang/async` 0.22.4. The JavaScript examples also
 test the async facade with `moonbitlang/async` 0.22.7.
 
 | Execution | Package imported as `@moonspec` | Executed targets |
@@ -97,7 +100,8 @@ Add `moonrockz/moonspec` to the `import` array in your `moon.pkg`.
 Define a World, implement step definitions, and run against inline Gherkin:
 
 ```moonbit
-struct CalcWorld { mut result : Int } derive(Default)
+#derive(Default)
+struct CalcWorld { mut result : Int }
 
 pub extend CalcWorld with Default::{default}
 
@@ -124,7 +128,7 @@ test "Feature: Calculator" {
 }
 ```
 
-Each scenario gets a fresh World via `derive(Default)`. MoonBit structs are
+Each scenario gets a fresh World via `#derive(Default)`. MoonBit structs are
 reference types -- mutations in closures are visible across step handlers.
 
 ## Generate Tests with the CLI
@@ -189,9 +193,10 @@ Feature: Calculator
 
 ```moonbit
 #moonspec.world
+#derive(Default)
 struct CalcWorld {
   mut result : Int
-} derive(Default)
+}
 
 pub extend CalcWorld with Default::{default}
 
@@ -300,7 +305,7 @@ file can set `world`, the codegen `mode` and other defaults; see
 
 ## Features
 
-- **World trait** -- per-scenario state with `derive(Default)`
+- **World trait** -- per-scenario state with `#derive(Default)`
 - **StepLibrary trait** -- composable, reusable step groups
 - **Cucumber Expressions** -- 11 built-in parameter types, custom typed handles, and capture decoders
 - **Expression tools** -- registry-aware expression factory and candidate generator

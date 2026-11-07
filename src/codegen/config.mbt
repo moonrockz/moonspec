@@ -1,9 +1,10 @@
 ///|
 /// Code generation mode.
+#derive(Debug, Eq)
 pub(all) enum CodegenMode {
   PerScenario
   PerFeature
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend CodegenMode with @moonbitlang/core/debug.Debug::{to_repr}
@@ -13,6 +14,7 @@ pub extend CodegenMode with Eq::{not_equal, equal}
 
 ///|
 /// Configuration for code generation.
+#derive(Debug, Eq)
 pub(all) struct CodegenConfig {
   execution : @config.ExecutionPolicy
   shared : @config.SharedConfig?
@@ -22,7 +24,7 @@ pub(all) struct CodegenConfig {
   formatters : Array[@config.FormatterConfig]?
   /// Emit `options.no_color(true)` and turn off color in pretty formatters.
   no_color : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend CodegenConfig with @moonbitlang/core/debug.Debug::{to_repr}

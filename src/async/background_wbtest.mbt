@@ -1,7 +1,8 @@
 ///|
+#derive(Default)
 struct BgWorld {
   mut context : String
-} derive(Default)
+}
 
 ///|
 pub extend BgWorld with Default::{default}
