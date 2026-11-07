@@ -3,8 +3,8 @@
 moonspec is a BDD (Behavior-Driven Development) test framework for [MoonBit](https://www.moonbitlang.com/). It brings Gherkin feature files and Cucumber Expressions to MoonBit, letting you describe application behavior in plain English and verify it with executable step definitions.
 
 This guide starts with the root synchronous API. The later codegen walkthrough
-keeps the async generator default. These execution changes are unreleased;
-use a local checkout as described in [sync execution](testing-strategies.md#sync-execution-and-target-support).
+keeps the async generator default. These execution changes first ship in 0.12.0;
+see [sync execution](testing-strategies.md#sync-execution-and-target-support).
 
 ## Prerequisites
 
@@ -25,9 +25,8 @@ moon add moonrockz/moonspec
 
 Sync tests need no async test-driver import. For the optional async workflow,
 add `moonbitlang/async` and import `"moonrockz/moonspec/async" @moonspec` instead.
-For unreleased sync APIs, use the local `moon.work` from the
-[sync-wasm example](../../examples/sync-wasm/); `moon add` alone selects a
-published version.
+The sync APIs need moonspec 0.12.0 or newer. The
+[sync-wasm example](../../examples/sync-wasm/) shows a complete consumer.
 
 Then add `moonrockz/moonspec` to the `import` list in the `moon.pkg` file for the package where your tests will live:
 

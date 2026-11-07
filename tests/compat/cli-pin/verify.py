@@ -45,29 +45,31 @@ with tempfile.TemporaryDirectory(prefix="moonspec-cli-pin-") as tmp:
     package.mkdir()
     args = [CLI, "gen", "build", "input.feature", "-w", "MyWorld", "--package", "src"]
     preview = run([*args, "--moonx"], consumer, "moonx-default-preview")
-    assert "moonspec@0.11.0 gen tests" in preview, preview
-    assert "--execution" not in preview, preview
+    assert "moonspec/cmd/moonspec@0.12.0 gen tests" in preview, preview
+    assert "--execution async" in preview, preview
     run([*args, "--moonx", "--apply"], consumer, "moonx-default-apply")
     rules = (package / "moon.pkg").read_text()
     assert command(preview) == command(rules)
     initial = (package / "input_feature_wbtest.mbt").read_text()
     assert "async test" in initial and "@moonspec.FeatureSource::File(" in initial, initial
-    for apply in [False, True]:
-        before = {p.name: p.read_bytes() for p in package.iterdir()}
-        result = run([*args, "--moonx", "--execution", "sync", *(["--apply"] if apply else [])], consumer, "moonx-sync-" + str(apply), success=False)
-        assert "0.11.0" in result and "sync" in result, result
-        assert "mise run build:cli" in result and "without --moonx" in result, result
-        assert before == {p.name: p.read_bytes() for p in package.iterdir()}
+    # From 0.12.0 the registry pin supports explicit sync selection.
+    sync_preview = run([*args, "--moonx", "--execution", "sync"], consumer, "moonx-sync-preview")
+    assert "moonspec@0.12.0 gen tests" in sync_preview and "--execution sync" in sync_preview, sync_preview
+    assert (package / "moon.pkg").read_text() == rules, "a preview must not write"
     empty = consumer / "empty"
     empty.mkdir()
-    run([*args[:-1], "empty", "--moonx", "--execution", "sync", "--apply"], consumer, "moonx-sync-empty", success=False)
-    assert not list(empty.iterdir())
+    run([*args[:-1], "empty", "--moonx", "--execution", "sync", "--apply"], consumer, "moonx-sync-empty")
+    empty_rules = (empty / "moon.pkg").read_text()
+    assert "moonspec@0.12.0 gen tests" in empty_rules and "--execution sync" in empty_rules, empty_rules
     (consumer / "moonspec.json5").write_text('{ execution: "sync" }')
-    run([*args, "--moonx", "--apply"], consumer, "moonx-config-sync", success=False)
+    run([*args, "--moonx", "--apply"], consumer, "moonx-config-sync")
+    rules = (package / "moon.pkg").read_text()
+    assert "moonspec@0.12.0 gen tests" in rules and "--execution sync" in rules, rules
+    assert "--execution async" not in rules, rules
     # Upgrade a canonical bad registry rule without losing unrelated content.
     unrelated = 'rule(\n  name: "other",\n  command: "echo preserved",\n)\n\n'
-    bad = rules.replace(" -o $output", " --execution async -o $output")
-    (package / "moon.pkg").write_text(unrelated + bad)
+    registry = rules.replace("--execution sync", "--execution async")
+    (package / "moon.pkg").write_text(unrelated + registry)
     (package / "input_feature_wbtest.mbt").unlink()
     run([*args, "--apply"], consumer, "installed-sync-apply")
     sync_rules = (package / "moon.pkg").read_text()
@@ -81,6 +83,6 @@ with tempfile.TemporaryDirectory(prefix="moonspec-cli-pin-") as tmp:
     regenerated = regenerate(selected, consumer, "installed-sync-regenerated")
     assert "@moonspec.run_or_fail_sync(" in regenerated and "async test" not in regenerated
 
-report = {"cases": 8, "published_pin": "0.11.0", "local_sync_regenerated": True, "rejection_preserves_files": True}
+report = {"cases": 7, "published_pin": "0.12.0", "local_sync_regenerated": True, "moonx_sync": True}
 (EVIDENCE / "report.json").write_text(json.dumps(report, indent=2) + "\n")
 print(json.dumps(report))

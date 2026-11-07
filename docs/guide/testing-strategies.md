@@ -3,7 +3,7 @@
 This guide covers scenario selection, execution, retries and reporting.
 Examples calling `run` or `run_or_fail` use `"moonrockz/moonspec/async" @moonspec`
 and retain the async test-driver import. For ordinary tests, import the root
-and use `run_sync` / `run_or_fail_sync`. These APIs are unreleased. The following
+and use `run_sync` / `run_or_fail_sync`. These APIs first ship in 0.12.0. The following
 section gives the tested toolchain and full matrix.
 
 To share World, steps, hooks and settings across generated target launchers,
@@ -13,11 +13,9 @@ sync and async suites together. Scalar execution still defaults to async.
 
 ## Sync execution and target support
 
-The sync APIs and async import migration on this page are unreleased pre-1.0
-changes. Use this repository checkout and a local `moon.work` to try them.
-Published 0.11.0 does not contain these APIs. Under the existing pre-1.0
-policy, `mise run release:version` computes `v0.12.0` for this breaking change.
-The module version remains unchanged until the normal release process.
+The sync APIs and async import migration on this page are pre-1.0 changes
+that first ship in 0.12.0; 0.11.0 does not contain these APIs. See the
+[0.12.0 migration guide](../migrations/v0.12.0.md).
 
 ### Supported targets
 
@@ -165,14 +163,14 @@ For a clean consumer, use a `moon.mod` like the example:
 ```moonbit
 name = "example/sync-wasm"
 version = "0.0.1"
-import { "moonrockz/moonspec@0.11.0" }
+import { "moonrockz/moonspec@0.12.0" }
 source = "src"
 ```
 
-Until release, add a consumer-local `moon.work` whose members are the path to
-this repository checkout and `"."`. This resolves the module above to local
-source instead of published 0.11.0. The committed sync-wasm example uses
-`members = ["../..", "."]`. In `src/moon.pkg`, use:
+To try unreleased changes, add a consumer-local `moon.work` whose members are
+the path to this repository checkout and `"."`. This resolves the module above
+to local source instead of the published package. The committed sync-wasm
+example uses `members = ["../..", "."]`. In `src/moon.pkg`, use:
 
 ```moonbit
 import { "moonrockz/moonspec" }
@@ -208,9 +206,9 @@ The unchanged async default emits `async test`, `run_or_fail` and
 `FeatureSource::File`. Use the `/async` facade and the async test-driver import
 for that output. Build-rule commands retain the selected execution; rerun
 `gen build --apply` after changing the config selection to update existing
-rules. In this checkout, `--moonx` pins published `0.11.0`, which supports
-async generation only. Its rules omit `--execution`; requesting sync fails
-before writes and directs you to the locally built CLI without `--moonx`.
+rules. `--moonx` pins the running CLI's version; from `0.12.0` its rules
+include `--execution` and support sync. Pins below `0.12.0` support async
+only: requesting sync fails before writes.
 Regeneration updates both the canonical rule's CLI prefix and its execution
 selection, preserving unrelated options and rules. Commit generated source,
 since dependency builds do not run those rules.
@@ -262,10 +260,10 @@ keeps the async examples executable on JavaScript.
 ## One setup across targets
 
 Define your World, steps, hooks and runtime settings once, then let the local
-generator create separate sync and async test packages. This is an unreleased
-pre-1.0 feature. Use the checkout CLI and runtime, as in the runnable
-[multi-target example](../../examples/multi-target/). Published 0.11.0 does not
-provide this contract, and no supporting registry policy release is assumed.
+generator create separate sync and async test packages. This is a pre-1.0
+feature that first ships in 0.12.0. See the runnable
+[multi-target example](../../examples/multi-target/). 0.11.0 does not provide
+this contract.
 
 ### Select execution by target
 
@@ -455,9 +453,7 @@ for shared or target-policy config. Handle its typed error, and use
 renderer. The shared planner returns an opaque `GenerationPlan` whose
 `files()` returns copies of planned path/content records.
 
-The unchanged version task computes v0.12.0 for these unreleased breaking
-changes. The module version remains unchanged until the release process;
-this work does not publish a release or establish registry policy support.
+These breaking changes first ship in 0.12.0.
 
 ## Tag Filtering
 
