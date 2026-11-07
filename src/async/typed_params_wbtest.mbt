@@ -1,7 +1,8 @@
 ///|
+#derive(Eq, Debug)
 enum LightColor {
   Red
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend LightColor with @moonbitlang/core/debug.Debug::{to_repr}
@@ -10,7 +11,8 @@ pub extend LightColor with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend LightColor with Eq::{not_equal, equal}
 
 ///|
-struct TypedColorWorld {} derive(Default)
+#derive(Default)
+struct TypedColorWorld {}
 
 ///|
 pub extend TypedColorWorld with Default::{default}
@@ -70,7 +72,8 @@ async test "typed decoder failures report diagnostics in normal and dry-run exec
 }
 
 ///|
-struct InvalidParameterWorld {} derive(Default)
+#derive(Default)
+struct InvalidParameterWorld {}
 
 ///|
 pub extend InvalidParameterWorld with Default::{default}

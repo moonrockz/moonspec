@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) struct Args {
   content : String
   counterpart_content : String?
@@ -7,7 +8,7 @@ pub(all) struct Args {
   release_version : String
   git_ref : String
   out : String
-} derive(Eq, Debug)
+}
 
 ///|
 fn with_slashes(path : String) -> String {

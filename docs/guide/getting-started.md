@@ -10,7 +10,9 @@ use a local checkout as described in [sync execution](testing-strategies.md#sync
 
 - [MoonBit toolchain](https://www.moonbitlang.com/download/) installed (`moon` CLI available)
 - An existing MoonBit project (create one with `moon new my-project` if needed)
-- moon/moonrun 0.1.20261028 and moonc/core 0.10.18+6c83a7f62 for the tested setup
+- MoonBit 0.10.20 or newer: moonspec 0.12.0 and later do not build on older
+  toolchains. The tested setup is moon/moonrun 0.1.20261104 and moonc/core
+  0.10.20+65efd5b93
 - Node.js only when running the JavaScript target
 
 ## Step 1: Install moonspec
@@ -58,17 +60,18 @@ Each **Feature** groups related scenarios. A **Background** runs before every sc
 
 ## Step 3: Create a World Struct
 
-The World struct holds per-scenario state. moonspec creates a fresh instance for each scenario, so every scenario starts with a clean slate. Define it with `derive(Default)`:
+The World struct holds per-scenario state. moonspec creates a fresh instance for each scenario, so every scenario starts with a clean slate. Define it with `#derive(Default)`:
 
 ```moonbit
+#derive(Default)
 struct CalcWorld {
   mut result : Int
-} derive(Default)
+}
 
 pub extend CalcWorld with Default::{default}
 ```
 
-`derive(Default)` is required -- moonspec calls `CalcWorld::default()` to create a new instance before each scenario runs. The `pub extend` line makes `CalcWorld::default` a regular method, so you can pass it as the World factory. Without it, current MoonBit versions warn that the method is "implicitly promoted" from the `Default` impl. Because MoonBit structs are reference types, mutations made by step closures are visible to all subsequent steps within the same scenario.
+`#derive(Default)` is required -- moonspec calls `CalcWorld::default()` to create a new instance before each scenario runs. The `pub extend` line makes `CalcWorld::default` a regular method, so you can pass it as the World factory. Without it, current MoonBit versions warn that the method is "implicitly promoted" from the `Default` impl. Because MoonBit structs are reference types, mutations made by step closures are visible to all subsequent steps within the same scenario.
 
 ## Step 4: Implement the World Trait
 
@@ -325,9 +328,10 @@ Instead of writing the `configure` method by hand, annotate standalone step func
 
 ```moonbit
 #moonspec.world
+#derive(Default)
 struct CalcWorld {
   mut result : Int
-} derive(Default)
+}
 
 pub extend CalcWorld with Default::{default}
 
@@ -528,9 +532,10 @@ Every scenario gets a completely fresh World instance created by calling the `de
 - Background steps run on the fresh instance before each scenario's own steps.
 
 ```moonbit
+#derive(Default)
 struct CalcWorld {
   mut result : Int    // Reset to 0 (default) for every scenario
-} derive(Default)
+}
 
 pub extend CalcWorld with Default::{default}
 ```

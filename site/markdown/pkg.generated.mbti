@@ -24,6 +24,7 @@ pub fn title_of(String) -> String
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug)
 pub(all) enum Block {
   Heading(Int32, String, Array[Inline])
   Paragraph(Array[Inline])
@@ -33,20 +34,22 @@ pub(all) enum Block {
   OrderedList(Int32, Array[Array[Block]])
   Table(Array[Array[Inline]], Array[Array[Array[Inline]]])
   Rule
-} derive(Eq, @debug.Debug)
+}
 pub fn Block::equal(Self, Self) -> Bool
 pub fn Block::not_equal(Self, Self) -> Bool
 pub fn Block::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Document {
   title : String
   blocks : Array[Block]
   toc : Array[TocEntry]
-} derive(Eq, @debug.Debug)
+}
 pub fn Document::equal(Self, Self) -> Bool
 pub fn Document::not_equal(Self, Self) -> Bool
 pub fn Document::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Inline {
   Text(String)
   Code(String)
@@ -56,7 +59,7 @@ pub(all) enum Inline {
   Link(Target, Array[Inline])
   Image(String, String)
   LineBreak
-} derive(Eq, @debug.Debug)
+}
 pub fn Inline::equal(Self, Self) -> Bool
 pub fn Inline::not_equal(Self, Self) -> Bool
 pub fn Inline::to_repr(Self) -> @debug.Repr
@@ -68,21 +71,23 @@ pub(all) struct LinkContext {
   git_ref : String
 }
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Target {
   Internal(@route.Route, String?)
   Anchor(String)
   External(String)
   Blocked
-} derive(Eq, @debug.Debug)
+}
 pub fn Target::equal(Self, Self) -> Bool
 pub fn Target::not_equal(Self, Self) -> Bool
 pub fn Target::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct TocEntry {
   level : Int32
   id : String
   text : String
-} derive(Eq, @debug.Debug)
+}
 pub fn TocEntry::equal(Self, Self) -> Bool
 pub fn TocEntry::not_equal(Self, Self) -> Bool
 pub fn TocEntry::to_repr(Self) -> @debug.Repr

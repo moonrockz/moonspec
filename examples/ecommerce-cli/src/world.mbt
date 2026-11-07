@@ -9,13 +9,14 @@ priv struct CartItem {
 ///|
 /// World struct holding per-scenario state for ecommerce tests.
 /// Combines cart, checkout, and inventory domains.
+#derive(Default)
 struct EcomWorld {
   cart : Array[CartItem]
   mut order_total : Int32
   mut checkout_rejected : Bool
   inventory : Map[String, Int32]
   mut last_checked_item : String
-} derive(Default)
+}
 
 ///|
 /// Make `EcomWorld::default` an explicit method, so tests can pass it as the

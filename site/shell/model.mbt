@@ -1,9 +1,10 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Theme {
   Auto
   Light
   Dark
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Theme with Eq::{equal, not_equal}
@@ -30,13 +31,14 @@ pub fn Theme::to_string(self : Theme) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum PageState {
   /// The landing page and pages that do not exist.
   NoContent
   Loading
   Ready(@markdown.Document)
   PageFailed
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend PageState with Eq::{equal, not_equal}
@@ -45,12 +47,13 @@ pub extend PageState with Eq::{equal, not_equal}
 pub extend PageState with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum IndexState {
   NotLoaded
   LoadingIndex
   IndexReady(@search.Index)
   IndexFailed
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend IndexState with Eq::{equal, not_equal}
@@ -59,10 +62,11 @@ pub extend IndexState with Eq::{equal, not_equal}
 pub extend IndexState with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum InstallTab {
   Installed
   Moonx
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend InstallTab with Eq::{equal, not_equal}
@@ -71,12 +75,13 @@ pub extend InstallTab with Eq::{equal, not_equal}
 pub extend InstallTab with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct SearchState {
   open : Bool
   query : String
   selected : Int32
   index : IndexState
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SearchState with Eq::{equal, not_equal}
@@ -85,6 +90,7 @@ pub extend SearchState with Eq::{equal, not_equal}
 pub extend SearchState with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Model {
   config : @data.SiteConfig
   manifest : @content.Manifest
@@ -97,7 +103,7 @@ pub(all) struct Model {
   menu_open : Bool
   // Fragment to scroll to once the page being loaded is ready.
   pending_anchor : String?
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Model with Eq::{equal, not_equal}

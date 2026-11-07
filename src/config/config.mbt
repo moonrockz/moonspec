@@ -1,9 +1,10 @@
 ///|
 /// Mode configuration — either a simple string or a per-file map.
+#derive(Debug, Eq)
 pub(all) enum ModeConfig {
   Simple(String)
   PerFile(Map[String, String])
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ModeConfig with @moonbitlang/core/debug.Debug::{to_repr}
@@ -13,10 +14,11 @@ pub extend ModeConfig with Eq::{not_equal, equal}
 
 ///|
 /// Steps codegen configuration.
+#derive(Debug, Eq)
 pub(all) struct StepsConfig {
   output : String?
   exclude : Array[String]?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StepsConfig with @moonbitlang/core/debug.Debug::{to_repr}
@@ -30,12 +32,13 @@ pub extend StepsConfig with Eq::{not_equal, equal}
 /// A white-box test (`*_wbtest.mbt`) can use private items of its package,
 /// such as the World impl that `gen steps` generates. A black-box test
 /// (`*_test.mbt`) sees only the public API.
+#derive(Debug, Eq)
 pub(all) enum TestKind {
   /// `*_wbtest.mbt`, written `"wbtest"` (the default)
   WhiteBox
   /// `*_test.mbt`, written `"test"`
   BlackBox
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend TestKind with @moonbitlang/core/debug.Debug::{to_repr}
@@ -56,10 +59,11 @@ pub fn TestKind::parse(value : String) -> TestKind? {
 
 ///|
 /// Execution effect of generated tests, independent of test grouping and visibility.
+#derive(Debug, Eq)
 pub(all) enum ExecutionMode {
   Async
   Sync
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ExecutionMode with @moonbitlang/core/debug.Debug::{to_repr}
@@ -68,9 +72,10 @@ pub extend ExecutionMode with @moonbitlang/core/debug.Debug::{to_repr}
 pub extend ExecutionMode with Eq::{not_equal, equal}
 
 ///|
+#derive(Debug)
 pub suberror ConfigError {
   InvalidExecution(String)
-} derive(Debug)
+}
 
 ///|
 pub extend ConfigError with @moonbitlang/core/debug.Debug::{to_repr}
@@ -86,11 +91,12 @@ pub fn ExecutionMode::parse(value : String) -> ExecutionMode? {
 
 ///|
 /// Configuration for a single output formatter.
+#derive(Debug, Eq)
 pub(all) struct FormatterConfig {
   type_ : String
   output : String
   no_color : Bool
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FormatterConfig with @moonbitlang/core/debug.Debug::{to_repr}
@@ -100,6 +106,7 @@ pub extend FormatterConfig with Eq::{not_equal, equal}
 
 ///|
 /// Moonspec configuration with optional fields for hierarchical merging.
+#derive(Debug, Eq)
 pub(all) struct MoonspecConfig {
   world : String?
   mode : ModeConfig?
@@ -110,7 +117,7 @@ pub(all) struct MoonspecConfig {
   execution : ExecutionPolicy?
   shared : SharedConfig?
   test_kind : TestKind?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend MoonspecConfig with @moonbitlang/core/debug.Debug::{to_repr}

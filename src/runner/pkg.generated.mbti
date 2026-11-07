@@ -22,17 +22,19 @@ pub fn[W : @core.World] run_or_fail_sync(() -> W, RunOptions) -> Unit raise
 pub fn[W : @core.World] run_sync(() -> W, RunOptions) -> RunResult raise
 
 // Errors
+#derive(@debug.Debug)
 pub suberror SyncExecutionError {
   ParallelNotSupported
   HostIoFailed(operation~ : String, path~ : String, message~ : String)
-} derive(@debug.Debug)
+}
 pub fn SyncExecutionError::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) suberror TagExpressionError {
   UnexpectedEnd(expression~ : String)
   UnexpectedToken(expression~ : String, token~ : String)
   UnclosedParen(expression~ : String)
-} derive(Eq, @debug.Debug)
+}
 pub fn TagExpressionError::equal(Self, Self) -> Bool
 pub fn TagExpressionError::not_equal(Self, Self) -> Bool
 pub fn TagExpressionError::output(Self, &Logger) -> Unit
@@ -62,18 +64,20 @@ pub fn FeatureCache::load_parsed(Self, String, @gherkin.Feature) -> Unit
 pub fn FeatureCache::load_text(Self, String, String) -> Unit raise
 pub fn FeatureCache::new() -> Self
 
+#derive(@debug.Debug)
 pub(all) struct FeatureResult {
   name : String
   scenarios : Array[ScenarioResult]
   duration_ms : Int64
-} derive(@debug.Debug)
+}
 pub fn FeatureResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum FeatureSource {
   Text(String, String)
   File(String)
   Parsed(String, @gherkin.Feature)
-} derive(Eq, @debug.Debug)
+}
 pub fn FeatureSource::equal(Self, Self) -> Bool
 pub fn FeatureSource::not_equal(Self, Self) -> Bool
 pub fn FeatureSource::to_repr(Self) -> @debug.Repr
@@ -91,20 +95,22 @@ pub fn IdGenerator::next(Self, String) -> String
 pub fn IdGenerator::next_hook_id(Self) -> String
 pub fn IdGenerator::next_param_type_id(Self) -> String
 
+#derive(Eq, @debug.Debug)
 pub(all) enum OutputDest {
   Stdout
   Stderr
   File(String)
-} derive(Eq, @debug.Debug)
+}
 pub fn OutputDest::equal(Self, Self) -> Bool
 pub fn OutputDest::not_equal(Self, Self) -> Bool
 pub fn OutputDest::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct ParseErrorInfo {
   uri : String
   message : String
   line : Int32?
-} derive(Eq, @debug.Debug)
+}
 pub fn ParseErrorInfo::equal(Self, Self) -> Bool
 pub fn ParseErrorInfo::not_equal(Self, Self) -> Bool
 pub fn ParseErrorInfo::to_repr(Self) -> @debug.Repr
@@ -146,13 +152,15 @@ pub fn RunOptions::scenario_name(Self, String) -> Unit
 pub fn RunOptions::skip_tags(Self, Array[String]) -> Unit
 pub fn RunOptions::tag_expr(Self, String) -> Unit
 
+#derive(@debug.Debug)
 pub(all) struct RunResult {
   features : Array[FeatureResult]
   summary : RunSummary
   parse_errors : Array[ParseErrorInfo]
-} derive(@debug.Debug)
+}
 pub fn RunResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RunSummary {
   total_scenarios : Int32
   passed : Int32
@@ -162,11 +170,12 @@ pub(all) struct RunSummary {
   skipped : Int32
   retried : Int32
   duration_ms : Int64
-} derive(Eq, @debug.Debug)
+}
 pub fn RunSummary::equal(Self, Self) -> Bool
 pub fn RunSummary::not_equal(Self, Self) -> Bool
 pub fn RunSummary::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct ScenarioResult {
   feature_name : String
   scenario_name : String
@@ -175,49 +184,53 @@ pub(all) struct ScenarioResult {
   steps : Array[StepResult]
   status : ScenarioStatus
   duration_ms : Int64
-} derive(@debug.Debug)
+}
 pub fn ScenarioResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum ScenarioStatus {
   Passed
   Failed
   Skipped(String?)
   Undefined
   Pending
-} derive(Eq, @debug.Debug)
+}
 pub fn ScenarioStatus::equal(Self, Self) -> Bool
 pub fn ScenarioStatus::from_steps(Array[StepStatus]) -> Self
 pub fn ScenarioStatus::not_equal(Self, Self) -> Bool
 pub fn ScenarioStatus::to_repr(Self) -> @debug.Repr
 
+#derive(@debug.Debug)
 pub(all) struct StepResult {
   text : String
   keyword : String
   status : StepStatus
   duration_ms : Int64
   diagnostic : Error?
-} derive(@debug.Debug)
+}
 pub fn StepResult::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum StepStatus {
   Passed
   Failed(String)
   Skipped(String?)
   Undefined
   Pending
-} derive(Eq, @debug.Debug)
+}
 pub fn StepStatus::equal(Self, Self) -> Bool
 pub fn StepStatus::is_passed(Self) -> Bool
 pub fn StepStatus::not_equal(Self, Self) -> Bool
 pub fn StepStatus::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum TagExpression {
   TagLiteral(String)
   Not(TagExpression)
   And(TagExpression, TagExpression)
   Or(TagExpression, TagExpression)
   Always
-} derive(Eq, @debug.Debug)
+}
 pub fn TagExpression::equal(Self, Self) -> Bool
 pub fn TagExpression::matches(Self, Array[String]) -> Bool
 pub fn TagExpression::not_equal(Self, Self) -> Bool

@@ -5,10 +5,11 @@ priv struct TodoItem {
 }
 
 ///|
+#derive(Default)
 #moonspec.world
 struct TodoWorld {
   todos : Array[TodoItem]
-} derive(Default)
+}
 
 ///|
 /// Make `TodoWorld::default` an explicit method, so tests can pass it as the

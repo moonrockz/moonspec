@@ -189,7 +189,11 @@ test "execute_scenario passes doc string as last arg" {
       astNodeIds: [],
       type_: Some(@cucumber_messages.PickleStepType::Context),
       argument: Some({
-        docString: Some({ content: "hello world", mediaType: Some("json"), }),
+        docString: Some({
+          argumentIndex: None,
+          content: "hello world",
+          mediaType: Some("json"),
+        }),
         dataTable: None,
       }),
     },
@@ -231,6 +235,7 @@ test "execute_scenario passes data table as last arg" {
       argument: Some({
         docString: None,
         dataTable: Some({
+          argumentIndex: None,
           rows: [
             { cells: [{ value: "name", }, { value: "age", }], },
             { cells: [{ value: "Alice", }, { value: "30", }], },
@@ -276,6 +281,7 @@ test "execute_scenario appends doc string after text params" {
       type_: Some(@cucumber_messages.PickleStepType::Action),
       argument: Some({
         docString: Some({
+          argumentIndex: None,
           content: "{\"name\":\"Alice\"}",
           mediaType: Some("json"),
         }),

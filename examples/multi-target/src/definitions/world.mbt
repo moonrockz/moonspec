@@ -1,6 +1,6 @@
 ///|
 pub struct CounterWorld {
-  priv mut count : Int
+  priv mut count : Int32
 }
 
 ///|
@@ -20,11 +20,13 @@ pub extend CounterWorld with @moonspec.World::{configure}
 
 ///|
 pub fn world() -> CounterWorld {
-  { count: 0 }
+  { count: 0, }
 }
 
 ///|
-pub fn options(sources : Array[@moonspec.FeatureSource]) -> @moonspec.RunOptions {
+pub fn options(
+  sources : Array[@moonspec.FeatureSource],
+) -> @moonspec.RunOptions {
   let options = @moonspec.RunOptions(sources)
   options.tag_expr("@shared")
   options.retries(1)

@@ -4,6 +4,7 @@ let build_rule_name = "moonspec-tests"
 
 ///|
 /// How a build rule runs the moonspec CLI.
+#derive(Eq, Debug)
 pub(all) enum CliCommand {
   /// The `moonspec` binary on `PATH`, from
   /// `moon install moonrockz/moonspec/cmd/moonspec`.
@@ -11,7 +12,7 @@ pub(all) enum CliCommand {
   /// `moonx`, which runs the CLI from the registry without an install.
   /// The version is pinned so that builds are reproducible.
   Moonx(version~ : String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend CliCommand with @moonbitlang/core/debug.Debug::{to_repr}
@@ -30,10 +31,11 @@ pub fn CliCommand::prefix(self : CliCommand) -> String {
 
 ///|
 /// A registry CLI pin cannot honor the requested build-rule execution mode.
+#derive(Debug)
 pub suberror BuildRuleError {
   UnsupportedExecution(version~ : String)
   UnsupportedVersion(version~ : String)
-} derive(Debug)
+}
 
 ///|
 pub extend BuildRuleError with @moonbitlang/core/debug.Debug::{to_repr}

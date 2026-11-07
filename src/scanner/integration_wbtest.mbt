@@ -32,3 +32,33 @@ test "end-to-end: scan and generate from attributed source" {
   assert_true(str_contains(code, "eat_cukes(self"))
   assert_true(str_contains(code, "check_cukes(self"))
 }
+
+///|
+test "end-to-end: scan a world declared with the #derive attribute" {
+  let source =
+    #|#derive(Default)
+    #|struct CucumberWorld {
+    #|  mut cucumbers : Int
+    #|}
+    #|
+    #|#moonspec.given("I have {int} cucumbers")
+    #|fn set_cukes(self : CucumberWorld, count : Int) -> Unit {
+    #|  self.cucumbers = count
+    #|}
+    #|
+    #|#moonspec.then("I should have {int} cucumbers")
+    #|fn check_cukes(self : CucumberWorld, count : Int) -> Unit raise Error {
+    #|  assert_eq(self.cucumbers, count)
+    #|}
+  let result = scan_source(source, "test.mbt")
+  assert_eq(result.step_fns.length(), 2)
+  assert_eq(result.step_fns[0].world_type, "CucumberWorld")
+  let code = generate_configure(
+    "CucumberWorld",
+    result.step_fns,
+    source_hash="test123",
+  )
+  assert_true(str_contains(code, "impl @moonspec.World for CucumberWorld"))
+  assert_true(str_contains(code, "set_cukes(self"))
+  assert_true(str_contains(code, "check_cukes(self"))
+}

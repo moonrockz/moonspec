@@ -1,10 +1,12 @@
 ///|
+#derive(Default)
 struct CalcWorld {
   mut result_val : Int32
-} derive(Default)
+}
 
 ///|
-struct ByteWorld {} derive(Default)
+#derive(Default)
+struct ByteWorld {}
 
 ///|
 pub extend ByteWorld with Default::{default}
@@ -86,7 +88,8 @@ async test "end-to-end: calculator feature" {
 }
 
 ///|
-struct TagWorld {} derive(Default)
+#derive(Default)
+struct TagWorld {}
 
 ///|
 pub extend TagWorld with Default::{default}
@@ -108,11 +111,12 @@ async test "end-to-end: tag filtering" {
 }
 
 ///|
+#derive(Default)
 struct DocWorld {
   mut payload : String
   mut media : String?
   mut users : Array[Map[String, String]]
-} derive(Default)
+}
 
 ///|
 pub extend DocWorld with Default::{default}
@@ -208,7 +212,8 @@ async test "end-to-end: data table" {
 }
 
 ///|
-struct AttachWorld {} derive(Default)
+#derive(Default)
+struct AttachWorld {}
 
 ///|
 pub extend AttachWorld with Default::{default}
@@ -238,7 +243,8 @@ async test "end-to-end: step attachment emits envelope" {
 }
 
 ///|
-struct UrlAttachWorld {} derive(Default)
+#derive(Default)
+struct UrlAttachWorld {}
 
 ///|
 pub extend UrlAttachWorld with Default::{default}
@@ -268,7 +274,8 @@ async test "end-to-end: attach_url emits ExternalAttachment" {
 }
 
 ///|
-struct CaseHookAttachWorld {} derive(Default)
+#derive(Default)
+struct CaseHookAttachWorld {}
 
 ///|
 pub extend CaseHookAttachWorld with Default::{default}
@@ -298,7 +305,8 @@ async test "end-to-end: case hook attachment emits envelope" {
 }
 
 ///|
-struct StepHookAttachWorld {} derive(Default)
+#derive(Default)
+struct StepHookAttachWorld {}
 
 ///|
 pub extend StepHookAttachWorld with Default::{default}
@@ -330,9 +338,10 @@ async test "end-to-end: step hook attachment emits envelope" {
 }
 
 ///|
+#derive(Debug)
 struct RetryWorld {
   call_count : Ref[Int32]
-} derive(Debug)
+}
 
 ///|
 pub extend RetryWorld with @moonbitlang/core/debug.Debug::{to_repr}
@@ -424,7 +433,8 @@ async test "retry: passing scenario is not counted as retried" {
 }
 
 ///|
-struct UndefinedRetryWorld {} derive(Default)
+#derive(Default)
+struct UndefinedRetryWorld {}
 
 ///|
 pub extend UndefinedRetryWorld with Default::{default}
@@ -491,7 +501,8 @@ async test "retry: envelope stream contains multiple TestCaseStarted attempts" {
 }
 
 ///|
-struct DryRunWorld {} derive(Default)
+#derive(Default)
+struct DryRunWorld {}
 
 ///|
 pub extend DryRunWorld with Default::{default}
@@ -563,7 +574,8 @@ async test "dry-run: envelopes emitted with SKIPPED status" {
 }
 
 ///|
-struct SkipTagWorld {} derive(Default)
+#derive(Default)
+struct SkipTagWorld {}
 
 ///|
 pub extend SkipTagWorld with Default::{default}

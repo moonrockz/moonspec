@@ -1,10 +1,11 @@
 ///|
 /// Destination for formatter output.
+#derive(Debug, Eq)
 pub(all) enum OutputDest {
   Stdout
   Stderr
   File(String)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend OutputDest with @moonbitlang/core/debug.Debug::{to_repr}

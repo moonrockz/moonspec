@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Kind {
   Plain
   Keyword
@@ -6,7 +7,7 @@ pub(all) enum Kind {
   Comment
   Number
   Tag
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Kind with Eq::{equal, not_equal}
@@ -15,10 +16,11 @@ pub extend Kind with Eq::{equal, not_equal}
 pub extend Kind with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Token {
   kind : Kind
   text : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Token with Eq::{equal, not_equal}

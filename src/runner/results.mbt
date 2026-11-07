@@ -1,10 +1,11 @@
 ///|
 /// Input source for a feature to be loaded into the cache.
+#derive(Debug, Eq)
 pub(all) enum FeatureSource {
   Text(String, String) // (path, content)
   File(String) // (path) — unchanged
   Parsed(String, @gherkin.Feature) // (path, feature)
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend FeatureSource with @moonbitlang/core/debug.Debug::{to_repr}
@@ -14,13 +15,14 @@ pub extend FeatureSource with Eq::{not_equal, equal}
 
 ///|
 /// Status of a single step execution.
+#derive(Debug, Eq)
 pub(all) enum StepStatus {
   Passed
   Failed(String)
   Skipped(String?)
   Undefined
   Pending
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StepStatus with @moonbitlang/core/debug.Debug::{to_repr}
@@ -39,13 +41,14 @@ pub fn StepStatus::is_passed(self : StepStatus) -> Bool {
 
 ///|
 /// Aggregate status of a scenario.
+#derive(Debug, Eq)
 pub(all) enum ScenarioStatus {
   Passed
   Failed
   Skipped(String?)
   Undefined
   Pending
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ScenarioStatus with @moonbitlang/core/debug.Debug::{to_repr}
@@ -87,19 +90,21 @@ pub fn ScenarioStatus::from_steps(steps : Array[StepStatus]) -> ScenarioStatus {
 
 ///|
 /// Result of executing a single step.
+#derive(Debug)
 pub(all) struct StepResult {
   text : String
   keyword : String
   status : StepStatus
   duration_ms : Int64
   diagnostic : Error?
-} derive(Debug)
+}
 
 ///|
 pub extend StepResult with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Result of executing a scenario.
+#derive(Debug)
 pub(all) struct ScenarioResult {
   feature_name : String
   scenario_name : String
@@ -108,18 +113,19 @@ pub(all) struct ScenarioResult {
   steps : Array[StepResult]
   status : ScenarioStatus
   duration_ms : Int64
-} derive(Debug)
+}
 
 ///|
 pub extend ScenarioResult with @moonbitlang/core/debug.Debug::{to_repr}
 
 ///|
 /// Result of executing a feature.
+#derive(Debug)
 pub(all) struct FeatureResult {
   name : String
   scenarios : Array[ScenarioResult]
   duration_ms : Int64
-} derive(Debug)
+}
 
 ///|
 pub extend FeatureResult with @moonbitlang/core/debug.Debug::{to_repr}
@@ -130,6 +136,7 @@ pub extend FeatureResult with @moonbitlang/core/debug.Debug::{to_repr}
 /// The `retried` field counts scenarios that required more than one attempt,
 /// regardless of their final outcome. A scenario that fails on the first
 /// attempt but passes on retry is counted as both `passed` and `retried`.
+#derive(Debug, Eq)
 pub(all) struct RunSummary {
   total_scenarios : Int32
   passed : Int32
@@ -139,7 +146,7 @@ pub(all) struct RunSummary {
   skipped : Int32
   retried : Int32
   duration_ms : Int64
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend RunSummary with @moonbitlang/core/debug.Debug::{to_repr}
@@ -149,11 +156,12 @@ pub extend RunSummary with Eq::{not_equal, equal}
 
 ///|
 /// Information about a parse error encountered when loading a feature.
+#derive(Debug, Eq)
 pub(all) struct ParseErrorInfo {
   uri : String
   message : String
   line : Int32?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ParseErrorInfo with @moonbitlang/core/debug.Debug::{to_repr}
@@ -172,11 +180,12 @@ pub struct PickleResult {
 
 ///|
 /// Complete result of a test run.
+#derive(Debug)
 pub(all) struct RunResult {
   features : Array[FeatureResult]
   summary : RunSummary
   parse_errors : Array[ParseErrorInfo]
-} derive(Debug)
+}
 
 ///|
 pub extend RunResult with @moonbitlang/core/debug.Debug::{to_repr}

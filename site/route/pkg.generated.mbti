@@ -16,17 +16,18 @@ pub fn strip_base(String, String) -> String?
 // Errors
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) enum Route {
   Landing
   Doc(String)
   Migration(String)
   NotFound(String)
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Route::equal(Self, Self) -> Bool
-pub fn Route::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Route::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Route::not_equal(Self, Self) -> Bool
 pub fn Route::parse(String) -> Self
-pub fn Route::to_json(Self) -> Json
+pub fn Route::to_json(Self) -> @json.Json
 pub fn Route::to_path(Self) -> String
 pub fn Route::to_repr(Self) -> @debug.Repr
 

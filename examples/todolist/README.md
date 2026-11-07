@@ -58,9 +58,10 @@ The `#moonspec.world` attribute marks the World struct:
 
 ```moonbit
 #moonspec.world
+#derive(Default)
 struct TodoWorld {
   todos : Array[TodoItem]
-} derive(Default)
+}
 ```
 
 Running `moonspec gen steps -d src/` scans these annotations and generates

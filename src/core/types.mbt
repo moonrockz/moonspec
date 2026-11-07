@@ -138,10 +138,11 @@ pub extend PendingAttachment with Eq::{not_equal, equal}
 
 ///|
 /// A step argument carrying both the typed value and the original matched text.
+#derive(Debug, Eq)
 pub(all) struct StepArg {
   value : StepValue
   raw : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StepArg with @moonbitlang/core/debug.Debug::{to_repr}
@@ -331,11 +332,12 @@ pub(all) enum StepMatchResult {
 
 ///|
 /// Information about a scenario being executed.
+#derive(Debug, Eq)
 pub(all) struct ScenarioInfo {
   feature_name : String
   scenario_name : String
   tags : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend ScenarioInfo with @moonbitlang/core/debug.Debug::{to_repr}
@@ -345,10 +347,11 @@ pub extend ScenarioInfo with Eq::{not_equal, equal}
 
 ///|
 /// Information about a step being executed.
+#derive(Debug, Eq)
 pub(all) struct StepInfo {
   keyword : String
   text : String
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend StepInfo with @moonbitlang/core/debug.Debug::{to_repr}
@@ -358,6 +361,7 @@ pub extend StepInfo with Eq::{not_equal, equal}
 
 ///|
 /// Structured error reported to after-hooks.
+#derive(Debug, Eq)
 pub(all) enum HookError {
   StepFailed(step~ : String, keyword~ : StepKeyword, message~ : String)
   ScenarioFailed(
@@ -365,7 +369,7 @@ pub(all) enum HookError {
     scenario_name~ : String,
     message~ : String
   )
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend HookError with @moonbitlang/core/debug.Debug::{to_repr}
@@ -375,10 +379,11 @@ pub extend HookError with Eq::{not_equal, equal}
 
 ///|
 /// Result passed to after-hooks indicating pass/fail with structured errors.
+#derive(Debug, Eq)
 pub(all) enum HookResult {
   Passed
   Failed(Array[HookError])
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend HookResult with @moonbitlang/core/debug.Debug::{to_repr}
@@ -574,9 +579,10 @@ pub fn StepHookCtx::attach_url(
 
 ///|
 /// Immutable wrapper around an array of cell values in a DataTable row.
+#derive(Debug, Eq)
 pub struct Cells {
   priv data : Array[String]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Cells with @moonbitlang/core/debug.Debug::{to_repr}
@@ -606,9 +612,10 @@ pub fn Cells::length(self : Cells) -> Int32 {
 
 ///|
 /// A single row in a DataTable, wrapping its cell values in an immutable Cells.
+#derive(Debug, Eq)
 pub(all) struct Row {
   cells : Cells
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Row with @moonbitlang/core/debug.Debug::{to_repr}
@@ -623,9 +630,10 @@ fn Row::Row(cells : Array[String]) -> Row {
 
 ///|
 /// Immutable wrapper around an array of rows in a DataTable.
+#derive(Debug, Eq)
 pub struct Rows {
   priv data : Array[Row]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Rows with @moonbitlang/core/debug.Debug::{to_repr}
@@ -655,10 +663,11 @@ pub fn Rows::length(self : Rows) -> Int32 {
 
 ///|
 /// A named column in a DataTable, derived from the header row.
+#derive(Debug, Eq)
 pub(all) struct Column {
   name : String
   index : Int32
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Column with @moonbitlang/core/debug.Debug::{to_repr}
@@ -673,9 +682,10 @@ fn Column::Column(name~ : String, index~ : Int32) -> Column {
 
 ///|
 /// Immutable wrapper around an array of columns in a DataTable.
+#derive(Debug, Eq)
 pub struct Columns {
   priv data : Array[Column]
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend Columns with @moonbitlang/core/debug.Debug::{to_repr}
@@ -715,10 +725,11 @@ pub fn Columns::find(self : Columns, name : String) -> Column? {
 
 ///|
 /// A DataTable from a Gherkin step. First row is treated as column headers.
+#derive(Debug, Eq)
 pub(all) struct DataTable {
   rows : Rows
   columns : Columns
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DataTable with @moonbitlang/core/debug.Debug::{to_repr}
@@ -773,10 +784,11 @@ pub fn DataTable::as_maps(self : DataTable) -> Array[Map[String, String]] {
 
 ///|
 /// A DocString from a Gherkin step — multi-line text with optional media type.
+#derive(Debug, Eq)
 pub(all) struct DocString {
   content : String
   media_type : String?
-} derive(Debug, Eq)
+}
 
 ///|
 pub extend DocString with @moonbitlang/core/debug.Debug::{to_repr}

@@ -1,7 +1,8 @@
 ///|
+#derive(Default)
 struct CalculatorWorld {
   mut result : Int32
-} derive(Default)
+}
 
 ///|
 pub extend CalculatorWorld with Default::{default}

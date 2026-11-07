@@ -1,5 +1,6 @@
 ///|
 /// One searchable section of a page: the text under one h2 or h3 heading.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct Entry {
   route : @route.Route
   /// Heading id, or "" for the text before the first h2.
@@ -9,7 +10,7 @@ pub(all) struct Entry {
   /// Heading texts, for example ["Config Fields", "test_kind (string)"].
   path : Array[String]
   text : String
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend Entry with Eq::{equal, not_equal}
@@ -144,18 +145,20 @@ pub fn tokenize(s : String) -> Array[String] {
 }
 
 ///|
+#derive(Eq, Debug)
 priv struct Prepared {
   entry : Entry
   title : Array[String]
   heading : Array[String]
   text : Array[String]
-} derive(Eq, Debug)
+}
 
 ///|
 /// Entries with their tokens, ready to query.
+#derive(Eq, Debug)
 pub struct Index {
   priv items : Array[Prepared]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Index with Eq::{equal, not_equal}
@@ -181,10 +184,11 @@ pub fn Index::size(self : Index) -> Int32 {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Segment {
   Plain(String)
   Hit(String)
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Segment with Eq::{equal, not_equal}
@@ -193,11 +197,12 @@ pub extend Segment with Eq::{equal, not_equal}
 pub extend Segment with @debug.Debug::{to_repr}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Match {
   entry : Entry
   score : Int32
   excerpt : Array[Segment]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Match with Eq::{equal, not_equal}

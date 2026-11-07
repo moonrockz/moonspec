@@ -19,17 +19,18 @@ experimental attribute-based approach.
 The **World** is a struct that holds per-scenario state. moonspec creates a
 fresh instance for each scenario, so scenarios are isolated from one another.
 
-### Basic World with `derive(Default)`
+### Basic World with `#derive(Default)`
 
 ```moonbit
+#derive(Default)
 struct CalcWorld {
   mut result : Int
-} derive(Default)
+}
 
 pub extend CalcWorld with Default::{default}
 ```
 
-The `derive(Default)` annotation auto-generates a constructor that
+The `#derive(Default)` annotation auto-generates a constructor that
 zero-initializes all fields. For `Int` that means `0`, for `String` it means
 `""`, for `Array` it means `[]`, and so on.
 
@@ -607,11 +608,12 @@ Each returns a `StepDef` value. The `steps` method must return an
 ### Composing Libraries in the World
 
 ```moonbit
+#derive(Default)
 struct EcomWorld {
   cart : Array[CartItem]
   inventory : Map[String, Int]
   mut order_total : Int
-} derive(Default)
+}
 
 pub extend EcomWorld with Default::{default}
 
@@ -819,9 +821,10 @@ Annotate your world struct with `#moonspec.world`:
 
 ```moonbit
 #moonspec.world
+#derive(Default)
 struct TodoWorld {
   todos : Array[TodoItem]
-} derive(Default)
+}
 
 pub extend TodoWorld with Default::{default}
 ```

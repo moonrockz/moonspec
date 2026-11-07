@@ -1,7 +1,8 @@
 ///|
+#derive(Default)
 struct CucumberWorld {
   mut total : Int32
-} derive(Default)
+}
 
 ///|
 pub extend CucumberWorld with Default::{default}
@@ -41,7 +42,8 @@ async test "feature parses and runs all scenarios" {
 }
 
 ///|
-struct EmptyWorld {} derive(Default)
+#derive(Default)
+struct EmptyWorld {}
 
 ///|
 pub extend EmptyWorld with Default::{default}

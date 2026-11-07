@@ -6,10 +6,11 @@ pub let github_repo : String = "https://github.com/moonrockz/moonspec"
 pub let api_docs_url : String = "https://mooncakes.io/docs/moonrockz/moonspec"
 
 ///|
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) enum Channel {
   Release
   Next
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend Channel with Eq::{equal, not_equal}
@@ -25,6 +26,7 @@ pub extend Channel with FromJson::{from_json}
 
 ///|
 /// One built version of the site.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct SiteConfig {
   /// Base path of this version, for example "/moonspec/next/".
   base : String
@@ -37,7 +39,7 @@ pub(all) struct SiteConfig {
   next_base : String
   /// Label of the release version, for the version picker.
   release_version : String
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend SiteConfig with Eq::{equal, not_equal}
@@ -54,6 +56,7 @@ pub extend SiteConfig with FromJson::{from_json}
 ///|
 /// Everything the component needs for its first render. The pre-render puts
 /// it in `<meta name="ms-data">`; the browser reads it back for hydration.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct SiteData {
   config : SiteConfig
   pages : Array[@content.Page]
@@ -62,7 +65,7 @@ pub(all) struct SiteData {
   route : @route.Route
   /// Markdown of the current page; `None` for the landing page and 404.
   markdown : String?
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend SiteData with Eq::{equal, not_equal}

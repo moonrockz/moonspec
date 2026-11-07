@@ -12,10 +12,13 @@ them natively with `moon test` or via the programmatic Runner API.
 
 ## Sync and async execution
 
-The sync APIs and async import migration below are unreleased pre-1.0 changes.
-Use this checkout for them; published 0.11.0 does not contain these APIs.
-The tested toolchain is moon/moonrun 0.1.20261028 with moonc and core
-0.10.18+6c83a7f62, and `moonbitlang/async` 0.22.4. The JavaScript examples also
+The sync APIs and async import migration below are pre-1.0 changes that
+first ship in 0.12.0; 0.11.0 does not contain these APIs.
+Version 0.12.0 and later need MoonBit 0.10.20 or newer: they use the
+`#derive(...)` attribute syntax and the `moonbitlang/core/json` package API,
+which older toolchains do not accept. On an older toolchain, use 0.11.0.
+The tested toolchain is moon/moonrun 0.1.20261104 with moonc and core
+0.10.20+65efd5b93, and `moonbitlang/async` 0.22.4. The JavaScript examples also
 test the async facade with `moonbitlang/async` 0.22.7.
 
 | Execution | Package imported as `@moonspec` | Executed targets |
@@ -97,9 +100,10 @@ Feature: Calculator
 2. Define a World struct with step definitions:
 
 ```moonbit
+#derive(Default)
 struct CalcWorld {
   mut result : Int
-} derive(Default)
+}
 
 pub extend CalcWorld with Default::{default}
 
@@ -132,7 +136,7 @@ test "calculator" {
 }
 ```
 
-Each scenario gets a fresh `CalcWorld` instance (via `derive(Default)`), so state
+Each scenario gets a fresh `CalcWorld` instance (via `#derive(Default)`), so state
 never leaks between scenarios. The `pub extend CalcWorld with Default::{default}`
 line lets you pass `CalcWorld::default` without a deprecation warning.
 
@@ -230,15 +234,16 @@ fresh instance constructed via MoonBit's `Default` trait.
 ### Defining a World
 
 ```moonbit
+#derive(Default)
 struct MyWorld {
   mut cucumbers : Int
   mut belly_full : Bool
-} derive(Default)
+}
 
 pub extend MyWorld with Default::{default}
 ```
 
-`derive(Default)` zero-initializes all fields. For custom initialization, implement
+`#derive(Default)` zero-initializes all fields. For custom initialization, implement
 `Default` manually.
 
 The `pub extend` line makes `MyWorld::default` a regular method, so you can pass
@@ -1276,7 +1281,7 @@ ordinary tests importing the public root package. Run
 See [`examples/calculator/`](examples/calculator/) -- one test per scenario:
 
 - Codegen via `moonspec gen` with per-scenario mode (default)
-- World struct with `derive(Default)` and inline step definitions
+- World struct with `#derive(Default)` and inline step definitions
 - Background steps, Scenario Outlines, and tag filtering
 - The same feature as Markdown with Gherkin (`features/calculator.feature.md`)
 

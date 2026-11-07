@@ -1,8 +1,9 @@
 ///|
+#derive(Default)
 pub(all) struct FixtureWorld {
   mut ready : Bool
   mut value : Int
-} derive(Default)
+}
 
 ///|
 pub extend FixtureWorld with Default::{default}

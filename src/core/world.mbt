@@ -10,7 +10,8 @@
 ///
 /// Example:
 /// ```
-/// struct MyWorld { mut count : Int } derive(Default)
+/// #derive(Default)
+/// struct MyWorld { mut count : Int }
 ///
 /// impl @moonspec.World for MyWorld with configure(self, s) {
 ///   s.given("a count of {int}", fn(ctx) {

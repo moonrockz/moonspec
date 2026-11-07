@@ -156,12 +156,13 @@ moonspec gen tests features/calculator.feature -w CalcWorld -o src
 ### 6. Define your World
 
 Create `src/world.mbt`. The World struct holds per-scenario state and uses
-`derive(Default)` for zero-initialization:
+`#derive(Default)` for zero-initialization:
 
 ```moonbit
+#derive(Default)
 struct CalcWorld {
   mut result : Int
-} derive(Default)
+}
 
 impl @moonspec.World for CalcWorld with configure(self, setup) {
   setup.given("a calculator", fn(_ctx) { self.result = 0 })
@@ -248,7 +249,7 @@ moonspec check features/calculator.feature
 ## What This Example Demonstrates
 
 - **Codegen**: `moonspec gen tests -w CalcWorld` generates runner tests from `.feature` files
-- **World trait**: Per-scenario state isolation via `derive(Default)` + `@moonspec.World`
+- **World trait**: Per-scenario state isolation via `#derive(Default)` + `@moonspec.World`
 - **Cucumber Expressions**: Type-safe step matching with `{int}` parameters
 - **Background steps**: Shared setup (`Given a calculator`) before each scenario
 - **Scenario Outlines**: Parameterized tests from Examples tables

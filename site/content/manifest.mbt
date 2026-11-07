@@ -6,10 +6,11 @@ pub let guide_order : Array[String] = [
 ]
 
 ///|
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) enum Group {
   Guides
   Migrations
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend Group with Eq::{equal, not_equal}
@@ -25,12 +26,13 @@ pub extend Group with FromJson::{from_json}
 
 ///|
 /// A published page. `source` is the repository path of its Markdown file.
+#derive(Eq, Debug, ToJson, FromJson)
 pub(all) struct Page {
   route : @route.Route
   title : String
   source : String
   group : Group
-} derive(Eq, Debug, ToJson, FromJson)
+}
 
 ///|
 pub extend Page with Eq::{equal, not_equal}
@@ -46,10 +48,11 @@ pub extend Page with FromJson::{from_json}
 
 ///|
 /// A Markdown file found in the content tree, with the text of its first `#` heading.
+#derive(Eq, Debug)
 pub(all) struct SourceFile {
   path : String
   title : String
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend SourceFile with Eq::{equal, not_equal}
@@ -59,9 +62,10 @@ pub extend SourceFile with @debug.Debug::{to_repr}
 
 ///|
 /// The published pages of one version, in sidebar order.
+#derive(Eq, Debug)
 pub(all) struct Manifest {
   pages : Array[Page]
-} derive(Eq, Debug)
+}
 
 ///|
 pub extend Manifest with Eq::{equal, not_equal}

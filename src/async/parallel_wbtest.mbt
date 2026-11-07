@@ -1,5 +1,6 @@
 ///|
-struct ParWorld {} derive(Default)
+#derive(Default)
+struct ParWorld {}
 
 ///|
 pub extend ParWorld with Default::{default}

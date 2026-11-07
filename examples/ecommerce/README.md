@@ -43,13 +43,14 @@ ecommerce/
 libraries in `configure`:
 
 ```moonbit
+#derive(Default)
 struct EcomWorld {
   cart : Array[CartItem]
   mut order_total : Int
   mut checkout_rejected : Bool
   inventory : Map[String, Int]
   mut last_checked_item : String
-} derive(Default)
+}
 
 impl @moonspec.World for EcomWorld with configure(self, setup) {
   setup.use_library(CartSteps::new(self))

@@ -1,5 +1,6 @@
 ///|
-struct SyncTestWorld {} derive(Default)
+#derive(Default)
+struct SyncTestWorld {}
 
 ///|
 pub extend SyncTestWorld with Default::{default}
