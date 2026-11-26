@@ -7,7 +7,7 @@ background and outline. There is no async package or test-driver import.
 
 These APIs first ship in moonspec 0.12.0. The example's local `moon.work`
 resolves the dependency in `moon.mod` to this repository checkout. Tested
-with moon/moonrun 0.1.20261104 and moonc/core 0.10.20+65efd5b93.
+with moon/moonrun 0.1.20261126 and moonc/core 1.0.0-rc1+3c0520448.
 
 From the repository root:
 

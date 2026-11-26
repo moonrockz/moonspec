@@ -9,8 +9,8 @@ first ship in 0.12.0; 0.11.0 does not contain these APIs.
 Version 0.12.0 and later need MoonBit 0.10.20 or newer: they use the
 `#derive(...)` attribute syntax and the `moonbitlang/core/json` package API,
 which older toolchains do not accept. On an older toolchain, use 0.11.0.
-The tested toolchain is moon/moonrun 0.1.20261104 with moonc and core
-0.10.20+65efd5b93, and `moonbitlang/async` 0.22.4. The JavaScript examples also
+The tested toolchain is moon/moonrun 0.1.20261126 with moonc and core
+1.0.0-rc1+3c0520448, and `moonbitlang/async` 0.22.4. The JavaScript examples also
 test the async facade with `moonbitlang/async` 0.22.7.
 
 | Execution | Package imported as `@moonspec` | Executed targets |
