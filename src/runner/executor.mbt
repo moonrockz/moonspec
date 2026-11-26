@@ -12,7 +12,7 @@ fn emit_attachments(
         body~,
         encoding~,
         media_type~,
-        file_name~
+        file_name~,
       ) => {
         // AttachmentContentEncoding constructors are not directly accessible
         // from outside cucumber-messages, so we convert via JSON stringify

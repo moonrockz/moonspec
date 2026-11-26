@@ -24,7 +24,7 @@ pub(all) enum Route {
   NotFound(String)
 }
 pub fn Route::equal(Self, Self) -> Bool
-pub fn Route::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Route::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Route::not_equal(Self, Self) -> Bool
 pub fn Route::parse(String) -> Self
 pub fn Route::to_json(Self) -> @json.Json

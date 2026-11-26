@@ -272,7 +272,7 @@ fn emit_run_hook_attachments(
         body~,
         encoding~,
         media_type~,
-        file_name~
+        file_name~,
       ) => {
         let enc_str = encoding.to_json().stringify()
         let enc_clean = enc_str[1:enc_str.length() - 1].to_owned()

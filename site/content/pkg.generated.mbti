@@ -25,7 +25,7 @@ pub(all) enum Group {
   Migrations
 }
 pub fn Group::equal(Self, Self) -> Bool
-pub fn Group::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Group::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Group::not_equal(Self, Self) -> Bool
 pub fn Group::to_json(Self) -> @json.Json
 pub fn Group::to_repr(Self) -> @debug.Repr
@@ -50,7 +50,7 @@ pub(all) struct Page {
   group : Group
 }
 pub fn Page::equal(Self, Self) -> Bool
-pub fn Page::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Page::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Page::not_equal(Self, Self) -> Bool
 pub fn Page::to_json(Self) -> @json.Json
 pub fn Page::to_repr(Self) -> @debug.Repr

@@ -9,7 +9,7 @@ pub suberror MoonspecError {
     step~ : String,
     keyword~ : String,
     snippet~ : String,
-    suggestions~ : Array[String]
+    suggestions~ : Array[String],
   )
   PendingStep(step~ : String, keyword~ : String, message~ : String)
   StepFailed(step~ : String, keyword~ : String, message~ : String)
@@ -19,7 +19,7 @@ pub suberror MoonspecError {
     feature~ : String,
     location~ : String?,
     steps~ : Array[StepReport],
-    errors~ : Array[MoonspecError]
+    errors~ : Array[MoonspecError],
   )
   RunFailed(summary~ : String, errors~ : Array[MoonspecError], color~ : Bool)
 }
