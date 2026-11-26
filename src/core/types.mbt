@@ -90,7 +90,7 @@ pub(all) enum PendingAttachment {
     body~ : String,
     encoding~ : @cucumber_messages.AttachmentContentEncoding,
     media_type~ : String,
-    file_name~ : String?
+    file_name~ : String?,
   )
   External(url~ : String, media_type~ : String)
 }
@@ -326,7 +326,7 @@ pub(all) enum StepMatchResult {
     step_text~ : String,
     keyword~ : String,
     snippet~ : String,
-    suggestions~ : Array[String]
+    suggestions~ : Array[String],
   )
 }
 
@@ -367,7 +367,7 @@ pub(all) enum HookError {
   ScenarioFailed(
     feature_name~ : String,
     scenario_name~ : String,
-    message~ : String
+    message~ : String,
   )
 }
 

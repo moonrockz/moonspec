@@ -2,7 +2,7 @@
 
 This example uses the checkout CLI and runtime. Its local `moon.work`
 selects the repository source even though `moon.mod` retains the registry version.
-Use moon/moonrun 0.1.20261104, moonc/core 0.10.20+65efd5b93 and async 0.22.4,
+Use moon/moonrun 0.1.20261126, moonc/core 1.0.0-rc1+3c0520448 and async 0.22.4,
 the same toolchain as the compatibility tests. No supporting registry CLI is
 assumed or fetched.
 

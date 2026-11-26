@@ -717,7 +717,7 @@ async test "run_or_fail report lists every step of a failed scenario" {
       #|1) Feature: B / Scenario: Fail # test://b:3
       #|   ✔ Given pass
       #|   ✖ Given fail
-      #|       Step 'fail' (Given): Failure(fail)
+      #|       Step 'fail' (Given): Failure: fail
       #|   - Given pass
     ),
   )

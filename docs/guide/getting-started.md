@@ -11,8 +11,8 @@ see [sync execution](testing-strategies.md#sync-execution-and-target-support).
 - [MoonBit toolchain](https://www.moonbitlang.com/download/) installed (`moon` CLI available)
 - An existing MoonBit project (create one with `moon new my-project` if needed)
 - MoonBit 0.10.20 or newer: moonspec 0.12.0 and later do not build on older
-  toolchains. The tested setup is moon/moonrun 0.1.20261104 and moonc/core
-  0.10.20+65efd5b93
+  toolchains. The tested setup is moon/moonrun 0.1.20261126 and moonc/core
+  1.0.0-rc1+3c0520448
 - Node.js only when running the JavaScript target
 
 ## Step 1: Install moonspec

@@ -33,8 +33,8 @@ checks do not establish support.
 Wasm-GC remains sync-only until upstream async integration is verified.
 LLVM is experimental and is not part of this support matrix.
 
-Verification uses moon and moonrun 0.1.20261104, moonc and its core distribution
-0.10.20+65efd5b93, and `moonbitlang/async` 0.22.4. The JavaScript examples also
+Verification uses moon and moonrun 0.1.20261126, moonc and its core distribution
+1.0.0-rc1+3c0520448, and `moonbitlang/async` 0.22.4. The JavaScript examples also
 test the async facade with `moonbitlang/async` 0.22.7. Modules that build for
 `wasm-gc` stay on async 0.22.5 or earlier: async 0.22.7 casts the core scheduler
 with `%identity`, and a Wasm-GC module that reaches the scheduler fails
